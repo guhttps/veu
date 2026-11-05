@@ -44,9 +44,9 @@ jobs:
       - name: Notas a partir do CHANGELOG
         run: |
           version="${GITHUB_REF_NAME#v}"
-          awk -v v="$version" '
-            $0 ~ "^## \\[" v "\\]" { found = 1; next }
-            found && /^## \[/ { exit }
+          awk -v header="## [$version]" '
+            index($0, header) == 1 { found = 1; next }
+            found && index($0, "## [") == 1 { exit }
             found && /^\[[^]]+\]: / { exit }
             found { print }
           ' CHANGELOG.md > notas.md
