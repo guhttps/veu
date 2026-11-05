@@ -1,0 +1,71 @@
+# Exemplo completo de configuração do Véu. Copie para a pasta onde roda o "veu servir"
+# (ou aponte VEU_CONFIG para ele) e apague o que não precisar: todas as opções têm padrão.
+
+[deteccao]
+# Pontuação mínima de 0 a 1. O padrão 0,5 também esconde valores com formato de documento
+# mas dígitos verificadores errados (provável erro de digitação). Use 0,6 para exigir validade.
+limiar = 0.5
+
+# Vazio = todos os tipos. Veja a lista com "veu entidades".
+entidades = []
+
+# Valores que nunca são escondidos: dados da própria empresa, contatos públicos.
+ignorar = ["contato@minhaempresa.com.br", "11.222.333/0001-81"]
+
+# Detectores ligados: padroes, nomes, enderecos, spacy, llm.
+detectores = ["padroes", "nomes", "enderecos"]
+modelo_spacy = "pt_core_news_lg"
+
+# Padrões próprios.
+[[deteccao.personalizados]]
+entidade = "MATRICULA"
+padrao = "MAT-\\d{6}"
+pontuacao = 0.9
+contexto = ["matrícula", "matricula"]
+exige_contexto = false
+
+# Detector por IA local (só com o detector "llm" ligado). Use um modelo local:
+# o texto original é enviado a este endereço.
+[deteccao.llm]
+url = "http://localhost:11434/v1"
+modelo = "qwen2.5:7b"
+
+[anonimizacao]
+# token | sintetico | mascara | remover | hash
+operador = "token"
+# Avisa o modelo para repetir os marcadores sem tentar adivinhar os valores.
+instruir_modelo = true
+# "João" sozinho recebe o mesmo marcador de "João da Silva".
+vincular_nomes = true
+# Variável de ambiente com o segredo do operador hash (marcadores estáveis entre requisições).
+segredo_env = "VEU_SEGREDO"
+
+[anonimizacao.operadores]
+CARTAO_CREDITO = "remover"
+DATA_NASCIMENTO = "mascara"
+
+[politica]
+# Tipos que fazem a requisição ser recusada em vez de só escondida.
+bloquear = []
+# "bloquear" (padrão) ou "repassar" os POST para endpoints que o Véu não sabe proteger.
+endpoints_desconhecidos = "bloquear"
+
+[servidor]
+host = "127.0.0.1"
+porta = 8787
+provedor_padrao = "openai"
+playground = true
+# Uma linha JSON por requisição, só com contagens.
+log_auditoria = "veu-auditoria.jsonl"
+sessao_ttl = 3600
+# Usa as chaves das variáveis de ambiente do servidor quando o cliente não envia nenhuma.
+injetar_chaves = false
+timeout = 600
+# Variável de ambiente com o token exigido no cabeçalho X-Veu-Token (recomendado fora do localhost).
+token_env = "VEU_TOKEN"
+
+# Provedor próprio: acessível em http://127.0.0.1:8787/interno/v1
+[provedores.interno]
+tipo = "openai"
+url = "https://ia.minhaempresa.com/v1"
+chave_env = "IA_INTERNA_KEY"

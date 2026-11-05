@@ -1,0 +1,14 @@
+name: Ideia ou integração nova
+description: Um tipo de dado, provedor de IA ou integração que falta.
+labels: ["ideia"]
+body:
+  - type: textarea
+    id: ideia
+    attributes:
+      label: O que você gostaria
+    validations:
+      required: true
+  - type: textarea
+    id: motivo
+    attributes:
+      label: Para que serve no seu caso

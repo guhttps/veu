@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip install "ruff>=0.6"
+      - run: ruff check .
+
+  tests:
+    name: Testes (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m pytest
+
+  benchmark:
+    name: Benchmark (vazamento máximo de 5%)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -e .
+      - name: Avaliar
+        run: |
+          set -o pipefail
+          veu avaliar --quantidade 1000 --max-vazamento 0.05 | tee resultado.md
+          { echo "# Benchmark do Véu"; cat resultado.md; } >> "$GITHUB_STEP_SUMMARY"
+
+  package:
+    name: Pacote instalável
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip install build
+      - run: python -m build
+      - name: Instalar o wheel num ambiente limpo
+        run: |
+          python -m venv /tmp/limpo
+          /tmp/limpo/bin/pip install dist/*.whl
+          /tmp/limpo/bin/veu --versao
+          resultado=$(echo "Sou a Maria Souza, CPF 529.982.247-25" | /tmp/limpo/bin/veu anonimizar 2>/dev/null)
+          echo "$resultado"
+          test "$resultado" = "Sou a [PESSOA_1], CPF [CPF_1]"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  docker:
+    name: Imagem Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t veu .
+      - name: Teste de fumaça
+        run: |
+          docker run -d --name veu -p 8787:8787 -e VEU_TOKEN=ci veu
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:8787/veu/saude && break; sleep 1; done
+          curl -fs http://127.0.0.1:8787/veu/saude
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8787/veu/v1/detectar -d '{}')" = "401"
+          curl -fs http://127.0.0.1:8787/veu/v1/anonimizar -H "X-Veu-Token: ci" -H "Content-Type: application/json" \
+            -d '{"texto": "CPF 529.982.247-25"}' | tee resposta.json
+          grep -q '"texto":"CPF \[CPF_1\]"' resposta.json
+      - if: failure()
+        run: docker logs veu

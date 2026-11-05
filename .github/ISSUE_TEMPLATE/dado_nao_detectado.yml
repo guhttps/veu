@@ -1,0 +1,25 @@
+name: Dado pessoal não detectado (ou detectado por engano)
+description: Um dado que passou sem ser escondido, ou um texto comum que foi escondido.
+labels: ["deteccao"]
+body:
+  - type: markdown
+    attributes:
+      value: "**Use somente dados fictícios.** Gere valores com `veu gerar-dataset` ou troque os dígitos e nomes reais."
+  - type: textarea
+    id: texto
+    attributes:
+      label: Texto de exemplo (fictício)
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: O que deveria acontecer
+      placeholder: '"Kawanny Rodrigues" deveria virar [PESSOA_1].'
+    validations:
+      required: true
+  - type: input
+    id: versao
+    attributes:
+      label: Versão do Véu (veu --versao)
