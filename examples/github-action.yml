@@ -1,0 +1,24 @@
+# Copie para .github/workflows/dados-pessoais.yml no seu repositório.
+name: Dados pessoais
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write   # só para enviar o SARIF à aba Security
+
+jobs:
+  veu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: guhttps/veu@v0.3.0
+        with:
+          sarif: veu.sarif
+      - if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: veu.sarif

@@ -33,7 +33,8 @@ Você recebe    Olá, Maria Souza! Localizei o pedido do CPF 529.982.247-25.
 - 🔁 **Reversível e consistente:** o mesmo dado recebe sempre o mesmo marcador, "João" sozinho é ligado a "João da Silva", e a restauração tolera o que os modelos fazem com os marcadores (`[CPF 1]`, `CPF_1`, `[cpf_1`).
 - 🌊 **Streaming de verdade:** marcadores que chegam partidos entre pedaços ("[PES" + "SOA_1]") são remontados, inclusive dentro dos argumentos JSON de chamadas de ferramentas.
 - 🎭 **5 operadores:** marcador, valor sintético (outro CPF válido, outro nome), máscara (`***.982.247-**`), remoção e hash estável.
-- 🔌 **Várias integrações:** proxy para OpenAI, Anthropic e Gemini (e qualquer API compatível com OpenAI), transporte para os SDKs Python, API REST, filtro de logs, hook de pre-commit, CLI e Docker.
+- 🔌 **Integra com tudo:** proxy para OpenAI, Anthropic, Gemini, Ollama e 20 provedores prontos; SDKs Python, LangChain nativo, decorador `@protect`, servidor MCP para agentes, pandas e arquivos CSV/JSON; logging, structlog, loguru, Sentry e Prometheus; pre-commit e GitHub Action com SARIF.
+- 🧩 **Flexível:** detectores próprios como plugins, exceções por regex, regras por provedor (ex.: modelo local sem anonimizar) e operador escolhido por requisição.
 - 🛡️ **Política e auditoria:** bloqueie tipos de dados (como cartões), mantenha uma lista de valores permitidos e registre um log de auditoria só com contagens, nunca com os valores.
 - 🪶 **Leve:** o núcleo não tem dependências e processa cerca de 370 mil caracteres por segundo.
 
@@ -59,7 +60,7 @@ pip install "veu[servidor] @ git+https://github.com/guhttps/veu"
 ```
 
 - Só a biblioteca, sem dependências: `pip install "veu @ git+https://github.com/guhttps/veu"`.
-- Com o detector de nomes do spaCy: adicione o extra `spacy` e rode `python -m spacy download pt_core_news_lg`.
+- Extras opcionais: `mcp` (servidor MCP), `langchain`, `pandas`, `spacy` (detector de nomes do spaCy; depois rode `python -m spacy download pt_core_news_lg`) ou `todos`. Exemplo: `pip install "veu[servidor,mcp] @ git+https://github.com/guhttps/veu"`.
 - Docker: `docker build -t veu .` e `docker run -p 8787:8787 -e VEU_TOKEN=um-segredo veu` (o token é obrigatório fora do localhost).
 
 ## Uso rápido
@@ -109,19 +110,19 @@ veu.restore("Certo, [PESSOA_1]. Vou ligar no [TELEFONE_1].", resultado.vault)
 
 ## Integrações
 
-| Onde | Como | Guia |
+| Categoria | Integrações | Guia |
 |---|---|---|
-| OpenAI (Python, Node, qualquer linguagem) | Proxy em `/v1` ou `openai_client()` | [OpenAI](docs/integracoes.md#openai) |
-| Anthropic (Claude) | Proxy em `/v1/messages` ou `anthropic_client()` | [Anthropic](docs/integracoes.md#anthropic) |
-| Google Gemini | Proxy em `/v1beta/...` (API nativa) ou `/gemini-openai/v1` | [Gemini](docs/integracoes.md#gemini) |
-| Groq, OpenRouter, DeepSeek, Mistral, Together, Maritaca, Ollama, LM Studio | Prefixo no proxy: `/groq/v1`, `/ollama/v1`... | [Provedores](docs/integracoes.md#provedores-compatíveis-com-openai) |
-| LangChain e LlamaIndex | `base_url` apontando para o proxy | [LangChain](docs/integracoes.md#langchain) |
-| n8n, Make, Zapier e outras linguagens | API REST: `/veu/v1/anonimizar` e `/veu/v1/restaurar` | [API REST](docs/integracoes.md#api-rest-n8n-make-qualquer-linguagem) |
-| Logs da sua aplicação | `protect_logs()` esconde dados pessoais do `logging` | [Logs](docs/integracoes.md#logs) |
-| Repositórios Git | Hook de pre-commit que barra commits com CPF, e-mails... | [pre-commit](docs/integracoes.md#pre-commit-e-ci) |
-| Arquivos e scripts | CLI: `veu detectar`, `anonimizar`, `restaurar` | [CLI](docs/integracoes.md#linha-de-comando) |
+| **Modelos de IA** (proxy) | OpenAI, Anthropic, Gemini, Ollama nativo, Azure OpenAI e 20 provedores prontos: Groq, OpenRouter, DeepSeek, Mistral, Together, xAI, Perplexity, Fireworks, Cerebras, Hugging Face, Cohere, NVIDIA, SambaNova, Maritaca, LM Studio, vLLM, llama.cpp... | [Modelos](docs/integracoes.md#modelos-de-ia) |
+| **SDKs Python** | `openai_client()`, `anthropic_client()` e transportes para `httpx`/`httpx2` | [SDKs](docs/integracoes.md#atalhos-dos-sdks) |
+| **Frameworks** | LangChain nativo (modelos, cadeias, streaming, ferramentas e RAG), decorador `@protect` para qualquer função, `veu.session()` | [LangChain](docs/integracoes.md#langchain) · [@protect](docs/integracoes.md#decorador-protect) |
+| **Agentes** | Servidor **MCP** para Claude Code, Claude Desktop e Cursor: auditar e anonimizar arquivos sem os dados entrarem na conversa | [MCP](docs/integracoes.md#mcp-claude-code-claude-desktop-cursor) |
+| **Outras linguagens e no-code** | Node.js, Go, Java... pelo proxy; n8n, Make e Zapier pela API REST | [API REST](docs/integracoes.md#api-rest-n8n-make-qualquer-linguagem) |
+| **Dados** | CSV, JSON e JSONL pela CLI, DataFrames do pandas, documentos para RAG, com o mesmo marcador em todas as linhas | [Dados](docs/integracoes.md#dados) |
+| **Observabilidade** | `logging`, structlog, loguru, Sentry e métricas Prometheus | [Observabilidade](docs/integracoes.md#observabilidade) |
+| **Repositórios** | Hook de pre-commit, GitHub Action com anotações no PR e SARIF para a aba Security | [Repositórios](docs/integracoes.md#repositórios) |
+| **Extensões** | Detectores próprios (código, caminho de importação ou plugin), exceções por regex, regras por provedor e opções por requisição | [Extensões](docs/integracoes.md#extensões-e-implantação) |
 
-O proxy cobre Chat Completions, Responses, Embeddings e Completions da OpenAI, Messages da Anthropic e generateContent, streamGenerateContent, countTokens e embedContent do Gemini, com e sem streaming. Por segurança, requisições `POST` para endpoints que ele não sabe proteger (como upload de áudio) são **bloqueadas**, e não repassadas sem proteção.
+O proxy cobre Chat Completions, Responses, Embeddings e Completions da OpenAI, Messages da Anthropic, generateContent, streamGenerateContent, countTokens e embedContent do Gemini e a API nativa do Ollama, com e sem streaming (SSE e JSON por linha). Por segurança, requisições `POST` para endpoints que ele não sabe proteger (como upload de áudio) são **bloqueadas**, e não repassadas sem proteção.
 
 ## Playground
 
@@ -227,7 +228,7 @@ Leia o [modelo de ameaças e as limitações](SECURITY.md) antes de usar em prod
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # mais de 130 testes, inclusive com os SDKs oficiais da OpenAI e da Anthropic
+pytest                    # mais de 180 testes, inclusive com os SDKs oficiais, LangChain e MCP
 ruff check .
 veu avaliar               # benchmark
 ```
@@ -241,6 +242,8 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 - [ ] Detector de nomes em minúsculas sem saudação ("o rayane esqueceu")
 - [ ] Imagem Docker publicada no GitHub Container Registry
 - [ ] Suporte à API Realtime e a uploads de arquivos
+- [ ] Integração nativa com o LlamaIndex
+- [ ] Extensão de navegador para os sites do ChatGPT, Claude e Gemini
 
 ## Licença
 

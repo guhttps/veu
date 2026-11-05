@@ -35,7 +35,10 @@ O CI roda os testes no Linux e no Windows, com Python 3.11 a 3.14, e falha se o 
 | Adicionar nomes, sobrenomes, cidades ou empresas | `src/veu/data/*.txt` (um por linha) |
 | Melhorar endereços | `src/veu/recognizers/addresses.py` |
 | Validar um novo documento | `src/veu/validators.py` (e um gerador em `surrogates.py`) |
-| Suportar outra API de IA | `src/veu/gateway/adapters.py` |
+| Suportar outra API de IA | `src/veu/gateway/adapters.py` (e um provedor em `config.py`) |
+| Integrar com uma biblioteca (LangChain, Sentry, pandas...) | `src/veu/integrations/` |
+| Ferramentas do servidor MCP | `src/veu/integrations/mcp.py` |
+| Arquivos de dados e relatórios (SARIF, GitHub) | `src/veu/files.py` e `src/veu/reporting.py` |
 | Mudar o proxy ou a API REST | `src/veu/server/app.py` |
 | Adicionar casos ao benchmark | `src/veu/bench/hard.py` (escritos à mão) ou `generator.py` |
 

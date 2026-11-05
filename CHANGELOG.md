@@ -5,6 +5,32 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-05
+
+Muitas integrações novas e mais flexibilidade.
+
+### Integrações
+- **LangChain nativo:** `protect_model()` protege qualquer modelo ou cadeia (invoke, stream, async, argumentos de ferramentas) e `VeuDocumentTransformer` anonimiza documentos para RAG com um único cofre.
+- **Servidor MCP** (`veu mcp`) para Claude Code, Claude Desktop e Cursor, com ferramentas que auditam e anonimizam arquivos sem trazer os dados para a conversa.
+- **Decorador `@protect`** para qualquer função que chama um modelo, inclusive `async` e geradoras (streaming).
+- **`veu.session()`:** um cofre compartilhado por várias chamadas, com `anonymize_data` para dicts e listas e `restore_stream`.
+- **API nativa do Ollama** (`/api/chat`, `/api/generate`, `/api/embed`) com streaming em JSON por linha.
+- **10 provedores novos:** xAI, Perplexity, Fireworks, Cerebras, Hugging Face, Cohere, NVIDIA, SambaNova, vLLM e llama.cpp. Guia para o Azure OpenAI.
+- **Arquivos de dados:** `veu anonimizar` e `veu restaurar` entendem CSV, TSV, JSON e JSONL, com `--campos` e `--forcar campo=TIPO`, e o mesmo marcador em todas as linhas.
+- **pandas:** `anonymize_dataframe()` e `restore_dataframe()`.
+- **Observabilidade:** integrações com Sentry (`before_send`), structlog e loguru, e métricas Prometheus em `/veu/metricas`.
+- **CI:** GitHub Action (`uses: guhttps/veu@v0.3.0`) com anotações no PR, e `veu verificar --formato github|sarif|json` (SARIF para a aba Security).
+
+### Flexibilidade
+- Detectores próprios por `Veu(extra_recognizers=[...])`, por caminho de importação no `veu.toml` ou como plugin (entry point `veu.detectores`).
+- `ignorar_padroes`: exceções por expressão regular.
+- Regras por provedor: `anonimizar`, `operador` e `bloquear`, inclusive para os provedores prontos.
+- Cabeçalho `X-Veu-Operador` para escolher o operador por requisição (`operador_por_requisicao`).
+
+### Corrigido
+- Caminhos `/veu/...` desconhecidos (como `/veu/metricas` com as métricas desligadas) respondem 404 em vez de serem repassados ao provedor.
+- Tuplas dentro de listas e dicts agora também são anonimizadas.
+
 ## [0.2.0] - 2026-11-04
 
 Revisão de segurança.
@@ -56,6 +82,7 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/guhttps/veu/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/guhttps/veu/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/guhttps/veu/releases/tag/v0.1.0

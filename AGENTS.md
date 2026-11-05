@@ -20,7 +20,10 @@ No Windows, o ambiente virtual fica em `.venv/Scripts/`.
 - `src/veu/anonymizer.py` e `vault.py`: operadores, cofre e restauração (inclusive em streaming).
 - `src/veu/gateway/`: formatos das APIs de IA (adaptadores e SSE), compartilhados pelo proxy e pelos transportes.
 - `src/veu/server/`: proxy Starlette, API REST e playground.
-- `src/veu/integrations/`: transportes httpx/httpx2, atalhos de SDK e filtro de logging.
+- `src/veu/integrations/`: transportes httpx/httpx2, atalhos de SDK, LangChain, MCP, decorador, pandas, logging, structlog, loguru e Sentry.
+- `src/veu/sessions.py`: cofre compartilhado por várias chamadas (base do decorador, LangChain e MCP).
+- `src/veu/files.py` e `src/veu/reporting.py`: arquivos CSV/JSON/JSONL e relatórios (texto, GitHub, SARIF, JSON).
+- `action.yml`: GitHub Action composta (verifica dados pessoais no repositório).
 - `src/veu/bench/`: gerador de dados anotados e avaliação.
 
 ## Regras
@@ -29,5 +32,5 @@ No Windows, o ambiente virtual fica em `.venv/Scripts/`.
 - Não ajuste o detector olhando `VALIDATION_TEMPLATES` em `bench/generator.py`: esse conjunto mede a generalização.
 - Toda correção de detecção vem com um teste que falharia sem ela.
 - Identificadores em inglês; textos para o usuário, chaves do `veu.toml` e comandos da CLI em português do Brasil.
-- O núcleo (`veu` sem extras) não pode ganhar dependências. Servidor e integrações usam extras opcionais.
+- O núcleo (`veu` sem extras) não pode ganhar dependências. Servidor e integrações usam extras opcionais, importados só dentro do módulo da integração.
 - Commits em inglês, no imperativo. Registre mudanças visíveis no `CHANGELOG.md`.
