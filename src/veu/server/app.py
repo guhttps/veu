@@ -23,7 +23,7 @@ from veu import __version__
 from veu.anonymizer import normalize_operator
 from veu.config import Config, ConfigError, ProviderConfig, load_config
 from veu.core import Veu
-from veu.gateway import BlockedError, Gateway, detect_adapter
+from veu.gateway import BlockedError, Gateway, detect_adapter, is_streaming
 from veu.server.state import AuditLog, SessionStore, Stats
 
 HOP_HEADERS = frozenset({
@@ -64,6 +64,8 @@ def resolve_route(path: str, config: Config) -> tuple[ProviderConfig, str] | Non
             kind = "gemini"
         elif re.search(r"/v1/messages(?:/count_tokens)?/?$", path):
             kind = "anthropic"
+        elif re.fullmatch(r"/api/(?:chat|generate|embed|embeddings|tags|show|ps|version)/?", path):
+            kind = "ollama"
         else:
             kind = None
         if kind is None:
@@ -124,7 +126,13 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             "numa rede interna isolada, VEU_PERMITIR_SEM_TOKEN=1."
         )
     veu = Veu(config)
-    gateway = Gateway(veu)
+    gateways: dict[str, Gateway] = {config.operator: Gateway(veu)}
+
+    def gateway_for(operator: str) -> Gateway:
+        if operator not in gateways:
+            gateways[operator] = Gateway(veu.with_operator(operator))
+        return gateways[operator]
+
     # Proxy e API REST têm sessões separadas: um identificador escolhido no proxy nunca é restaurável pela API.
     proxy_sessions = SessionStore(veu.new_vault, ttl=config.session_ttl)
     api_sessions = SessionStore(veu.new_vault, ttl=config.session_ttl)
@@ -138,7 +146,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         follow_redirects=False,
     )
 
-    def guard(request: Request, *, check_token: bool = True) -> Response | None:
+    def guard(request: Request, *, check_token: bool = True, allow_bearer: bool = False) -> Response | None:
         """Barra DNS rebinding, requisições de outros sites (CSRF) e chamadas sem o token."""
         host_header = request.headers.get("host", "")
         hostname = urlsplit(f"//{host_header}").hostname or ""
@@ -151,6 +159,8 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             return _error("Requisições de outros sites não são aceitas.", 403, "veu_origem_invalida")
         if check_token and config.token:
             given = request.headers.get("x-veu-token", "")
+            if not given and allow_bearer:
+                given = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
             if not hmac.compare_digest(given.encode(), config.token.encode()):
                 return _error("Token do Véu ausente ou inválido (cabeçalho X-Veu-Token).", 401, "veu_nao_autorizado")
         return None
@@ -174,7 +184,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
     def veu_for(operator: str | None) -> Veu:
         key = normalize_operator(operator) if operator else config.operator
         if key not in operator_instances:
-            operator_instances[key] = Veu(config, operator=key)
+            operator_instances[key] = veu.with_operator(key)
         return operator_instances[key]
 
     async def read_json(request: Request) -> dict:
@@ -193,6 +203,13 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
 
     async def statistics(request: Request) -> Response:
         return guard(request) or JSONResponse(stats.snapshot(len(proxy_sessions) + len(api_sessions)))
+
+    async def metrics(request: Request) -> Response:
+        # O Prometheus envia "Authorization: Bearer <token>"; o X-Veu-Token também vale.
+        if (blocked := guard(request, allow_bearer=True)) is not None:
+            return blocked
+        text = stats.prometheus(len(proxy_sessions) + len(api_sessions), __version__)
+        return Response(text, media_type="text/plain; version=0.0.4; charset=utf-8")
 
     async def detect(request: Request) -> Response:
         if (blocked := guard(request)) is not None:
@@ -260,6 +277,9 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             "referrer-policy": "no-referrer",
         })
 
+    async def unknown_veu_route(request: Request) -> Response:
+        return _error(f"Rota do Véu inexistente ou desligada: {request.url.path}", 404, "veu_rota_inexistente")
+
     async def home(request: Request) -> Response:
         if config.playground:
             return RedirectResponse("/veu/playground")
@@ -293,6 +313,11 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         headers = _forward_headers(request, provider, config)
         adapter = detect_adapter(request.method, url.split("?", 1)[0])
         started = time.monotonic()
+        if adapter is not None and not provider.anonymize:
+            # Provedor configurado com anonimizar = false (por exemplo, um modelo local): repassa sem alterar.
+            stats.record(provider.name, Counter())
+            audit.write(provedor=provider.name, endpoint=adapter.name, sem_anonimizar=True)
+            return await passthrough(request, url, headers, body)
         if adapter is None:
             if request.method in ("GET", "HEAD") or config.unknown_endpoints == "repassar":
                 return await passthrough(request, url, headers, body)
@@ -301,13 +326,21 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
                 'endpoints desconhecidos sem proteção, use endpoints_desconhecidos = "repassar" no veu.toml.',
                 501, "veu_endpoint_nao_suportado",
             )
+        operator = provider.operator or config.operator
+        requested = request.headers.get("x-veu-operador")
+        if requested and config.request_operator:
+            try:
+                operator = normalize_operator(requested)
+            except ValueError as error:
+                return JSONResponse(adapter.error_body(str(error)), status_code=400)
+        gateway = gateway_for(normalize_operator(operator))
         vault = None
         session_id = request.headers.get("x-veu-sessao")
         if session_id:
             key = hashlib.sha256(f"{_credential(request)}\0{session_id}".encode()).hexdigest()
             vault = proxy_sessions.get(key)
         try:
-            prepared = await run_in_threadpool(gateway.prepare, adapter, body, vault, request.url.path)
+            prepared = await run_in_threadpool(gateway.prepare, adapter, body, vault, request.url.path, provider.block)
         except BlockedError as error:
             stats.record(provider.name, error.counts, blocked=True)
             audit.write(provedor=provider.name, endpoint=adapter.name, bloqueado=sorted(error.labels),
@@ -334,8 +367,9 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
                         entidades=dict(prepared.counts), duracao_ms=round((time.monotonic() - started) * 1000))
 
         response_headers = _response_headers(response, prepared.counts)
-        if "text/event-stream" in response.headers.get("content-type", ""):
-            transformer = gateway.stream(prepared)
+        content_type = response.headers.get("content-type", "")
+        if is_streaming(content_type):
+            transformer = gateway.stream(prepared, content_type)
 
             async def events():
                 try:
@@ -362,6 +396,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
     routes = [
         Route("/veu/saude", health, methods=["GET"]),
         Route("/veu/estatisticas", statistics, methods=["GET"]),
+        *([Route("/veu/metricas", metrics, methods=["GET"])] if config.metrics else []),
         Route("/veu/v1/detectar", detect, methods=["POST"]),
         Route("/veu/v1/anonimizar", anonymize, methods=["POST"]),
         Route("/veu/v1/restaurar", restore, methods=["POST"]),
@@ -369,6 +404,9 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
     if config.playground:
         routes.append(Route("/veu/playground", playground, methods=["GET"]))
     routes.append(Route("/", home, methods=["GET"]))
+    # Rotas do próprio Véu que não existem (ex.: métricas desligadas) nunca podem cair no proxy.
+    routes.append(Route("/veu/{path:path}", unknown_veu_route,
+                        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]))
     routes.append(Route("/{path:path}", proxy, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]))
 
     @contextlib.asynccontextmanager

@@ -1,0 +1,80 @@
+name: Véu - dados pessoais
+description: Procura dados pessoais brasileiros (CPF, CNPJ, nomes, e-mails, telefones...) nos arquivos do repositório.
+author: guhttps
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  caminhos:
+    description: Padrões de arquivos para o git ls-files, separados por espaço (padrão, todos os versionados).
+    default: ""
+  diretorio:
+    description: Pasta do repositório a verificar.
+    default: "."
+  limiar:
+    description: Pontuação mínima, de 0 a 1.
+    default: "0.5"
+  entidades:
+    description: Só estes tipos, separados por vírgula (padrão, todos).
+    default: ""
+  sarif:
+    description: Caminho de um relatório SARIF a gerar, para enviar à aba Security com github/codeql-action/upload-sarif.
+    default: ""
+  falhar:
+    description: Falha o job quando encontra dados pessoais (true ou false).
+    default: "true"
+  python-version:
+    description: Versão do Python usada para rodar o Véu.
+    default: "3.13"
+
+outputs:
+  encontrados:
+    description: Quantidade de dados pessoais encontrados.
+    value: ${{ steps.verificar.outputs.encontrados }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v7
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Instalar o Véu
+      shell: bash
+      run: python -m pip install --quiet --disable-pip-version-check "$GITHUB_ACTION_PATH"
+
+    - name: Verificar dados pessoais
+      id: verificar
+      shell: bash
+      working-directory: ${{ inputs.diretorio }}
+      env:
+        CAMINHOS: ${{ inputs.caminhos }}
+        LIMIAR: ${{ inputs.limiar }}
+        ENTIDADES: ${{ inputs.entidades }}
+        SARIF: ${{ inputs.sarif }}
+        FALHAR: ${{ inputs.falhar }}
+      run: |
+        set -uo pipefail
+        if [ -n "$CAMINHOS" ]; then
+          read -r -a padroes <<< "$CAMINHOS"
+          mapfile -t arquivos < <(git ls-files -- "${padroes[@]}")
+        else
+          mapfile -t arquivos < <(git ls-files)
+        fi
+        if [ "${#arquivos[@]}" -eq 0 ]; then
+          echo "Nenhum arquivo para verificar."
+          echo "encontrados=0" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        opcoes=(--limiar "$LIMIAR")
+        if [ -n "$ENTIDADES" ]; then opcoes+=(--entidades "$ENTIDADES"); fi
+        if [ -n "$SARIF" ]; then opcoes+=(--sarif "$SARIF"); fi
+        veu verificar "${arquivos[@]}" "${opcoes[@]}" --formato github --json "$RUNNER_TEMP/veu.json" --nao-falhar
+        total=$(python -c "import json, os; print(len(json.load(open(os.path.join(os.environ['RUNNER_TEMP'], 'veu.json'), encoding='utf-8'))))")
+        echo "encontrados=$total" >> "$GITHUB_OUTPUT"
+        echo "### Véu: $total dado(s) pessoal(is) encontrado(s)" >> "$GITHUB_STEP_SUMMARY"
+        if [ "$total" -gt 0 ] && [ "$FALHAR" = "true" ]; then
+          echo "::error title=Véu::$total dado(s) pessoal(is) encontrado(s). Remova-os ou marque a linha com 'veu: ignorar'."
+          exit 1
+        fi

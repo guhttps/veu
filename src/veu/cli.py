@@ -10,13 +10,13 @@ import sys
 from pathlib import Path
 
 from veu import __version__
-from veu.anonymizer import OPERATORS, mask_value
+from veu.anonymizer import OPERATORS
 from veu.config import ConfigError, load_config
 from veu.core import Veu
 from veu.entities import LABELS
+from veu.files import FORMATS as FILE_FORMATS
+from veu.reporting import REPORT_FORMATS
 from veu.vault import Vault
-
-IGNORE_MARKERS = ("veu: ignorar", "veu:ignorar", "veu: ignore", "veu:ignore")
 
 
 def _configure_output() -> None:
@@ -79,61 +79,81 @@ def cmd_detect(args) -> int:
     return 0
 
 
+def _load_vault(path: str) -> Vault:
+    return Vault.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def _parse_force(values: list[str] | None) -> dict[str, str]:
+    """--forcar cpf=CPF --forcar nome=PESSOA -> {"cpf": "CPF", "nome": "PESSOA"}."""
+    force = {}
+    for item in values or []:
+        for pair in item.split(","):
+            if pair.strip():
+                field, _, label = pair.partition("=")
+                if not label:
+                    raise ValueError(f'Use --forcar campo=TIPO (recebido "{pair}").')
+                force[field.strip()] = label.strip().upper()
+    return force
+
+
 def cmd_anonymize(args) -> int:
+    from veu.files import DataAnonymizer, anonymize_text, detect_format
+
     veu = _veu(args)
-    vault = Vault.from_dict(json.loads(Path(args.cofre).read_text(encoding="utf-8"))) \
-        if args.cofre and Path(args.cofre).is_file() and args.continuar else veu.new_vault()
-    result = veu.anonymize(_read(args.arquivo), vault)
-    _write(result.text, args.saida)
+    vault = _load_vault(args.cofre) if args.cofre and Path(args.cofre).is_file() and args.continuar else None
+    session = veu.session(vault)
+    file_format = detect_format(args.arquivo if args.arquivo not in (None, "-") else None, args.formato)
+    fields = [field.strip() for field in args.campos.split(",")] if args.campos else None
+    data = DataAnonymizer(session, fields, _parse_force(args.forcar))
+    _write(anonymize_text(_read(args.arquivo), file_format, data,
+                          Path(args.arquivo) if args.arquivo not in (None, "-") else None), args.saida)
     if args.cofre:
-        _write_private(Path(args.cofre), json.dumps(vault.to_dict(), ensure_ascii=False, indent=2))
+        _write_private(Path(args.cofre), json.dumps(session.vault.to_dict(), ensure_ascii=False, indent=2))
         print(f"\nCofre salvo em {args.cofre}. Ele contém os dados reais: guarde com cuidado e não versione.",
               file=sys.stderr)
-    counts = result.counts()
-    if counts:
-        summary = ", ".join(f"{label}={count}" for label, count in sorted(counts.items()))
+    if session.counts:
+        summary = ", ".join(f"{label}={count}" for label, count in sorted(session.counts.items()))
         print(f"Escondidos: {summary}", file=sys.stderr)
     return 0
 
 
 def cmd_restore(args) -> int:
-    vault = Vault.from_dict(json.loads(Path(args.cofre).read_text(encoding="utf-8")))
-    _write(vault.restore(_read(args.arquivo)), args.saida)
+    from veu.files import detect_format, restore_text
+
+    file_format = detect_format(args.arquivo if args.arquivo not in (None, "-") else None, args.formato)
+    _write(restore_text(_read(args.arquivo), file_format, _load_vault(args.cofre)), args.saida)
     return 0
 
 
 def cmd_check(args) -> int:
     """Modo pre-commit/CI: lista dados pessoais em arquivos e falha se encontrar algum."""
-    veu = _veu(args)
-    found = 0
-    for path in args.arquivos:
-        file = Path(path)
-        try:
-            raw = file.read_bytes()
-        except OSError as exc:
-            print(f"{path}: não foi possível ler ({exc})", file=sys.stderr)
-            continue
-        if b"\x00" in raw[:8192]:
-            continue
-        text = raw.decode("utf-8", errors="replace")
-        lines = text.splitlines(keepends=True)
-        offsets, position = [], 0
-        for line in lines:
-            offsets.append(position)
-            position += len(line)
-        for entity in veu.analyze(text):
-            line_index = max(i for i, start in enumerate(offsets) if start <= entity.start) if offsets else 0
-            line = lines[line_index] if lines else ""
-            if any(marker in line.lower() for marker in IGNORE_MARKERS):
-                continue
-            column = entity.start - offsets[line_index] + 1 if offsets else 1
-            print(f"{path}:{line_index + 1}:{column}: {entity.label} ({entity.score:.0%}) "
-                  f"{mask_value(entity.label, entity.text)}")
-            found += 1
-    if found:
-        print(f"\n{found} dado(s) pessoal(is) encontrado(s). Remova-os ou marque a linha com '# veu: ignorar'.",
-              file=sys.stderr)
-        return 1
+    from veu.reporting import check_files, render
+
+    findings, warnings = check_files(args.arquivos, _veu(args))
+    for warning in warnings:
+        print(warning, file=sys.stderr)
+    report = render(findings, args.formato)
+    if args.saida:
+        Path(args.saida).write_text(report, encoding="utf-8")
+    else:
+        sys.stdout.write(report)
+    for extra_format, path in (("sarif", args.sarif), ("json", args.json)):
+        if path:
+            Path(path).write_text(render(findings, extra_format), encoding="utf-8")
+    if findings:
+        print(f"\n{len(findings)} dado(s) pessoal(is) encontrado(s). Remova-os ou marque a linha com "
+              "'# veu: ignorar'.", file=sys.stderr)
+        return 0 if args.nao_falhar else 1
+    return 0
+
+
+def cmd_mcp(args) -> int:
+    try:
+        from veu.integrations.mcp import build_server
+    except ImportError:
+        print('O servidor MCP precisa do extra: pip install "veu[mcp]"', file=sys.stderr)
+        return 2
+    build_server(_veu(args)).run("stdio")
     return 0
 
 
@@ -223,6 +243,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--operador", choices=sorted(OPERATORS), help="como substituir (padrão: token)")
     sub.add_argument("--cofre", help="salva o cofre neste JSON para restaurar depois")
     sub.add_argument("--continuar", action="store_true", help="reaproveita o cofre existente (marcadores estáveis)")
+    sub.add_argument("--formato", choices=FILE_FORMATS, help="texto, csv, json ou jsonl (padrão: pela extensão)")
+    sub.add_argument("--campos", help="só estas colunas/chaves, separadas por vírgula")
+    sub.add_argument("--forcar", action="append", metavar="CAMPO=TIPO",
+                     help="trata o campo inteiro como um tipo de dado (ex.: cpf=CPF); pode repetir")
     sub.add_argument("-o", "--saida", help="arquivo de saída (padrão: saída padrão)")
     common(sub)
     sub.set_defaults(func=cmd_anonymize)
@@ -230,13 +254,24 @@ def build_parser() -> argparse.ArgumentParser:
     sub = commands.add_parser("restaurar", help="devolve os dados reais usando um cofre salvo")
     sub.add_argument("arquivo", nargs="?", help="arquivo de texto (padrão: entrada padrão)")
     sub.add_argument("--cofre", required=True, help="cofre salvo pelo comando anonimizar")
+    sub.add_argument("--formato", choices=FILE_FORMATS, help="texto, csv, json ou jsonl (padrão: pela extensão)")
     sub.add_argument("-o", "--saida", help="arquivo de saída (padrão: saída padrão)")
     sub.set_defaults(func=cmd_restore)
 
     sub = commands.add_parser("verificar", help="falha se algum arquivo tiver dados pessoais (pre-commit, CI)")
     sub.add_argument("arquivos", nargs="+")
+    sub.add_argument("--formato", choices=REPORT_FORMATS, default="texto",
+                     help="texto, github (anotações no CI), sarif (aba Security do GitHub) ou json")
+    sub.add_argument("--saida", help="grava o relatório neste arquivo")
+    sub.add_argument("--sarif", metavar="ARQUIVO", help="também grava um relatório SARIF neste arquivo")
+    sub.add_argument("--json", metavar="ARQUIVO", help="também grava um relatório JSON neste arquivo")
+    sub.add_argument("--nao-falhar", action="store_true", help="sai com código 0 mesmo encontrando dados")
     common(sub)
     sub.set_defaults(func=cmd_check)
+
+    sub = commands.add_parser("mcp", help="servidor MCP (stdio) para Claude Code, Claude Desktop, Cursor...")
+    common(sub)
+    sub.set_defaults(func=cmd_mcp)
 
     sub = commands.add_parser("servir", help="inicia o proxy e o playground")
     sub.add_argument("--config", help="caminho do veu.toml")

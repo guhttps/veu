@@ -19,6 +19,43 @@ def encode_event(name: str | None, data: Any, extra_lines: list[str] | None = No
     return "\n".join(lines) + "\n\n"
 
 
+class NDJSONTransformer:
+    """Mesmo papel do SSETransformer para streams de JSON por linha (API nativa do Ollama)."""
+
+    def __init__(self, process: Callable[[str | None, Any], list[Event]], finish: Callable[[], list[Event]]):
+        self._process = process
+        self._finish = finish
+        self._decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+        self._buffer = ""
+
+    def feed(self, chunk: bytes) -> bytes:
+        self._buffer += self._decoder.decode(chunk)
+        lines = self._buffer.split("\n")
+        self._buffer = lines.pop()
+        return "".join(self._handle(line) for line in lines).encode()
+
+    def close(self) -> bytes:
+        self._buffer += self._decoder.decode(b"", final=True)
+        output = self._handle(self._buffer) if self._buffer.strip() else ""
+        self._buffer = ""
+        output += "".join(self._encode(data) for _, data in self._finish())
+        return output.encode()
+
+    @staticmethod
+    def _encode(data: Any) -> str:
+        return (data if isinstance(data, str) else json.dumps(data, ensure_ascii=False, separators=(",", ":"))) + "\n"
+
+    def _handle(self, line: str) -> str:
+        line = line.rstrip("\r")
+        if not line.strip():
+            return line + "\n"
+        try:
+            data: Any = json.loads(line)
+        except ValueError:
+            return line + "\n"
+        return "".join(self._encode(event_data) for _, event_data in self._process(None, data))
+
+
 class SSETransformer:
     """Recebe bytes de um stream SSE e devolve bytes com os eventos transformados.
 

@@ -140,6 +140,12 @@ class Anonymizer:
         output.append(text[position:])
         return AnonymizationResult("".join(output), replacements, vault)
 
+    def replace_value(self, label: str, value: str, vault: Vault) -> str:
+        """Substitui um valor inteiro já sabido ser de um tipo (ex.: toda a coluna "cpf" de uma planilha)."""
+        label = label.upper()
+        operator = self.operators.get(label, self.operator)
+        return self._replace(Entity(label, 0, len(value), 1.0, value, "forcado"), operator, vault, None)
+
     def _replace(self, entity: Entity, operator: str, vault: Vault, canonical: str | None) -> str:
         value = entity.text
         if canonical is not None and operator in ("token", "hash", "sintetico"):

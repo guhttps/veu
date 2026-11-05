@@ -50,6 +50,8 @@ class Masker:
             return self.text(value)
         if isinstance(value, list):
             return [self.obj(item) for item in value]
+        if isinstance(value, tuple):
+            return tuple(self.obj(item) for item in value)
         if isinstance(value, dict):
             return {key: self.obj(item) for key, item in value.items()}
         return value
@@ -61,6 +63,8 @@ def restore_obj(value: Any, vault: Vault) -> Any:
         return vault.restore(value)
     if isinstance(value, list):
         return [restore_obj(item, vault) for item in value]
+    if isinstance(value, tuple):
+        return tuple(restore_obj(item, vault) for item in value)
     if isinstance(value, dict):
         if value.get("type") in _UNTOUCHED_TYPES:
             return value
@@ -546,6 +550,79 @@ class GeminiAdapter(Adapter):
         return [(None, template)]
 
 
+class OllamaAdapter(Adapter):
+    """API nativa do Ollama: /api/chat, /api/generate, /api/embed e /api/embeddings.
+
+    O streaming é JSON por linha (NDJSON) e vem ligado por padrão quando "stream" não é informado.
+    """
+
+    name = "ollama"
+    _PATHS = ("/api/chat", "/api/generate", "/api/embed", "/api/embeddings")
+
+    def matches(self, method, path):
+        return method == "POST" and any(path.rstrip("/").endswith(suffix) for suffix in self._PATHS)
+
+    def is_stream(self, payload, path):
+        return path.rstrip("/").endswith(("/api/chat", "/api/generate")) and payload.get("stream", True) is not False
+
+    def mask(self, payload, masker):
+        for message in payload.get("messages") or []:
+            if isinstance(message, dict):
+                message["content"] = masker.text(message.get("content"))
+                for call in message.get("tool_calls") or []:
+                    function = call.get("function") if isinstance(call, dict) else None
+                    if isinstance(function, dict):
+                        function["arguments"] = masker.obj(function.get("arguments"))
+        for key in ("prompt", "system"):
+            if isinstance(payload.get(key), str):
+                payload[key] = masker.text(payload[key])
+        value = payload.get("input")
+        if isinstance(value, str):
+            payload["input"] = masker.text(value)
+        elif isinstance(value, list) and all(isinstance(item, str) for item in value):
+            payload["input"] = [masker.text(item) for item in value]
+
+    def instruct(self, payload, instruction):
+        if "messages" in payload:
+            messages = payload["messages"]
+            if messages and isinstance(messages[0], dict) and messages[0].get("role") == "system":
+                messages[0]["content"] = f"{messages[0].get('content') or ''}\n\n{instruction}"
+            else:
+                messages.insert(0, {"role": "system", "content": instruction})
+        elif "prompt" in payload:
+            payload["system"] = f"{payload['system']}\n\n{instruction}" if payload.get("system") else instruction
+
+    def error_body(self, message):
+        return {"error": message}
+
+    def stream_event(self, name, data, state):
+        if not isinstance(data, dict):
+            return [(name, data)]
+        message = data.get("message")
+        if isinstance(message, dict):
+            if isinstance(message.get("content"), str):
+                message["content"] = state.feed(("chat",), message["content"])
+            if message.get("tool_calls"):
+                message["tool_calls"] = state.restore(message["tool_calls"])
+            if data.get("done"):
+                message["content"] = (message.get("content") or "") + state.flush(("chat",))
+        if isinstance(data.get("response"), str):
+            data["response"] = state.feed(("generate",), data["response"])
+            if data.get("done"):
+                data["response"] += state.flush(("generate",))
+        return [(name, data)]
+
+    def stream_finish(self, state):
+        events = []
+        for key in state.pending_keys():
+            tail = state.flush(key)
+            if key == ("chat",):
+                events.append((None, {"message": {"role": "assistant", "content": tail}, "done": False}))
+            else:
+                events.append((None, {"response": tail, "done": False}))
+        return events
+
+
 ADAPTERS: tuple[Adapter, ...] = (
     OpenAIChatAdapter(),
     OpenAIResponsesAdapter(),
@@ -553,6 +630,7 @@ ADAPTERS: tuple[Adapter, ...] = (
     OpenAICompletionsAdapter(),
     AnthropicMessagesAdapter(),
     GeminiAdapter(),
+    OllamaAdapter(),
 )
 
 

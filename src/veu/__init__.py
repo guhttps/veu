@@ -18,7 +18,7 @@ from veu.core import Veu
 from veu.entities import LABELS, Entity
 from veu.vault import StreamRestorer, Vault
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "LABELS",
@@ -36,7 +36,9 @@ __all__ = [
     "analyze",
     "anonymize",
     "load_config",
+    "protect",
     "restore",
+    "session",
 ]
 
 _default: Veu | None = None
@@ -62,3 +64,15 @@ def anonymize(text: str, vault: Vault | None = None) -> AnonymizationResult:
 def restore(text: str, vault: Vault) -> str:
     """Devolve os dados reais no lugar dos marcadores."""
     return vault.restore(text)
+
+
+def session(vault: Vault | None = None):
+    """Sessão com um cofre compartilhado: anonymize, anonymize_data, restore, restore_stream."""
+    return _instance().session(vault)
+
+
+def protect(func=None, **options):
+    """Decorador: anonimiza os argumentos e restaura o retorno (veja veu.integrations.decorator)."""
+    from veu.integrations.decorator import protect as decorator
+
+    return decorator(func, **options)

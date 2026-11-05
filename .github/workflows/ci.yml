@@ -80,6 +80,37 @@ jobs:
           name: dist
           path: dist/
 
+  action:
+    name: GitHub Action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Repositório de teste com um CPF
+        run: |
+          mkdir -p "$RUNNER_TEMP/teste" && cd "$RUNNER_TEMP/teste" && git init -q
+          echo 'cpf = "529.982.247-25"' > dados.py
+          echo 'print("ok")' > limpo.py
+          git add .
+      - uses: ./
+        id: sujo
+        continue-on-error: true
+        with:
+          diretorio: ${{ runner.temp }}/teste
+          sarif: ${{ runner.temp }}/veu.sarif
+      - name: A action precisa falhar e gerar o SARIF
+        env:
+          RESULTADO: ${{ steps.sujo.outcome }}
+          ENCONTRADOS: ${{ steps.sujo.outputs.encontrados }}
+        run: |
+          test "$RESULTADO" = "failure"
+          test "$ENCONTRADOS" = "1"
+          python -c "import json, os; d = json.load(open(os.path.join(os.environ['RUNNER_TEMP'], 'veu.sarif'))); assert d['runs'][0]['results'][0]['ruleId'] == 'CPF'"
+      - name: Arquivo sem dados passa
+        uses: ./
+        with:
+          diretorio: ${{ runner.temp }}/teste
+          caminhos: limpo.py
+
   docker:
     name: Imagem Docker
     runs-on: ubuntu-latest

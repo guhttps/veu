@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from veu.core import Veu
 from veu.gateway.adapters import Adapter, Masker, StreamState, restore_obj
-from veu.gateway.sse import SSETransformer
+from veu.gateway.sse import NDJSONTransformer, SSETransformer
 from veu.vault import Vault
 
 INSTRUCTION = (
@@ -47,15 +48,20 @@ class Gateway:
     def config(self):
         return self.veu.config
 
-    def prepare(self, adapter: Adapter, body: bytes, vault: Vault | None = None, path: str = "") -> Prepared:
-        """Esconde os dados pessoais do corpo da requisição. Levanta BlockedError ou ValueError (JSON inválido)."""
+    def prepare(self, adapter: Adapter, body: bytes, vault: Vault | None = None, path: str = "",
+                block: Iterable[str] | None = None) -> Prepared:
+        """Esconde os dados pessoais do corpo da requisição. Levanta BlockedError ou ValueError (JSON inválido).
+
+        block: tipos que fazem a requisição ser recusada (padrão: a política global).
+        """
         payload = json.loads(body or b"{}")
         if not isinstance(payload, dict):
             raise ValueError("O corpo da requisição precisa ser um objeto JSON.")
         vault = self.veu.new_vault() if vault is None else vault
         masker = Masker(self.veu.anonymizer, vault)
         adapter.mask(payload, masker)
-        blocked = sorted(label for label in masker.counts if label in self.config.block)
+        policy = set(self.config.block if block is None else block)
+        blocked = sorted(label for label in masker.counts if label in policy)
         if blocked:
             raise BlockedError(blocked, masker.counts)
         if self.config.instruct_model and masker.counts and vault.has_placeholders:
@@ -73,10 +79,16 @@ class Gateway:
             return prepared.vault.restore(body.decode("utf-8", errors="replace")).encode()
         return json.dumps(restore_obj(data, prepared.vault), ensure_ascii=False).encode()
 
-    def stream(self, prepared: Prepared) -> SSETransformer:
+    def stream(self, prepared: Prepared, content_type: str = "text/event-stream") -> SSETransformer | NDJSONTransformer:
+        """Transformador incremental para a resposta em streaming (SSE ou JSON por linha)."""
         state = StreamState(prepared.vault)
         adapter = prepared.adapter
-        return SSETransformer(
+        transformer = NDJSONTransformer if "ndjson" in content_type else SSETransformer
+        return transformer(
             lambda name, data: adapter.stream_event(name, data, state),
             lambda: adapter.stream_finish(state),
         )
+
+
+def is_streaming(content_type: str) -> bool:
+    return "text/event-stream" in content_type or "ndjson" in content_type

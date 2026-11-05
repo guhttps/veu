@@ -5,7 +5,7 @@ from __future__ import annotations
 from types import ModuleType, SimpleNamespace
 
 from veu.core import Veu
-from veu.gateway import BlockedError, Gateway, Prepared, detect_adapter
+from veu.gateway import BlockedError, Gateway, Prepared, detect_adapter, is_streaming
 
 _DROP_RESPONSE_HEADERS = ("content-length", "content-encoding", "transfer-encoding")
 
@@ -105,8 +105,9 @@ def build(http: ModuleType) -> SimpleNamespace:
                 return upstream if upstream is not None else self.transport.handle_request(request)
             response = self.transport.handle_request(upstream)
             headers = response_headers(response, prepared)
-            if "text/event-stream" in response.headers.get("content-type", ""):
-                stream = SyncTransformStream(response, self.gateway.stream(prepared))
+            content_type = response.headers.get("content-type", "")
+            if is_streaming(content_type):
+                stream = SyncTransformStream(response, self.gateway.stream(prepared, content_type))
                 return http.Response(response.status_code, headers=headers, stream=stream,
                                      extensions=response.extensions, request=request)
             try:
@@ -133,8 +134,9 @@ def build(http: ModuleType) -> SimpleNamespace:
                 return upstream if upstream is not None else await self.transport.handle_async_request(request)
             response = await self.transport.handle_async_request(upstream)
             headers = response_headers(response, prepared)
-            if "text/event-stream" in response.headers.get("content-type", ""):
-                stream = AsyncTransformStream(response, self.gateway.stream(prepared))
+            content_type = response.headers.get("content-type", "")
+            if is_streaming(content_type):
+                stream = AsyncTransformStream(response, self.gateway.stream(prepared, content_type))
                 return http.Response(response.status_code, headers=headers, stream=stream,
                                      extensions=response.extensions, request=request)
             try:

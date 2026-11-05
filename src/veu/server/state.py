@@ -90,6 +90,39 @@ class Stats:
             }
 
 
+    def prometheus(self, sessions: int, version: str) -> str:
+        """Métricas no formato texto do Prometheus (contadores; nenhum valor pessoal)."""
+
+        def label(value: str) -> str:
+            return value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ")
+
+        with self._lock:
+            lines = [
+                "# HELP veu_info Versão do Véu.",
+                "# TYPE veu_info gauge",
+                f'veu_info{{versao="{label(version)}"}} 1',
+                "# HELP veu_requisicoes_total Requisições processadas, por provedor.",
+                "# TYPE veu_requisicoes_total counter",
+                *(f'veu_requisicoes_total{{provedor="{label(name)}"}} {count}' for name, count in sorted(self.providers.items())),
+                "# HELP veu_requisicoes_bloqueadas_total Requisições recusadas pela política.",
+                "# TYPE veu_requisicoes_bloqueadas_total counter",
+                f"veu_requisicoes_bloqueadas_total {self.blocked}",
+                "# HELP veu_erros_upstream_total Respostas com erro 5xx ou falha de conexão com o provedor.",
+                "# TYPE veu_erros_upstream_total counter",
+                f"veu_erros_upstream_total {self.errors}",
+                "# HELP veu_dados_escondidos_total Dados pessoais escondidos, por tipo.",
+                "# TYPE veu_dados_escondidos_total counter",
+                *(f'veu_dados_escondidos_total{{entidade="{label(name)}"}} {count}' for name, count in sorted(self.entities.items())),
+                "# HELP veu_sessoes_ativas Sessões com cofre na memória.",
+                "# TYPE veu_sessoes_ativas gauge",
+                f"veu_sessoes_ativas {sessions}",
+                "# HELP veu_ativo_desde_segundos Momento em que o servidor iniciou (epoch).",
+                "# TYPE veu_ativo_desde_segundos gauge",
+                f"veu_ativo_desde_segundos {self.started:.0f}",
+            ]
+        return "\n".join(lines) + "\n"
+
+
 class AuditLog:
     """Uma linha JSON por requisição, só com contagens: nenhum valor pessoal é gravado."""
 

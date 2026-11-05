@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import importlib
 import os
+from collections.abc import Iterable
+from importlib.metadata import entry_points
 
 from veu.analyzer import Analyzer
 from veu.anonymizer import AnonymizationResult, Anonymizer
-from veu.config import Config
+from veu.config import PLUGIN_GROUP, Config, ConfigError
 from veu.entities import Entity
 from veu.recognizers import (
     DEFAULT_SPECS,
@@ -19,6 +22,28 @@ from veu.recognizers import (
     custom_spec,
 )
 from veu.vault import Vault
+
+
+def load_plugin(name: str) -> Recognizer:
+    """Carrega um detector de terceiros: "pacote.modulo:Classe" ou o nome de um entry point de veu.detectores.
+
+    Um detector é qualquer objeto com name, labels e find(texto) -> candidatos (veja veu.recognizers.base).
+    """
+    if ":" in name:
+        module_name, _, attribute = name.partition(":")
+        try:
+            target = getattr(importlib.import_module(module_name), attribute)
+        except (ImportError, AttributeError) as exc:
+            raise ConfigError(f'Não foi possível carregar o detector "{name}": {exc}') from exc
+    else:
+        found = list(entry_points(group=PLUGIN_GROUP, name=name))
+        if not found:
+            raise ConfigError(f'Detector "{name}" não encontrado nos plugins instalados.')
+        target = found[0].load()
+    recognizer = target() if isinstance(target, type) or not hasattr(target, "find") else target
+    if not all(hasattr(recognizer, attribute) for attribute in ("name", "labels", "find")):
+        raise ConfigError(f'O detector "{name}" precisa ter name, labels e find(texto).')
+    return recognizer
 
 
 def build_recognizers(config: Config) -> list[Recognizer]:
@@ -44,6 +69,8 @@ def build_recognizers(config: Config) -> list[Recognizer]:
                 raise ValueError('O detector "llm" precisa de [deteccao.llm] url e modelo no veu.toml.')
             key = os.environ.get(config.llm_key_env) if config.llm_key_env else None
             recognizers.append(LLMRecognizer(config.llm_url, config.llm_model, key))
+        else:
+            recognizers.append(load_plugin(name))
     if custom and "padroes" not in config.detectors:
         recognizers.append(PatternRecognizer(custom))
     return recognizers
@@ -58,16 +85,18 @@ class Veu:
     'CPF [CPF_1]'
     >>> veu.restore("Seu CPF é [CPF_1]", resultado.vault)
     'Seu CPF é 529.982.247-25'
+
+    extra_recognizers: detectores próprios, somados aos da configuração.
     """
 
-    def __init__(self, config: Config | None = None, **options):
+    def __init__(self, config: Config | None = None, *, extra_recognizers: Iterable[Recognizer] = (), **options):
         config = config or Config()
         if options:
             config = config.with_overrides(**options)
         self.config = config
         self.analyzer = Analyzer(
-            build_recognizers(config), threshold=config.threshold, labels=config.labels or None,
-            allowlist=config.allowlist,
+            [*build_recognizers(config), *extra_recognizers], threshold=config.threshold,
+            labels=config.labels or None, allowlist=config.allowlist, allow_patterns=config.allow_patterns,
         )
         self.anonymizer = Anonymizer(
             self.analyzer, operator=config.operator, operators=config.operators, link_names=config.link_names,
@@ -85,3 +114,20 @@ class Veu:
 
     def new_vault(self) -> Vault:
         return self.anonymizer.new_vault()
+
+    def session(self, vault: Vault | None = None):
+        """Sessão com um cofre compartilhado por várias chamadas (veja veu.sessions.Session)."""
+        from veu.sessions import Session
+
+        return Session(self.anonymizer, vault)
+
+    def with_operator(self, operator: str) -> Veu:
+        """Outra instância com o mesmo detector e outro operador (reaproveita os detectores carregados)."""
+        clone = object.__new__(Veu)
+        clone.config = self.config.with_overrides(operator=operator)
+        clone.analyzer = self.analyzer
+        clone.anonymizer = Anonymizer(
+            self.analyzer, operator=operator, operators=self.config.operators, link_names=self.config.link_names,
+            secret=self.config.secret.encode() if self.config.secret else None,
+        )
+        return clone

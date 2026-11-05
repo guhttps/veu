@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import bisect
+import re
 from collections.abc import Iterable
 
 from veu._text import fold, only_digits
@@ -33,6 +34,7 @@ class Analyzer:
         threshold: float = DEFAULT_THRESHOLD,
         labels: Iterable[str] | None = None,
         allowlist: Iterable[str] = (),
+        allow_patterns: Iterable[str] = (),
     ):
         self.recognizers = list(default_recognizers() if recognizers is None else recognizers)
         self.threshold = threshold
@@ -41,9 +43,13 @@ class Analyzer:
         self._allow_text = {fold(value) for value in allowlist}
         self._allow_codes = {only_digits(value) for value in allowlist if len(only_digits(value)) >= 6}
         self._allow_codes |= {normalize_cnpj(value) for value in allowlist if len(normalize_cnpj(value)) == 14}
+        self._allow_patterns = [re.compile(pattern, re.IGNORECASE) for pattern in allow_patterns]
+        self._has_allowlist = bool(self._allow_text or self._allow_codes or self._allow_patterns)
 
     def _allowed(self, value: str) -> bool:
         if fold(value) in self._allow_text:
+            return True
+        if any(pattern.search(value) for pattern in self._allow_patterns):
             return True
         digits = only_digits(value)
         return (len(digits) >= 6 and digits in self._allow_codes) or normalize_cnpj(value) in self._allow_codes
@@ -57,7 +63,7 @@ class Analyzer:
                     continue
                 if self.labels is not None and candidate.label not in self.labels:
                     continue
-                if (self._allow_text or self._allow_codes) and self._allowed(text[candidate.start:candidate.end]):
+                if self._has_allowlist and self._allowed(text[candidate.start:candidate.end]):
                     continue
                 found.append(candidate)
         return found
