@@ -13,10 +13,12 @@ import functools
 import json
 from collections import Counter
 from pathlib import Path
-from typing import TypedDict
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+
+# O pydantic (usado pelo MCP) exige o TypedDict do typing_extensions no Python < 3.12.
+from typing_extensions import TypedDict
 
 from veu import __version__
 from veu.anonymizer import mask_value, normalize_operator
