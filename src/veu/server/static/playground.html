@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Véu · Playground</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --surface: #ffffff; --surface-2: #f0f2f8; --line: #dfe3ee; --text: #161a26;
+    --soft: #4b5368; --muted: #7a8296; --accent: #5b47e0; --accent-soft: #ece9ff; --ok: #1f8a5b;
+    --mark-doc: #ffe1b8; --mark-contact: #cfe8ff; --mark-person: #e5dcff; --mark-place: #d3f3df; --mark-other: #f6d4dc;
+    --mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0f16; --surface: #151824; --surface-2: #1b1f2e; --line: #2a3043; --text: #eef0f6;
+      --soft: #b6bccd; --muted: #8189a0; --accent: #9d8cff; --accent-soft: #262044; --ok: #5ad08a;
+      --mark-doc: #5a3d12; --mark-contact: #123c5e; --mark-person: #3a2a6e; --mark-place: #164a2c; --mark-other: #5a1f2c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.55 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif; }
+  .page { max-width: 1180px; margin: 0 auto; padding: 28px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 20px; }
+  h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
+  h1 span { color: var(--accent); }
+  header p { margin: 0; color: var(--soft); }
+  .version { margin-left: auto; color: var(--muted); font-size: 13px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+  .card h2 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--soft); text-transform: uppercase; letter-spacing: 0.06em; }
+  textarea { width: 100%; min-height: 220px; resize: vertical; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: 14px/1.55 var(--mono); }
+  textarea:focus, select:focus, input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 10px; }
+  select, input { padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: inherit; }
+  button { padding: 9px 16px; border-radius: 9px; border: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+  button.secondary { background: var(--accent-soft); color: var(--accent); }
+  .hint { color: var(--muted); font-size: 13px; }
+  .output { white-space: pre-wrap; word-break: break-word; padding: 12px; border-radius: 10px; background: var(--surface-2);
+    border: 1px solid var(--line); min-height: 64px; font: 14px/1.7 var(--mono); }
+  mark { border-radius: 5px; padding: 1px 3px; color: inherit; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  mark.short { white-space: nowrap; }
+  #input { min-height: 300px; }
+  mark small { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; margin-left: 4px; opacity: 0.75; }
+  .doc { background: var(--mark-doc); } .contact { background: var(--mark-contact); } .person { background: var(--mark-person); }
+  .place { background: var(--mark-place); } .other { background: var(--mark-other); }
+  .stack { display: grid; gap: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  td code { font-family: var(--mono); word-break: break-all; }
+  .table-wrap { overflow-x: auto; }
+  .empty { color: var(--muted); font-style: italic; }
+  .status { min-height: 20px; font-size: 13px; color: var(--muted); }
+  .status.error { color: #d6455b; }
+  .restored { border-color: var(--ok); }
+  .token { display: none; }
+  .token.visible { display: flex; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Véu <span>playground</span></h1>
+    <p>Veja o que o modelo de IA receberia e como a resposta volta com os dados reais.</p>
+    <span class="version">v{{VERSAO}}</span>
+  </header>
+
+  <div class="controls token" id="tokenRow">
+    <label for="token">Token do Véu</label>
+    <input id="token" type="password" autocomplete="off" placeholder="X-Veu-Token">
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Texto original</h2>
+      <textarea id="input" spellcheck="false" aria-label="Texto original">Olá, sou a Maria Aparecida da Silva, CPF 529.982.247-25. Meu pedido não chegou!
+Pode ligar no (11) 91234-5678 ou escrever para maria.silva@gmail.com.
+Moro na Rua das Flores, 123, apto 45, CEP 01310-100.
+A empresa é a XPTO Ltda, CNPJ 12.ABC.345/01DE-35. Paguei com o cartão 4111 1111 1111 1111.
+Obs.: a Maria prefere contato à tarde.</textarea>
+      <div class="controls">
+        <label for="operator">Operador</label>
+        <select id="operator">
+          <option value="token">Marcador ([CPF_1])</option>
+          <option value="sintetico">Sintético (outro CPF válido)</option>
+          <option value="mascara">Máscara (***.982.247-**)</option>
+          <option value="remover">Remover ([CPF])</option>
+          <option value="hash">Hash ([CPF_3fa2c1d9])</option>
+        </select>
+        <button id="run">Esconder dados</button>
+        <span class="hint">Ctrl+Enter</span>
+      </div>
+      <p class="status" id="status" role="status"></p>
+    </section>
+
+    <section class="stack">
+      <div class="card">
+        <h2>Dados encontrados</h2>
+        <div class="output" id="highlight"><span class="empty">Clique em "Esconder dados".</span></div>
+      </div>
+      <div class="card">
+        <h2>O que o modelo recebe</h2>
+        <div class="output" id="masked"><span class="empty">—</span></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid" style="margin-top:16px">
+    <section class="card">
+      <h2>Simule a resposta do modelo</h2>
+      <textarea id="reply" spellcheck="false" style="min-height:120px" aria-label="Resposta simulada do modelo">Olá, [PESSOA_1]! Localizei o pedido do CPF [CPF_1]. Vamos ligar no [TELEFONE_1] amanhã à tarde.</textarea>
+      <div class="controls">
+        <button class="secondary" id="restore">Restaurar dados</button>
+        <span class="hint">Usa o cofre da sessão criada ao esconder os dados.</span>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Resposta que o usuário vê</h2>
+      <div class="output restored" id="restored"><span class="empty">—</span></div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:16px">
+    <h2>Substituições</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tipo</th><th>Original</th><th>Enviado ao modelo</th><th>Confiança</th><th>Detector</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="5" class="empty">Nenhuma ainda.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const GROUPS = {
+  CPF: "doc", CNPJ: "doc", RG: "doc", CNH: "doc", TITULO_ELEITOR: "doc", PIS: "doc", CNS: "doc", PASSAPORTE: "doc",
+  RENAVAM: "doc", PROCESSO: "doc", TELEFONE: "contact", EMAIL: "contact", IP: "contact", PESSOA: "person",
+  ENDERECO: "place", CEP: "place", PLACA: "other", CARTAO_CREDITO: "other", CONTA_BANCARIA: "other",
+  CHAVE_PIX: "other", DATA_NASCIMENTO: "other",
+};
+const needsToken = "{{TOKEN}}" === "1";
+if (needsToken) document.getElementById("tokenRow").classList.add("visible");
+let session = null;
+let lastOperator = null;
+
+const $ = (id) => document.getElementById(id);
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+}
+function setStatus(message, isError = false) {
+  $("status").textContent = message;
+  $("status").classList.toggle("error", isError);
+}
+async function call(path, body) {
+  const headers = {"Content-Type": "application/json"};
+  if (needsToken) headers["X-Veu-Token"] = $("token").value;
+  const response = await fetch(path, {method: "POST", headers, body: JSON.stringify(body)});
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || `Erro ${response.status}`);
+  return data;
+}
+
+async function run() {
+  const text = $("input").value;
+  const operator = $("operator").value;
+  if (operator !== lastOperator) session = null;
+  setStatus("Analisando…");
+  try {
+    const started = performance.now();
+    const data = await call("/veu/v1/anonimizar", {texto: text, operador: operator, sessao: session});
+    session = data.sessao;
+    lastOperator = operator;
+    const items = data.substituicoes;
+    let html = "", cursor = 0;
+    for (const item of items) {
+      html += escapeHtml(text.slice(cursor, item.inicio));
+      const group = GROUPS[item.entidade] || "other";
+      const short = item.fim - item.inicio <= 24 ? " short" : "";
+      html += `<mark class="${group}${short}" title="${item.entidade} · ${Math.round(item.pontuacao * 100)}%">` +
+        `${escapeHtml(text.slice(item.inicio, item.fim))}<small>${item.entidade}</small></mark>`;
+      cursor = item.fim;
+    }
+    html += escapeHtml(text.slice(cursor));
+    $("highlight").innerHTML = items.length ? html : '<span class="empty">Nenhum dado pessoal encontrado.</span>';
+    $("masked").textContent = data.texto;
+    $("rows").innerHTML = items.length ? items.map((item) =>
+      `<tr><td>${item.entidade}</td><td><code>${escapeHtml(text.slice(item.inicio, item.fim))}</code></td>` +
+      `<td><code>${escapeHtml(item.substituto)}</code></td><td>${Math.round(item.pontuacao * 100)}%</td>` +
+      `<td>${item.detector}</td></tr>`).join("") : '<tr><td colspan="5" class="empty">Nenhuma.</td></tr>';
+    const elapsed = Math.round(performance.now() - started);
+    setStatus(`${items.length} dado(s) escondido(s) em ${elapsed} ms.`);
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+}
+
+async function restore() {
+  if (!session) { setStatus('Primeiro clique em "Esconder dados".', true); return; }
+  try {
+    const data = await call("/veu/v1/restaurar", {texto: $("reply").value, sessao: session});
+    $("restored").textContent = data.texto;
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+}
+
+$("run").addEventListener("click", run);
+$("restore").addEventListener("click", restore);
+$("input").addEventListener("keydown", (event) => { if (event.key === "Enter" && event.ctrlKey) run(); });
+// A página já abre com o exemplo processado (sem token, que precisa ser digitado antes).
+if (!needsToken) run().then(restore);
+</script>
+</body>
+</html>
