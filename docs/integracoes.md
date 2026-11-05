@@ -113,7 +113,7 @@ Para um provedor que não está na lista (vLLM, Azure, uma API interna), adicion
 ```toml
 [provedores.interno]
 tipo = "openai"                       # "openai", "anthropic" ou "gemini"
-url = "https://ia.minhaempresa.com/v1"
+url = "https://ia.minhaempresa.example/v1"
 ```
 
 E use `http://127.0.0.1:8787/interno/v1`. Para trocar o provedor de `/v1`, use `provedor_padrao` em `[servidor]`.
@@ -204,7 +204,7 @@ Impede que CPFs, e-mails e outros dados reais entrem no repositório. Em `.pre-c
 ```yaml
 repos:
   - repo: https://github.com/guhttps/veu
-    rev: v0.1.0
+    rev: v0.2.0
     hooks:
       - id: veu
 ```
@@ -236,8 +236,10 @@ docker build -t veu .
 docker run -p 8787:8787 -e VEU_TOKEN=troque-este-valor veu
 ```
 
-Dentro do contêiner o Véu ouve em `0.0.0.0`, por isso o token é recomendado: com ele, todas as rotas (menos `/veu/saude`) exigem o cabeçalho `X-Veu-Token`. Para usar um `veu.toml`, monte o arquivo e aponte `VEU_CONFIG` para ele.
+Dentro do contêiner o Véu ouve em `0.0.0.0`, por isso ele **não inicia sem `VEU_TOKEN`**: com o token, todas as rotas (menos `/veu/saude`) exigem o cabeçalho `X-Veu-Token`. Numa rede interna isolada, sem publicar a porta, dá para liberar o uso sem token com `-e VEU_PERMITIR_SEM_TOKEN=1`. Para usar um `veu.toml`, monte o arquivo e aponte `VEU_CONFIG` para ele.
 
 ## Sessões
 
-Por padrão, cada requisição tem seu próprio cofre. Para manter os mesmos marcadores entre requisições diferentes (por exemplo, embeddings e chat da mesma conversa), envie o cabeçalho `X-Veu-Sessao` com um identificador seu. As sessões ficam na memória e expiram após uma hora sem uso (`sessao_ttl`).
+Por padrão, cada requisição tem seu próprio cofre. Para manter os mesmos marcadores entre requisições diferentes (por exemplo, embeddings e chat da mesma conversa), envie o cabeçalho `X-Veu-Sessao` com um identificador seu, um por conversa. As sessões ficam na memória e expiram após uma hora sem uso (`sessao_ttl`).
+
+As sessões do proxy são separadas pela credencial do cliente (a chave de API enviada): quem usa outra chave nunca acessa o mesmo cofre, mesmo repetindo o identificador. As sessões da API REST são criadas pelo servidor, com identificadores aleatórios.

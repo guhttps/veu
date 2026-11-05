@@ -18,7 +18,7 @@ from veu.core import Veu
 from veu.entities import LABELS, Entity
 from veu.vault import StreamRestorer, Vault
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "LABELS",

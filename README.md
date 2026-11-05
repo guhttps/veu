@@ -35,7 +35,7 @@ Você recebe    Olá, Maria Souza! Localizei o pedido do CPF 529.982.247-25.
 - 🎭 **5 operadores:** marcador, valor sintético (outro CPF válido, outro nome), máscara (`***.982.247-**`), remoção e hash estável.
 - 🔌 **Várias integrações:** proxy para OpenAI, Anthropic e Gemini (e qualquer API compatível com OpenAI), transporte para os SDKs Python, API REST, filtro de logs, hook de pre-commit, CLI e Docker.
 - 🛡️ **Política e auditoria:** bloqueie tipos de dados (como cartões), mantenha uma lista de valores permitidos e registre um log de auditoria só com contagens, nunca com os valores.
-- 🪶 **Leve:** o núcleo não tem dependências e processa cerca de 380 mil caracteres por segundo.
+- 🪶 **Leve:** o núcleo não tem dependências e processa cerca de 370 mil caracteres por segundo.
 
 ## Como funciona
 
@@ -60,7 +60,7 @@ pip install "veu[servidor] @ git+https://github.com/guhttps/veu"
 
 - Só a biblioteca, sem dependências: `pip install "veu @ git+https://github.com/guhttps/veu"`.
 - Com o detector de nomes do spaCy: adicione o extra `spacy` e rode `python -m spacy download pt_core_news_lg`.
-- Docker: `docker build -t veu .` e `docker run -p 8787:8787 -e VEU_TOKEN=um-segredo veu`.
+- Docker: `docker build -t veu .` e `docker run -p 8787:8787 -e VEU_TOKEN=um-segredo veu` (o token é obrigatório fora do localhost).
 
 ## Uso rápido
 
@@ -137,7 +137,7 @@ Abra `http://127.0.0.1:8787/veu/playground` para ver o que a IA receberia e test
 | `CPF` | 529.982.247-25 | formato + dígitos verificadores |
 | `CNPJ` | 11.222.333/0001-81, 12.ABC.345/01DE-35 | numérico e alfanumérico + dígitos |
 | `TELEFONE` | (11) 91234-5678, +55 21 3456-7890 | DDD válido, celular com 9 |
-| `EMAIL` | maria@empresa.com.br | formato |
+| `EMAIL` | maria@empresa.example | formato |
 | `ENDERECO` | Rua das Flores, 123, apto 45 | logradouro + nome + número/complemento |
 | `CEP` | 01310-100 | formato (8 dígitos soltos só com contexto) |
 | `RG` | 12.345.678-9 | formato e contexto |
@@ -176,8 +176,8 @@ veu avaliar --quantidade 1000
 
 | Conjunto | Textos | Precisão | Revocação | Vazamento geral | Vazamento de nomes |
 |---|---:|---:|---:|---:|---:|
-| Validação (modelos de texto **não usados** para ajustar o detector) | 1.000 | 100,0% | 97,1% | **3,0%** | 7,7% |
-| Validação, com o detector spaCy ligado | 1.000 | 98,3% | 98,4% | **1,5%** | 3,8% |
+| Validação (modelos de texto **não usados** para ajustar o detector) | 1.000 | 100,0% | 97,5% | **2,5%** | 6,5% |
+| Validação, com o detector spaCy ligado | 1.000 | 97,8% | 98,6% | **1,2%** | 3,0% |
 | Casos difíceis escritos à mão | 25 | 100,0% | 100,0% | 0,0% | 0,0% |
 | Desenvolvimento (modelos usados no ajuste) | 1.000 | 100,0% | 100,0% | 0,0% | 0,0% |
 
@@ -185,7 +185,7 @@ Como ler esses números com honestidade:
 
 - **O número que importa é o da validação.** O conjunto de desenvolvimento chega a 100% porque o detector foi ajustado olhando para ele.
 - **Documentos com dígitos verificadores** (CPF, CNPJ, cartão, processo...) ficaram em 0% de vazamento nos três conjuntos. **Nomes são a parte difícil**, principalmente em minúsculas, em conversas sem saudação ("kkkk o rayane esqueceu").
-- **O spaCy reduz o vazamento de nomes pela metade, mas é cerca de 20 vezes mais lento** (19 mil contra 380 mil caracteres por segundo) e traz alguns falsos positivos. Sozinho, sem as regras do Véu, o spaCy deixou passar 10,5% dos nomes.
+- **O spaCy reduz o vazamento de nomes para menos da metade, mas é cerca de 18 vezes mais lento** (20 mil contra 370 mil caracteres por segundo) e traz alguns falsos positivos. Sozinho, sem as regras do Véu, o spaCy deixou passar 10% dos nomes.
 - **Os textos são sintéticos.** Em dados reais, espere resultados piores. Teste com uma amostra dos seus próprios textos antes de confiar.
 
 Detalhes da metodologia em [docs/benchmark.md](docs/benchmark.md).
@@ -197,7 +197,7 @@ Tudo funciona sem configuração. Para ajustar, crie um `veu.toml` (exemplo comp
 ```toml
 [deteccao]
 limiar = 0.5                                   # 0 a 1; mais alto = menos falsos positivos
-ignorar = ["contato@minhaempresa.com.br"]      # valores que nunca são escondidos
+ignorar = ["contato@minhaempresa.example"]      # valores que nunca são escondidos
 
 [anonimizacao]
 operador = "token"
@@ -209,13 +209,15 @@ bloquear = ["CARTAO_CREDITO"]                  # recusa a requisição em vez de
 log_auditoria = "veu-auditoria.jsonl"          # só contagens, nunca os valores
 ```
 
-As principais opções também aceitam variáveis de ambiente: `VEU_LIMIAR`, `VEU_OPERADOR`, `VEU_BLOQUEAR`, `VEU_HOST`, `VEU_PORTA`, `VEU_TOKEN`, `VEU_SEGREDO`, `VEU_PROVEDOR_PADRAO` e `VEU_URL_<PROVEDOR>`.
+As principais opções também aceitam variáveis de ambiente: `VEU_LIMIAR`, `VEU_OPERADOR`, `VEU_BLOQUEAR`, `VEU_HOST`, `VEU_PORTA`, `VEU_TOKEN`, `VEU_PERMITIR_SEM_TOKEN`, `VEU_LIMITE_CORPO_MB`, `VEU_SEGREDO`, `VEU_PROVEDOR_PADRAO` e `VEU_URL_<PROVEDOR>`.
 
 ## Segurança
 
-- O Véu ouve só em `127.0.0.1` por padrão. Para expor na rede (Docker, servidor), defina `VEU_TOKEN`: todas as rotas passam a exigir o cabeçalho `X-Veu-Token`.
+- O Véu ouve só em `127.0.0.1` por padrão e, assim, recusa requisições de outros sites abertos no navegador (CSRF e DNS rebinding).
+- Fora do localhost (Docker, servidor), ele **não inicia sem `VEU_TOKEN`**: todas as rotas passam a exigir o cabeçalho `X-Veu-Token`.
 - As chaves de API vêm do cliente e passam direto para o provedor. Injetar chaves do servidor (`injetar_chaves = true`) é opcional.
-- O cofre fica na memória, por sessão, e expira em uma hora sem uso.
+- O cofre fica na memória e expira em uma hora sem uso. Sessões de credenciais diferentes nunca compartilham o cofre.
+- O Véu protege os dados do provedor de IA, mas não decide quem pode ver o quê dentro da sua aplicação: veja as [limitações](SECURITY.md#o-que-o-véu-não-faz).
 
 Leia o [modelo de ameaças e as limitações](SECURITY.md) antes de usar em produção.
 

@@ -21,7 +21,7 @@ curl -s "$VEU/v1/messages" \
 # Gemini (API nativa)
 curl -s "$VEU/v1beta/models/gemini-2.5-flash:generateContent" \
   -H "x-goog-api-key: $GEMINI_API_KEY" -H "Content-Type: application/json" \
-  -d '{"contents": [{"parts": [{"text": "Meu e-mail é ana.lima@gmail.com."}]}]}'
+  -d '{"contents": [{"parts": [{"text": "Meu e-mail é ana.lima@example.com."}]}]}'
 
 # Só ver o que seria escondido
 curl -s "$VEU/veu/v1/detectar" -H "Content-Type: application/json" \

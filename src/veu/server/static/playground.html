@@ -78,7 +78,7 @@
     <section class="card">
       <h2>Texto original</h2>
       <textarea id="input" spellcheck="false" aria-label="Texto original">Olá, sou a Maria Aparecida da Silva, CPF 529.982.247-25. Meu pedido não chegou!
-Pode ligar no (11) 91234-5678 ou escrever para maria.silva@gmail.com.
+Pode ligar no (11) 91234-5678 ou escrever para maria.silva@example.com.
 Moro na Rua das Flores, 123, apto 45, CEP 01310-100.
 A empresa é a XPTO Ltda, CNPJ 12.ABC.345/01DE-35. Paguei com o cartão 4111 1111 1111 1111.
 Obs.: a Maria prefere contato à tarde.</textarea>
@@ -180,17 +180,17 @@ async function run() {
       html += escapeHtml(text.slice(cursor, item.inicio));
       const group = GROUPS[item.entidade] || "other";
       const short = item.fim - item.inicio <= 24 ? " short" : "";
-      html += `<mark class="${group}${short}" title="${item.entidade} · ${Math.round(item.pontuacao * 100)}%">` +
-        `${escapeHtml(text.slice(item.inicio, item.fim))}<small>${item.entidade}</small></mark>`;
+      html += `<mark class="${group}${short}" title="${escapeHtml(item.entidade)} · ${Math.round(item.pontuacao * 100)}%">` +
+        `${escapeHtml(text.slice(item.inicio, item.fim))}<small>${escapeHtml(item.entidade)}</small></mark>`;
       cursor = item.fim;
     }
     html += escapeHtml(text.slice(cursor));
     $("highlight").innerHTML = items.length ? html : '<span class="empty">Nenhum dado pessoal encontrado.</span>';
     $("masked").textContent = data.texto;
     $("rows").innerHTML = items.length ? items.map((item) =>
-      `<tr><td>${item.entidade}</td><td><code>${escapeHtml(text.slice(item.inicio, item.fim))}</code></td>` +
+      `<tr><td>${escapeHtml(item.entidade)}</td><td><code>${escapeHtml(text.slice(item.inicio, item.fim))}</code></td>` +
       `<td><code>${escapeHtml(item.substituto)}</code></td><td>${Math.round(item.pontuacao * 100)}%</td>` +
-      `<td>${item.detector}</td></tr>`).join("") : '<tr><td colspan="5" class="empty">Nenhuma.</td></tr>';
+      `<td>${escapeHtml(item.detector)}</td></tr>`).join("") : '<tr><td colspan="5" class="empty">Nenhuma.</td></tr>';
     const elapsed = Math.round(performance.now() - started);
     setStatus(`${items.length} dado(s) escondido(s) em ${elapsed} ms.`);
   } catch (error) {

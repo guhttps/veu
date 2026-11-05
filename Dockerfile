@@ -22,5 +22,5 @@ EXPOSE 8787
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/veu/saude', timeout=4)"
 
-# Defina VEU_TOKEN ao expor o contêiner: veja docs/integracoes.md#docker
+# O Véu não inicia fora do localhost sem VEU_TOKEN (ou VEU_PERMITIR_SEM_TOKEN=1): veja docs/integracoes.md#docker
 CMD ["veu", "servir"]

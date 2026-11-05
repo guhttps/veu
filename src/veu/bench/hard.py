@@ -21,7 +21,7 @@ CASES: list[tuple[str, list[tuple[str, str]]]] = [
     ("Placa do carro: BRA2E19. Renavam 00639884962.", [("BRA2E19", "PLACA"), ("00639884962", "RENAVAM")]),
     ("Fala, joão! Tudo certo pra amanhã?", [("joão", "PESSOA")]),
     ("Quem atendeu foi o Dr. Wanderley Fagundes.", [("Wanderley Fagundes", "PESSOA")]),
-    ("Pix: maria.lima@gmail.com", [("maria.lima@gmail.com", "EMAIL")]),
+    ("Pix: maria.lima@example.com", [("maria.lima@example.com", "EMAIL")]),
     ("Conta 12345-6, agência 0001, Banco do Brasil.", [("12345-6", "CONTA_BANCARIA"), ("0001", "CONTA_BANCARIA")]),
     ("Data de nascimento: 7 de setembro de 1985.", [("7 de setembro de 1985", "DATA_NASCIMENTO")]),
     ("Acesso de 2804:14c:5b:a0::1 bloqueado.", [("2804:14c:5b:a0::1", "IP")]),

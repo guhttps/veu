@@ -40,7 +40,7 @@ class Upstream:
 def call(app, method, path, **kwargs):
     async def run():
         transport = httpx.ASGITransport(app=app)
-        async with httpx.AsyncClient(transport=transport, base_url="http://veu") as client:
+        async with httpx.AsyncClient(transport=transport, base_url="http://localhost:8787") as client:
             return await client.request(method, path, **kwargs)
 
     return asyncio.run(run())

@@ -46,5 +46,26 @@ def folded_set(name: str) -> frozenset[str]:
     return frozenset(fold(entry) for entry in load_wordlist(name))
 
 
+def text_before(text: str, start: int, size: int) -> str:
+    """Até size caracteres antes de start, sem começar no meio de uma palavra.
+
+    Cortar "example.org" em "rg" faria a palavra de contexto "RG" aparecer onde não existe.
+    """
+    left = max(0, start - size)
+    if left > 0 and text[left - 1].isalnum():
+        while left < start and text[left].isalnum():
+            left += 1
+    return text[left:start]
+
+
+def text_after(text: str, end: int, size: int) -> str:
+    """Até size caracteres depois de end, sem terminar no meio de uma palavra."""
+    right = min(len(text), end + size)
+    if right < len(text) and text[right].isalnum():
+        while right > end and text[right - 1].isalnum():
+            right -= 1
+    return text[end:right]
+
+
 def context_window(text: str, start: int, end: int, before: int, after: int) -> str:
-    return fold(text[max(0, start - before):start]) + " │ " + fold(text[end:end + after])
+    return fold(text_before(text, start, before)) + " │ " + fold(text_after(text, end, after))

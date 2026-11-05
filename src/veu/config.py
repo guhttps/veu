@@ -78,6 +78,9 @@ class Config:
     timeout: float = 600.0
     # Se definido, todas as rotas (menos /veu/saude) exigem o cabeçalho X-Veu-Token com este valor.
     token: str | None = None
+    # Fora do localhost o servidor exige token; isto libera rodar sem ele (rede interna isolada).
+    allow_no_token: bool = False
+    max_body_mb: float = 20.0
     providers: dict[str, ProviderConfig] = field(default_factory=lambda: dict(BUILTIN_PROVIDERS))
 
     def __post_init__(self):
@@ -124,7 +127,8 @@ _SECTIONS = {
     "servidor": {
         "host": "host", "porta": "port", "provedor_padrao": "default_provider", "playground": "playground",
         "log_auditoria": "audit_log", "sessao_ttl": "session_ttl", "injetar_chaves": "inject_keys",
-        "timeout": "timeout", "token_env": None,
+        "timeout": "timeout", "token_env": None, "permitir_sem_token": "allow_no_token",
+        "limite_corpo_mb": "max_body_mb",
     },
 }
 
@@ -194,6 +198,10 @@ def _from_env(environ: dict[str, str], base: Config) -> dict:
         changes["secret"] = environ["VEU_SEGREDO"]
     if "VEU_TOKEN" in environ:
         changes["token"] = environ["VEU_TOKEN"] or None
+    if "VEU_PERMITIR_SEM_TOKEN" in environ:
+        changes["allow_no_token"] = environ["VEU_PERMITIR_SEM_TOKEN"].strip().lower() in ("1", "true", "sim", "yes")
+    if "VEU_LIMITE_CORPO_MB" in environ:
+        changes["max_body_mb"] = float(environ["VEU_LIMITE_CORPO_MB"])
     providers = dict(changes.get("providers", base.providers))
     for name, provider in list(providers.items()):
         env_name = "VEU_URL_" + name.upper().replace("-", "_")

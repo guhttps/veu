@@ -5,6 +5,32 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-04
+
+Revisão de segurança.
+
+### Segurança
+- Sessões do proxy separadas pela credencial do cliente: com outra chave de API, não dá mais para reutilizar o identificador de sessão de alguém e pedir ao modelo que repita os marcadores dela.
+- A API REST só continua sessões que ela mesma criou (identificadores aleatórios), e as sessões da API e do proxy ficam em cofres separados.
+- No localhost, o servidor só aceita o Host `localhost`/`127.0.0.1` e recusa requisições com `Origin` de outro site, contra DNS rebinding e CSRF vindos de páginas abertas no navegador.
+- Fora do localhost, o servidor não inicia sem `VEU_TOKEN`, a menos que `VEU_PERMITIR_SEM_TOKEN=1`.
+- Log de acesso do servidor HTTP desligado, porque a URL pode trazer a chave da API (`?key=` do Gemini).
+- Cookies, `Referer` e `Origin` do cliente não são repassados ao provedor, e o `Set-Cookie` do provedor não volta ao cliente.
+- Limite de tamanho do corpo (`limite_corpo_mb`, padrão de 20 MB) e processamento fora do laço principal do servidor.
+- Erros de conexão com o provedor não repetem mais detalhes internos (como a URL com a chave).
+- Cabeçalhos de segurança no playground (CSP, `frame-ancestors 'none'`) e escape de todos os rótulos exibidos.
+- O cofre salvo pela CLI é criado com permissão só para o dono (Linux e macOS).
+- E-mails do modo sintético e dos exemplos usam domínios reservados (`example.com`), para nunca inventar o endereço de alguém de verdade.
+
+### Corrigido
+- A ligação de nomes parciais tinha custo quadrático: um texto de 1 MB levava cerca de 40 segundos e agora leva cerca de 3.
+- Condição de corrida: duas requisições simultâneas na mesma sessão podiam receber o mesmo marcador para valores diferentes.
+- JSON aninhado demais agora é recusado com erro 400 em vez de erro interno.
+
+### Alterado
+- `POST /veu/v1/anonimizar` com uma `sessao` que não existe responde 404 em vez de criar a sessão.
+- Requisições `OPTIONS` não são mais repassadas ao provedor.
+
 ## [0.1.0] - 2026-11-04
 
 Primeira versão.
@@ -30,5 +56,6 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/guhttps/veu/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/guhttps/veu/releases/tag/v0.1.0

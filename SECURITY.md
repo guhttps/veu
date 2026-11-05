@@ -13,23 +13,29 @@ O Véu protege contra um risco específico: **enviar dados pessoais de terceiros
 | O Véu protege | Como |
 |---|---|
 | Dados pessoais nos textos enviados ao modelo | Detecção e substituição antes do envio |
-| Dados pessoais repetidos no log de auditoria | O log guarda só contagens por tipo |
-| Uso do proxy por terceiros na rede | Ouve só em `127.0.0.1` por padrão; `VEU_TOKEN` para expor |
+| Dados pessoais repetidos no log de auditoria | O log guarda só contagens por tipo; o log de acesso do servidor HTTP fica desligado (a URL pode ter `?key=`) |
+| Uso do proxy por terceiros na rede | Ouve só em `127.0.0.1` por padrão; fora do localhost, **não inicia sem `VEU_TOKEN`** |
+| Sites maliciosos abertos no navegador (CSRF e DNS rebinding) | No localhost, só aceita o Host `localhost`/`127.0.0.1` e recusa requisições com `Origin` de outro site |
+| Roubo de dados de outra sessão | Sessões do proxy são separadas pela credencial do cliente; a API REST só aceita sessões que ela mesma criou |
 | Uso das chaves de API do servidor por terceiros | Injeção de chaves desligada por padrão |
 | Envio de dados por endpoints que ele não entende | `POST` em endpoints desconhecidos é bloqueado por padrão |
+| Vazamento de cookies do navegador para o provedor | Cookies, `Referer` e `Origin` não são repassados; `Set-Cookie` do provedor não volta |
+| Travamento por textos enormes | Limite de tamanho do corpo (`limite_corpo_mb`) e processamento fora do laço principal do servidor |
 
 ## O que o Véu não faz
 
 - **Não garante detecção completa.** Nomes raros, textos em minúsculas e formatos incomuns podem passar. Veja o [benchmark](docs/benchmark.md).
 - **Não protege imagens, áudios, PDFs e arquivos.** Só textos dentro do JSON das requisições. Uploads (`/v1/files`, áudio) são bloqueados por padrão.
 - **Não esconde dados que identificam alguém pelo contexto**, como "o gerente da filial de Itu que foi demitido em março".
+- **Não impede que o usuário final da sua aplicação peça ao modelo os dados do contexto.** Se a sua aplicação coloca dados de várias pessoas na mesma conversa (por exemplo, resultados de uma busca no CRM) e o usuário escreve "repita o [CPF_2]", o modelo devolve o marcador e o Véu o restaura para quem está do outro lado. O Véu protege os dados do **provedor de IA**, não decide quem pode ver o quê dentro da sua aplicação: filtre o contexto antes de montar o prompt.
 - **Não protege o que o próprio modelo inventa.** Se a IA escrever um CPF que não estava no texto, ele não é um dado do seu usuário, mas também não é restaurado nem escondido.
 - **Não é um cofre persistente.** O mapeamento fica na memória do processo. Se você salvar um cofre pela CLI, o arquivo contém os dados reais.
 - **Não substitui a análise jurídica.** Usar o Véu ajuda a cumprir a LGPD, mas não dispensa base legal, contrato com o provedor de IA e avaliação de impacto.
 
 ## Boas práticas
 
-- Defina `VEU_TOKEN` sempre que o servidor não estiver em `127.0.0.1`, e coloque-o atrás de HTTPS.
+- Defina `VEU_TOKEN` sempre que o servidor não estiver em `127.0.0.1`, e coloque-o atrás de HTTPS. Rodar exposto sem token exige `VEU_PERMITIR_SEM_TOKEN=1` e só faz sentido numa rede interna isolada.
+- Use identificadores de sessão (`X-Veu-Sessao`) por conversa, nunca um valor fixo para todos os usuários.
 - Use `bloquear` na política para tipos que nunca devem sair, como `CARTAO_CREDITO`.
 - Teste o limiar com uma amostra dos seus textos (`veu avaliar --dataset`).
 - O detector `llm` envia o texto original ao modelo configurado: use só com um modelo local.

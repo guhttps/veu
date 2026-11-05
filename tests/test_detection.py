@@ -19,7 +19,7 @@ def labels(text, **options):
         ("CNPJ 12.ABC.345/01DE-35", ("CNPJ", "12.ABC.345/01DE-35")),
         ("ligue (11) 91234-5678", ("TELEFONE", "(11) 91234-5678")),
         ("whats +55 21 99876-5432", ("TELEFONE", "+55 21 99876-5432")),
-        ("escreva para maria.souza@gmail.com", ("EMAIL", "maria.souza@gmail.com")),
+        ("escreva para maria.souza@example.com", ("EMAIL", "maria.souza@example.com")),
         ("CEP 01310-100", ("CEP", "01310-100")),
         ("placa BRA2E19", ("PLACA", "BRA2E19")),
         ("cartão 4111 1111 1111 1111", ("CARTAO_CREDITO", "4111 1111 1111 1111")),
@@ -107,10 +107,10 @@ def test_address_contains_person_name():
 
 
 def test_allowlist_and_label_filter():
-    text = "Contato: suporte@empresa.com.br, CNPJ 11.222.333/0001-81, CPF 529.982.247-25"
-    found = labels(text, allowlist=("suporte@empresa.com.br", "11222333000181"))
+    text = "Contato: suporte@empresa.example, CNPJ 11.222.333/0001-81, CPF 529.982.247-25"
+    found = labels(text, allowlist=("suporte@empresa.example", "11222333000181"))
     assert found == [("CPF", "529.982.247-25")]
-    assert labels(text, labels=("EMAIL",)) == [("EMAIL", "suporte@empresa.com.br")]
+    assert labels(text, labels=("EMAIL",)) == [("EMAIL", "suporte@empresa.example")]
 
 
 def test_custom_patterns():
@@ -120,3 +120,10 @@ def test_custom_patterns():
 
 def test_analyzer_is_empty_safe():
     assert Analyzer().analyze("") == []
+
+
+def test_context_words_are_not_formed_by_cutting_longer_words():
+    # A janela de contexto cortava "example.org" em "rg", e o número do pedido virava RG.
+    text = "De: Ana Lima <ana@example.org>\nAssunto: Pedido 6836774"
+    assert ("RG", "6836774") not in labels(text)
+    assert ("RG", "6836774") in labels("RG: 6836774")

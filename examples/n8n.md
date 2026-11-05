@@ -49,4 +49,4 @@ Troque `$json.output` pelo campo onde o seu nó de IA devolve o texto.
 
 Se o nó permitir trocar a URL base da API (credenciais "OpenAI" com Base URL personalizada, por exemplo), use `http://veu:8787/v1`. Aí o Véu esconde e restaura sozinho, sem os dois nós HTTP.
 
-Com `VEU_TOKEN` definido, o nó precisa enviar o cabeçalho `X-Veu-Token`. Se ele não permitir cabeçalhos extras, rode o Véu sem token, mas só na rede interna do Docker: não publique a porta (`-p`) para fora.
+Com `VEU_TOKEN` definido, o nó precisa enviar o cabeçalho `X-Veu-Token`. Se ele não permitir cabeçalhos extras, rode o Véu sem token (`-e VEU_PERMITIR_SEM_TOKEN=1`), mas só na rede interna do Docker: não publique a porta (`-p`) para fora.

@@ -12,6 +12,7 @@ import json
 import os
 import random
 import re
+import threading
 from collections import Counter
 from dataclasses import dataclass
 
@@ -66,6 +67,9 @@ class Vault:
         self._pattern: re.Pattern | None = None
         self._digit_surrogates: dict[str, str] = {}
         self._text_surrogates: dict[str, str] = {}
+        # Cofres de sessão são usados por várias requisições ao mesmo tempo: sem a trava, duas
+        # requisições poderiam dar o mesmo [CPF_2] a valores diferentes.
+        self._lock = threading.RLock()
 
     # Criação de marcadores
     def lookup(self, label: str, value: str) -> str | None:
@@ -73,37 +77,40 @@ class Vault:
 
     def placeholder(self, label: str, value: str, *, hashed: bool = False) -> str:
         key = (label, normalize_value(label, value))
-        existing = self._by_key.get(key)
-        if existing is not None:
-            return existing
-        if hashed:
-            digest = hmac.new(self._secret, f"{label}:{key[1]}".encode(), hashlib.sha256).hexdigest()
-            replacement = f"[{label}_{digest[:8]}]"
-        else:
-            self._counters[label] += 1
-            replacement = f"[{label}_{self._counters[label]}]"
-        self._store(key, VaultEntry(label, value, replacement, "marcador"))
-        return replacement
+        with self._lock:
+            existing = self._by_key.get(key)
+            if existing is not None:
+                return existing
+            if hashed:
+                digest = hmac.new(self._secret, f"{label}:{key[1]}".encode(), hashlib.sha256).hexdigest()
+                replacement = f"[{label}_{digest[:8]}]"
+            else:
+                self._counters[label] += 1
+                replacement = f"[{label}_{self._counters[label]}]"
+            self._store(key, VaultEntry(label, value, replacement, "marcador"))
+            return replacement
 
     def surrogate(self, label: str, value: str, make) -> str:
         """Substituto sintético e verossímil (por exemplo, outro CPF válido). make(rng) gera o valor."""
         key = (label, normalize_value(label, value))
-        existing = self._by_key.get(key)
-        if existing is not None:
-            return existing
-        taken = {fold(entry.original) for entry in self._entries.values()} | {fold(r) for r in self._entries}
-        for _ in range(20):
-            replacement = make(self.rng)
-            if replacement and fold(replacement) not in taken and fold(replacement) != fold(value):
-                break
-        else:
-            return self.placeholder(label, value)
-        self._store(key, VaultEntry(label, value, replacement, "sintetico"))
-        return replacement
+        with self._lock:
+            existing = self._by_key.get(key)
+            if existing is not None:
+                return existing
+            taken = {fold(entry.original) for entry in self._entries.values()} | {fold(r) for r in self._entries}
+            for _ in range(20):
+                replacement = make(self.rng)
+                if replacement and fold(replacement) not in taken and fold(replacement) != fold(value):
+                    break
+            else:
+                return self.placeholder(label, value)
+            self._store(key, VaultEntry(label, value, replacement, "sintetico"))
+            return replacement
 
     def alias(self, label: str, value: str, replacement: str) -> None:
         """Faz outro valor (por exemplo, só o primeiro nome) usar um marcador já existente."""
-        self._by_key.setdefault((label, normalize_value(label, value)), replacement)
+        with self._lock:
+            self._by_key.setdefault((label, normalize_value(label, value)), replacement)
 
     def _store(self, key: tuple[str, str], entry: VaultEntry) -> None:
         self._by_key[key] = entry.replacement
@@ -135,6 +142,10 @@ class Vault:
 
     # Restauração
     def _compiled(self) -> re.Pattern:
+        with self._lock:
+            return self._build_pattern()
+
+    def _build_pattern(self) -> re.Pattern:
         if self._pattern is None:
             parts = [_PLACEHOLDER, _BARE]
             surrogates = []

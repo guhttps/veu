@@ -15,7 +15,7 @@ def test_toml_and_environment(tmp_path):
         """
 [deteccao]
 limiar = 0.7
-ignorar = ["contato@empresa.com.br"]
+ignorar = ["contato@empresa.example"]
 
 [[deteccao.personalizados]]
 entidade = "MATRICULA"
@@ -127,5 +127,5 @@ def test_example_config_is_valid():
     from pathlib import Path
 
     config = load_config(Path(__file__).parent.parent / "examples" / "veu.toml", environ={})
-    assert config.providers["interno"].url == "https://ia.minhaempresa.com/v1"
+    assert config.providers["interno"].url == "https://ia.minhaempresa.example/v1"
     assert config.operators["CARTAO_CREDITO"] == "remover"

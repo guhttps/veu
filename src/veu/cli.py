@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -35,6 +36,15 @@ def _write(text: str, path: str | None) -> None:
         sys.stdout.write(text)
     else:
         Path(path).write_text(text, encoding="utf-8")
+
+
+def _write_private(path: Path, text: str) -> None:
+    """Grava um arquivo legível só pelo dono (no Linux e no macOS; no Windows vale a permissão da pasta)."""
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        handle.write(text)
+    with contextlib.suppress(OSError):
+        os.chmod(path, 0o600)
 
 
 def _veu(args) -> Veu:
@@ -76,7 +86,7 @@ def cmd_anonymize(args) -> int:
     result = veu.anonymize(_read(args.arquivo), vault)
     _write(result.text, args.saida)
     if args.cofre:
-        Path(args.cofre).write_text(json.dumps(vault.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+        _write_private(Path(args.cofre), json.dumps(vault.to_dict(), ensure_ascii=False, indent=2))
         print(f"\nCofre salvo em {args.cofre}. Ele contém os dados reais: guarde com cuidado e não versione.",
               file=sys.stderr)
     counts = result.counts()
@@ -140,7 +150,6 @@ def cmd_serve(args) -> int:
     if args.porta:
         overrides["port"] = args.porta
     config = config.with_overrides(**overrides) if overrides else config
-    print(f"Véu {__version__} em http://{config.host}:{config.port}  (playground: /veu/playground)", file=sys.stderr)
     server.run(config)
     return 0
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import bisect
 import re
 from collections import Counter
 from dataclasses import dataclass, field
@@ -175,17 +176,21 @@ class Anonymizer:
         pattern = re.compile(r"(?<![\w])(?:" + alternatives + r")(?![\w])")
         added: list[Entity] = []
         canonical: dict[int, str] = {}
-        taken = [(e.start, e.end) for e in entities]
+        # As entidades vêm ordenadas e sem sobreposição: busca binária mantém o custo linear em textos grandes.
+        starts = [e.start for e in entities]
+        ends = [e.end for e in entities]
         for match in pattern.finditer(text):
-            if any(start < match.end() and match.start() < end for start, end in taken):
+            position = bisect.bisect_right(starts, match.start())
+            if position > 0 and ends[position - 1] > match.start():
+                continue
+            if position < len(starts) and starts[position] < match.end():
                 continue
             entity = Entity("PESSOA", match.start(), match.end(), 0.7, match.group(0), "vinculo")
             added.append(entity)
             canonical[match.start()] = parts[match.group(0)]
+        by_folded = {fold(word): full for word, full in parts.items()}
         for entity in entities:
-            if entity.label == "PESSOA" and len(entity.text.split()) == 1:
-                for word, full in parts.items():
-                    if fold(entity.text) == fold(word):
-                        canonical[entity.start] = full
+            if entity.label == "PESSOA" and len(entity.text.split()) == 1 and fold(entity.text) in by_folded:
+                canonical[entity.start] = by_folded[fold(entity.text)]
         merged = sorted(entities + added, key=lambda e: e.start)
         return merged, canonical

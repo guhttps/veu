@@ -9,7 +9,7 @@ from veu.anonymizer import mask_value, normalize_operator
 
 TEXT = (
     "O cliente João da Silva (CPF 529.982.247-25, tel (11) 91234-5678) pediu reembolso. "
-    "João disse que o e-mail é joao.silva@gmail.com."
+    "João disse que o e-mail é joao.silva@example.com."
 )
 
 
@@ -65,7 +65,7 @@ def test_synthetic_operator_produces_valid_lookalikes_and_restores():
     by_label = {item.label: item.replacement for item in result.replacements}
     assert is_valid_cpf(by_label["CPF"]) and by_label["CPF"] != "529.982.247-25"
     assert is_valid_phone(by_label["TELEFONE"])
-    assert by_label["EMAIL"].endswith("@gmail.com")
+    assert by_label["EMAIL"].rsplit("@", 1)[1] in ("example.com", "example.org", "example.net", "empresa.example")
     assert "João" not in result.text and "529.982.247-25" not in result.text
     # O modelo pode tirar a pontuação do CPF falso; a restauração continua funcionando.
     digits = by_label["CPF"].replace(".", "").replace("-", "")
@@ -76,7 +76,7 @@ def test_synthetic_operator_produces_valid_lookalikes_and_restores():
 def test_irreversible_operators():
     assert Veu(operator="remover").anonymize("CPF 529.982.247-25").text == "CPF [CPF]"
     assert Veu(operator="mascara").anonymize("CPF 529.982.247-25").text == "CPF ***.982.247-**"
-    assert mask_value("EMAIL", "joao@gmail.com") == "j***@gmail.com"
+    assert mask_value("EMAIL", "joao@example.com") == "j***@example.com"
     assert mask_value("PESSOA", "João da Silva") == "J*** da S***"
 
 
@@ -101,7 +101,7 @@ def test_unknown_operator_is_rejected():
 def test_vault_round_trip_through_dict():
     result = veu.anonymize(TEXT)
     restored_vault = Vault.from_dict(json.loads(json.dumps(result.vault.to_dict())))
-    assert restored_vault.restore("[PESSOA_1] / [EMAIL_1]") == "João da Silva / joao.silva@gmail.com"
+    assert restored_vault.restore("[PESSOA_1] / [EMAIL_1]") == "João da Silva / joao.silva@example.com"
     assert veu.anonymize("Outro CPF 111.444.777-35", restored_vault).text == "Outro CPF [CPF_2]"
 
 

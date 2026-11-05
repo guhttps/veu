@@ -11,7 +11,7 @@ from veu.integrations.logging import protect_logs
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 protect_logs()
 
-logging.info("Novo cadastro: %s, CPF %s, e-mail %s", "Maria Souza", "529.982.247-25", "maria@gmail.com")
+logging.info("Novo cadastro: %s, CPF %s, e-mail %s", "Maria Souza", "529.982.247-25", "maria@example.com")
 try:
     raise ValueError("Cartão 4111 1111 1111 1111 recusado")
 except ValueError:

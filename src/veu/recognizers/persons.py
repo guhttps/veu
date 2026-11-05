@@ -10,7 +10,7 @@ import re
 from collections.abc import Iterable
 
 from veu._text import fold, words_regex
-from veu.recognizers.base import Candidate, folded_set, load_wordlist
+from veu.recognizers.base import Candidate, folded_set, load_wordlist, text_before
 
 _WORD = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)*")
 _SPACE_GAP = re.compile(r"[ \t]{1,2}")
@@ -88,7 +88,7 @@ class PersonRecognizer:
         return not (word.isupper() and len(word) <= 3) or fold(word) in self.first_names or fold(word) in self.surnames
 
     def _has_context(self, text: str, start: int, before: int = 30) -> bool:
-        window = fold(text[max(0, start - before):start])
+        window = fold(text_before(text, start, before))
         return self._context.search(window) is not None
 
     def find(self, text: str) -> Iterable[Candidate]:
@@ -149,7 +149,7 @@ class PersonRecognizer:
             return None
         start, end = tokens[0][0], tokens[-1][1]
         # "Rua Augusta", "Av. Getúlio Vargas": nome de logradouro, não de pessoa.
-        if _STREET_BEFORE.search(fold(text[max(0, start - 16):start])):
+        if _STREET_BEFORE.search(fold(text_before(text, start, 16))):
             return None
         context = self._has_context(text, start)
         name_words = [token[2] for token in tokens if fold(token[2]) not in CONNECTORS]
@@ -188,7 +188,7 @@ class PersonRecognizer:
         return Candidate("PESSOA", start, end, score, self.name)
 
     def _strong_context(self, text: str, start: int) -> bool:
-        window = fold(text[max(0, start - 25):start])
+        window = fold(text_before(text, start, 25))
         return re.search(r"(?:meu nome e|me chamo|nome:|nome completo:|sr\.?|sra\.?|dona|dr\.?|dra\.?)\s*$", window) is not None
 
     def _lowercase_names(self, text: str, words: list[tuple[int, int, str]]) -> Iterable[Candidate]:
@@ -216,7 +216,7 @@ class PersonRecognizer:
                 last += 1
             while last > index and fold(words[last][2]) in CONNECTORS:
                 last -= 1
-            before = fold(text[max(0, start - 18):start])
+            before = fold(text_before(text, start, 18))
             if last > index:
                 yield Candidate("PESSOA", start, words[last][1], 0.65, self.name)
             elif self._greeting.search(before):

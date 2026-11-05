@@ -10,7 +10,7 @@ limiar = 0.5
 entidades = []
 
 # Valores que nunca são escondidos: dados da própria empresa, contatos públicos.
-ignorar = ["contato@minhaempresa.com.br", "11.222.333/0001-81"]
+ignorar = ["contato@minhaempresa.example", "11.222.333/0001-81"]
 
 # Detectores ligados: padroes, nomes, enderecos, spacy, llm.
 detectores = ["padroes", "nomes", "enderecos"]
@@ -63,9 +63,13 @@ injetar_chaves = false
 timeout = 600
 # Variável de ambiente com o token exigido no cabeçalho X-Veu-Token (recomendado fora do localhost).
 token_env = "VEU_TOKEN"
+# Fora do localhost o servidor não inicia sem token. Libere só numa rede interna isolada.
+permitir_sem_token = false
+# Tamanho máximo do corpo de cada requisição, em MB.
+limite_corpo_mb = 20
 
 # Provedor próprio: acessível em http://127.0.0.1:8787/interno/v1
 [provedores.interno]
 tipo = "openai"
-url = "https://ia.minhaempresa.com/v1"
+url = "https://ia.minhaempresa.example/v1"
 chave_env = "IA_INTERNA_KEY"

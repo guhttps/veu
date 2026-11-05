@@ -97,8 +97,8 @@ def fake_email(rng: random.Random, name: str | None = None, domain: str | None =
     local = separator.join((words[0], words[-1])) if len(words) > 1 else words[0]
     if rng.random() < 0.3:
         local += str(rng.randint(1, 99))
-    domain = domain or rng.choice(("gmail.com", "hotmail.com", "outlook.com", "yahoo.com.br", "uol.com.br",
-                                   "empresa.com.br", "bol.com.br"))
+    # Domínios reservados para exemplos (RFC 2606): o e-mail inventado nunca é de alguém de verdade.
+    domain = domain or rng.choice(("example.com", "example.org", "example.net", "empresa.example"))
     return f"{local}@{domain}"
 
 
@@ -236,7 +236,7 @@ def make_surrogate(label: str, original: str, rng: random.Random) -> str | None:
         new = only_digits(fake_phone(rng, "digitos", mobile=len(local) == 11))
         return apply_format(original, digits[: len(digits) - len(local)] + new)
     if label == "EMAIL" and "@" in original:
-        return fake_email(rng, domain=original.rsplit("@", 1)[1])
+        return fake_email(rng)
     if label == "CEP" and len(digits) == 8:
         return apply_format(original, only_digits(fake_cep(rng)))
     if label == "PLACA":
