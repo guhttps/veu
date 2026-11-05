@@ -1,0 +1,89 @@
+# Empresas, órgãos e marcas cujos nomes contêm nomes de pessoas ou parecem nomes.
+Americanas
+Ambev
+Amil
+Banco do Brasil
+Banco Inter
+Banrisul
+Bradesco
+Bradesco Saúde
+BTG Pactual
+C6 Bank
+Caixa
+Caixa Econômica Federal
+Casas Bahia
+Cemig
+Cielo
+Claro
+Copel
+Correios
+Detran
+Embraer
+Enel
+Getnet
+Globo
+Havan
+Hapvida
+Inter
+Itaú
+Itaú Unibanco
+Light
+Localiza
+Lojas Americanas
+Lojas Renner
+Magalu
+Magazine Luiza
+Mercado Livre
+Mercado Pago
+Natura
+Nubank
+O Boticário
+Oi
+PagSeguro
+Petrobras
+PicPay
+Ponto Frio
+Porto Seguro
+Receita Federal
+Rede Globo
+Renner
+Riachuelo
+Sabesp
+Santander
+Serasa
+Sicoob
+Sicredi
+SulAmérica
+Supremo Tribunal Federal
+Superior Tribunal de Justiça
+Tim
+Unimed
+Vale
+Vivo
+Google
+Microsoft
+Apple
+Amazon
+Meta
+Netflix
+Spotify
+Uber
+iFood
+WhatsApp
+Instagram
+Facebook
+Telegram
+OpenAI
+Anthropic
+Claude
+Gemini
+ChatGPT
+Copilot
+Mercedes Benz
+Volkswagen
+Fiat
+Chevrolet
+Toyota
+Honda
+Hyundai
+Renault

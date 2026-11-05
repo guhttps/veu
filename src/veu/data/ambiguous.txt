@@ -1,0 +1,27 @@
+# Nomes que também são palavras comuns. Sozinhos, só contam como nome com contexto
+# ("Dona Rosa", "falar com a Clara") ou acompanhados de sobrenome.
+Aurora
+Branca
+Celeste
+Clara
+Conceição
+Cruz
+Dores
+Estrela
+Flor
+Glória
+Graça
+Íris
+Jade
+Lis
+Luna
+Luz
+Mar
+Neves
+Paz
+Pérola
+Rosa
+Serena
+Socorro
+Sol
+Vitória

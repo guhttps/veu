@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "veu"
+dynamic = ["version"]
+description = "Esconde dados pessoais brasileiros (CPF, nomes, telefones, endereços...) antes de enviar textos para modelos de IA e devolve os dados reais na resposta."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "guhttps" }]
+keywords = ["lgpd", "pii", "anonimizacao", "privacidade", "llm", "proxy", "cpf", "cnpj", "openai", "anthropic"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Natural Language :: Portuguese (Brazilian)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
+    "Topic :: Text Processing",
+]
+# O núcleo (detecção, anonimização e restauração) não tem dependências.
+dependencies = []
+
+[project.optional-dependencies]
+servidor = ["starlette>=0.40", "uvicorn>=0.30", "httpx>=0.27"]
+httpx = ["httpx>=0.27"]
+spacy = ["spacy>=3.7"]
+dev = [
+    "veu[servidor]",
+    "pytest>=8",
+    "ruff>=0.6",
+    "openai>=1.40",
+    "anthropic>=0.34",
+]
+
+[project.scripts]
+veu = "veu.cli:main"
+
+[project.urls]
+Repositorio = "https://github.com/guhttps/veu"
+Documentacao = "https://github.com/guhttps/veu#readme"
+Problemas = "https://github.com/guhttps/veu/issues"
+
+[tool.hatch.version]
+path = "src/veu/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/veu"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [".venv", ".github", "dist"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "W", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

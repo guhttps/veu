@@ -1,0 +1,197 @@
+# Estados, cidades e países. Sequências com estes nomes não são tratadas como pessoas.
+Acre
+Alagoas
+Amapá
+Amazonas
+Bahia
+Ceará
+Distrito Federal
+Espírito Santo
+Goiás
+Maranhão
+Mato Grosso
+Mato Grosso do Sul
+Minas Gerais
+Pará
+Paraíba
+Paraná
+Pernambuco
+Piauí
+Rio de Janeiro
+Rio Grande do Norte
+Rio Grande do Sul
+Rondônia
+Roraima
+Santa Catarina
+São Paulo
+Sergipe
+Tocantins
+Angra dos Reis
+Ananindeua
+Anápolis
+Aparecida de Goiânia
+Aracaju
+Araraquara
+Arapiraca
+Balneário Camboriú
+Barueri
+Bauru
+Belém
+Belo Horizonte
+Bento Gonçalves
+Betim
+Blumenau
+Boa Vista
+Brasília
+Cabo Frio
+Camaçari
+Campina Grande
+Campinas
+Campo Grande
+Campos dos Goytacazes
+Canoas
+Carapicuíba
+Cariacica
+Caruaru
+Cascavel
+Caucaia
+Caxias do Sul
+Chapecó
+Contagem
+Criciúma
+Cuiabá
+Curitiba
+Diadema
+Divinópolis
+Dourados
+Duque de Caxias
+Embu das Artes
+Feira de Santana
+Florianópolis
+Fortaleza
+Foz do Iguaçu
+Franca
+Goiânia
+Governador Valadares
+Gramado
+Gravataí
+Guarujá
+Guarulhos
+Ilhéus
+Imperatriz
+Indaiatuba
+Ipatinga
+Itabuna
+Itajaí
+Itaquaquecetuba
+Jaboatão dos Guararapes
+Jacareí
+Jaraguá do Sul
+João Pessoa
+Joinville
+Juazeiro do Norte
+Juiz de Fora
+Jundiaí
+Lages
+Limeira
+Londrina
+Macaé
+Macapá
+Maceió
+Manaus
+Marabá
+Maringá
+Marília
+Mauá
+Mogi das Cruzes
+Montes Claros
+Mossoró
+Natal
+Niterói
+Nova Friburgo
+Nova Iguaçu
+Olinda
+Osasco
+Ouro Preto
+Palmas
+Paranaguá
+Passo Fundo
+Pelotas
+Petrolina
+Petrópolis
+Piracicaba
+Poços de Caldas
+Ponta Grossa
+Porto Alegre
+Porto Seguro
+Porto Velho
+Praia Grande
+Presidente Prudente
+Recife
+Ribeirão Preto
+Rio Branco
+Rio Claro
+Rio Grande
+Rondonópolis
+Salvador
+Santa Maria
+Santarém
+Santo André
+Santos
+São Bernardo do Campo
+São Carlos
+São Gonçalo
+São João de Meriti
+São José
+São José dos Campos
+São José do Rio Preto
+São Luís
+São Vicente
+Serra
+Sete Lagoas
+Sobral
+Sorocaba
+Sumaré
+Suzano
+Taboão da Serra
+Taubaté
+Teresina
+Teresópolis
+Uberaba
+Uberlândia
+Várzea Grande
+Vila Velha
+Vitória da Conquista
+Volta Redonda
+Copacabana
+Ipanema
+Leblon
+Barra da Tijuca
+Pinheiros
+Moema
+Vila Mariana
+Lapa
+Brasil
+Portugal
+Argentina
+Uruguai
+Paraguai
+Chile
+Bolívia
+Peru
+Colômbia
+Venezuela
+México
+Estados Unidos
+Canadá
+Espanha
+França
+Itália
+Alemanha
+Inglaterra
+Japão
+China
+Angola
+Moçambique
+América Latina
+Europa
