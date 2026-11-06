@@ -1,0 +1,70 @@
+{
+  "name": "veu-js",
+  "version": "0.4.0",
+  "description": "Esconde dados pessoais brasileiros e segredos (CPF, nomes, chaves de API) antes de o texto chegar a um modelo de IA e devolve os dados reais na resposta.",
+  "license": "MIT",
+  "author": "guhttps",
+  "homepage": "https://github.com/guhttps/veu/tree/main/js#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guhttps/veu.git",
+    "directory": "js"
+  },
+  "bugs": "https://github.com/guhttps/veu/issues",
+  "keywords": [
+    "pii",
+    "lgpd",
+    "anonimizacao",
+    "llm",
+    "openai",
+    "anthropic",
+    "privacy",
+    "cpf",
+    "secrets",
+    "ai-sdk"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./fetch": {
+      "types": "./dist/integrations/fetch.d.ts",
+      "default": "./dist/integrations/fetch.js"
+    },
+    "./ai-sdk": {
+      "types": "./dist/integrations/ai-sdk.d.ts",
+      "default": "./dist/integrations/ai-sdk.js"
+    },
+    "./navegador": "./dist/veu.global.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dados": "node scripts/gerar-dados.mjs",
+    "pretest": "node scripts/gerar-dados.mjs",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "node scripts/gerar-dados.mjs && tsc -p tsconfig.json --noEmit",
+    "build": "node scripts/gerar-dados.mjs && tsc -p tsconfig.build.json && node scripts/empacotar.mjs",
+    "conformidade": "python ../scripts/gerar_conformidade.py",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "0.135.0",
+    "@types/node": "24.19.2",
+    "ai": "7.0.145",
+    "esbuild": "0.28.2",
+    "openai": "7.38.0",
+    "typescript": "7.0.2"
+  }
+}

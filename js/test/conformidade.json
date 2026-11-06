@@ -1,0 +1,4441 @@
+{
+ "casos": [
+  {
+   "texto": "Oi, aqui é a Maria das Graças Souza, CPF 529.982.247-25, moro na Rua das Flores, 123.",
+   "entidades": [
+    [
+     "PESSOA",
+     13,
+     35,
+     0.9
+    ],
+    [
+     "CPF",
+     41,
+     55,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     65,
+     84,
+     0.9
+    ]
+   ],
+   "anonimizado": "Oi, aqui é a [PESSOA_1], CPF [CPF_1], moro na [ENDERECO_1].",
+   "mascarado": "Oi, aqui é a M*** das G*** S***, CPF ***.982.247-**, moro na *** *** ******, *23."
+  },
+  {
+   "texto": "falei com joao da silva ontem, ele pediu o boleto",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     23,
+     0.65
+    ]
+   ],
+   "anonimizado": "falei com [PESSOA_1] ontem, ele pediu o boleto",
+   "mascarado": "falei com j*** da s*** ontem, ele pediu o boleto"
+  },
+  {
+   "texto": "Prezado Sr. Ferreira, seu processo 0001234-55.2023.8.26.0100 foi atualizado.",
+   "entidades": [
+    [
+     "PESSOA",
+     12,
+     20,
+     0.6
+    ],
+    [
+     "PROCESSO",
+     35,
+     60,
+     0.75
+    ]
+   ],
+   "anonimizado": "Prezado Sr. [PESSOA_1], seu processo [PROCESSO_1] foi atualizado.",
+   "mascarado": "Prezado Sr. F***, seu processo *******-**.****.*.**.**00 foi atualizado."
+  },
+  {
+   "texto": "CNPJ 12.ABC.345/01DE-35 e CNPJ 11.222.333/0001-81",
+   "entidades": [
+    [
+     "CNPJ",
+     5,
+     23,
+     1.0
+    ],
+    [
+     "CNPJ",
+     31,
+     49,
+     1.0
+    ]
+   ],
+   "anonimizado": "CNPJ [CNPJ_1] e CNPJ [CNPJ_2]",
+   "mascarado": "CNPJ **.***.***/****-35 e CNPJ **.***.***/****-81"
+  },
+  {
+   "texto": "Pix: 123e4567-e89b-12d3-a456-426614174000 e IP 192.168.0.10, IPv6 2001:db8::1",
+   "entidades": [
+    [
+     "CHAVE_PIX",
+     5,
+     41,
+     0.9
+    ],
+    [
+     "IP",
+     47,
+     59,
+     0.9
+    ],
+    [
+     "IP",
+     66,
+     77,
+     0.9
+    ]
+   ],
+   "anonimizado": "Pix: [CHAVE_PIX_1] e IP [IP_1], IPv6 [IP_2]",
+   "mascarado": "Pix: ********-****-****-****-**********00 e IP ***.***.*.10, IPv6 ****:**8::1"
+  },
+  {
+   "texto": "Nascida em 12 de março de 1990, RG 12.345.678-9 SSP/SP, CNH 02650306461",
+   "entidades": [
+    [
+     "DATA_NASCIMENTO",
+     11,
+     30,
+     0.85
+    ],
+    [
+     "RG",
+     35,
+     47,
+     0.95
+    ],
+    [
+     "CNH",
+     60,
+     71,
+     0.97
+    ]
+   ],
+   "anonimizado": "Nascida em [DATA_NASCIMENTO_1], RG [RG_1] SSP/SP, CNH [CNH_1]",
+   "mascarado": "Nascida em ** ** ***** ** **90, RG **.***.**8-9 SSP/SP, CNH *********61"
+  },
+  {
+   "texto": "placa ABC1D23 e RENAVAM 00639884962, cartão 4111 1111 1111 1111",
+   "entidades": [
+    [
+     "PLACA",
+     6,
+     13,
+     0.95
+    ],
+    [
+     "RENAVAM",
+     24,
+     35,
+     0.97
+    ],
+    [
+     "CARTAO_CREDITO",
+     44,
+     63,
+     0.95
+    ]
+   ],
+   "anonimizado": "placa [PLACA_1] e RENAVAM [RENAVAM_1], cartão [CARTAO_CREDITO_1]",
+   "mascarado": "placa *****23 e RENAVAM *********62, cartão **** **** **** **11"
+  },
+  {
+   "texto": "IBAN DE89 3704 0044 0532 0130 00 e telefone +1 415 555 2671",
+   "entidades": [
+    [
+     "IBAN",
+     5,
+     32,
+     1.0
+    ],
+    [
+     "TELEFONE",
+     44,
+     59,
+     0.95
+    ]
+   ],
+   "anonimizado": "IBAN [IBAN_1] e telefone [TELEFONE_1]",
+   "mascarado": "IBAN **** **** **** **** **** 00 e telefone +* *** *** **71"
+  },
+  {
+   "texto": "Senha: deve conter 8 caracteres. password = getpass() e DB_PASSWORD=hunter2!",
+   "entidades": [
+    [
+     "SENHA",
+     68,
+     76,
+     0.85
+    ]
+   ],
+   "anonimizado": "Senha: deve conter 8 caracteres. password = getpass() e DB_PASSWORD=[SENHA_1]",
+   "mascarado": "Senha: deve conter 8 caracteres. password = getpass() e DB_PASSWORD=********"
+  },
+  {
+   "texto": "postgres://admin:S3nh4Forte@db.interna.example:5432/app.",
+   "entidades": [
+    [
+     "URL_CONEXAO",
+     0,
+     55,
+     0.95
+    ]
+   ],
+   "anonimizado": "[URL_CONEXAO_1].",
+   "mascarado": "postgres://****."
+  },
+  {
+   "texto": "Av. Paulista, 1578, apto 42, bloco B, São Paulo",
+   "entidades": [
+    [
+     "ENDERECO",
+     0,
+     36,
+     0.9
+    ]
+   ],
+   "anonimizado": "[ENDERECO_1], São Paulo",
+   "mascarado": "**. ********, ****, **** **, ****o B, São Paulo"
+  },
+  {
+   "texto": "Encontro na Praça da Sé às 10h com a Dra. Ana Lúcia",
+   "entidades": [
+    [
+     "PESSOA",
+     42,
+     51,
+     0.9
+    ]
+   ],
+   "anonimizado": "Encontro na Praça da Sé às 10h com a Dra. [PESSOA_1]",
+   "mascarado": "Encontro na Praça da Sé às 10h com a Dra. A*** L***"
+  },
+  {
+   "texto": "O Banco do Brasil e a Construtora Horizonte Ltda assinaram com João Pereira",
+   "entidades": [
+    [
+     "PESSOA",
+     63,
+     75,
+     0.9
+    ]
+   ],
+   "anonimizado": "O Banco do Brasil e a Construtora Horizonte Ltda assinaram com [PESSOA_1]",
+   "mascarado": "O Banco do Brasil e a Construtora Horizonte Ltda assinaram com J*** P***"
+  },
+  {
+   "texto": "Março foi bom para o Marco e para a Rosa.",
+   "entidades": [
+    [
+     "PESSOA",
+     21,
+     26,
+     0.6
+    ]
+   ],
+   "anonimizado": "Março foi bom para o [PESSOA_1] e para a Rosa.",
+   "mascarado": "Março foi bom para o M*** e para a Rosa."
+  },
+  {
+   "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
+   "entidades": [
+    [
+     "PESSOA",
+     16,
+     31,
+     0.9
+    ],
+    [
+     "CPF",
+     44,
+     58,
+     1.0
+    ]
+   ],
+   "anonimizado": "Olá, meu nome é [PESSOA_1] e meu CPF é [CPF_1]. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
+   "mascarado": "Olá, meu nome é S*** P*** e meu CPF é ***.287.921-**. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou."
+  },
+  {
+   "texto": "Cliente Américo Vieira ligou do número (38) 2810-0339 reclamando da cobrança de R$ 502,99. Protocolo 202553794352.",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     22,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     39,
+     53,
+     0.95
+    ]
+   ],
+   "anonimizado": "Cliente [PESSOA_1] ligou do número [TELEFONE_1] reclamando da cobrança de R$ 502,99. Protocolo 202553794352.",
+   "mascarado": "Cliente A*** V*** ligou do número (**) ****-**39 reclamando da cobrança de R$ 502,99. Protocolo 202553794352."
+  },
+  {
+   "texto": "Bom dia! Aqui é a Rose, quero trocar o e-mail da minha conta para francisco.sampaio@empresa.example.",
+   "entidades": [
+    [
+     "PESSOA",
+     18,
+     22,
+     0.6
+    ],
+    [
+     "EMAIL",
+     66,
+     99,
+     1.0
+    ]
+   ],
+   "anonimizado": "Bom dia! Aqui é a [PESSOA_1], quero trocar o e-mail da minha conta para [EMAIL_1].",
+   "mascarado": "Bom dia! Aqui é a R***, quero trocar o e-mail da minha conta para f***@empresa.example."
+  },
+  {
+   "texto": "Pode enviar o boleto para adalberto.rossi@example.net? Meu CPF é 68145384079 e o telefone +55 19 96614-6100.",
+   "entidades": [
+    [
+     "EMAIL",
+     26,
+     53,
+     0.95
+    ],
+    [
+     "CPF",
+     65,
+     76,
+     0.95
+    ],
+    [
+     "TELEFONE",
+     90,
+     107,
+     0.95
+    ]
+   ],
+   "anonimizado": "Pode enviar o boleto para [EMAIL_1]? Meu CPF é [CPF_1] e o telefone [TELEFONE_1].",
+   "mascarado": "Pode enviar o boleto para a***@example.net? Meu CPF é ***453840** e o telefone +** ** *****-**00."
+  },
+  {
+   "texto": "Prezado(a) Gilson Arruda, seu pedido 7895078 com smartphone foi enviado para Alameda Raquel Barreto, 2320, CEP 55145-061.",
+   "entidades": [
+    [
+     "PESSOA",
+     11,
+     24,
+     0.9
+    ],
+    [
+     "ENDERECO",
+     77,
+     105,
+     0.9
+    ],
+    [
+     "CEP",
+     111,
+     120,
+     0.95
+    ]
+   ],
+   "anonimizado": "Prezado(a) [PESSOA_1], seu pedido 7895078 com smartphone foi enviado para [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Prezado(a) G*** A***, seu pedido 7895078 com smartphone foi enviado para ******* ****** *******, **20, CEP *****-*61."
+  },
+  {
+   "texto": "Atendimento 202443069630: a cliente informou que mora na Rua Arlete Prado, 3265 e prefere contato pelo WhatsApp 89 97266 1663.",
+   "entidades": [
+    [
+     "ENDERECO",
+     57,
+     79,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     112,
+     125,
+     0.95
+    ]
+   ],
+   "anonimizado": "Atendimento 202443069630: a cliente informou que mora na [ENDERECO_1] e prefere contato pelo WhatsApp [TELEFONE_1].",
+   "mascarado": "Atendimento 202443069630: a cliente informou que mora na *** ****** *****, **65 e prefere contato pelo WhatsApp ** ***** **63."
+  },
+  {
+   "texto": "Solicito o cancelamento do cartão 4494 0326 9910 2370. Titular: Ademir Yamamoto.",
+   "entidades": [
+    [
+     "CARTAO_CREDITO",
+     34,
+     53,
+     0.95
+    ],
+    [
+     "PESSOA",
+     64,
+     79,
+     0.9
+    ]
+   ],
+   "anonimizado": "Solicito o cancelamento do cartão [CARTAO_CREDITO_1]. Titular: [PESSOA_1].",
+   "mascarado": "Solicito o cancelamento do cartão **** **** **** **70. Titular: A*** Y***."
+  },
+  {
+   "texto": "oi luiz tudo bem? me passa sua chave pix: 12ca3f70-62dc-48d6-8bdb-f090d48dd9f3",
+   "entidades": [
+    [
+     "PESSOA",
+     3,
+     7,
+     0.6
+    ],
+    [
+     "CHAVE_PIX",
+     42,
+     78,
+     0.9
+    ]
+   ],
+   "anonimizado": "oi [PESSOA_1] tudo bem? me passa sua chave pix: [CHAVE_PIX_1]",
+   "mascarado": "oi l*** tudo bem? me passa sua chave pix: ********-****-****-****-**********f3"
+  },
+  {
+   "texto": "falei com bernardo bezerra ontem, ela pediu pra ligar no (53) 96955-9729",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     26,
+     0.65
+    ],
+    [
+     "TELEFONE",
+     57,
+     72,
+     0.95
+    ]
+   ],
+   "anonimizado": "falei com [PESSOA_1] ontem, ela pediu pra ligar no [TELEFONE_1]",
+   "mascarado": "falei com b*** b*** ontem, ela pediu pra ligar no (**) *****-**29"
+  },
+  {
+   "texto": "bom dia teresa! o cpf dela é 92622439369, confere?",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     14,
+     0.6
+    ],
+    [
+     "CPF",
+     29,
+     40,
+     0.95
+    ]
+   ],
+   "anonimizado": "bom dia [PESSOA_1]! o cpf dela é [CPF_1], confere?",
+   "mascarado": "bom dia t***! o cpf dela é ***224393**, confere?"
+  },
+  {
+   "texto": "Paciente Filipe Frederico Klein, nascido em 22/02/1994, cartão SUS 111 0843 6469 0009, deu entrada no Escola Nova Era às 16h15.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     31,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     44,
+     54,
+     0.85
+    ],
+    [
+     "CNS",
+     67,
+     85,
+     0.97
+    ]
+   ],
+   "anonimizado": "Paciente [PESSOA_1], nascido em [DATA_NASCIMENTO_1], cartão SUS [CNS_1], deu entrada no Escola Nova Era às 16h15.",
+   "mascarado": "Paciente F*** F*** K***, nascido em **/**/**94, cartão SUS *** **** **** **09, deu entrada no Escola Nova Era às 16h15."
+  },
+  {
+   "texto": "Prontuário: Benedita Tamires Tavares, data de nascimento: 10 de fevereiro de 1995. Responsável: Juçara Ferraz, telefone (19) 98673-0024.",
+   "entidades": [
+    [
+     "PESSOA",
+     12,
+     36,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     58,
+     81,
+     0.85
+    ],
+    [
+     "PESSOA",
+     96,
+     109,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     120,
+     135,
+     0.95
+    ]
+   ],
+   "anonimizado": "Prontuário: [PESSOA_1], data de nascimento: [DATA_NASCIMENTO_1]. Responsável: [PESSOA_2], telefone [TELEFONE_1].",
+   "mascarado": "Prontuário: B*** T*** T***, data de nascimento: ** ** ********* ** **95. Responsável: J*** F***, telefone (**) *****-**24."
+  },
+  {
+   "texto": "Dra. Elisvaldo Santos solicitou exames para o paciente Diogo Edilene Pinheiro (CNS 190075400910000).",
+   "entidades": [
+    [
+     "PESSOA",
+     5,
+     21,
+     0.7
+    ],
+    [
+     "PESSOA",
+     55,
+     77,
+     0.9
+    ],
+    [
+     "CNS",
+     83,
+     98,
+     0.97
+    ]
+   ],
+   "anonimizado": "Dra. [PESSOA_1] solicitou exames para o paciente [PESSOA_2] (CNS [CNS_1]).",
+   "mascarado": "Dra. E*** S*** solicitou exames para o paciente D*** E*** P*** (CNS *************00)."
+  },
+  {
+   "texto": "Processo nº 7145211-85.2019.8.12.0255. Autor: Sueli Barros, CPF 607.909.669-21, residente na Rua 3 de Março, 186. Réu: Farmácia Popular do Centro, CNPJ 65.697.778/0001-47.",
+   "entidades": [
+    [
+     "PROCESSO",
+     12,
+     37,
+     1.0
+    ],
+    [
+     "PESSOA",
+     46,
+     58,
+     0.9
+    ],
+    [
+     "CPF",
+     64,
+     78,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     93,
+     112,
+     0.9
+    ],
+    [
+     "CNPJ",
+     152,
+     170,
+     1.0
+    ]
+   ],
+   "anonimizado": "Processo nº [PROCESSO_1]. Autor: [PESSOA_1], CPF [CPF_1], residente na [ENDERECO_1]. Réu: Farmácia Popular do Centro, CNPJ [CNPJ_1].",
+   "mascarado": "Processo nº *******-**.****.*.**.**55. Autor: S*** B***, CPF ***.909.669-**, residente na *** * ** *****, *86. Réu: Farmácia Popular do Centro, CNPJ **.***.***/****-47."
+  },
+  {
+   "texto": "William Sato, portador do RG 49.170.317-9 e inscrito no CPF sob o nº 740.542.938-67, vem respeitosamente requerer a revisão.",
+   "entidades": [
+    [
+     "PESSOA",
+     0,
+     12,
+     0.9
+    ],
+    [
+     "RG",
+     29,
+     41,
+     0.95
+    ],
+    [
+     "CPF",
+     69,
+     83,
+     1.0
+    ]
+   ],
+   "anonimizado": "[PESSOA_1], portador do RG [RG_1] e inscrito no CPF sob o nº [CPF_1], vem respeitosamente requerer a revisão.",
+   "mascarado": "W*** S***, portador do RG **.***.**7-9 e inscrito no CPF sob o nº ***.542.938-**, vem respeitosamente requerer a revisão."
+  },
+  {
+   "texto": "Nos autos do processo 2577356-56.2026.5.07.6336, a testemunha Dandara Vasconcelos declarou ter visto o veículo de placa GEE-7501.",
+   "entidades": [
+    [
+     "PROCESSO",
+     22,
+     47,
+     1.0
+    ],
+    [
+     "PESSOA",
+     62,
+     81,
+     0.7
+    ],
+    [
+     "PLACA",
+     120,
+     128,
+     0.95
+    ]
+   ],
+   "anonimizado": "Nos autos do processo [PROCESSO_1], a testemunha [PESSOA_1] declarou ter visto o veículo de placa [PLACA_1].",
+   "mascarado": "Nos autos do processo *******-**.****.*.**.**36, a testemunha D*** V*** declarou ter visto o veículo de placa ***-**01."
+  },
+  {
+   "texto": "Admissão: Érico Bueno, CPF 774.366.875-49, PIS 97510490495, título de eleitor 9026 7304 0817. Salário de R$ 2318,06.",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     21,
+     0.9
+    ],
+    [
+     "CPF",
+     27,
+     41,
+     1.0
+    ],
+    [
+     "PIS",
+     47,
+     58,
+     0.97
+    ],
+    [
+     "TITULO_ELEITOR",
+     78,
+     92,
+     0.95
+    ]
+   ],
+   "anonimizado": "Admissão: [PESSOA_1], CPF [CPF_1], PIS [PIS_1], título de eleitor [TITULO_ELEITOR_1]. Salário de R$ 2318,06.",
+   "mascarado": "Admissão: É*** B***, CPF ***.366.875-**, PIS *********95, título de eleitor **** **** **17. Salário de R$ 2318,06."
+  },
+  {
+   "texto": "Dados bancários do colaborador Cristina Milena Barros: agência 4266, conta 42078023-4. Data de nascimento: 01/06/1988.",
+   "entidades": [
+    [
+     "PESSOA",
+     31,
+     53,
+     0.9
+    ],
+    [
+     "CONTA_BANCARIA",
+     63,
+     67,
+     0.8
+    ],
+    [
+     "CONTA_BANCARIA",
+     75,
+     85,
+     0.85
+    ],
+    [
+     "DATA_NASCIMENTO",
+     107,
+     117,
+     0.85
+    ]
+   ],
+   "anonimizado": "Dados bancários do colaborador [PESSOA_1]: agência [CONTA_BANCARIA_1], conta [CONTA_BANCARIA_2]. Data de nascimento: [DATA_NASCIMENTO_1].",
+   "mascarado": "Dados bancários do colaborador C*** M*** B***: agência ****, conta *******3-4. Data de nascimento: **/**/**88."
+  },
+  {
+   "texto": "Veículo placa QQT-2631, RENAVAM 66277306895, proprietário Vera Marinho Porto, CNH 31133614886.",
+   "entidades": [
+    [
+     "PLACA",
+     14,
+     22,
+     0.95
+    ],
+    [
+     "RENAVAM",
+     32,
+     43,
+     0.97
+    ],
+    [
+     "PESSOA",
+     58,
+     76,
+     0.9
+    ],
+    [
+     "CNH",
+     82,
+     93,
+     0.97
+    ]
+   ],
+   "anonimizado": "Veículo placa [PLACA_1], RENAVAM [RENAVAM_1], proprietário [PESSOA_1], CNH [CNH_1].",
+   "mascarado": "Veículo placa ***-**31, RENAVAM *********95, proprietário V*** M*** P***, CNH *********86."
+  },
+  {
+   "texto": "Pagamento via Pix para a chave 52056395-eea9-4b6f-8a71-067bfa0c31f6 confirmado em 09/12/2024. Valor: R$ 5719,64.",
+   "entidades": [
+    [
+     "CHAVE_PIX",
+     31,
+     67,
+     0.9
+    ]
+   ],
+   "anonimizado": "Pagamento via Pix para a chave [CHAVE_PIX_1] confirmado em 09/12/2024. Valor: R$ 5719,64.",
+   "mascarado": "Pagamento via Pix para a chave ********-****-****-****-**********f6 confirmado em 09/12/2024. Valor: R$ 5719,64."
+  },
+  {
+   "texto": "Transferência de R$ 1366,04 para Marcílio Soares, CPF 647.031.602-69, conta 2728877-9.",
+   "entidades": [
+    [
+     "PESSOA",
+     33,
+     48,
+     0.9
+    ],
+    [
+     "CPF",
+     54,
+     68,
+     1.0
+    ],
+    [
+     "CONTA_BANCARIA",
+     76,
+     85,
+     0.85
+    ]
+   ],
+   "anonimizado": "Transferência de R$ 1366,04 para [PESSOA_1], CPF [CPF_1], conta [CONTA_BANCARIA_1].",
+   "mascarado": "Transferência de R$ 1366,04 para M*** S***, CPF ***.031.602-**, conta ******7-9."
+  },
+  {
+   "texto": "Login suspeito do usuário carlos.takahashi@example.net a partir do IP 2001:db8:5425:8355::4fcc às 19h15 do dia 10/03/2026.",
+   "entidades": [
+    [
+     "EMAIL",
+     26,
+     54,
+     0.95
+    ],
+    [
+     "IP",
+     70,
+     94,
+     0.9
+    ]
+   ],
+   "anonimizado": "Login suspeito do usuário [EMAIL_1] a partir do IP [IP_1] às 19h15 do dia 10/03/2026.",
+   "mascarado": "Login suspeito do usuário c***@example.net a partir do IP ****:***:****:****::**cc às 19h15 do dia 10/03/2026."
+  },
+  {
+   "texto": "Erro ao processar o pedido 9623161: cliente Gabrielle Nascimento (CPF 81809608031), versão 9.12.8.",
+   "entidades": [
+    [
+     "PESSOA",
+     44,
+     64,
+     0.9
+    ],
+    [
+     "CPF",
+     70,
+     81,
+     0.95
+    ]
+   ],
+   "anonimizado": "Erro ao processar o pedido 9623161: cliente [PESSOA_1] (CPF [CPF_1]), versão 9.12.8.",
+   "mascarado": "Erro ao processar o pedido 9623161: cliente G*** N*** (CPF ***096080**), versão 9.12.8."
+  },
+  {
+   "texto": "Nota fiscal emitida para Mercado Bom Preço, CNPJ V5.A4Y.TQP/HFUV-57, com sede na Rua 14 de Novembro, 1076, casa 7.",
+   "entidades": [
+    [
+     "CNPJ",
+     49,
+     67,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     81,
+     113,
+     0.9
+    ]
+   ],
+   "anonimizado": "Nota fiscal emitida para Mercado Bom Preço, CNPJ [CNPJ_1], com sede na [ENDERECO_1].",
+   "mascarado": "Nota fiscal emitida para Mercado Bom Preço, CNPJ **.***.***/****-57, com sede na *** ** ** ********, ****, ***a 7."
+  },
+  {
+   "texto": "Locador: Albino Antunes, CPF 323.045.539-82. Locatário: Clarice Rios, RG 189438606. Imóvel na Avenida Gerson Gallo, 2188, CEP 93899-235.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     23,
+     0.9
+    ],
+    [
+     "CPF",
+     29,
+     43,
+     1.0
+    ],
+    [
+     "PESSOA",
+     56,
+     68,
+     0.9
+    ],
+    [
+     "RG",
+     73,
+     82,
+     0.85
+    ],
+    [
+     "ENDERECO",
+     94,
+     120,
+     0.9
+    ],
+    [
+     "CEP",
+     126,
+     135,
+     0.95
+    ]
+   ],
+   "anonimizado": "Locador: [PESSOA_1], CPF [CPF_1]. Locatário: [PESSOA_2], RG [RG_1]. Imóvel na [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Locador: A*** A***, CPF ***.045.539-**. Locatário: C*** R***, RG *******06. Imóvel na ******* ****** *****, **88, CEP *****-*35."
+  },
+  {
+   "texto": "Reserva confirmada para Lourenço Bertolini, passaporte KG331232, voo para Recife em 09/07/2024.",
+   "entidades": [
+    [
+     "PESSOA",
+     24,
+     42,
+     0.9
+    ],
+    [
+     "PASSAPORTE",
+     55,
+     63,
+     0.9
+    ]
+   ],
+   "anonimizado": "Reserva confirmada para [PESSOA_1], passaporte [PASSAPORTE_1], voo para Recife em 09/07/2024.",
+   "mascarado": "Reserva confirmada para L*** B***, passaporte ******32, voo para Recife em 09/07/2024."
+  },
+  {
+   "texto": "De: Rayane Siqueira <dayane_faria@example.com>\nAssunto: Pedido 1621566\n\nOlá, segue meu endereço novo: Travessa Max Cabral, 2887, Salvador.\nAtt, Vera",
+   "entidades": [
+    [
+     "PESSOA",
+     4,
+     19,
+     0.9
+    ],
+    [
+     "EMAIL",
+     21,
+     45,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     102,
+     127,
+     0.9
+    ],
+    [
+     "PESSOA",
+     144,
+     148,
+     0.8
+    ]
+   ],
+   "anonimizado": "De: [PESSOA_1] <[EMAIL_1]>\nAssunto: Pedido 1621566\n\nOlá, segue meu endereço novo: [ENDERECO_1], Salvador.\nAtt, [PESSOA_2]",
+   "mascarado": "De: R*** S*** <d***@example.com>\nAssunto: Pedido 1621566\n\nOlá, segue meu endereço novo: ******** *** ******, **87, Salvador.\nAtt, V***"
+  },
+  {
+   "texto": "Oi pessoal, o Fernando vai substituir a Benício na reunião de 16/02/2024. Qualquer coisa, liguem no (98) 99232-1322.",
+   "entidades": [
+    [
+     "PESSOA",
+     14,
+     22,
+     0.8
+    ],
+    [
+     "PESSOA",
+     40,
+     47,
+     0.6
+    ],
+    [
+     "TELEFONE",
+     100,
+     115,
+     0.85
+    ]
+   ],
+   "anonimizado": "Oi pessoal, o [PESSOA_1] vai substituir a [PESSOA_2] na reunião de 16/02/2024. Qualquer coisa, liguem no [TELEFONE_1].",
+   "mascarado": "Oi pessoal, o F*** vai substituir a B*** na reunião de 16/02/2024. Qualquer coisa, liguem no (**) *****-**22."
+  },
+  {
+   "texto": "CPF: 419.027.115-21; CNPJ: 67.685.639/0001-29; Tel.: (16) 97267-5563; E-mail: enricoborges@example.net; CEP: 26993-895",
+   "entidades": [
+    [
+     "CPF",
+     5,
+     19,
+     1.0
+    ],
+    [
+     "CNPJ",
+     27,
+     45,
+     1.0
+    ],
+    [
+     "TELEFONE",
+     53,
+     68,
+     0.95
+    ],
+    [
+     "EMAIL",
+     78,
+     102,
+     1.0
+    ],
+    [
+     "CEP",
+     109,
+     118,
+     0.95
+    ]
+   ],
+   "anonimizado": "CPF: [CPF_1]; CNPJ: [CNPJ_1]; Tel.: [TELEFONE_1]; E-mail: [EMAIL_1]; CEP: [CEP_1]",
+   "mascarado": "CPF: ***.027.115-**; CNPJ: **.***.***/****-29; Tel.: (**) *****-**63; E-mail: e***@example.net; CEP: *****-*95"
+  },
+  {
+   "texto": "NOME: JANDIRA DALVA NAKAMURA\nCPF: 262.585.626-20\nENDEREÇO: Avenida Benício Nowak, 1400, bloco C",
+   "entidades": [
+    [
+     "PESSOA",
+     6,
+     28,
+     0.9
+    ],
+    [
+     "CPF",
+     34,
+     48,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     59,
+     95,
+     0.9
+    ]
+   ],
+   "anonimizado": "NOME: [PESSOA_1]\nCPF: [CPF_1]\nENDEREÇO: [ENDERECO_1]",
+   "mascarado": "NOME: J*** D*** N***\nCPF: ***.585.626-**\nENDEREÇO: ******* ******* *****, ****, ****o C"
+  },
+  {
+   "texto": "Sra. Luzinete Ferrari, sua consulta foi remarcada para 02/04/2026 às 16h30.",
+   "entidades": [
+    [
+     "PESSOA",
+     5,
+     21,
+     0.7
+    ]
+   ],
+   "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 02/04/2026 às 16h30.",
+   "mascarado": "Sra. L*** F***, sua consulta foi remarcada para 02/04/2026 às 16h30."
+  },
+  {
+   "texto": "A colaboradora Kethelyn Romano Moura pediu férias a partir de 19/03/2024.",
+   "entidades": [
+    [
+     "PESSOA",
+     15,
+     36,
+     0.7
+    ]
+   ],
+   "anonimizado": "A colaboradora [PESSOA_1] pediu férias a partir de 19/03/2024.",
+   "mascarado": "A colaboradora K*** R*** M*** pediu férias a partir de 19/03/2024."
+  },
+  {
+   "texto": "O pedido 6546303 de cadeira gamer foi entregue em Belo Horizonte no dia 23/02/2027, às 7h00. Valor total: R$ 1780,94.",
+   "entidades": [],
+   "anonimizado": "O pedido 6546303 de cadeira gamer foi entregue em Belo Horizonte no dia 23/02/2027, às 7h00. Valor total: R$ 1780,94.",
+   "mascarado": "O pedido 6546303 de cadeira gamer foi entregue em Belo Horizonte no dia 23/02/2027, às 7h00. Valor total: R$ 1780,94."
+  },
+  {
+   "texto": "A Construtora Horizonte anunciou resultados do trimestre: receita de R$ 4214,56 e crescimento em Manaus.",
+   "entidades": [],
+   "anonimizado": "A Construtora Horizonte anunciou resultados do trimestre: receita de R$ 4214,56 e crescimento em Manaus.",
+   "mascarado": "A Construtora Horizonte anunciou resultados do trimestre: receita de R$ 4214,56 e crescimento em Manaus."
+  },
+  {
+   "texto": "Atualize para a versão 9.1.3. O protocolo de atendimento é 202660422474.",
+   "entidades": [],
+   "anonimizado": "Atualize para a versão 9.1.3. O protocolo de atendimento é 202660422474.",
+   "mascarado": "Atualize para a versão 9.1.3. O protocolo de atendimento é 202660422474."
+  },
+  {
+   "texto": "Reunião marcada para 01/02/2026 às 15h30 na sede da Clínica Vida Plena em Florianópolis.",
+   "entidades": [],
+   "anonimizado": "Reunião marcada para 01/02/2026 às 15h30 na sede da Clínica Vida Plena em Florianópolis.",
+   "mascarado": "Reunião marcada para 01/02/2026 às 15h30 na sede da Clínica Vida Plena em Florianópolis."
+  },
+  {
+   "texto": "O produto SKU-80842 está em promoção por R$ 8330,53 até 17/10/2024.",
+   "entidades": [],
+   "anonimizado": "O produto SKU-80842 está em promoção por R$ 8330,53 até 17/10/2024.",
+   "mascarado": "O produto SKU-80842 está em promoção por R$ 8330,53 até 17/10/2024."
+  },
+  {
+   "texto": "Rosa é a cor do ano, segundo a Escola Nova Era. Vitória do time em Recife!",
+   "entidades": [],
+   "anonimizado": "Rosa é a cor do ano, segundo a Escola Nova Era. Vitória do time em Recife!",
+   "mascarado": "Rosa é a cor do ano, segundo a Escola Nova Era. Vitória do time em Recife!"
+  },
+  {
+   "texto": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 9227664.",
+   "entidades": [],
+   "anonimizado": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 9227664.",
+   "mascarado": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 9227664."
+  },
+  {
+   "texto": "Avenida Paulista, Rua Augusta e Praça da Sé são pontos turísticos de São Paulo.",
+   "entidades": [],
+   "anonimizado": "Avenida Paulista, Rua Augusta e Praça da Sé são pontos turísticos de São Paulo.",
+   "mascarado": "Avenida Paulista, Rua Augusta e Praça da Sé são pontos turísticos de São Paulo."
+  },
+  {
+   "texto": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 766880.",
+   "entidades": [],
+   "anonimizado": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 766880.",
+   "mascarado": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 766880."
+  },
+  {
+   "texto": "Locador: Nicolas Queiroz, CPF 278.990.676-93. Locatário: Zacarias Moreira, RG 58.474.844-0. Imóvel na Rua 8 de Março, 1297, bloco C, CEP 70951-367.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     24,
+     0.9
+    ],
+    [
+     "CPF",
+     30,
+     44,
+     1.0
+    ],
+    [
+     "PESSOA",
+     57,
+     73,
+     0.9
+    ],
+    [
+     "RG",
+     78,
+     90,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     102,
+     131,
+     0.9
+    ],
+    [
+     "CEP",
+     137,
+     146,
+     0.95
+    ]
+   ],
+   "anonimizado": "Locador: [PESSOA_1], CPF [CPF_1]. Locatário: [PESSOA_2], RG [RG_1]. Imóvel na [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Locador: N*** Q***, CPF ***.990.676-**. Locatário: Z*** M***, RG **.***.**4-0. Imóvel na *** * ** *****, ****, ****o C, CEP *****-*67."
+  },
+  {
+   "texto": "Admissão: Andrea Santana, CPF 172.391.096-15, PIS 305.82157.26-0, título de eleitor 4965 8242 0892. Salário de R$ 7892,14.",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     24,
+     0.9
+    ],
+    [
+     "CPF",
+     30,
+     44,
+     1.0
+    ],
+    [
+     "PIS",
+     50,
+     64,
+     1.0
+    ],
+    [
+     "TITULO_ELEITOR",
+     84,
+     98,
+     0.95
+    ]
+   ],
+   "anonimizado": "Admissão: [PESSOA_1], CPF [CPF_1], PIS [PIS_1], título de eleitor [TITULO_ELEITOR_1]. Salário de R$ 7892,14.",
+   "mascarado": "Admissão: A*** S***, CPF ***.391.096-**, PIS ***.*****.*6-0, título de eleitor **** **** **92. Salário de R$ 7892,14."
+  },
+  {
+   "texto": "O pedido 5187484 de tênis de corrida foi entregue em Porto Alegre no dia 09/10/2025, às 15h15. Valor total: R$ 3119,31.",
+   "entidades": [],
+   "anonimizado": "O pedido 5187484 de tênis de corrida foi entregue em Porto Alegre no dia 09/10/2025, às 15h15. Valor total: R$ 3119,31.",
+   "mascarado": "O pedido 5187484 de tênis de corrida foi entregue em Porto Alegre no dia 09/10/2025, às 15h15. Valor total: R$ 3119,31."
+  },
+  {
+   "texto": "O pedido 3297961 de notebook foi entregue em São Paulo no dia 01/05/2026, às 20h00. Valor total: R$ 633,13.",
+   "entidades": [],
+   "anonimizado": "O pedido 3297961 de notebook foi entregue em São Paulo no dia 01/05/2026, às 20h00. Valor total: R$ 633,13.",
+   "mascarado": "O pedido 3297961 de notebook foi entregue em São Paulo no dia 01/05/2026, às 20h00. Valor total: R$ 633,13."
+  },
+  {
+   "texto": "Joyce Carlos da Fischer, portador do RG 57.753.557-2 e inscrito no CPF sob o nº 117.937.646-38, vem respeitosamente requerer a revisão.",
+   "entidades": [
+    [
+     "PESSOA",
+     0,
+     23,
+     0.9
+    ],
+    [
+     "RG",
+     40,
+     52,
+     0.95
+    ],
+    [
+     "CPF",
+     80,
+     94,
+     1.0
+    ]
+   ],
+   "anonimizado": "[PESSOA_1], portador do RG [RG_1] e inscrito no CPF sob o nº [CPF_1], vem respeitosamente requerer a revisão.",
+   "mascarado": "J*** C*** da F***, portador do RG **.***.**7-2 e inscrito no CPF sob o nº ***.937.646-**, vem respeitosamente requerer a revisão."
+  },
+  {
+   "texto": "bom dia milena! o cpf dela é 29548265923, confere?",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     14,
+     0.6
+    ],
+    [
+     "CPF",
+     29,
+     40,
+     0.95
+    ]
+   ],
+   "anonimizado": "bom dia [PESSOA_1]! o cpf dela é [CPF_1], confere?",
+   "mascarado": "bom dia m***! o cpf dela é ***482659**, confere?"
+  },
+  {
+   "texto": "Solicito o cancelamento do cartão 5518 1699 7740 1436. Titular: Caetano Ribeiro Hayashi.",
+   "entidades": [
+    [
+     "CARTAO_CREDITO",
+     34,
+     53,
+     0.95
+    ],
+    [
+     "PESSOA",
+     64,
+     87,
+     0.9
+    ]
+   ],
+   "anonimizado": "Solicito o cancelamento do cartão [CARTAO_CREDITO_1]. Titular: [PESSOA_1].",
+   "mascarado": "Solicito o cancelamento do cartão **** **** **** **36. Titular: C*** R*** H***."
+  },
+  {
+   "texto": "Transferência de R$ 4645,18 para Mateus Romano, CPF 551.579.947-02, conta 7536831-5.",
+   "entidades": [
+    [
+     "PESSOA",
+     33,
+     46,
+     0.9
+    ],
+    [
+     "CPF",
+     52,
+     66,
+     1.0
+    ],
+    [
+     "CONTA_BANCARIA",
+     74,
+     83,
+     0.85
+    ]
+   ],
+   "anonimizado": "Transferência de R$ 4645,18 para [PESSOA_1], CPF [CPF_1], conta [CONTA_BANCARIA_1].",
+   "mascarado": "Transferência de R$ 4645,18 para M*** R***, CPF ***.579.947-**, conta ******1-5."
+  },
+  {
+   "texto": "Nota fiscal emitida para Hospital Santa Luzia, CNPJ NP.OCN.OY9/BB5T-15, com sede na Travessa Alberto Figueiredo, 2113, bloco A.",
+   "entidades": [
+    [
+     "CNPJ",
+     52,
+     70,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     84,
+     126,
+     0.9
+    ]
+   ],
+   "anonimizado": "Nota fiscal emitida para Hospital Santa Luzia, CNPJ [CNPJ_1], com sede na [ENDERECO_1].",
+   "mascarado": "Nota fiscal emitida para Hospital Santa Luzia, CNPJ **.***.***/****-15, com sede na ******** ******* **********, ****, ****o A."
+  },
+  {
+   "texto": "Oi pessoal, o Arthur vai substituir a Leonel na reunião de 26/09/2024. Qualquer coisa, liguem no (28) 98102-1633.",
+   "entidades": [
+    [
+     "PESSOA",
+     14,
+     20,
+     0.8
+    ],
+    [
+     "PESSOA",
+     38,
+     44,
+     0.6
+    ],
+    [
+     "TELEFONE",
+     97,
+     112,
+     0.85
+    ]
+   ],
+   "anonimizado": "Oi pessoal, o [PESSOA_1] vai substituir a [PESSOA_2] na reunião de 26/09/2024. Qualquer coisa, liguem no [TELEFONE_1].",
+   "mascarado": "Oi pessoal, o A*** vai substituir a L*** na reunião de 26/09/2024. Qualquer coisa, liguem no (**) *****-**33."
+  },
+  {
+   "texto": "A colaboradora Kleber Santana Maia pediu férias a partir de 25/08/2027.",
+   "entidades": [
+    [
+     "PESSOA",
+     15,
+     34,
+     0.7
+    ]
+   ],
+   "anonimizado": "A colaboradora [PESSOA_1] pediu férias a partir de 25/08/2027.",
+   "mascarado": "A colaboradora K*** S*** M*** pediu férias a partir de 25/08/2027."
+  },
+  {
+   "texto": "Erro ao processar o pedido 5677571: cliente Douglas Ribeiro (CPF 78190650602), versão 2.14.8.",
+   "entidades": [
+    [
+     "PESSOA",
+     44,
+     59,
+     0.9
+    ],
+    [
+     "CPF",
+     65,
+     76,
+     0.95
+    ]
+   ],
+   "anonimizado": "Erro ao processar o pedido 5677571: cliente [PESSOA_1] (CPF [CPF_1]), versão 2.14.8.",
+   "mascarado": "Erro ao processar o pedido 5677571: cliente D*** R*** (CPF ***906506**), versão 2.14.8."
+  },
+  {
+   "texto": "Cliente Mayara Bueno Novaes ligou do número (38) 99253-6684 reclamando da cobrança de R$ 4499,07. Protocolo 202551398733.",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     27,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     44,
+     59,
+     0.95
+    ]
+   ],
+   "anonimizado": "Cliente [PESSOA_1] ligou do número [TELEFONE_1] reclamando da cobrança de R$ 4499,07. Protocolo 202551398733.",
+   "mascarado": "Cliente M*** B*** N*** ligou do número (**) *****-**84 reclamando da cobrança de R$ 4499,07. Protocolo 202551398733."
+  },
+  {
+   "texto": "oi leila tudo bem? me passa sua chave pix: eb736da1-c6a3-4d8b-a7cf-d9eea5e209d6",
+   "entidades": [
+    [
+     "PESSOA",
+     3,
+     8,
+     0.6
+    ],
+    [
+     "CHAVE_PIX",
+     43,
+     79,
+     0.9
+    ]
+   ],
+   "anonimizado": "oi [PESSOA_1] tudo bem? me passa sua chave pix: [CHAVE_PIX_1]",
+   "mascarado": "oi l*** tudo bem? me passa sua chave pix: ********-****-****-****-**********d6"
+  },
+  {
+   "texto": "Prontuário: Severino Almeida, data de nascimento: 27 de fevereiro de 1983. Responsável: Lorenzo Brito, telefone (47) 97979-8372.",
+   "entidades": [
+    [
+     "PESSOA",
+     12,
+     28,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     50,
+     73,
+     0.85
+    ],
+    [
+     "PESSOA",
+     88,
+     101,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     112,
+     127,
+     0.95
+    ]
+   ],
+   "anonimizado": "Prontuário: [PESSOA_1], data de nascimento: [DATA_NASCIMENTO_1]. Responsável: [PESSOA_2], telefone [TELEFONE_1].",
+   "mascarado": "Prontuário: S*** A***, data de nascimento: ** ** ********* ** **83. Responsável: L*** B***, telefone (**) *****-**72."
+  },
+  {
+   "texto": "Dados bancários do colaborador Estela Suzuki: agência 6107, conta 47658173-6. Data de nascimento: 04/07/1959.",
+   "entidades": [
+    [
+     "PESSOA",
+     31,
+     44,
+     0.9
+    ],
+    [
+     "CONTA_BANCARIA",
+     54,
+     58,
+     0.8
+    ],
+    [
+     "CONTA_BANCARIA",
+     66,
+     76,
+     0.85
+    ],
+    [
+     "DATA_NASCIMENTO",
+     98,
+     108,
+     0.85
+    ]
+   ],
+   "anonimizado": "Dados bancários do colaborador [PESSOA_1]: agência [CONTA_BANCARIA_1], conta [CONTA_BANCARIA_2]. Data de nascimento: [DATA_NASCIMENTO_1].",
+   "mascarado": "Dados bancários do colaborador E*** S***: agência ****, conta *******3-6. Data de nascimento: **/**/**59."
+  },
+  {
+   "texto": "falei com nelson santos ontem, ela pediu pra ligar no 18 97075 7369",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     23,
+     0.65
+    ],
+    [
+     "TELEFONE",
+     54,
+     67,
+     0.95
+    ]
+   ],
+   "anonimizado": "falei com [PESSOA_1] ontem, ela pediu pra ligar no [TELEFONE_1]",
+   "mascarado": "falei com n*** s*** ontem, ela pediu pra ligar no ** ***** **69"
+  },
+  {
+   "texto": "Paciente Eloá Yamamoto, nascido em 25/12/1952, cartão SUS 121 5498 1771 0003, deu entrada no Farmácia Popular do Centro às 7h15.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     22,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     35,
+     45,
+     0.85
+    ],
+    [
+     "CNS",
+     58,
+     76,
+     0.97
+    ]
+   ],
+   "anonimizado": "Paciente [PESSOA_1], nascido em [DATA_NASCIMENTO_1], cartão SUS [CNS_1], deu entrada no Farmácia Popular do Centro às 7h15.",
+   "mascarado": "Paciente E*** Y***, nascido em **/**/**52, cartão SUS *** **** **** **03, deu entrada no Farmácia Popular do Centro às 7h15."
+  },
+  {
+   "texto": "De: Cássia Khoury <rosangela.fernandes@empresa.example>\nAssunto: Pedido 2653275\n\nOlá, segue meu endereço novo: Travessa Lourenço Lopes, 1661, casa 8, Recife.\nAtt, Edinaldo",
+   "entidades": [
+    [
+     "PESSOA",
+     4,
+     17,
+     0.9
+    ],
+    [
+     "EMAIL",
+     19,
+     54,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     111,
+     148,
+     0.9
+    ],
+    [
+     "PESSOA",
+     163,
+     171,
+     0.8
+    ]
+   ],
+   "anonimizado": "De: [PESSOA_1] <[EMAIL_1]>\nAssunto: Pedido 2653275\n\nOlá, segue meu endereço novo: [ENDERECO_1], Recife.\nAtt, [PESSOA_2]",
+   "mascarado": "De: C*** K*** <r***@empresa.example>\nAssunto: Pedido 2653275\n\nOlá, segue meu endereço novo: ******** ******** *****, ****, ***a 8, Recife.\nAtt, E***"
+  },
+  {
+   "texto": "Solicito o cancelamento do cartão 5717 0673 4917 0391. Titular: Kauane Fontana.",
+   "entidades": [
+    [
+     "CARTAO_CREDITO",
+     34,
+     53,
+     0.95
+    ],
+    [
+     "PESSOA",
+     64,
+     78,
+     0.9
+    ]
+   ],
+   "anonimizado": "Solicito o cancelamento do cartão [CARTAO_CREDITO_1]. Titular: [PESSOA_1].",
+   "mascarado": "Solicito o cancelamento do cartão **** **** **** **91. Titular: K*** F***."
+  },
+  {
+   "texto": "Locador: Laura Suzuki Moraes, CPF 143.361.544-49. Locatário: Sophia Maciel Pimentel, RG 29.122.236-0. Imóvel na Rua Charles Fontes, 133, apto 74, CEP 66823-267.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     28,
+     0.9
+    ],
+    [
+     "CPF",
+     34,
+     48,
+     1.0
+    ],
+    [
+     "PESSOA",
+     61,
+     83,
+     0.9
+    ],
+    [
+     "RG",
+     88,
+     100,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     112,
+     144,
+     0.9
+    ],
+    [
+     "CEP",
+     150,
+     159,
+     0.95
+    ]
+   ],
+   "anonimizado": "Locador: [PESSOA_1], CPF [CPF_1]. Locatário: [PESSOA_2], RG [RG_1]. Imóvel na [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Locador: L*** S*** M***, CPF ***.361.544-**. Locatário: S*** M*** P***, RG **.***.**6-0. Imóvel na *** ******* ******, ***, **** 74, CEP *****-*67."
+  },
+  {
+   "texto": "Login suspeito do usuário poliana.ferrari@example.net a partir do IP 2001:db8:7d77:97e::42bf às 17h15 do dia 11/05/2027.",
+   "entidades": [
+    [
+     "EMAIL",
+     26,
+     53,
+     0.95
+    ],
+    [
+     "IP",
+     69,
+     92,
+     0.9
+    ]
+   ],
+   "anonimizado": "Login suspeito do usuário [EMAIL_1] a partir do IP [IP_1] às 17h15 do dia 11/05/2027.",
+   "mascarado": "Login suspeito do usuário p***@example.net a partir do IP ****:***:****:***::**bf às 17h15 do dia 11/05/2027."
+  },
+  {
+   "texto": "Solicito o cancelamento do cartão 5385 4192 4848 3592. Titular: Walter Gabriel Sampaio.",
+   "entidades": [
+    [
+     "CARTAO_CREDITO",
+     34,
+     53,
+     0.95
+    ],
+    [
+     "PESSOA",
+     64,
+     86,
+     0.9
+    ]
+   ],
+   "anonimizado": "Solicito o cancelamento do cartão [CARTAO_CREDITO_1]. Titular: [PESSOA_1].",
+   "mascarado": "Solicito o cancelamento do cartão **** **** **** **92. Titular: W*** G*** S***."
+  },
+  {
+   "texto": "Dra. Ozéias Amaral solicitou exames para o paciente Gabriel Carneiro Freitas (CNS 251 5471 7239 0000).",
+   "entidades": [
+    [
+     "PESSOA",
+     5,
+     18,
+     0.7
+    ],
+    [
+     "PESSOA",
+     52,
+     76,
+     0.9
+    ],
+    [
+     "CNS",
+     82,
+     100,
+     0.97
+    ]
+   ],
+   "anonimizado": "Dra. [PESSOA_1] solicitou exames para o paciente [PESSOA_2] (CNS [CNS_1]).",
+   "mascarado": "Dra. O*** A*** solicitou exames para o paciente G*** C*** F*** (CNS *** **** **** **00)."
+  },
+  {
+   "texto": "Atualize para a versão 9.17.1. O protocolo de atendimento é 202645482875.",
+   "entidades": [],
+   "anonimizado": "Atualize para a versão 9.17.1. O protocolo de atendimento é 202645482875.",
+   "mascarado": "Atualize para a versão 9.17.1. O protocolo de atendimento é 202645482875."
+  },
+  {
+   "texto": "Paciente Manoel Câmara de Abreu, nascido em 17/06/1991, cartão SUS 129 8170 6224 0009, deu entrada no Padaria Pão Dourado às 7h15.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     31,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     44,
+     54,
+     0.85
+    ],
+    [
+     "CNS",
+     67,
+     85,
+     0.97
+    ]
+   ],
+   "anonimizado": "Paciente [PESSOA_1], nascido em [DATA_NASCIMENTO_1], cartão SUS [CNS_1], deu entrada no Padaria Pão Dourado às 7h15.",
+   "mascarado": "Paciente M*** C*** de A***, nascido em **/**/**91, cartão SUS *** **** **** **09, deu entrada no Padaria Pão Dourado às 7h15."
+  },
+  {
+   "texto": "Dra. Crislaine Prado solicitou exames para o paciente Edna Santos (CNS 225 8243 9500 0003).",
+   "entidades": [
+    [
+     "PESSOA",
+     5,
+     20,
+     0.7
+    ],
+    [
+     "PESSOA",
+     54,
+     65,
+     0.9
+    ],
+    [
+     "CNS",
+     71,
+     89,
+     0.97
+    ]
+   ],
+   "anonimizado": "Dra. [PESSOA_1] solicitou exames para o paciente [PESSOA_2] (CNS [CNS_1]).",
+   "mascarado": "Dra. C*** P*** solicitou exames para o paciente E*** S*** (CNS *** **** **** **03)."
+  },
+  {
+   "texto": "bom dia paloma! o cpf dela é 79175699699, confere?",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     14,
+     0.6
+    ],
+    [
+     "CPF",
+     29,
+     40,
+     0.95
+    ]
+   ],
+   "anonimizado": "bom dia [PESSOA_1]! o cpf dela é [CPF_1], confere?",
+   "mascarado": "bom dia p***! o cpf dela é ***756996**, confere?"
+  },
+  {
+   "texto": "Veículo placa OWN6D91, RENAVAM 85886605040, proprietário Roberto Vieira Macedo, CNH 49131738601.",
+   "entidades": [
+    [
+     "PLACA",
+     14,
+     21,
+     0.95
+    ],
+    [
+     "RENAVAM",
+     31,
+     42,
+     0.97
+    ],
+    [
+     "PESSOA",
+     57,
+     78,
+     0.9
+    ],
+    [
+     "CNH",
+     84,
+     95,
+     0.97
+    ]
+   ],
+   "anonimizado": "Veículo placa [PLACA_1], RENAVAM [RENAVAM_1], proprietário [PESSOA_1], CNH [CNH_1].",
+   "mascarado": "Veículo placa *****91, RENAVAM *********40, proprietário R*** V*** M***, CNH *********01."
+  },
+  {
+   "texto": "Pode enviar o boleto para tais.kruger@example.org? Meu CPF é 84631586923 e o telefone +55 41 97691-1182.",
+   "entidades": [
+    [
+     "EMAIL",
+     26,
+     49,
+     0.95
+    ],
+    [
+     "CPF",
+     61,
+     72,
+     0.95
+    ],
+    [
+     "TELEFONE",
+     86,
+     103,
+     0.95
+    ]
+   ],
+   "anonimizado": "Pode enviar o boleto para [EMAIL_1]? Meu CPF é [CPF_1] e o telefone [TELEFONE_1].",
+   "mascarado": "Pode enviar o boleto para t***@example.org? Meu CPF é ***315869** e o telefone +** ** *****-**82."
+  },
+  {
+   "texto": "oi sarah tudo bem? me passa sua chave pix: ba6a0316-3e72-4c5c-8bcd-9eb30025c96c",
+   "entidades": [
+    [
+     "PESSOA",
+     3,
+     8,
+     0.6
+    ],
+    [
+     "CHAVE_PIX",
+     43,
+     79,
+     0.9
+    ]
+   ],
+   "anonimizado": "oi [PESSOA_1] tudo bem? me passa sua chave pix: [CHAVE_PIX_1]",
+   "mascarado": "oi s*** tudo bem? me passa sua chave pix: ********-****-****-****-**********6c"
+  },
+  {
+   "texto": "Pagamento via Pix para a chave 1008cc56-2c09-48b2-9323-c0cc061fe816 confirmado em 15/08/2027. Valor: R$ 2324,45.",
+   "entidades": [
+    [
+     "CHAVE_PIX",
+     31,
+     67,
+     0.9
+    ]
+   ],
+   "anonimizado": "Pagamento via Pix para a chave [CHAVE_PIX_1] confirmado em 15/08/2027. Valor: R$ 2324,45.",
+   "mascarado": "Pagamento via Pix para a chave ********-****-****-****-**********16 confirmado em 15/08/2027. Valor: R$ 2324,45."
+  },
+  {
+   "texto": "Rosa é a cor do ano, segundo a Construtora Horizonte. Vitória do time em São Paulo!",
+   "entidades": [],
+   "anonimizado": "Rosa é a cor do ano, segundo a Construtora Horizonte. Vitória do time em São Paulo!",
+   "mascarado": "Rosa é a cor do ano, segundo a Construtora Horizonte. Vitória do time em São Paulo!"
+  },
+  {
+   "texto": "Pagamento via Pix para a chave 50543969-e604-44c5-b472-aafb07f83f00 confirmado em 10/06/2027. Valor: R$ 2356,99.",
+   "entidades": [
+    [
+     "CHAVE_PIX",
+     31,
+     67,
+     0.9
+    ]
+   ],
+   "anonimizado": "Pagamento via Pix para a chave [CHAVE_PIX_1] confirmado em 10/06/2027. Valor: R$ 2356,99.",
+   "mascarado": "Pagamento via Pix para a chave ********-****-****-****-**********00 confirmado em 10/06/2027. Valor: R$ 2356,99."
+  },
+  {
+   "texto": "Sra. Luzinete Farias, sua consulta foi remarcada para 07/05/2024 às 13h30.",
+   "entidades": [
+    [
+     "PESSOA",
+     5,
+     20,
+     0.7
+    ]
+   ],
+   "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 07/05/2024 às 13h30.",
+   "mascarado": "Sra. L*** F***, sua consulta foi remarcada para 07/05/2024 às 13h30."
+  },
+  {
+   "texto": "Erro ao processar o pedido 7937062: cliente Estela Giordano (CPF 83833014563), versão 5.13.2.",
+   "entidades": [
+    [
+     "PESSOA",
+     44,
+     59,
+     0.9
+    ],
+    [
+     "CPF",
+     65,
+     76,
+     0.95
+    ]
+   ],
+   "anonimizado": "Erro ao processar o pedido 7937062: cliente [PESSOA_1] (CPF [CPF_1]), versão 5.13.2.",
+   "mascarado": "Erro ao processar o pedido 7937062: cliente E*** G*** (CPF ***330145**), versão 5.13.2."
+  },
+  {
+   "texto": "Login suspeito do usuário ruth.nogueira40@example.com a partir do IP 192.0.2.69 às 12h15 do dia 17/11/2026.",
+   "entidades": [
+    [
+     "EMAIL",
+     26,
+     53,
+     0.95
+    ],
+    [
+     "IP",
+     69,
+     79,
+     0.9
+    ]
+   ],
+   "anonimizado": "Login suspeito do usuário [EMAIL_1] a partir do IP [IP_1] às 12h15 do dia 17/11/2026.",
+   "mascarado": "Login suspeito do usuário r***@example.com a partir do IP ***.*.*.69 às 12h15 do dia 17/11/2026."
+  },
+  {
+   "texto": "Dados bancários do colaborador Yasmin Cabral: agência 9452, conta 423421-7. Data de nascimento: 04/07/1979.",
+   "entidades": [
+    [
+     "PESSOA",
+     31,
+     44,
+     0.9
+    ],
+    [
+     "CONTA_BANCARIA",
+     54,
+     58,
+     0.8
+    ],
+    [
+     "CONTA_BANCARIA",
+     66,
+     74,
+     0.85
+    ],
+    [
+     "DATA_NASCIMENTO",
+     96,
+     106,
+     0.85
+    ]
+   ],
+   "anonimizado": "Dados bancários do colaborador [PESSOA_1]: agência [CONTA_BANCARIA_1], conta [CONTA_BANCARIA_2]. Data de nascimento: [DATA_NASCIMENTO_1].",
+   "mascarado": "Dados bancários do colaborador Y*** C***: agência ****, conta *****1-7. Data de nascimento: **/**/**79."
+  },
+  {
+   "texto": "A Mercado Bom Preço anunciou resultados do trimestre: receita de R$ 8706,05 e crescimento em São Paulo.",
+   "entidades": [],
+   "anonimizado": "A Mercado Bom Preço anunciou resultados do trimestre: receita de R$ 8706,05 e crescimento em São Paulo.",
+   "mascarado": "A Mercado Bom Preço anunciou resultados do trimestre: receita de R$ 8706,05 e crescimento em São Paulo."
+  },
+  {
+   "texto": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 9850872.",
+   "entidades": [],
+   "anonimizado": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 9850872.",
+   "mascarado": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 9850872."
+  },
+  {
+   "texto": "Veículo placa NZS1F43, RENAVAM 32480220970, proprietário Neide Vanderlei dos Azevedo, CNH 55708488876.",
+   "entidades": [
+    [
+     "PLACA",
+     14,
+     21,
+     0.95
+    ],
+    [
+     "RENAVAM",
+     31,
+     42,
+     0.97
+    ],
+    [
+     "PESSOA",
+     57,
+     84,
+     0.9
+    ],
+    [
+     "CNH",
+     90,
+     101,
+     0.97
+    ]
+   ],
+   "anonimizado": "Veículo placa [PLACA_1], RENAVAM [RENAVAM_1], proprietário [PESSOA_1], CNH [CNH_1].",
+   "mascarado": "Veículo placa *****43, RENAVAM *********70, proprietário N*** V*** dos A***, CNH *********76."
+  },
+  {
+   "texto": "Prontuário: Enrico Romeu Franco, data de nascimento: 25 de dezembro de 1962. Responsável: Inês Heitor Vargas, telefone (17) 99252-9097.",
+   "entidades": [
+    [
+     "PESSOA",
+     12,
+     31,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     53,
+     75,
+     0.85
+    ],
+    [
+     "PESSOA",
+     90,
+     108,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     119,
+     134,
+     0.95
+    ]
+   ],
+   "anonimizado": "Prontuário: [PESSOA_1], data de nascimento: [DATA_NASCIMENTO_1]. Responsável: [PESSOA_2], telefone [TELEFONE_1].",
+   "mascarado": "Prontuário: E*** R*** F***, data de nascimento: ** ** ******** ** **62. Responsável: I*** H*** V***, telefone (**) *****-**97."
+  },
+  {
+   "texto": "Oi pessoal, o Verônica vai substituir a Roseli na reunião de 24/05/2024. Qualquer coisa, liguem no (42) 97920-4605.",
+   "entidades": [
+    [
+     "PESSOA",
+     14,
+     22,
+     0.8
+    ],
+    [
+     "PESSOA",
+     40,
+     46,
+     0.6
+    ],
+    [
+     "TELEFONE",
+     99,
+     114,
+     0.85
+    ]
+   ],
+   "anonimizado": "Oi pessoal, o [PESSOA_1] vai substituir a [PESSOA_2] na reunião de 24/05/2024. Qualquer coisa, liguem no [TELEFONE_1].",
+   "mascarado": "Oi pessoal, o V*** vai substituir a R*** na reunião de 24/05/2024. Qualquer coisa, liguem no (**) *****-**05."
+  },
+  {
+   "texto": "A Farmácia Popular do Centro anunciou resultados do trimestre: receita de R$ 9655,63 e crescimento em Recife.",
+   "entidades": [],
+   "anonimizado": "A Farmácia Popular do Centro anunciou resultados do trimestre: receita de R$ 9655,63 e crescimento em Recife.",
+   "mascarado": "A Farmácia Popular do Centro anunciou resultados do trimestre: receita de R$ 9655,63 e crescimento em Recife."
+  },
+  {
+   "texto": "O pedido 2888968 de smartphone foi entregue em Porto Alegre no dia 08/03/2027, às 21h00. Valor total: R$ 5184,52.",
+   "entidades": [],
+   "anonimizado": "O pedido 2888968 de smartphone foi entregue em Porto Alegre no dia 08/03/2027, às 21h00. Valor total: R$ 5184,52.",
+   "mascarado": "O pedido 2888968 de smartphone foi entregue em Porto Alegre no dia 08/03/2027, às 21h00. Valor total: R$ 5184,52."
+  },
+  {
+   "texto": "NOME: MICHEL SCHNEIDER DOS AQUINO\nCPF: 227.800.368-26\nENDEREÇO: Rua 13 de Setembro, 967",
+   "entidades": [
+    [
+     "PESSOA",
+     6,
+     33,
+     0.9
+    ],
+    [
+     "CPF",
+     39,
+     53,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     64,
+     87,
+     0.9
+    ]
+   ],
+   "anonimizado": "NOME: [PESSOA_1]\nCPF: [CPF_1]\nENDEREÇO: [ENDERECO_1]",
+   "mascarado": "NOME: M*** S*** DOS A***\nCPF: ***.800.368-**\nENDEREÇO: *** ** ** ********, *67"
+  },
+  {
+   "texto": "Prezado(a) Humberto Lima, seu pedido 4258141 com fone de ouvido foi enviado para Avenida Ramon Porto, 353, CEP 64593-026.",
+   "entidades": [
+    [
+     "PESSOA",
+     11,
+     24,
+     0.9
+    ],
+    [
+     "ENDERECO",
+     81,
+     105,
+     0.9
+    ],
+    [
+     "CEP",
+     111,
+     120,
+     0.95
+    ]
+   ],
+   "anonimizado": "Prezado(a) [PESSOA_1], seu pedido 4258141 com fone de ouvido foi enviado para [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Prezado(a) H*** L***, seu pedido 4258141 com fone de ouvido foi enviado para ******* ***** *****, *53, CEP *****-*26."
+  },
+  {
+   "texto": "Rosa é a cor do ano, segundo a Hospital Santa Luzia. Vitória do time em Salvador!",
+   "entidades": [],
+   "anonimizado": "Rosa é a cor do ano, segundo a Hospital Santa Luzia. Vitória do time em Salvador!",
+   "mascarado": "Rosa é a cor do ano, segundo a Hospital Santa Luzia. Vitória do time em Salvador!"
+  },
+  {
+   "texto": "O produto SKU-87418 está em promoção por R$ 2914,59 até 28/07/2025.",
+   "entidades": [],
+   "anonimizado": "O produto SKU-87418 está em promoção por R$ 2914,59 até 28/07/2025.",
+   "mascarado": "O produto SKU-87418 está em promoção por R$ 2914,59 até 28/07/2025."
+  },
+  {
+   "texto": "Locador: Ângela Ferreira, CPF 653.282.736-30. Locatário: Sofia Takahashi, RG 77.273.866-1. Imóvel na Rua 9 de Setembro, 1943, bloco B, CEP 58693-415.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     24,
+     0.9
+    ],
+    [
+     "CPF",
+     30,
+     44,
+     1.0
+    ],
+    [
+     "PESSOA",
+     57,
+     72,
+     0.9
+    ],
+    [
+     "RG",
+     77,
+     89,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     101,
+     133,
+     0.9
+    ],
+    [
+     "CEP",
+     139,
+     148,
+     0.95
+    ]
+   ],
+   "anonimizado": "Locador: [PESSOA_1], CPF [CPF_1]. Locatário: [PESSOA_2], RG [RG_1]. Imóvel na [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Locador: Â*** F***, CPF ***.282.736-**. Locatário: S*** T***, RG **.***.**6-1. Imóvel na *** * ** ********, ****, ****o B, CEP *****-*15."
+  },
+  {
+   "texto": "Pode enviar o boleto para elisangela_ito31@example.com? Meu CPF é 05671654858 e o telefone +55 18 98693-7032.",
+   "entidades": [
+    [
+     "EMAIL",
+     26,
+     54,
+     0.95
+    ],
+    [
+     "CPF",
+     66,
+     77,
+     0.95
+    ],
+    [
+     "TELEFONE",
+     91,
+     108,
+     0.95
+    ]
+   ],
+   "anonimizado": "Pode enviar o boleto para [EMAIL_1]? Meu CPF é [CPF_1] e o telefone [TELEFONE_1].",
+   "mascarado": "Pode enviar o boleto para e***@example.com? Meu CPF é ***716548** e o telefone +** ** *****-**32."
+  },
+  {
+   "texto": "O pedido 9999018 de cafeteira foi entregue em São Paulo no dia 07/05/2027, às 20h45. Valor total: R$ 8922,88.",
+   "entidades": [],
+   "anonimizado": "O pedido 9999018 de cafeteira foi entregue em São Paulo no dia 07/05/2027, às 20h45. Valor total: R$ 8922,88.",
+   "mascarado": "O pedido 9999018 de cafeteira foi entregue em São Paulo no dia 07/05/2027, às 20h45. Valor total: R$ 8922,88."
+  },
+  {
+   "texto": "falei com wellington schneider ontem, ela pediu pra ligar no 89 99234 8762",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     30,
+     0.65
+    ],
+    [
+     "TELEFONE",
+     61,
+     74,
+     0.95
+    ]
+   ],
+   "anonimizado": "falei com [PESSOA_1] ontem, ela pediu pra ligar no [TELEFONE_1]",
+   "mascarado": "falei com w*** s*** ontem, ela pediu pra ligar no ** ***** **62"
+  },
+  {
+   "texto": "Locador: Marlon Keila Mello, CPF 320.079.041-52. Locatário: Marisa Russo, RG 53.416.167-0. Imóvel na Travessa Júlio Rios, 2881, casa 7, CEP 35381-562.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     27,
+     0.9
+    ],
+    [
+     "CPF",
+     33,
+     47,
+     1.0
+    ],
+    [
+     "PESSOA",
+     60,
+     72,
+     0.9
+    ],
+    [
+     "RG",
+     77,
+     89,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     101,
+     134,
+     0.9
+    ],
+    [
+     "CEP",
+     140,
+     149,
+     0.95
+    ]
+   ],
+   "anonimizado": "Locador: [PESSOA_1], CPF [CPF_1]. Locatário: [PESSOA_2], RG [RG_1]. Imóvel na [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Locador: M*** K*** M***, CPF ***.079.041-**. Locatário: M*** R***, RG **.***.**7-0. Imóvel na ******** ***** ****, ****, ***a 7, CEP *****-*62."
+  },
+  {
+   "texto": "Sra. Ozéias Gomes, sua consulta foi remarcada para 23/09/2026 às 7h45.",
+   "entidades": [
+    [
+     "PESSOA",
+     5,
+     17,
+     0.7
+    ]
+   ],
+   "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 23/09/2026 às 7h45.",
+   "mascarado": "Sra. O*** G***, sua consulta foi remarcada para 23/09/2026 às 7h45."
+  },
+  {
+   "texto": "oi michel tudo bem? me passa sua chave pix: 67844060-e994-4e49-901c-b93de8e154db",
+   "entidades": [
+    [
+     "PESSOA",
+     3,
+     9,
+     0.6
+    ],
+    [
+     "CHAVE_PIX",
+     44,
+     80,
+     0.9
+    ]
+   ],
+   "anonimizado": "oi [PESSOA_1] tudo bem? me passa sua chave pix: [CHAVE_PIX_1]",
+   "mascarado": "oi m*** tudo bem? me passa sua chave pix: ********-****-****-****-**********db"
+  },
+  {
+   "texto": "Dados bancários do colaborador Nair Ribeiro: agência 5915, conta 54100555-9. Data de nascimento: 30/06/1963.",
+   "entidades": [
+    [
+     "PESSOA",
+     31,
+     43,
+     0.9
+    ],
+    [
+     "CONTA_BANCARIA",
+     53,
+     57,
+     0.8
+    ],
+    [
+     "CONTA_BANCARIA",
+     65,
+     75,
+     0.85
+    ],
+    [
+     "DATA_NASCIMENTO",
+     97,
+     107,
+     0.85
+    ]
+   ],
+   "anonimizado": "Dados bancários do colaborador [PESSOA_1]: agência [CONTA_BANCARIA_1], conta [CONTA_BANCARIA_2]. Data de nascimento: [DATA_NASCIMENTO_1].",
+   "mascarado": "Dados bancários do colaborador N*** R***: agência ****, conta *******5-9. Data de nascimento: **/**/**63."
+  },
+  {
+   "texto": "Prontuário: Sônia Márcia dos Meireles, data de nascimento: 11/10/1946. Responsável: Andréia Nascimento Colombo, telefone (92) 99660-2844.",
+   "entidades": [
+    [
+     "PESSOA",
+     12,
+     37,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     59,
+     69,
+     0.85
+    ],
+    [
+     "PESSOA",
+     84,
+     110,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     121,
+     136,
+     0.95
+    ]
+   ],
+   "anonimizado": "Prontuário: [PESSOA_1], data de nascimento: [DATA_NASCIMENTO_1]. Responsável: [PESSOA_2], telefone [TELEFONE_1].",
+   "mascarado": "Prontuário: S*** M*** dos M***, data de nascimento: **/**/**46. Responsável: A*** N*** C***, telefone (**) *****-**44."
+  },
+  {
+   "texto": "A colaboradora Elisvaldo Ramos Alves pediu férias a partir de 05/10/2025.",
+   "entidades": [
+    [
+     "PESSOA",
+     15,
+     36,
+     0.7
+    ]
+   ],
+   "anonimizado": "A colaboradora [PESSOA_1] pediu férias a partir de 05/10/2025.",
+   "mascarado": "A colaboradora E*** R*** A*** pediu férias a partir de 05/10/2025."
+  },
+  {
+   "texto": "Dados bancários do colaborador Jandira Hoffmann: agência 4605, conta 808603-8. Data de nascimento: 30/04/1998.",
+   "entidades": [
+    [
+     "PESSOA",
+     31,
+     47,
+     0.9
+    ],
+    [
+     "CONTA_BANCARIA",
+     57,
+     61,
+     0.8
+    ],
+    [
+     "CONTA_BANCARIA",
+     69,
+     77,
+     0.85
+    ],
+    [
+     "DATA_NASCIMENTO",
+     99,
+     109,
+     0.85
+    ]
+   ],
+   "anonimizado": "Dados bancários do colaborador [PESSOA_1]: agência [CONTA_BANCARIA_1], conta [CONTA_BANCARIA_2]. Data de nascimento: [DATA_NASCIMENTO_1].",
+   "mascarado": "Dados bancários do colaborador J*** H***: agência ****, conta *****3-8. Data de nascimento: **/**/**98."
+  },
+  {
+   "texto": "Reunião marcada para 03/10/2026 às 15h30 na sede da Mercado Bom Preço em São Paulo.",
+   "entidades": [],
+   "anonimizado": "Reunião marcada para 03/10/2026 às 15h30 na sede da Mercado Bom Preço em São Paulo.",
+   "mascarado": "Reunião marcada para 03/10/2026 às 15h30 na sede da Mercado Bom Preço em São Paulo."
+  },
+  {
+   "texto": "Transferência de R$ 3417,89 para Eloá Duarte, CPF 225.979.456-42, conta 5873355-2.",
+   "entidades": [
+    [
+     "PESSOA",
+     33,
+     44,
+     0.9
+    ],
+    [
+     "CPF",
+     50,
+     64,
+     1.0
+    ],
+    [
+     "CONTA_BANCARIA",
+     72,
+     81,
+     0.85
+    ]
+   ],
+   "anonimizado": "Transferência de R$ 3417,89 para [PESSOA_1], CPF [CPF_1], conta [CONTA_BANCARIA_1].",
+   "mascarado": "Transferência de R$ 3417,89 para E*** D***, CPF ***.979.456-**, conta ******5-2."
+  },
+  {
+   "texto": "O pedido 2123923 de fone de ouvido foi entregue em Recife no dia 27/02/2026, às 10h45. Valor total: R$ 8404,98.",
+   "entidades": [],
+   "anonimizado": "O pedido 2123923 de fone de ouvido foi entregue em Recife no dia 27/02/2026, às 10h45. Valor total: R$ 8404,98.",
+   "mascarado": "O pedido 2123923 de fone de ouvido foi entregue em Recife no dia 27/02/2026, às 10h45. Valor total: R$ 8404,98."
+  },
+  {
+   "texto": "Sra. Thayná Correia, sua consulta foi remarcada para 20/07/2027 às 8h30.",
+   "entidades": [
+    [
+     "PESSOA",
+     5,
+     19,
+     0.7
+    ]
+   ],
+   "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 20/07/2027 às 8h30.",
+   "mascarado": "Sra. T*** C***, sua consulta foi remarcada para 20/07/2027 às 8h30."
+  },
+  {
+   "texto": "Admissão: Vinícius Matsumoto, CPF 644.552.539-39, PIS 96294223694, título de eleitor 320792441473. Salário de R$ 4138,80.",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     28,
+     0.9
+    ],
+    [
+     "CPF",
+     34,
+     48,
+     1.0
+    ],
+    [
+     "PIS",
+     54,
+     65,
+     0.97
+    ],
+    [
+     "TITULO_ELEITOR",
+     85,
+     97,
+     0.95
+    ]
+   ],
+   "anonimizado": "Admissão: [PESSOA_1], CPF [CPF_1], PIS [PIS_1], título de eleitor [TITULO_ELEITOR_1]. Salário de R$ 4138,80.",
+   "mascarado": "Admissão: V*** M***, CPF ***.552.539-**, PIS *********94, título de eleitor **********73. Salário de R$ 4138,80."
+  },
+  {
+   "texto": "Reserva confirmada para Edilson Araújo, passaporte FW103458, voo para Recife em 13/06/2024.",
+   "entidades": [
+    [
+     "PESSOA",
+     24,
+     38,
+     0.9
+    ],
+    [
+     "PASSAPORTE",
+     51,
+     59,
+     0.9
+    ]
+   ],
+   "anonimizado": "Reserva confirmada para [PESSOA_1], passaporte [PASSAPORTE_1], voo para Recife em 13/06/2024.",
+   "mascarado": "Reserva confirmada para E*** A***, passaporte ******58, voo para Recife em 13/06/2024."
+  },
+  {
+   "texto": "Atualize para a versão 8.5.5. O protocolo de atendimento é 202451500210.",
+   "entidades": [],
+   "anonimizado": "Atualize para a versão 8.5.5. O protocolo de atendimento é 202451500210.",
+   "mascarado": "Atualize para a versão 8.5.5. O protocolo de atendimento é 202451500210."
+  },
+  {
+   "texto": "CPF: 436.962.963-25; CNPJ: 84.272.184/0001-39; Tel.: (37) 98049-9246; E-mail: joseane.macedo26@example.net; CEP: 94802-104",
+   "entidades": [
+    [
+     "CPF",
+     5,
+     19,
+     1.0
+    ],
+    [
+     "CNPJ",
+     27,
+     45,
+     1.0
+    ],
+    [
+     "TELEFONE",
+     53,
+     68,
+     0.95
+    ],
+    [
+     "EMAIL",
+     78,
+     106,
+     1.0
+    ],
+    [
+     "CEP",
+     113,
+     122,
+     0.95
+    ]
+   ],
+   "anonimizado": "CPF: [CPF_1]; CNPJ: [CNPJ_1]; Tel.: [TELEFONE_1]; E-mail: [EMAIL_1]; CEP: [CEP_1]",
+   "mascarado": "CPF: ***.962.963-**; CNPJ: **.***.***/****-39; Tel.: (**) *****-**46; E-mail: j***@example.net; CEP: *****-*04"
+  },
+  {
+   "texto": "Atendimento 202434494288: a cliente informou que mora na Avenida Geovana Muniz, 1984, bloco D e prefere contato pelo WhatsApp (54) 98343-7902.",
+   "entidades": [
+    [
+     "ENDERECO",
+     57,
+     93,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     126,
+     141,
+     0.95
+    ]
+   ],
+   "anonimizado": "Atendimento 202434494288: a cliente informou que mora na [ENDERECO_1] e prefere contato pelo WhatsApp [TELEFONE_1].",
+   "mascarado": "Atendimento 202434494288: a cliente informou que mora na ******* ******* *****, ****, ****o D e prefere contato pelo WhatsApp (**) *****-**02."
+  },
+  {
+   "texto": "Cliente Daniel Becker ligou do número (14) 98187-0315 reclamando da cobrança de R$ 190,98. Protocolo 202645558955.",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     21,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     38,
+     53,
+     0.95
+    ]
+   ],
+   "anonimizado": "Cliente [PESSOA_1] ligou do número [TELEFONE_1] reclamando da cobrança de R$ 190,98. Protocolo 202645558955.",
+   "mascarado": "Cliente D*** B*** ligou do número (**) *****-**15 reclamando da cobrança de R$ 190,98. Protocolo 202645558955."
+  },
+  {
+   "texto": "Nos autos do processo 7648176-44.2018.5.20.0092, a testemunha Dandara Macedo declarou ter visto o veículo de placa LQV4Z57.",
+   "entidades": [
+    [
+     "PROCESSO",
+     22,
+     47,
+     1.0
+    ],
+    [
+     "PESSOA",
+     62,
+     76,
+     0.7
+    ],
+    [
+     "PLACA",
+     115,
+     122,
+     0.95
+    ]
+   ],
+   "anonimizado": "Nos autos do processo [PROCESSO_1], a testemunha [PESSOA_1] declarou ter visto o veículo de placa [PLACA_1].",
+   "mascarado": "Nos autos do processo *******-**.****.*.**.**92, a testemunha D*** M*** declarou ter visto o veículo de placa *****57."
+  },
+  {
+   "texto": "Erro ao processar o pedido 5247083: cliente Bárbara Ricci (CPF 59145323020), versão 3.17.4.",
+   "entidades": [
+    [
+     "PESSOA",
+     44,
+     57,
+     0.9
+    ],
+    [
+     "CPF",
+     63,
+     74,
+     0.95
+    ]
+   ],
+   "anonimizado": "Erro ao processar o pedido 5247083: cliente [PESSOA_1] (CPF [CPF_1]), versão 3.17.4.",
+   "mascarado": "Erro ao processar o pedido 5247083: cliente B*** R*** (CPF ***453230**), versão 3.17.4."
+  },
+  {
+   "texto": "Processo nº 2512255-92.2010.5.01.0680. Autor: Cecília Macedo, CPF 830.251.919-70, residente na Alameda Sueli Figueiredo, 2046. Réu: Tech Soluções Ltda, CNPJ 41.652.580/0001-89.",
+   "entidades": [
+    [
+     "PROCESSO",
+     12,
+     37,
+     1.0
+    ],
+    [
+     "PESSOA",
+     46,
+     60,
+     0.9
+    ],
+    [
+     "CPF",
+     66,
+     80,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     95,
+     125,
+     0.9
+    ],
+    [
+     "CNPJ",
+     157,
+     175,
+     1.0
+    ]
+   ],
+   "anonimizado": "Processo nº [PROCESSO_1]. Autor: [PESSOA_1], CPF [CPF_1], residente na [ENDERECO_1]. Réu: Tech Soluções Ltda, CNPJ [CNPJ_1].",
+   "mascarado": "Processo nº *******-**.****.*.**.**80. Autor: C*** M***, CPF ***.251.919-**, residente na ******* ***** **********, **46. Réu: Tech Soluções Ltda, CNPJ **.***.***/****-89."
+  },
+  {
+   "texto": "bom dia natália! o cpf dela é 03995768946, confere?",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     15,
+     0.6
+    ],
+    [
+     "CPF",
+     30,
+     41,
+     0.95
+    ]
+   ],
+   "anonimizado": "bom dia [PESSOA_1]! o cpf dela é [CPF_1], confere?",
+   "mascarado": "bom dia n***! o cpf dela é ***957689**, confere?"
+  },
+  {
+   "texto": "oi danielle tudo bem? me passa sua chave pix: be801d3d-b099-4e57-bd19-cd55d6653c7b",
+   "entidades": [
+    [
+     "PESSOA",
+     3,
+     11,
+     0.6
+    ],
+    [
+     "CHAVE_PIX",
+     46,
+     82,
+     0.9
+    ]
+   ],
+   "anonimizado": "oi [PESSOA_1] tudo bem? me passa sua chave pix: [CHAVE_PIX_1]",
+   "mascarado": "oi d*** tudo bem? me passa sua chave pix: ********-****-****-****-**********7b"
+  },
+  {
+   "texto": "NOME: ROMEU NOVAES MIRANDA\nCPF: 698.908.087-65\nENDEREÇO: Rua Antonio Machado, 623",
+   "entidades": [
+    [
+     "PESSOA",
+     6,
+     26,
+     0.9
+    ],
+    [
+     "CPF",
+     32,
+     46,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     57,
+     81,
+     0.9
+    ]
+   ],
+   "anonimizado": "NOME: [PESSOA_1]\nCPF: [CPF_1]\nENDEREÇO: [ENDERECO_1]",
+   "mascarado": "NOME: R*** N*** M***\nCPF: ***.908.087-**\nENDEREÇO: *** ******* *******, *23"
+  },
+  {
+   "texto": "Login suspeito do usuário jamilekobayashi@empresa.example a partir do IP 2001:db8:cddf:1adc::de13 às 11h45 do dia 04/04/2025.",
+   "entidades": [
+    [
+     "EMAIL",
+     26,
+     57,
+     0.95
+    ],
+    [
+     "IP",
+     73,
+     97,
+     0.9
+    ]
+   ],
+   "anonimizado": "Login suspeito do usuário [EMAIL_1] a partir do IP [IP_1] às 11h45 do dia 04/04/2025.",
+   "mascarado": "Login suspeito do usuário j***@empresa.example a partir do IP ****:***:****:****::**13 às 11h45 do dia 04/04/2025."
+  },
+  {
+   "texto": "bom dia cristiano! o cpf dela é 18441205469, confere?",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     17,
+     0.6
+    ],
+    [
+     "CPF",
+     32,
+     43,
+     0.95
+    ]
+   ],
+   "anonimizado": "bom dia [PESSOA_1]! o cpf dela é [CPF_1], confere?",
+   "mascarado": "bom dia c***! o cpf dela é ***412054**, confere?"
+  },
+  {
+   "texto": "A Clínica Vida Plena anunciou resultados do trimestre: receita de R$ 7449,26 e crescimento em Florianópolis.",
+   "entidades": [],
+   "anonimizado": "A Clínica Vida Plena anunciou resultados do trimestre: receita de R$ 7449,26 e crescimento em Florianópolis.",
+   "mascarado": "A Clínica Vida Plena anunciou resultados do trimestre: receita de R$ 7449,26 e crescimento em Florianópolis."
+  },
+  {
+   "texto": "Olá, meu nome é Francisco Resende e meu CPF é 431.187.731-54. Fiz o pedido 8342442 no valor de R$ 926,98 e até agora não chegou.",
+   "entidades": [
+    [
+     "PESSOA",
+     16,
+     33,
+     0.9
+    ],
+    [
+     "CPF",
+     46,
+     60,
+     1.0
+    ]
+   ],
+   "anonimizado": "Olá, meu nome é [PESSOA_1] e meu CPF é [CPF_1]. Fiz o pedido 8342442 no valor de R$ 926,98 e até agora não chegou.",
+   "mascarado": "Olá, meu nome é F*** R*** e meu CPF é ***.187.731-**. Fiz o pedido 8342442 no valor de R$ 926,98 e até agora não chegou."
+  },
+  {
+   "texto": "Reunião marcada para 03/03/2026 às 12h00 na sede da Clínica Vida Plena em São Paulo.",
+   "entidades": [],
+   "anonimizado": "Reunião marcada para 03/03/2026 às 12h00 na sede da Clínica Vida Plena em São Paulo.",
+   "mascarado": "Reunião marcada para 03/03/2026 às 12h00 na sede da Clínica Vida Plena em São Paulo."
+  },
+  {
+   "texto": "Erro ao processar o pedido 3694046: cliente Daiane Nogueira (CPF 29609771149), versão 4.17.5.",
+   "entidades": [
+    [
+     "PESSOA",
+     44,
+     59,
+     0.9
+    ],
+    [
+     "CPF",
+     65,
+     76,
+     0.95
+    ]
+   ],
+   "anonimizado": "Erro ao processar o pedido 3694046: cliente [PESSOA_1] (CPF [CPF_1]), versão 4.17.5.",
+   "mascarado": "Erro ao processar o pedido 3694046: cliente D*** N*** (CPF ***097711**), versão 4.17.5."
+  },
+  {
+   "texto": "Dra. Rosivaldo Zanetti solicitou exames para o paciente Natália Alencar (CNS 249332229700009).",
+   "entidades": [
+    [
+     "PESSOA",
+     5,
+     22,
+     0.7
+    ],
+    [
+     "PESSOA",
+     56,
+     71,
+     0.9
+    ],
+    [
+     "CNS",
+     77,
+     92,
+     0.97
+    ]
+   ],
+   "anonimizado": "Dra. [PESSOA_1] solicitou exames para o paciente [PESSOA_2] (CNS [CNS_1]).",
+   "mascarado": "Dra. R*** Z*** solicitou exames para o paciente N*** A*** (CNS *************09)."
+  },
+  {
+   "texto": "falei com joyce cabral ontem, ela pediu pra ligar no (74) 4301-3546",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     22,
+     0.65
+    ],
+    [
+     "TELEFONE",
+     53,
+     67,
+     0.95
+    ]
+   ],
+   "anonimizado": "falei com [PESSOA_1] ontem, ela pediu pra ligar no [TELEFONE_1]",
+   "mascarado": "falei com j*** c*** ontem, ela pediu pra ligar no (**) ****-**46"
+  },
+  {
+   "texto": "Dra. Railson Barreto solicitou exames para o paciente Joaquim Paulo Lacerda (CNS 173763693710002).",
+   "entidades": [
+    [
+     "PESSOA",
+     5,
+     20,
+     0.7
+    ],
+    [
+     "PESSOA",
+     54,
+     75,
+     0.9
+    ],
+    [
+     "CNS",
+     81,
+     96,
+     0.97
+    ]
+   ],
+   "anonimizado": "Dra. [PESSOA_1] solicitou exames para o paciente [PESSOA_2] (CNS [CNS_1]).",
+   "mascarado": "Dra. R*** B*** solicitou exames para o paciente J*** P*** L*** (CNS *************02)."
+  },
+  {
+   "texto": "Nota fiscal emitida para Padaria Pão Dourado, CNPJ LI.SHI.0F0/QN8G-67, com sede na Travessa Márcia Brandão, 3361.",
+   "entidades": [
+    [
+     "CNPJ",
+     51,
+     69,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     83,
+     112,
+     0.9
+    ]
+   ],
+   "anonimizado": "Nota fiscal emitida para Padaria Pão Dourado, CNPJ [CNPJ_1], com sede na [ENDERECO_1].",
+   "mascarado": "Nota fiscal emitida para Padaria Pão Dourado, CNPJ **.***.***/****-67, com sede na ******** ****** *******, **61."
+  },
+  {
+   "texto": "Rosa é a cor do ano, segundo a Mercado Bom Preço. Vitória do time em Florianópolis!",
+   "entidades": [],
+   "anonimizado": "Rosa é a cor do ano, segundo a Mercado Bom Preço. Vitória do time em Florianópolis!",
+   "mascarado": "Rosa é a cor do ano, segundo a Mercado Bom Preço. Vitória do time em Florianópolis!"
+  },
+  {
+   "texto": "Solicito o cancelamento do cartão 5315 0509 5027 1522. Titular: Victor Lourenço.",
+   "entidades": [
+    [
+     "CARTAO_CREDITO",
+     34,
+     53,
+     0.95
+    ],
+    [
+     "PESSOA",
+     64,
+     79,
+     0.9
+    ]
+   ],
+   "anonimizado": "Solicito o cancelamento do cartão [CARTAO_CREDITO_1]. Titular: [PESSOA_1].",
+   "mascarado": "Solicito o cancelamento do cartão **** **** **** **22. Titular: V*** L***."
+  },
+  {
+   "texto": "Sra. Valdenice Moretti, sua consulta foi remarcada para 20/01/2025 às 7h45.",
+   "entidades": [
+    [
+     "PESSOA",
+     5,
+     22,
+     0.7
+    ]
+   ],
+   "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 20/01/2025 às 7h45.",
+   "mascarado": "Sra. V*** M***, sua consulta foi remarcada para 20/01/2025 às 7h45."
+  },
+  {
+   "texto": "Oi pessoal, o Humberto vai substituir a Cleide na reunião de 02/02/2027. Qualquer coisa, liguem no 47 97752 8611.",
+   "entidades": [
+    [
+     "PESSOA",
+     14,
+     22,
+     0.8
+    ],
+    [
+     "PESSOA",
+     40,
+     46,
+     0.6
+    ],
+    [
+     "TELEFONE",
+     99,
+     112,
+     0.85
+    ]
+   ],
+   "anonimizado": "Oi pessoal, o [PESSOA_1] vai substituir a [PESSOA_2] na reunião de 02/02/2027. Qualquer coisa, liguem no [TELEFONE_1].",
+   "mascarado": "Oi pessoal, o H*** vai substituir a C*** na reunião de 02/02/2027. Qualquer coisa, liguem no ** ***** **11."
+  },
+  {
+   "texto": "Olá, meu nome é Jaime Rossi e meu CPF é 716.720.550-83. Fiz o pedido 1836918 no valor de R$ 5762,52 e até agora não chegou.",
+   "entidades": [
+    [
+     "PESSOA",
+     16,
+     27,
+     0.9
+    ],
+    [
+     "CPF",
+     40,
+     54,
+     1.0
+    ]
+   ],
+   "anonimizado": "Olá, meu nome é [PESSOA_1] e meu CPF é [CPF_1]. Fiz o pedido 1836918 no valor de R$ 5762,52 e até agora não chegou.",
+   "mascarado": "Olá, meu nome é J*** R*** e meu CPF é ***.720.550-**. Fiz o pedido 1836918 no valor de R$ 5762,52 e até agora não chegou."
+  },
+  {
+   "texto": "Atualize para a versão 9.17.1. O protocolo de atendimento é 202450474447.",
+   "entidades": [],
+   "anonimizado": "Atualize para a versão 9.17.1. O protocolo de atendimento é 202450474447.",
+   "mascarado": "Atualize para a versão 9.17.1. O protocolo de atendimento é 202450474447."
+  },
+  {
+   "texto": "O pedido 9472594 de fone de ouvido foi entregue em Recife no dia 19/04/2025, às 9h30. Valor total: R$ 4826,45.",
+   "entidades": [],
+   "anonimizado": "O pedido 9472594 de fone de ouvido foi entregue em Recife no dia 19/04/2025, às 9h30. Valor total: R$ 4826,45.",
+   "mascarado": "O pedido 9472594 de fone de ouvido foi entregue em Recife no dia 19/04/2025, às 9h30. Valor total: R$ 4826,45."
+  },
+  {
+   "texto": "Nos autos do processo 3967039-10.2019.4.18.1721, a testemunha Anelise Rocha declarou ter visto o veículo de placa SQF6T91.",
+   "entidades": [
+    [
+     "PROCESSO",
+     22,
+     47,
+     1.0
+    ],
+    [
+     "PESSOA",
+     62,
+     75,
+     0.7
+    ],
+    [
+     "PLACA",
+     114,
+     121,
+     0.95
+    ]
+   ],
+   "anonimizado": "Nos autos do processo [PROCESSO_1], a testemunha [PESSOA_1] declarou ter visto o veículo de placa [PLACA_1].",
+   "mascarado": "Nos autos do processo *******-**.****.*.**.**21, a testemunha A*** R*** declarou ter visto o veículo de placa *****91."
+  },
+  {
+   "texto": "De: Hugo Chagas <cleidekobayashi@example.org>\nAssunto: Pedido 4944753\n\nOlá, segue meu endereço novo: Rua Patrícia Bueno, 2022, casa 1, Porto Alegre.\nAtt, Bruna",
+   "entidades": [
+    [
+     "PESSOA",
+     4,
+     15,
+     0.9
+    ],
+    [
+     "EMAIL",
+     17,
+     44,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     101,
+     133,
+     0.9
+    ],
+    [
+     "PESSOA",
+     154,
+     159,
+     0.8
+    ]
+   ],
+   "anonimizado": "De: [PESSOA_1] <[EMAIL_1]>\nAssunto: Pedido 4944753\n\nOlá, segue meu endereço novo: [ENDERECO_1], Porto Alegre.\nAtt, [PESSOA_2]",
+   "mascarado": "De: H*** C*** <c***@example.org>\nAssunto: Pedido 4944753\n\nOlá, segue meu endereço novo: *** ******** *****, ****, ***a 1, Porto Alegre.\nAtt, B***"
+  },
+  {
+   "texto": "Processo nº 4816573-66.2025.8.05.9816. Autor: Lauro Jandira Figueiredo, CPF 676.565.710-00, residente na Rua Emília Santos, 1566. Réu: Padaria Pão Dourado, CNPJ 31.505.573/0001-09.",
+   "entidades": [
+    [
+     "PROCESSO",
+     12,
+     37,
+     1.0
+    ],
+    [
+     "PESSOA",
+     46,
+     70,
+     0.9
+    ],
+    [
+     "CPF",
+     76,
+     90,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     105,
+     128,
+     0.9
+    ],
+    [
+     "CNPJ",
+     161,
+     179,
+     1.0
+    ]
+   ],
+   "anonimizado": "Processo nº [PROCESSO_1]. Autor: [PESSOA_1], CPF [CPF_1], residente na [ENDERECO_1]. Réu: Padaria Pão Dourado, CNPJ [CNPJ_1].",
+   "mascarado": "Processo nº *******-**.****.*.**.**16. Autor: L*** J*** F***, CPF ***.565.710-**, residente na *** ****** ******, **66. Réu: Padaria Pão Dourado, CNPJ **.***.***/****-09."
+  },
+  {
+   "texto": "A Escola Nova Era anunciou resultados do trimestre: receita de R$ 156,47 e crescimento em Manaus.",
+   "entidades": [],
+   "anonimizado": "A Escola Nova Era anunciou resultados do trimestre: receita de R$ 156,47 e crescimento em Manaus.",
+   "mascarado": "A Escola Nova Era anunciou resultados do trimestre: receita de R$ 156,47 e crescimento em Manaus."
+  },
+  {
+   "texto": "Rosa é a cor do ano, segundo a Mercado Bom Preço. Vitória do time em São Paulo!",
+   "entidades": [],
+   "anonimizado": "Rosa é a cor do ano, segundo a Mercado Bom Preço. Vitória do time em São Paulo!",
+   "mascarado": "Rosa é a cor do ano, segundo a Mercado Bom Preço. Vitória do time em São Paulo!"
+  },
+  {
+   "texto": "Rosa é a cor do ano, segundo a Clínica Vida Plena. Vitória do time em Belo Horizonte!",
+   "entidades": [],
+   "anonimizado": "Rosa é a cor do ano, segundo a Clínica Vida Plena. Vitória do time em Belo Horizonte!",
+   "mascarado": "Rosa é a cor do ano, segundo a Clínica Vida Plena. Vitória do time em Belo Horizonte!"
+  },
+  {
+   "texto": "Nota fiscal emitida para Clínica Vida Plena, CNPJ JD.3KB.V7X/M35D-34, com sede na Travessa Regina Marchetti, 3523.",
+   "entidades": [
+    [
+     "CNPJ",
+     50,
+     68,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     82,
+     113,
+     0.9
+    ]
+   ],
+   "anonimizado": "Nota fiscal emitida para Clínica Vida Plena, CNPJ [CNPJ_1], com sede na [ENDERECO_1].",
+   "mascarado": "Nota fiscal emitida para Clínica Vida Plena, CNPJ **.***.***/****-34, com sede na ******** ****** *********, **23."
+  },
+  {
+   "texto": "Atendimento 202586800203: a cliente informou que mora na Rua Olga Fonseca, 3406, apto 27 e prefere contato pelo WhatsApp (18) 99069-1825.",
+   "entidades": [
+    [
+     "ENDERECO",
+     57,
+     88,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     121,
+     136,
+     0.95
+    ]
+   ],
+   "anonimizado": "Atendimento 202586800203: a cliente informou que mora na [ENDERECO_1] e prefere contato pelo WhatsApp [TELEFONE_1].",
+   "mascarado": "Atendimento 202586800203: a cliente informou que mora na *** **** *******, ****, **** 27 e prefere contato pelo WhatsApp (**) *****-**25."
+  },
+  {
+   "texto": "Cliente Giovanna Aguiar Kobayashi ligou do número (21) 97172-6761 reclamando da cobrança de R$ 7300,40. Protocolo 202619590060.",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     33,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     50,
+     65,
+     0.95
+    ]
+   ],
+   "anonimizado": "Cliente [PESSOA_1] ligou do número [TELEFONE_1] reclamando da cobrança de R$ 7300,40. Protocolo 202619590060.",
+   "mascarado": "Cliente G*** A*** K*** ligou do número (**) *****-**61 reclamando da cobrança de R$ 7300,40. Protocolo 202619590060."
+  },
+  {
+   "texto": "oi marlon tudo bem? me passa sua chave pix: b643dcda-8c51-4453-94e6-c41aaa8f2032",
+   "entidades": [
+    [
+     "PESSOA",
+     3,
+     9,
+     0.6
+    ],
+    [
+     "CHAVE_PIX",
+     44,
+     80,
+     0.9
+    ]
+   ],
+   "anonimizado": "oi [PESSOA_1] tudo bem? me passa sua chave pix: [CHAVE_PIX_1]",
+   "mascarado": "oi m*** tudo bem? me passa sua chave pix: ********-****-****-****-**********32"
+  },
+  {
+   "texto": "oi daniel tudo bem? me passa sua chave pix: f4305bf2-b0e1-402a-8f5f-e3f865acf4a9",
+   "entidades": [
+    [
+     "PESSOA",
+     3,
+     9,
+     0.6
+    ],
+    [
+     "CHAVE_PIX",
+     44,
+     80,
+     0.9
+    ]
+   ],
+   "anonimizado": "oi [PESSOA_1] tudo bem? me passa sua chave pix: [CHAVE_PIX_1]",
+   "mascarado": "oi d*** tudo bem? me passa sua chave pix: ********-****-****-****-**********a9"
+  },
+  {
+   "texto": "Reunião marcada para 04/04/2024 às 20h30 na sede da Tech Soluções Ltda em Recife.",
+   "entidades": [],
+   "anonimizado": "Reunião marcada para 04/04/2024 às 20h30 na sede da Tech Soluções Ltda em Recife.",
+   "mascarado": "Reunião marcada para 04/04/2024 às 20h30 na sede da Tech Soluções Ltda em Recife."
+  },
+  {
+   "texto": "bom dia joseane! o cpf dela é 76066377680, confere?",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     15,
+     0.6
+    ],
+    [
+     "CPF",
+     30,
+     41,
+     0.95
+    ]
+   ],
+   "anonimizado": "bom dia [PESSOA_1]! o cpf dela é [CPF_1], confere?",
+   "mascarado": "bom dia j***! o cpf dela é ***663776**, confere?"
+  },
+  {
+   "texto": "Locador: Tatiane Enzo Yamamoto, CPF 305.256.986-47. Locatário: Sílvia Medeiros, RG 276517345. Imóvel na Rua Janaína Bandeira, 3288, CEP 73369-182.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     30,
+     0.9
+    ],
+    [
+     "CPF",
+     36,
+     50,
+     1.0
+    ],
+    [
+     "PESSOA",
+     63,
+     78,
+     0.9
+    ],
+    [
+     "RG",
+     83,
+     92,
+     0.85
+    ],
+    [
+     "ENDERECO",
+     104,
+     130,
+     0.9
+    ],
+    [
+     "CEP",
+     136,
+     145,
+     0.95
+    ]
+   ],
+   "anonimizado": "Locador: [PESSOA_1], CPF [CPF_1]. Locatário: [PESSOA_2], RG [RG_1]. Imóvel na [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Locador: T*** E*** Y***, CPF ***.256.986-**. Locatário: S*** M***, RG *******45. Imóvel na *** ******* ********, **88, CEP *****-*82."
+  },
+  {
+   "texto": "De: Sebastião Daiane dos Fraga <cintia_fischer@example.org>\nAssunto: Pedido 598403\n\nOlá, segue meu endereço novo: Travessa Emanuel Sousa, 2008, casa 8, Recife.\nAtt, Ítalo",
+   "entidades": [
+    [
+     "PESSOA",
+     4,
+     30,
+     0.9
+    ],
+    [
+     "EMAIL",
+     32,
+     58,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     114,
+     150,
+     0.9
+    ],
+    [
+     "PESSOA",
+     165,
+     170,
+     0.8
+    ]
+   ],
+   "anonimizado": "De: [PESSOA_1] <[EMAIL_1]>\nAssunto: Pedido 598403\n\nOlá, segue meu endereço novo: [ENDERECO_1], Recife.\nAtt, [PESSOA_2]",
+   "mascarado": "De: S*** D*** dos F*** <c***@example.org>\nAssunto: Pedido 598403\n\nOlá, segue meu endereço novo: ******** ******* *****, ****, ***a 8, Recife.\nAtt, Í***"
+  },
+  {
+   "texto": "bom dia guilherme! o cpf dela é 38951239276, confere?",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     17,
+     0.6
+    ],
+    [
+     "CPF",
+     32,
+     43,
+     0.95
+    ]
+   ],
+   "anonimizado": "bom dia [PESSOA_1]! o cpf dela é [CPF_1], confere?",
+   "mascarado": "bom dia g***! o cpf dela é ***512392**, confere?"
+  },
+  {
+   "texto": "Nota fiscal emitida para Clínica Vida Plena, CNPJ N6.IG7.FM1/BYGI-69, com sede na Avenida Jennifer Rezende, 311, casa 5.",
+   "entidades": [
+    [
+     "CNPJ",
+     50,
+     68,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     82,
+     119,
+     0.9
+    ]
+   ],
+   "anonimizado": "Nota fiscal emitida para Clínica Vida Plena, CNPJ [CNPJ_1], com sede na [ENDERECO_1].",
+   "mascarado": "Nota fiscal emitida para Clínica Vida Plena, CNPJ **.***.***/****-69, com sede na ******* ******** *******, ***, ***a 5."
+  },
+  {
+   "texto": "Paciente Diogo Siqueira Nowak, nascido em 17 de março de 1999, cartão SUS 240658377550004, deu entrada no Construtora Horizonte às 15h30.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     29,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     42,
+     61,
+     0.85
+    ],
+    [
+     "CNS",
+     74,
+     89,
+     0.97
+    ]
+   ],
+   "anonimizado": "Paciente [PESSOA_1], nascido em [DATA_NASCIMENTO_1], cartão SUS [CNS_1], deu entrada no Construtora Horizonte às 15h30.",
+   "mascarado": "Paciente D*** S*** N***, nascido em ** ** ***** ** **99, cartão SUS *************04, deu entrada no Construtora Horizonte às 15h30."
+  },
+  {
+   "texto": "Cleide Valente, portador do RG 140191354 e inscrito no CPF sob o nº 520.120.692-15, vem respeitosamente requerer a revisão.",
+   "entidades": [
+    [
+     "PESSOA",
+     0,
+     14,
+     0.9
+    ],
+    [
+     "RG",
+     31,
+     40,
+     0.85
+    ],
+    [
+     "CPF",
+     68,
+     82,
+     1.0
+    ]
+   ],
+   "anonimizado": "[PESSOA_1], portador do RG [RG_1] e inscrito no CPF sob o nº [CPF_1], vem respeitosamente requerer a revisão.",
+   "mascarado": "C*** V***, portador do RG *******54 e inscrito no CPF sob o nº ***.120.692-**, vem respeitosamente requerer a revisão."
+  },
+  {
+   "texto": "A Mercado Bom Preço anunciou resultados do trimestre: receita de R$ 7166,67 e crescimento em Curitiba.",
+   "entidades": [],
+   "anonimizado": "A Mercado Bom Preço anunciou resultados do trimestre: receita de R$ 7166,67 e crescimento em Curitiba.",
+   "mascarado": "A Mercado Bom Preço anunciou resultados do trimestre: receita de R$ 7166,67 e crescimento em Curitiba."
+  },
+  {
+   "texto": "Atendimento 202657544474: a cliente informou que mora na Avenida Cintia Nogueira, 572 e prefere contato pelo WhatsApp (14) 96244-5342.",
+   "entidades": [
+    [
+     "ENDERECO",
+     57,
+     85,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     118,
+     133,
+     0.95
+    ]
+   ],
+   "anonimizado": "Atendimento 202657544474: a cliente informou que mora na [ENDERECO_1] e prefere contato pelo WhatsApp [TELEFONE_1].",
+   "mascarado": "Atendimento 202657544474: a cliente informou que mora na ******* ****** ********, *72 e prefere contato pelo WhatsApp (**) *****-**42."
+  },
+  {
+   "texto": "Atualize para a versão 3.13.0. O protocolo de atendimento é 202675725117.",
+   "entidades": [],
+   "anonimizado": "Atualize para a versão 3.13.0. O protocolo de atendimento é 202675725117.",
+   "mascarado": "Atualize para a versão 3.13.0. O protocolo de atendimento é 202675725117."
+  },
+  {
+   "texto": "Rosa é a cor do ano, segundo a Clínica Vida Plena. Vitória do time em Curitiba!",
+   "entidades": [],
+   "anonimizado": "Rosa é a cor do ano, segundo a Clínica Vida Plena. Vitória do time em Curitiba!",
+   "mascarado": "Rosa é a cor do ano, segundo a Clínica Vida Plena. Vitória do time em Curitiba!"
+  },
+  {
+   "texto": "Atendimento 202631089528: a cliente informou que mora na Rua Cleber Bueno, 1221 e prefere contato pelo WhatsApp (37) 97989-1051.",
+   "entidades": [
+    [
+     "ENDERECO",
+     57,
+     79,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     112,
+     127,
+     0.95
+    ]
+   ],
+   "anonimizado": "Atendimento 202631089528: a cliente informou que mora na [ENDERECO_1] e prefere contato pelo WhatsApp [TELEFONE_1].",
+   "mascarado": "Atendimento 202631089528: a cliente informou que mora na *** ****** *****, **21 e prefere contato pelo WhatsApp (**) *****-**51."
+  },
+  {
+   "texto": "Processo nº 6365535-20.2017.4.25.3409. Autor: Yuri Hayashi, CPF 585.736.232-68, residente na Alameda Tamires Figueiredo, 3210. Réu: Tech Soluções Ltda, CNPJ 39.498.949/0001-07.",
+   "entidades": [
+    [
+     "PROCESSO",
+     12,
+     37,
+     1.0
+    ],
+    [
+     "PESSOA",
+     46,
+     58,
+     0.9
+    ],
+    [
+     "CPF",
+     64,
+     78,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     93,
+     125,
+     0.9
+    ],
+    [
+     "CNPJ",
+     157,
+     175,
+     1.0
+    ]
+   ],
+   "anonimizado": "Processo nº [PROCESSO_1]. Autor: [PESSOA_1], CPF [CPF_1], residente na [ENDERECO_1]. Réu: Tech Soluções Ltda, CNPJ [CNPJ_1].",
+   "mascarado": "Processo nº *******-**.****.*.**.**09. Autor: Y*** H***, CPF ***.736.232-**, residente na ******* ******* **********, **10. Réu: Tech Soluções Ltda, CNPJ **.***.***/****-07."
+  },
+  {
+   "texto": "Cliente Lívia Fraga ligou do número (69) 97038-1183 reclamando da cobrança de R$ 7245,27. Protocolo 202465614891.",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     19,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     36,
+     51,
+     0.95
+    ]
+   ],
+   "anonimizado": "Cliente [PESSOA_1] ligou do número [TELEFONE_1] reclamando da cobrança de R$ 7245,27. Protocolo 202465614891.",
+   "mascarado": "Cliente L*** F*** ligou do número (**) *****-**83 reclamando da cobrança de R$ 7245,27. Protocolo 202465614891."
+  },
+  {
+   "texto": "Reunião marcada para 05/06/2026 às 9h00 na sede da Padaria Pão Dourado em Curitiba.",
+   "entidades": [],
+   "anonimizado": "Reunião marcada para 05/06/2026 às 9h00 na sede da Padaria Pão Dourado em Curitiba.",
+   "mascarado": "Reunião marcada para 05/06/2026 às 9h00 na sede da Padaria Pão Dourado em Curitiba."
+  },
+  {
+   "texto": "De: Ícaro Gilberto Menezes <beatriz.ramos5@empresa.example>\nAssunto: Pedido 1102305\n\nOlá, segue meu endereço novo: Avenida Edna Barbosa, 843, casa 4, Curitiba.\nAtt, Douglas",
+   "entidades": [
+    [
+     "PESSOA",
+     4,
+     26,
+     0.9
+    ],
+    [
+     "EMAIL",
+     28,
+     58,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     115,
+     148,
+     0.9
+    ],
+    [
+     "PESSOA",
+     165,
+     172,
+     0.8
+    ]
+   ],
+   "anonimizado": "De: [PESSOA_1] <[EMAIL_1]>\nAssunto: Pedido 1102305\n\nOlá, segue meu endereço novo: [ENDERECO_1], Curitiba.\nAtt, [PESSOA_2]",
+   "mascarado": "De: Í*** G*** M*** <b***@empresa.example>\nAssunto: Pedido 1102305\n\nOlá, segue meu endereço novo: ******* **** *******, ***, ***a 4, Curitiba.\nAtt, D***"
+  },
+  {
+   "texto": "bom dia lucca! o cpf dela é 03323755103, confere?",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     13,
+     0.6
+    ],
+    [
+     "CPF",
+     28,
+     39,
+     0.95
+    ]
+   ],
+   "anonimizado": "bom dia [PESSOA_1]! o cpf dela é [CPF_1], confere?",
+   "mascarado": "bom dia l***! o cpf dela é ***237551**, confere?"
+  },
+  {
+   "texto": "Dados bancários do colaborador Benjamim Diniz: agência 6693, conta 14529-1. Data de nascimento: 09/04/1987.",
+   "entidades": [
+    [
+     "PESSOA",
+     31,
+     45,
+     0.9
+    ],
+    [
+     "CONTA_BANCARIA",
+     55,
+     59,
+     0.8
+    ],
+    [
+     "CONTA_BANCARIA",
+     67,
+     74,
+     0.85
+    ],
+    [
+     "DATA_NASCIMENTO",
+     96,
+     106,
+     0.85
+    ]
+   ],
+   "anonimizado": "Dados bancários do colaborador [PESSOA_1]: agência [CONTA_BANCARIA_1], conta [CONTA_BANCARIA_2]. Data de nascimento: [DATA_NASCIMENTO_1].",
+   "mascarado": "Dados bancários do colaborador B*** D***: agência ****, conta ****9-1. Data de nascimento: **/**/**87."
+  },
+  {
+   "texto": "A Escola Nova Era anunciou resultados do trimestre: receita de R$ 8640,33 e crescimento em Recife.",
+   "entidades": [],
+   "anonimizado": "A Escola Nova Era anunciou resultados do trimestre: receita de R$ 8640,33 e crescimento em Recife.",
+   "mascarado": "A Escola Nova Era anunciou resultados do trimestre: receita de R$ 8640,33 e crescimento em Recife."
+  },
+  {
+   "texto": "Atendimento 202639922686: a cliente informou que mora na Rua 30 de Setembro, 1998 e prefere contato pelo WhatsApp 38 98914 7975.",
+   "entidades": [
+    [
+     "ENDERECO",
+     57,
+     81,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     114,
+     127,
+     0.95
+    ]
+   ],
+   "anonimizado": "Atendimento 202639922686: a cliente informou que mora na [ENDERECO_1] e prefere contato pelo WhatsApp [TELEFONE_1].",
+   "mascarado": "Atendimento 202639922686: a cliente informou que mora na *** ** ** ********, **98 e prefere contato pelo WhatsApp ** ***** **75."
+  },
+  {
+   "texto": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 8204994.",
+   "entidades": [],
+   "anonimizado": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 8204994.",
+   "mascarado": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 8204994."
+  },
+  {
+   "texto": "NOME: ALZIRA SÔNIA DOS FISCHER\nCPF: 680.420.263-58\nENDEREÇO: Rua Hadassa Nunes, 3274",
+   "entidades": [
+    [
+     "PESSOA",
+     6,
+     30,
+     0.9
+    ],
+    [
+     "CPF",
+     36,
+     50,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     61,
+     84,
+     0.9
+    ]
+   ],
+   "anonimizado": "NOME: [PESSOA_1]\nCPF: [CPF_1]\nENDEREÇO: [ENDERECO_1]",
+   "mascarado": "NOME: A*** S*** DOS F***\nCPF: ***.420.263-**\nENDEREÇO: *** ******* *****, **74"
+  },
+  {
+   "texto": "Prezado(a) Alessandra Dantas, seu pedido 5748110 com notebook foi enviado para Rua Manuel Gonçalves, 3474, CEP 67495-252.",
+   "entidades": [
+    [
+     "PESSOA",
+     11,
+     28,
+     0.9
+    ],
+    [
+     "ENDERECO",
+     79,
+     105,
+     0.9
+    ],
+    [
+     "CEP",
+     111,
+     120,
+     0.95
+    ]
+   ],
+   "anonimizado": "Prezado(a) [PESSOA_1], seu pedido 5748110 com notebook foi enviado para [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Prezado(a) A*** D***, seu pedido 5748110 com notebook foi enviado para *** ****** *********, **74, CEP *****-*52."
+  },
+  {
+   "texto": "Rosa é a cor do ano, segundo a Padaria Pão Dourado. Vitória do time em Manaus!",
+   "entidades": [],
+   "anonimizado": "Rosa é a cor do ano, segundo a Padaria Pão Dourado. Vitória do time em Manaus!",
+   "mascarado": "Rosa é a cor do ano, segundo a Padaria Pão Dourado. Vitória do time em Manaus!"
+  },
+  {
+   "texto": "Atualize para a versão 8.8.5. O protocolo de atendimento é 202541318644.",
+   "entidades": [],
+   "anonimizado": "Atualize para a versão 8.8.5. O protocolo de atendimento é 202541318644.",
+   "mascarado": "Atualize para a versão 8.8.5. O protocolo de atendimento é 202541318644."
+  },
+  {
+   "texto": "Paciente Viviane Tavares, nascido em 04/05/1955, cartão SUS 238962541050005, deu entrada no Escola Nova Era às 10h45.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     24,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     37,
+     47,
+     0.85
+    ],
+    [
+     "CNS",
+     60,
+     75,
+     0.97
+    ]
+   ],
+   "anonimizado": "Paciente [PESSOA_1], nascido em [DATA_NASCIMENTO_1], cartão SUS [CNS_1], deu entrada no Escola Nova Era às 10h45.",
+   "mascarado": "Paciente V*** T***, nascido em **/**/**55, cartão SUS *************05, deu entrada no Escola Nova Era às 10h45."
+  },
+  {
+   "texto": "O pedido 6367599 de notebook foi entregue em Goiânia no dia 13/05/2027, às 21h00. Valor total: R$ 1483,40.",
+   "entidades": [],
+   "anonimizado": "O pedido 6367599 de notebook foi entregue em Goiânia no dia 13/05/2027, às 21h00. Valor total: R$ 1483,40.",
+   "mascarado": "O pedido 6367599 de notebook foi entregue em Goiânia no dia 13/05/2027, às 21h00. Valor total: R$ 1483,40."
+  },
+  {
+   "texto": "A colaboradora Lucinéia Reis Azevedo pediu férias a partir de 21/03/2024.",
+   "entidades": [
+    [
+     "PESSOA",
+     15,
+     36,
+     0.7
+    ]
+   ],
+   "anonimizado": "A colaboradora [PESSOA_1] pediu férias a partir de 21/03/2024.",
+   "mascarado": "A colaboradora L*** R*** A*** pediu férias a partir de 21/03/2024."
+  },
+  {
+   "texto": "Dados bancários do colaborador Rosilene Juçara dos Nowak: agência 7530, conta 43816-5. Data de nascimento: 21 de março de 1945.",
+   "entidades": [
+    [
+     "PESSOA",
+     31,
+     56,
+     0.9
+    ],
+    [
+     "CONTA_BANCARIA",
+     66,
+     70,
+     0.8
+    ],
+    [
+     "CONTA_BANCARIA",
+     78,
+     85,
+     0.85
+    ],
+    [
+     "DATA_NASCIMENTO",
+     107,
+     126,
+     0.85
+    ]
+   ],
+   "anonimizado": "Dados bancários do colaborador [PESSOA_1]: agência [CONTA_BANCARIA_1], conta [CONTA_BANCARIA_2]. Data de nascimento: [DATA_NASCIMENTO_1].",
+   "mascarado": "Dados bancários do colaborador R*** J*** dos N***: agência ****, conta ****6-5. Data de nascimento: ** ** ***** ** **45."
+  },
+  {
+   "texto": "Prezado(a) Tatiane Cavalcanti, seu pedido 4885703 com tênis de corrida foi enviado para Travessa Frederico Marchetti, 882, CEP 84234-421.",
+   "entidades": [
+    [
+     "PESSOA",
+     11,
+     29,
+     0.9
+    ],
+    [
+     "ENDERECO",
+     88,
+     121,
+     0.9
+    ],
+    [
+     "CEP",
+     127,
+     136,
+     0.95
+    ]
+   ],
+   "anonimizado": "Prezado(a) [PESSOA_1], seu pedido 4885703 com tênis de corrida foi enviado para [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Prezado(a) T*** C***, seu pedido 4885703 com tênis de corrida foi enviado para ******** ********* *********, *82, CEP *****-*21."
+  },
+  {
+   "texto": "Sra. Maiara Wagner, sua consulta foi remarcada para 08/01/2024 às 17h45.",
+   "entidades": [
+    [
+     "PESSOA",
+     12,
+     18,
+     0.8
+    ]
+   ],
+   "anonimizado": "Sra. Maiara [PESSOA_1], sua consulta foi remarcada para 08/01/2024 às 17h45.",
+   "mascarado": "Sra. Maiara W***, sua consulta foi remarcada para 08/01/2024 às 17h45."
+  },
+  {
+   "texto": "Reserva confirmada para Augusta Coelho de Bueno, passaporte MJ429492, voo para São Paulo em 14/07/2027.",
+   "entidades": [
+    [
+     "PESSOA",
+     24,
+     47,
+     0.9
+    ],
+    [
+     "PASSAPORTE",
+     60,
+     68,
+     0.9
+    ]
+   ],
+   "anonimizado": "Reserva confirmada para [PESSOA_1], passaporte [PASSAPORTE_1], voo para São Paulo em 14/07/2027.",
+   "mascarado": "Reserva confirmada para A*** C*** de B***, passaporte ******92, voo para São Paulo em 14/07/2027."
+  },
+  {
+   "texto": "Olá, meu nome é Joana Lombardi dos Resende e meu CPF é 500.273.391-30. Fiz o pedido 2581895 no valor de R$ 8461,55 e até agora não chegou.",
+   "entidades": [
+    [
+     "PESSOA",
+     16,
+     42,
+     0.9
+    ],
+    [
+     "CPF",
+     55,
+     69,
+     1.0
+    ]
+   ],
+   "anonimizado": "Olá, meu nome é [PESSOA_1] e meu CPF é [CPF_1]. Fiz o pedido 2581895 no valor de R$ 8461,55 e até agora não chegou.",
+   "mascarado": "Olá, meu nome é J*** L*** dos R*** e meu CPF é ***.273.391-**. Fiz o pedido 2581895 no valor de R$ 8461,55 e até agora não chegou."
+  },
+  {
+   "texto": "Transferência de R$ 7657,34 para Felipe Joel Klein, CPF 155.004.899-68, conta 7051438-7.",
+   "entidades": [
+    [
+     "PESSOA",
+     33,
+     50,
+     0.9
+    ],
+    [
+     "CPF",
+     56,
+     70,
+     1.0
+    ],
+    [
+     "CONTA_BANCARIA",
+     78,
+     87,
+     0.85
+    ]
+   ],
+   "anonimizado": "Transferência de R$ 7657,34 para [PESSOA_1], CPF [CPF_1], conta [CONTA_BANCARIA_1].",
+   "mascarado": "Transferência de R$ 7657,34 para F*** J*** K***, CPF ***.004.899-**, conta ******8-7."
+  },
+  {
+   "texto": "Prezado(a) Célia Schneider, seu pedido 8993486 com notebook foi enviado para Avenida Kátia Faria, 3821, CEP 46561-505.",
+   "entidades": [
+    [
+     "PESSOA",
+     11,
+     26,
+     0.9
+    ],
+    [
+     "ENDERECO",
+     77,
+     102,
+     0.9
+    ],
+    [
+     "CEP",
+     108,
+     117,
+     0.95
+    ]
+   ],
+   "anonimizado": "Prezado(a) [PESSOA_1], seu pedido 8993486 com notebook foi enviado para [ENDERECO_1], CEP [CEP_1].",
+   "mascarado": "Prezado(a) C*** S***, seu pedido 8993486 com notebook foi enviado para ******* ***** *****, **21, CEP *****-*05."
+  },
+  {
+   "texto": "Veículo placa URN3N37, RENAVAM 11667688493, proprietário Raquel Santos da Belo, CNH 92284954075.",
+   "entidades": [
+    [
+     "PLACA",
+     14,
+     21,
+     0.95
+    ],
+    [
+     "RENAVAM",
+     31,
+     42,
+     0.97
+    ],
+    [
+     "PESSOA",
+     57,
+     78,
+     0.9
+    ],
+    [
+     "CNH",
+     84,
+     95,
+     0.97
+    ]
+   ],
+   "anonimizado": "Veículo placa [PLACA_1], RENAVAM [RENAVAM_1], proprietário [PESSOA_1], CNH [CNH_1].",
+   "mascarado": "Veículo placa *****37, RENAVAM *********93, proprietário R*** S*** da B***, CNH *********75."
+  },
+  {
+   "texto": "Pode enviar o boleto para selma_azevedo@empresa.example? Meu CPF é 34081047944 e o telefone +55 88 97679-3639.",
+   "entidades": [
+    [
+     "EMAIL",
+     26,
+     55,
+     0.95
+    ],
+    [
+     "CPF",
+     67,
+     78,
+     0.95
+    ],
+    [
+     "TELEFONE",
+     92,
+     109,
+     0.95
+    ]
+   ],
+   "anonimizado": "Pode enviar o boleto para [EMAIL_1]? Meu CPF é [CPF_1] e o telefone [TELEFONE_1].",
+   "mascarado": "Pode enviar o boleto para s***@empresa.example? Meu CPF é ***810479** e o telefone +** ** *****-**39."
+  },
+  {
+   "texto": "De: Carmem Schulz <denise.freitas@empresa.example>\nAssunto: Pedido 292359\n\nOlá, segue meu endereço novo: Alameda Solange Esposito, 433, bloco C, Recife.\nAtt, Manoela",
+   "entidades": [
+    [
+     "PESSOA",
+     4,
+     17,
+     0.9
+    ],
+    [
+     "EMAIL",
+     19,
+     49,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     105,
+     143,
+     0.9
+    ],
+    [
+     "PESSOA",
+     158,
+     165,
+     0.8
+    ]
+   ],
+   "anonimizado": "De: [PESSOA_1] <[EMAIL_1]>\nAssunto: Pedido 292359\n\nOlá, segue meu endereço novo: [ENDERECO_1], Recife.\nAtt, [PESSOA_2]",
+   "mascarado": "De: C*** S*** <d***@empresa.example>\nAssunto: Pedido 292359\n\nOlá, segue meu endereço novo: ******* ******* ********, ***, ****o C, Recife.\nAtt, M***"
+  },
+  {
+   "texto": "Pagamento via Pix para a chave dd9c64c9-d5d5-4d37-b88f-e01405a0878f confirmado em 24/09/2027. Valor: R$ 6544,24.",
+   "entidades": [
+    [
+     "CHAVE_PIX",
+     31,
+     67,
+     0.9
+    ]
+   ],
+   "anonimizado": "Pagamento via Pix para a chave [CHAVE_PIX_1] confirmado em 24/09/2027. Valor: R$ 6544,24.",
+   "mascarado": "Pagamento via Pix para a chave ********-****-****-****-**********8f confirmado em 24/09/2027. Valor: R$ 6544,24."
+  },
+  {
+   "texto": "Admissão: Cássio Schulz, CPF 473.563.765-63, PIS 064.91778.76-6, título de eleitor 861343992194. Salário de R$ 7460,55.",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     23,
+     0.9
+    ],
+    [
+     "CPF",
+     29,
+     43,
+     1.0
+    ],
+    [
+     "PIS",
+     49,
+     63,
+     1.0
+    ],
+    [
+     "TITULO_ELEITOR",
+     83,
+     95,
+     0.95
+    ]
+   ],
+   "anonimizado": "Admissão: [PESSOA_1], CPF [CPF_1], PIS [PIS_1], título de eleitor [TITULO_ELEITOR_1]. Salário de R$ 7460,55.",
+   "mascarado": "Admissão: C*** S***, CPF ***.563.765-**, PIS ***.*****.*6-6, título de eleitor **********94. Salário de R$ 7460,55."
+  },
+  {
+   "texto": "Processo nº 4391895-30.2023.8.13.0656. Autor: Caroline Conti, CPF 636.436.079-38, residente na Rua 7 de Novembro, 137. Réu: Clínica Vida Plena, CNPJ 59.744.868/0001-49.",
+   "entidades": [
+    [
+     "PROCESSO",
+     12,
+     37,
+     1.0
+    ],
+    [
+     "PESSOA",
+     46,
+     60,
+     0.9
+    ],
+    [
+     "CPF",
+     66,
+     80,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     95,
+     117,
+     0.9
+    ],
+    [
+     "CNPJ",
+     149,
+     167,
+     1.0
+    ]
+   ],
+   "anonimizado": "Processo nº [PROCESSO_1]. Autor: [PESSOA_1], CPF [CPF_1], residente na [ENDERECO_1]. Réu: Clínica Vida Plena, CNPJ [CNPJ_1].",
+   "mascarado": "Processo nº *******-**.****.*.**.**56. Autor: C*** C***, CPF ***.436.079-**, residente na *** * ** ********, *37. Réu: Clínica Vida Plena, CNPJ **.***.***/****-49."
+  },
+  {
+   "texto": "Paciente Douglas Sato, nascido em 18 de fevereiro de 1969, cartão SUS 149587527740005, deu entrada no Padaria Pão Dourado às 11h00.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     21,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     34,
+     57,
+     0.85
+    ],
+    [
+     "CNS",
+     70,
+     85,
+     0.97
+    ]
+   ],
+   "anonimizado": "Paciente [PESSOA_1], nascido em [DATA_NASCIMENTO_1], cartão SUS [CNS_1], deu entrada no Padaria Pão Dourado às 11h00.",
+   "mascarado": "Paciente D*** S***, nascido em ** ** ********* ** **69, cartão SUS *************05, deu entrada no Padaria Pão Dourado às 11h00."
+  },
+  {
+   "texto": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 818722.",
+   "entidades": [],
+   "anonimizado": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 818722.",
+   "mascarado": "Fizemos o deploy em 3 regiões e o tempo de resposta caiu 40%. Ticket 818722."
+  },
+  {
+   "texto": "NOME: SÍLVIA PEIXOTO DE TELES\nCPF: 560.104.825-85\nENDEREÇO: Alameda Joseane Cavalcante, 1469",
+   "entidades": [
+    [
+     "PESSOA",
+     6,
+     29,
+     0.9
+    ],
+    [
+     "CPF",
+     35,
+     49,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     60,
+     92,
+     0.9
+    ]
+   ],
+   "anonimizado": "NOME: [PESSOA_1]\nCPF: [CPF_1]\nENDEREÇO: [ENDERECO_1]",
+   "mascarado": "NOME: S*** P*** DE T***\nCPF: ***.104.825-**\nENDEREÇO: ******* ******* **********, **69"
+  },
+  {
+   "texto": "O pedido 415310 de tênis de corrida foi entregue em Manaus no dia 22/07/2025, às 16h15. Valor total: R$ 3395,22.",
+   "entidades": [],
+   "anonimizado": "O pedido 415310 de tênis de corrida foi entregue em Manaus no dia 22/07/2025, às 16h15. Valor total: R$ 3395,22.",
+   "mascarado": "O pedido 415310 de tênis de corrida foi entregue em Manaus no dia 22/07/2025, às 16h15. Valor total: R$ 3395,22."
+  },
+  {
+   "texto": "Cliente Carla Lombardi ligou do número (55) 96709-0453 reclamando da cobrança de R$ 5946,89. Protocolo 202555239341.",
+   "entidades": [
+    [
+     "PESSOA",
+     8,
+     22,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     39,
+     54,
+     0.95
+    ]
+   ],
+   "anonimizado": "Cliente [PESSOA_1] ligou do número [TELEFONE_1] reclamando da cobrança de R$ 5946,89. Protocolo 202555239341.",
+   "mascarado": "Cliente C*** L*** ligou do número (**) *****-**53 reclamando da cobrança de R$ 5946,89. Protocolo 202555239341."
+  },
+  {
+   "texto": "Processo nº 7507949-40.2021.5.08.8399. Autor: Eliana Marchetti, CPF 576.229.275-46, residente na Travessa Glauco Yamamoto, 3616, apto 126. Réu: Construtora Horizonte, CNPJ 70.189.015/0001-25.",
+   "entidades": [
+    [
+     "PROCESSO",
+     12,
+     37,
+     1.0
+    ],
+    [
+     "PESSOA",
+     46,
+     62,
+     0.9
+    ],
+    [
+     "CPF",
+     68,
+     82,
+     1.0
+    ],
+    [
+     "ENDERECO",
+     97,
+     137,
+     0.9
+    ],
+    [
+     "CNPJ",
+     172,
+     190,
+     1.0
+    ]
+   ],
+   "anonimizado": "Processo nº [PROCESSO_1]. Autor: [PESSOA_1], CPF [CPF_1], residente na [ENDERECO_1]. Réu: Construtora Horizonte, CNPJ [CNPJ_1].",
+   "mascarado": "Processo nº *******-**.****.*.**.**99. Autor: E*** M***, CPF ***.229.275-**, residente na ******** ****** ********, ****, **** *26. Réu: Construtora Horizonte, CNPJ **.***.***/****-25."
+  },
+  {
+   "texto": "Bom dia! Aqui é a Marisa, quero trocar o e-mail da minha conta para tiagoxavier@example.com.",
+   "entidades": [
+    [
+     "PESSOA",
+     18,
+     24,
+     0.6
+    ],
+    [
+     "EMAIL",
+     68,
+     91,
+     1.0
+    ]
+   ],
+   "anonimizado": "Bom dia! Aqui é a [PESSOA_1], quero trocar o e-mail da minha conta para [EMAIL_1].",
+   "mascarado": "Bom dia! Aqui é a M***, quero trocar o e-mail da minha conta para t***@example.com."
+  },
+  {
+   "texto": "Solicito o cancelamento do cartão 5092 8402 5074 3801. Titular: Ivete Meireles.",
+   "entidades": [
+    [
+     "CARTAO_CREDITO",
+     34,
+     53,
+     0.95
+    ],
+    [
+     "PESSOA",
+     64,
+     78,
+     0.9
+    ]
+   ],
+   "anonimizado": "Solicito o cancelamento do cartão [CARTAO_CREDITO_1]. Titular: [PESSOA_1].",
+   "mascarado": "Solicito o cancelamento do cartão **** **** **** **01. Titular: I*** M***."
+  },
+  {
+   "texto": "Olá, meu nome é Keila Linhares e meu CPF é 400.546.924-82. Fiz o pedido 2913523 no valor de R$ 1860,20 e até agora não chegou.",
+   "entidades": [
+    [
+     "PESSOA",
+     16,
+     30,
+     0.9
+    ],
+    [
+     "CPF",
+     43,
+     57,
+     1.0
+    ]
+   ],
+   "anonimizado": "Olá, meu nome é [PESSOA_1] e meu CPF é [CPF_1]. Fiz o pedido 2913523 no valor de R$ 1860,20 e até agora não chegou.",
+   "mascarado": "Olá, meu nome é K*** L*** e meu CPF é ***.546.924-**. Fiz o pedido 2913523 no valor de R$ 1860,20 e até agora não chegou."
+  },
+  {
+   "texto": "vc viu a msg da bia? ela disse q o cpf é 52998224725",
+   "entidades": [
+    [
+     "CPF",
+     41,
+     52,
+     0.95
+    ]
+   ],
+   "anonimizado": "vc viu a msg da bia? ela disse q o cpf é [CPF_1]",
+   "mascarado": "vc viu a msg da bia? ela disse q o cpf é ***982247**"
+  },
+  {
+   "texto": "me liga 11 98765 4321 ou 11987654321",
+   "entidades": [
+    [
+     "TELEFONE",
+     8,
+     21,
+     0.85
+    ],
+    [
+     "TELEFONE",
+     25,
+     36,
+     0.55
+    ]
+   ],
+   "anonimizado": "me liga [TELEFONE_1] ou [TELEFONE_1]",
+   "mascarado": "me liga ** ***** **21 ou *********21"
+  },
+  {
+   "texto": "Meu nome é Kawanny Rodrigues e moro em Natal.",
+   "entidades": [
+    [
+     "PESSOA",
+     11,
+     28,
+     0.7
+    ]
+   ],
+   "anonimizado": "Meu nome é [PESSOA_1] e moro em Natal.",
+   "mascarado": "Meu nome é K*** R*** e moro em Natal."
+  },
+  {
+   "texto": "A paciente Graça Maria de Jesus teve alta.",
+   "entidades": [
+    [
+     "PESSOA",
+     11,
+     31,
+     0.9
+    ]
+   ],
+   "anonimizado": "A paciente [PESSOA_1] teve alta.",
+   "mascarado": "A paciente G*** M*** de J*** teve alta."
+  },
+  {
+   "texto": "Rosa Pereira ligou pedindo a segunda via.",
+   "entidades": [
+    [
+     "PESSOA",
+     0,
+     12,
+     0.9
+    ]
+   ],
+   "anonimizado": "[PESSOA_1] ligou pedindo a segunda via.",
+   "mascarado": "R*** P*** ligou pedindo a segunda via."
+  },
+  {
+   "texto": "JOSÉ CARLOS DA SILVA SANTOS\nCPF 529.982.247-25",
+   "entidades": [
+    [
+     "PESSOA",
+     0,
+     27,
+     0.9
+    ],
+    [
+     "CPF",
+     32,
+     46,
+     1.0
+    ]
+   ],
+   "anonimizado": "[PESSOA_1]\nCPF [CPF_1]",
+   "mascarado": "J*** C*** DA S*** S***\nCPF ***.982.247-**"
+  },
+  {
+   "texto": "Enviar para Av. Brasil, 1500, sala 3 - Centro.",
+   "entidades": [
+    [
+     "ENDERECO",
+     12,
+     36,
+     0.9
+    ]
+   ],
+   "anonimizado": "Enviar para [ENDERECO_1] - Centro.",
+   "mascarado": "Enviar para **. ******, ****, ***a 3 - Centro."
+  },
+  {
+   "texto": "O CNPJ novo da filial é 12.ABC.345/01DE-35.",
+   "entidades": [
+    [
+     "CNPJ",
+     24,
+     42,
+     1.0
+    ]
+   ],
+   "anonimizado": "O CNPJ novo da filial é [CNPJ_1].",
+   "mascarado": "O CNPJ novo da filial é **.***.***/****-35."
+  },
+  {
+   "texto": "CPF 123.456.789-10 (digitei errado?)",
+   "entidades": [
+    [
+     "CPF",
+     4,
+     18,
+     0.7
+    ]
+   ],
+   "anonimizado": "CPF [CPF_1] (digitei errado?)",
+   "mascarado": "CPF ***.456.789-** (digitei errado?)"
+  },
+  {
+   "texto": "Placa do carro: BRA2E19. Renavam 00639884962.",
+   "entidades": [
+    [
+     "PLACA",
+     16,
+     23,
+     0.95
+    ],
+    [
+     "RENAVAM",
+     33,
+     44,
+     0.97
+    ]
+   ],
+   "anonimizado": "Placa do carro: [PLACA_1]. Renavam [RENAVAM_1].",
+   "mascarado": "Placa do carro: *****19. Renavam *********62."
+  },
+  {
+   "texto": "Fala, joão! Tudo certo pra amanhã?",
+   "entidades": [
+    [
+     "PESSOA",
+     6,
+     10,
+     0.6
+    ]
+   ],
+   "anonimizado": "Fala, [PESSOA_1]! Tudo certo pra amanhã?",
+   "mascarado": "Fala, j***! Tudo certo pra amanhã?"
+  },
+  {
+   "texto": "Quem atendeu foi o Dr. Wanderley Fagundes.",
+   "entidades": [
+    [
+     "PESSOA",
+     23,
+     41,
+     0.65
+    ]
+   ],
+   "anonimizado": "Quem atendeu foi o Dr. [PESSOA_1].",
+   "mascarado": "Quem atendeu foi o Dr. W*** F***."
+  },
+  {
+   "texto": "Pix: maria.lima@example.com",
+   "entidades": [
+    [
+     "EMAIL",
+     5,
+     27,
+     0.95
+    ]
+   ],
+   "anonimizado": "Pix: [EMAIL_1]",
+   "mascarado": "Pix: m***@example.com"
+  },
+  {
+   "texto": "Conta 12345-6, agência 0001, Banco do Brasil.",
+   "entidades": [
+    [
+     "CONTA_BANCARIA",
+     6,
+     13,
+     0.85
+    ],
+    [
+     "CONTA_BANCARIA",
+     23,
+     27,
+     0.8
+    ]
+   ],
+   "anonimizado": "Conta [CONTA_BANCARIA_1], agência [CONTA_BANCARIA_2], Banco do Brasil.",
+   "mascarado": "Conta ****5-6, agência ****, Banco do Brasil."
+  },
+  {
+   "texto": "Data de nascimento: 7 de setembro de 1985.",
+   "entidades": [
+    [
+     "DATA_NASCIMENTO",
+     20,
+     41,
+     0.85
+    ]
+   ],
+   "anonimizado": "Data de nascimento: [DATA_NASCIMENTO_1].",
+   "mascarado": "Data de nascimento: * ** ******** ** **85."
+  },
+  {
+   "texto": "Acesso de 2804:14c:5b:a0::1 bloqueado.",
+   "entidades": [
+    [
+     "IP",
+     10,
+     27,
+     0.9
+    ]
+   ],
+   "anonimizado": "Acesso de [IP_1] bloqueado.",
+   "mascarado": "Acesso de ****:***:**:*0::1 bloqueado."
+  },
+  {
+   "texto": "A reunião com a diretoria será em São José dos Campos.",
+   "entidades": [],
+   "anonimizado": "A reunião com a diretoria será em São José dos Campos.",
+   "mascarado": "A reunião com a diretoria será em São José dos Campos."
+  },
+  {
+   "texto": "O Banco do Brasil e o Magazine Luiza anunciaram parceria.",
+   "entidades": [],
+   "anonimizado": "O Banco do Brasil e o Magazine Luiza anunciaram parceria.",
+   "mascarado": "O Banco do Brasil e o Magazine Luiza anunciaram parceria."
+  },
+  {
+   "texto": "O voo LA3456 sai às 14h30 do portão 12.",
+   "entidades": [],
+   "anonimizado": "O voo LA3456 sai às 14h30 do portão 12.",
+   "mascarado": "O voo LA3456 sai às 14h30 do portão 12."
+  },
+  {
+   "texto": "A nota fiscal 000123456 tem valor de R$ 1.234,56.",
+   "entidades": [],
+   "anonimizado": "A nota fiscal 000123456 tem valor de R$ 1.234,56.",
+   "mascarado": "A nota fiscal 000123456 tem valor de R$ 1.234,56."
+  },
+  {
+   "texto": "Segue o código de rastreio: NB123456789BR.",
+   "entidades": [],
+   "anonimizado": "Segue o código de rastreio: NB123456789BR.",
+   "mascarado": "Segue o código de rastreio: NB123456789BR."
+  },
+  {
+   "texto": "Ontem choveu em Vitória e a Vila Velha ficou alagada.",
+   "entidades": [],
+   "anonimizado": "Ontem choveu em Vitória e a Vila Velha ficou alagada.",
+   "mascarado": "Ontem choveu em Vitória e a Vila Velha ficou alagada."
+  },
+  {
+   "texto": "O índice subiu 12,5% em 2025 e deve cair em 2026.",
+   "entidades": [],
+   "anonimizado": "O índice subiu 12,5% em 2025 e deve cair em 2026.",
+   "mascarado": "O índice subiu 12,5% em 2025 e deve cair em 2026."
+  },
+  {
+   "texto": "Assistimos ao jogo do Santos contra o Grêmio.",
+   "entidades": [],
+   "anonimizado": "Assistimos ao jogo do Santos contra o Grêmio.",
+   "mascarado": "Assistimos ao jogo do Santos contra o Grêmio."
+  },
+  {
+   "texto": "A versão 10.0.19045.3803 do Windows foi lançada.",
+   "entidades": [],
+   "anonimizado": "A versão 10.0.19045.3803 do Windows foi lançada.",
+   "mascarado": "A versão 10.0.19045.3803 do Windows foi lançada."
+  }
+ ]
+}
