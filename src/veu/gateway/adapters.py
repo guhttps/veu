@@ -23,14 +23,19 @@ _UNTOUCHED_KEYS = frozenset({"encrypted_content", "signature"})
 class Masker:
     """Esconde os dados pessoais de todos os textos de uma requisição usando um único cofre."""
 
-    def __init__(self, anonymizer: Anonymizer, vault: Vault):
+    def __init__(self, anonymizer: Anonymizer, vault: Vault, expand=None):
         self.anonymizer = anonymizer
         self.vault = vault
         self.counts: Counter[str] = Counter()
+        # expand(texto) acrescenta o conteúdo de links permitidos (Notion, Google) antes de esconder os dados.
+        self.expand = expand
+        self._in_arguments = False
 
     def text(self, value: Any) -> Any:
         if not isinstance(value, str) or not value:
             return value
+        if self.expand is not None and not self._in_arguments:
+            value = self.expand(value)
         result = self.anonymizer.anonymize(value, self.vault)
         self.counts.update(result.counts())
         return result.text
@@ -43,7 +48,11 @@ class Masker:
             parsed = json.loads(value)
         except ValueError:
             return self.text(value)
-        return json.dumps(self.obj(parsed), ensure_ascii=False)
+        self._in_arguments = True  # argumentos de ferramentas não ganham conteúdo de links
+        try:
+            return json.dumps(self.obj(parsed), ensure_ascii=False)
+        finally:
+            self._in_arguments = False
 
     def obj(self, value: Any) -> Any:
         if isinstance(value, str):

@@ -110,6 +110,9 @@ class Config:
     # Aceita o cabeçalho X-Veu-Operador para escolher o operador por requisição.
     request_operator: bool = True
     metrics: bool = True
+    # Troca links do Notion e do Google (e de outros domínios da lista) pelo conteúdo já protegido.
+    expand_links: bool = False
+    expand_domains: tuple[str, ...] = ("notion.so", "notion.site", "docs.google.com")
     providers: dict[str, ProviderConfig] = field(default_factory=lambda: dict(BUILTIN_PROVIDERS))
 
     def __post_init__(self):
@@ -172,6 +175,7 @@ _SECTIONS = {
         "log_auditoria": "audit_log", "sessao_ttl": "session_ttl", "injetar_chaves": "inject_keys",
         "timeout": "timeout", "token_env": None, "permitir_sem_token": "allow_no_token",
         "limite_corpo_mb": "max_body_mb", "operador_por_requisicao": "request_operator", "metricas": "metrics",
+        "expandir_links": "expand_links", "dominios_expandidos": "expand_domains",
     },
 }
 

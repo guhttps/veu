@@ -30,9 +30,11 @@ from veu.vault import Vault
 
 MAX_FILE_BYTES = 20 * 1024 * 1024
 INSTRUCTIONS = (
-    "O Véu encontra e esconde dados pessoais brasileiros (CPF, CNPJ, nomes, telefones, e-mails, endereços...). "
-    "Para arquivos, prefira verificar_arquivo e anonimizar_arquivo: eles processam os dados localmente e devolvem "
-    "só contagens e valores mascarados, sem trazer os dados pessoais para a conversa."
+    "O Véu encontra e esconde dados pessoais brasileiros e segredos (CPF, CNPJ, nomes, telefones, e-mails, endereços, "
+    "chaves de API, senhas...). Para ler uma página do Notion, um Google Docs/Sheets, um link ou um documento (Word, "
+    "Excel, PowerPoint, PDF), use ler_protegido: o conteúdo chega com os dados trocados por marcadores. Para arquivos, "
+    "prefira verificar_arquivo e anonimizar_arquivo: eles processam os dados localmente e devolvem só contagens e "
+    "valores mascarados, sem trazer os dados pessoais para a conversa."
 )
 
 
@@ -76,6 +78,15 @@ class ArquivoRestaurado(TypedDict):
     destino: str
 
 
+class FonteLida(TypedDict):
+    fonte: str
+    titulo: str
+    tipo: str
+    texto: str
+    sessao: str
+    escondidos: dict[str, int]
+
+
 def _expected_errors(function):
     """Erros esperados (arquivo inexistente, sessão expirada...) chegam ao agente como mensagem, sem traceback."""
 
@@ -89,12 +100,26 @@ def _expected_errors(function):
     return wrapper
 
 
-def _read(path: str) -> tuple[Path, str]:
+def _file(path: str) -> Path:
     file = Path(path).expanduser()
     if not file.is_file():
         raise ValueError(f"Arquivo não encontrado: {file}")
     if file.stat().st_size > MAX_FILE_BYTES:
         raise ValueError("Arquivo maior que 20 MB.")
+    return file
+
+
+def _read(path: str) -> tuple[Path, str]:
+    """Texto do arquivo; Word, Excel, PowerPoint e PDF são convertidos em texto."""
+    from veu.documents import document_kind, read_document
+
+    file = _file(path)
+    kind = document_kind(file)
+    if kind:
+        try:
+            return file, read_document(file, kind)
+        except ImportError as exc:
+            raise ValueError(str(exc)) from exc
     return file, file.read_text(encoding="utf-8-sig", errors="replace")
 
 
@@ -127,20 +152,50 @@ def build_server(veu: Veu | None = None) -> MCPServer:
         counts = Counter(item["entidade"] for item in found)
         return {"arquivo": str(file), "total": len(found), "por_entidade": dict(counts), "ocorrencias": found[:500]}
 
-    @server.tool(description="Cria uma cópia anonimizada de um arquivo (texto, CSV, JSON ou JSONL) sem trazer o "
-                             "conteúdo para a conversa. Opcionalmente salva o cofre (que contém os dados reais) "
-                             "para restaurar depois.")
+    @server.tool(description="Cria uma cópia anonimizada de um arquivo (texto, CSV, JSON, JSONL, Word, Excel ou "
+                             "PowerPoint, no mesmo formato; PDF vira texto) sem trazer o conteúdo para a conversa. "
+                             "Opcionalmente salva o cofre (que contém os dados reais) para restaurar depois.")
     @_expected_errors
     def anonimizar_arquivo(origem: str, destino: str, formato: str | None = None, campos: list[str] | None = None,
                            forcar: dict[str, str] | None = None, operador: str | None = None,
                            salvar_cofre: str | None = None) -> ArquivoAnonimizado:
-        source, _ = _read(origem)
+        source = _file(origem)
         engine = instance.with_operator(normalize_operator(operador)) if operador else instance
         vault, counts = anonymize_file(source, destino, veu=engine, file_format=formato, fields=campos, force=forcar)
         if salvar_cofre:
             Path(salvar_cofre).write_text(json.dumps(vault.to_dict(), ensure_ascii=False), encoding="utf-8")
         return {"destino": str(Path(destino)), "formato": detect_format(source, formato),
                 "escondidos": dict(counts), "cofre": salvar_cofre}
+
+    @server.tool(description="Lê uma página do Notion, um Google Docs/Sheets/Slides, uma página web ou um documento "
+                             "local (Word, Excel, PowerPoint, PDF, texto) e devolve o conteúdo já protegido: dados "
+                             "pessoais e segredos viram marcadores como [PESSOA_1]. Use a sessão devolvida com "
+                             "restaurar_texto se o usuário pedir a resposta com os dados reais.")
+    @_expected_errors
+    def ler_protegido(fonte: str, sessao: str | None = None) -> FonteLida:
+        from veu.sources import SourceError, read_source
+
+        try:
+            document = read_source(fonte)
+        except (SourceError, ImportError) as exc:
+            raise ToolError(str(exc)) from exc
+        if sessao:
+            vault = sessions.get(sessao, create=False)
+            if vault is None:
+                raise ValueError("Sessão não encontrada ou expirada.")
+        else:
+            sessao = SessionStore.new_id()
+            vault = sessions.get(sessao)
+        counts: Counter[str] = Counter()
+        title = ""
+        if document.title:
+            titled = instance.anonymize(document.title, vault)
+            title = titled.text
+            counts.update(titled.counts())
+        result = instance.anonymize(document.text, vault)
+        counts.update(result.counts())
+        return {"fonte": fonte, "titulo": title, "tipo": document.kind, "texto": result.text, "sessao": sessao,
+                "escondidos": dict(counts)}
 
     @server.tool(description="Lista os dados pessoais de um texto (tipo, posição e valor mascarado).")
     def detectar(texto: str) -> list[Deteccao]:

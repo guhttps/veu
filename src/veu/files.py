@@ -1,4 +1,4 @@
-"""Anonimização de arquivos de dados: texto, CSV, JSON e JSONL, com um único cofre para o arquivo inteiro.
+"""Anonimização de arquivos: texto, CSV, JSON, JSONL, Word, Excel, PowerPoint e PDF, com um único cofre por arquivo.
 
 O mesmo CPF recebe o mesmo marcador em todas as linhas, então análises e junções continuam funcionando.
 
@@ -17,11 +17,14 @@ from pathlib import Path
 from typing import Any
 
 from veu.core import Veu
+from veu.documents import EXTENSIONS as DOCUMENT_EXTENSIONS
+from veu.documents import WRITABLE, read_document, restore_spans, transform_document
 from veu.sessions import Session
 from veu.vault import Vault
 
-FORMATS = ("texto", "csv", "json", "jsonl")
-_EXTENSIONS = {".csv": "csv", ".tsv": "csv", ".json": "json", ".jsonl": "jsonl", ".ndjson": "jsonl"}
+FORMATS = ("texto", "csv", "json", "jsonl", "docx", "xlsx", "pptx", "pdf")
+_EXTENSIONS = {".csv": "csv", ".tsv": "csv", ".json": "json", ".jsonl": "jsonl", ".ndjson": "jsonl",
+               **DOCUMENT_EXTENSIONS}
 
 
 def detect_format(path: str | Path | None, explicit: str | None = None) -> str:
@@ -137,16 +140,41 @@ def anonymize_file(
     fields: Iterable[str] | None = None,
     force: Mapping[str, str] | None = None,
 ) -> tuple[Vault, Counter[str]]:
-    """Anonimiza um arquivo inteiro com um único cofre. Devolve o cofre e as contagens por tipo."""
+    """Anonimiza um arquivo inteiro com um único cofre. Devolve o cofre e as contagens por tipo.
+
+    Word, Excel e PowerPoint saem no mesmo formato, com a formatação intacta. PDF sai como texto.
+    """
     source, destination = Path(source), Path(destination)
     session = (veu or Veu()).session(vault)
     data = DataAnonymizer(session, fields, force)
-    text = source.read_text(encoding="utf-8-sig")
-    destination.write_text(anonymize_text(text, detect_format(source, file_format), data, source), encoding="utf-8")
+    kind = detect_format(source, file_format)
+    if kind in WRITABLE:
+        def spans(text: str) -> list[tuple[int, int, str]]:
+            result = session.anonymizer.anonymize(text, session.vault)
+            session.counts.update(result.counts())
+            return [(item.entity.start, item.entity.end, item.replacement) for item in result.replacements]
+
+        transform_document(source, destination, kind, spans=spans, text=session.anonymize, cell=data.value)
+        return session.vault, Counter(session.counts)
+    if kind == "pdf":
+        if destination.suffix.lower() == ".pdf":
+            raise ValueError("O PDF anonimizado sai como texto: use um destino .txt ou .md.")
+        text = read_document(source, "pdf")
+        kind = "texto"
+    else:
+        text = source.read_text(encoding="utf-8-sig")
+    destination.write_text(anonymize_text(text, kind, data, source), encoding="utf-8")
     return session.vault, Counter(session.counts)
 
 
 def restore_file(source: str | Path, destination: str | Path, vault: Vault, *, file_format: str | None = None) -> None:
     source, destination = Path(source), Path(destination)
+    kind = detect_format(source, file_format)
+    if kind in WRITABLE:
+        transform_document(source, destination, kind, spans=lambda text: restore_spans(vault, text), text=vault.restore,
+                           cell=lambda _key, value: vault.restore(value) if isinstance(value, str) else value)
+        return
+    if kind == "pdf":
+        raise ValueError("Restaure o texto gerado a partir do PDF (.txt ou .md), não o PDF.")
     text = source.read_text(encoding="utf-8-sig")
     destination.write_text(restore_text(text, detect_format(source, file_format), vault, source), encoding="utf-8")

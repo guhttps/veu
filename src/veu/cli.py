@@ -96,17 +96,7 @@ def _parse_force(values: list[str] | None) -> dict[str, str]:
     return force
 
 
-def cmd_anonymize(args) -> int:
-    from veu.files import DataAnonymizer, anonymize_text, detect_format
-
-    veu = _veu(args)
-    vault = _load_vault(args.cofre) if args.cofre and Path(args.cofre).is_file() and args.continuar else None
-    session = veu.session(vault)
-    file_format = detect_format(args.arquivo if args.arquivo not in (None, "-") else None, args.formato)
-    fields = [field.strip() for field in args.campos.split(",")] if args.campos else None
-    data = DataAnonymizer(session, fields, _parse_force(args.forcar))
-    _write(anonymize_text(_read(args.arquivo), file_format, data,
-                          Path(args.arquivo) if args.arquivo not in (None, "-") else None), args.saida)
+def _save_vault_and_report(args, session) -> None:
     if args.cofre:
         _write_private(Path(args.cofre), json.dumps(session.vault.to_dict(), ensure_ascii=False, indent=2))
         print(f"\nCofre salvo em {args.cofre}. Ele contém os dados reais: guarde com cuidado e não versione.",
@@ -114,14 +104,76 @@ def cmd_anonymize(args) -> int:
     if session.counts:
         summary = ", ".join(f"{label}={count}" for label, count in sorted(session.counts.items()))
         print(f"Escondidos: {summary}", file=sys.stderr)
+
+
+def cmd_anonymize(args) -> int:
+    from veu.documents import WRITABLE, read_document
+    from veu.files import DataAnonymizer, anonymize_file, anonymize_text, detect_format
+
+    veu = _veu(args)
+    vault = _load_vault(args.cofre) if args.cofre and Path(args.cofre).is_file() and args.continuar else None
+    session = veu.session(vault)
+    path = Path(args.arquivo) if args.arquivo not in (None, "-") else None
+    file_format = detect_format(path, args.formato)
+    fields = [field.strip() for field in args.campos.split(",")] if args.campos else None
+    force = _parse_force(args.forcar)
+    if file_format in WRITABLE:
+        if path is None or args.saida in (None, "-"):
+            raise ValueError(f"Para {file_format}, informe o arquivo e a saída: "
+                             f"veu anonimizar entrada.{file_format} -o protegido.{file_format}")
+        _, counts = anonymize_file(path, args.saida, veu=veu, vault=session.vault, fields=fields, force=force)
+        session.counts.update(counts)
+        print(f"Documento protegido em {args.saida} (mesmo formato do original).", file=sys.stderr)
+        _save_vault_and_report(args, session)
+        return 0
+    data = DataAnonymizer(session, fields, force)
+    if file_format == "pdf":
+        if path is None:
+            raise ValueError("Informe o arquivo PDF.")
+        text, file_format = read_document(path, "pdf"), "texto"
+    else:
+        text = _read(args.arquivo)
+    _write(anonymize_text(text, file_format, data, path), args.saida)
+    _save_vault_and_report(args, session)
     return 0
 
 
 def cmd_restore(args) -> int:
-    from veu.files import detect_format, restore_text
+    from veu.documents import WRITABLE
+    from veu.files import detect_format, restore_file, restore_text
 
-    file_format = detect_format(args.arquivo if args.arquivo not in (None, "-") else None, args.formato)
+    path = Path(args.arquivo) if args.arquivo not in (None, "-") else None
+    file_format = detect_format(path, args.formato)
+    if file_format in WRITABLE:
+        if path is None or args.saida in (None, "-"):
+            raise ValueError(f"Para {file_format}, informe o arquivo e a saída (-o).")
+        restore_file(path, args.saida, _load_vault(args.cofre))
+        print(f"Documento restaurado em {args.saida}.", file=sys.stderr)
+        return 0
     _write(restore_text(_read(args.arquivo), file_format, _load_vault(args.cofre)), args.saida)
+    return 0
+
+
+def cmd_read(args) -> int:
+    """Lê uma fonte (Notion, Google, link ou documento) e mostra o conteúdo já protegido."""
+    from veu.sources import SourceError, read_source
+
+    veu = _veu(args)
+    vault = _load_vault(args.cofre) if args.cofre and Path(args.cofre).is_file() and args.continuar else None
+    try:
+        document = read_source(args.fonte)
+    except (SourceError, ImportError) as exc:
+        print(f"Erro: {exc}", file=sys.stderr)
+        return 2
+    session = veu.session(vault)
+    title = session.anonymize(document.title) if document.title else ""
+    text = session.anonymize(document.text)
+    if args.json:
+        output = {**document.to_dict(), "titulo": title, "texto": text, "escondidos": dict(session.counts)}
+        _write(json.dumps(output, ensure_ascii=False, indent=2) + "\n", args.saida)
+    else:
+        _write(text if text.endswith("\n") else text + "\n", args.saida)
+    _save_vault_and_report(args, session)
     return 0
 
 
@@ -221,7 +273,7 @@ def cmd_entities(args) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="veu", description="Esconde dados pessoais brasileiros antes de enviar textos para modelos de IA.",
+        prog="veu", description="Esconde dados pessoais e segredos antes de enviar textos para modelos de IA.",
     )
     parser.add_argument("--versao", "--version", action="version", version=f"veu {__version__}")
     commands = parser.add_subparsers(dest="comando", required=True, metavar="comando")
@@ -229,7 +281,7 @@ def build_parser() -> argparse.ArgumentParser:
     def common(sub):
         sub.add_argument("--config", help="caminho do veu.toml")
         sub.add_argument("--limiar", type=float, help="pontuação mínima de 0 a 1 (padrão 0,5)")
-        sub.add_argument("--detectores", help="lista separada por vírgula: padroes,nomes,enderecos,spacy,llm")
+        sub.add_argument("--detectores", help="lista separada por vírgula: padroes,nomes,enderecos,segredos,spacy,llm")
         sub.add_argument("--entidades", help="limita a alguns tipos, como CPF,EMAIL")
 
     sub = commands.add_parser("detectar", help="lista os dados pessoais encontrados")
@@ -238,12 +290,23 @@ def build_parser() -> argparse.ArgumentParser:
     common(sub)
     sub.set_defaults(func=cmd_detect)
 
+    sub = commands.add_parser("ler", help="lê Notion, Google Docs/Sheets, um link ou um documento já protegido")
+    sub.add_argument("fonte", help="URL do Notion, do Google ou de uma página, ou arquivo (docx, xlsx, pptx, pdf...)")
+    sub.add_argument("--cofre", help="salva o cofre neste JSON para restaurar a resposta da IA depois")
+    sub.add_argument("--continuar", action="store_true", help="reaproveita o cofre existente (marcadores estáveis)")
+    sub.add_argument("--operador", choices=sorted(OPERATORS), help="como substituir (padrão: token)")
+    sub.add_argument("--json", action="store_true", help="saída em JSON com título, tipo e contagens")
+    sub.add_argument("-o", "--saida", help="arquivo de saída (padrão: saída padrão)")
+    common(sub)
+    sub.set_defaults(func=cmd_read)
+
     sub = commands.add_parser("anonimizar", help="troca os dados pessoais por marcadores")
-    sub.add_argument("arquivo", nargs="?", help="arquivo de texto (padrão: entrada padrão)")
+    sub.add_argument("arquivo", nargs="?", help="arquivo (texto, CSV, JSON, Word, Excel, PowerPoint ou PDF)")
     sub.add_argument("--operador", choices=sorted(OPERATORS), help="como substituir (padrão: token)")
     sub.add_argument("--cofre", help="salva o cofre neste JSON para restaurar depois")
     sub.add_argument("--continuar", action="store_true", help="reaproveita o cofre existente (marcadores estáveis)")
-    sub.add_argument("--formato", choices=FILE_FORMATS, help="texto, csv, json ou jsonl (padrão: pela extensão)")
+    sub.add_argument("--formato", choices=FILE_FORMATS,
+                     help="texto, csv, json, jsonl, docx, xlsx, pptx ou pdf (padrão: pela extensão)")
     sub.add_argument("--campos", help="só estas colunas/chaves, separadas por vírgula")
     sub.add_argument("--forcar", action="append", metavar="CAMPO=TIPO",
                      help="trata o campo inteiro como um tipo de dado (ex.: cpf=CPF); pode repetir")
@@ -254,7 +317,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub = commands.add_parser("restaurar", help="devolve os dados reais usando um cofre salvo")
     sub.add_argument("arquivo", nargs="?", help="arquivo de texto (padrão: entrada padrão)")
     sub.add_argument("--cofre", required=True, help="cofre salvo pelo comando anonimizar")
-    sub.add_argument("--formato", choices=FILE_FORMATS, help="texto, csv, json ou jsonl (padrão: pela extensão)")
+    sub.add_argument("--formato", choices=FILE_FORMATS,
+                     help="texto, csv, json, jsonl, docx, xlsx ou pptx (padrão: pela extensão)")
     sub.add_argument("-o", "--saida", help="arquivo de saída (padrão: saída padrão)")
     sub.set_defaults(func=cmd_restore)
 
@@ -305,7 +369,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         return args.func(args)
-    except (ConfigError, ValueError, FileNotFoundError) as exc:
+    except (ConfigError, ValueError, FileNotFoundError, ImportError) as exc:
         print(f"Erro: {exc}", file=sys.stderr)
         return 2
 

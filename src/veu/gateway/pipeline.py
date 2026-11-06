@@ -43,6 +43,11 @@ class Prepared:
 class Gateway:
     def __init__(self, veu: Veu | None = None):
         self.veu = veu or Veu()
+        self.expander = None
+        if self.veu.config.expand_links:
+            from veu.sources import LinkExpander
+
+            self.expander = LinkExpander(self.veu.config.expand_domains)
 
     @property
     def config(self):
@@ -58,7 +63,7 @@ class Gateway:
         if not isinstance(payload, dict):
             raise ValueError("O corpo da requisição precisa ser um objeto JSON.")
         vault = self.veu.new_vault() if vault is None else vault
-        masker = Masker(self.veu.anonymizer, vault)
+        masker = Masker(self.veu.anonymizer, vault, self.expander.expand if self.expander else None)
         adapter.mask(payload, masker)
         policy = set(self.config.block if block is None else block)
         blocked = sorted(label for label in masker.counts if label in policy)
