@@ -1,0 +1,99 @@
+# Valores do chart do Véu. Veja docs/empresas.md para o passo a passo.
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/guhttps/veu
+  tag: ""            # padrão: appVersion do chart
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# Secret com os tokens e chaves (crie antes do install). Chaves esperadas, todas opcionais:
+#   VEU_TOKEN, VEU_SEGREDO_AUDITORIA, VEU_SESSOES (redis://...), tokens das equipes,
+#   OPENAI_API_KEY / ANTHROPIC_API_KEY etc. (com injetar_chaves = true) e NOTION_TOKEN.
+existingSecret: veu
+
+# Conteúdo do veu.toml montado em /etc/veu/veu.toml.
+config: |
+  [deteccao]
+  detectores = ["padroes", "nomes", "enderecos", "segredos"]
+
+  [anonimizacao]
+  operador = "token"
+
+  [politica]
+  bloquear = ["CHAVE_PRIVADA"]
+
+  [servidor]
+  host = "0.0.0.0"
+  porta = 8787
+  playground = false
+  log_auditoria = "-"                       # auditoria na saída padrão, para o coletor de logs
+  segredo_auditoria_env = "VEU_SEGREDO_AUDITORIA"
+  injetar_chaves = true                     # as chaves dos provedores ficam só no Secret
+  metricas = true
+
+  # Uma seção por equipe, cada uma com seu token no Secret:
+  # [equipes.juridico]
+  # token_env = "VEU_TOKEN_JURIDICO"
+  # bloquear = ["CARTAO_CREDITO"]
+
+# Sessões compartilhadas entre réplicas (o cofre tem dados reais: Redis interno, com senha e TLS).
+# Informe a URL em VEU_SESSOES no Secret, por exemplo rediss://:senha@redis-veu:6379/0
+redis:
+  enabled: false
+
+env: []
+#  - name: VEU_LIMIAR
+#    value: "0.5"
+
+service:
+  type: ClusterIP
+  port: 8787
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    memory: 768Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Restringe a saída do pod: DNS, HTTPS para os provedores e o Redis (se houver).
+networkPolicy:
+  enabled: true
+  # Quem pode chamar o Véu (por padrão, pods do mesmo namespace).
+  ingressFrom:
+    - podSelector: {}
+  redisPort: 6379
+
+serviceMonitor:
+  enabled: false
+  interval: 30s
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

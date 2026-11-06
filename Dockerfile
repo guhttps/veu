@@ -1,7 +1,7 @@
 FROM python:3.13-slim
 
 LABEL org.opencontainers.image.title="Véu" \
-      org.opencontainers.image.description="Proxy que esconde dados pessoais brasileiros antes de enviar textos para modelos de IA" \
+      org.opencontainers.image.description="Gateway que esconde dados pessoais e segredos antes de enviar textos para modelos de IA" \
       org.opencontainers.image.source="https://github.com/guhttps/veu" \
       org.opencontainers.image.licenses="MIT"
 
@@ -15,7 +15,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
-RUN pip install ".[servidor]" && useradd --create-home --uid 10001 veu
+RUN pip install ".[servidor,redis,documentos]" && useradd --create-home --uid 10001 veu
 
 USER veu
 EXPOSE 8787

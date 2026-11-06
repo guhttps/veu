@@ -208,6 +208,21 @@ def cmd_hook(args) -> int:
     return run(args.evento, mode=args.modo, pii=args.dados_pessoais, block=block, fmt=args.formato, veu=_veu(args))
 
 
+def cmd_audit(args) -> int:
+    """Confere a cadeia de hashes de um log de auditoria do servidor."""
+    from veu.server.state import verify_audit
+
+    secret = os.environ.get(args.segredo_env) if args.segredo_env else None
+    if args.segredo_env and not secret:
+        raise ValueError(f"A variável {args.segredo_env} não está definida.")
+    ok, count, problem = verify_audit(args.arquivo, secret)
+    if ok:
+        print(f"Log íntegro: {count} registros, cadeia completa.")
+        return 0
+    print(f"Log comprometido depois de {count} registros válidos: {problem}.", file=sys.stderr)
+    return 1
+
+
 def cmd_mcp(args) -> int:
     try:
         from veu.integrations.mcp import build_server
@@ -353,6 +368,12 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--formato", choices=("claude", "cursor"), default="claude", help="formato do agente")
     common(sub)
     sub.set_defaults(func=cmd_hook)
+
+    sub = commands.add_parser("auditoria", help="confere a integridade do log de auditoria do servidor")
+    sub.add_argument("acao", choices=("verificar",))
+    sub.add_argument("arquivo", help="log de auditoria (JSONL)")
+    sub.add_argument("--segredo-env", help="variável de ambiente com o segredo da auditoria (se configurado)")
+    sub.set_defaults(func=cmd_audit)
 
     sub = commands.add_parser("mcp", help="servidor MCP (stdio) para Claude Code, Claude Desktop, Cursor...")
     common(sub)

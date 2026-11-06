@@ -97,6 +97,15 @@ jobs:
             npm test
           fi
 
+  helm:
+    name: Chart Helm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+      - run: helm lint deploy/helm/veu --strict
+      - run: helm template teste deploy/helm/veu --set serviceMonitor.enabled=true --set redis.enabled=true > /dev/null
+
   litellm:
     name: Guardrail do LiteLLM
     runs-on: ubuntu-latest

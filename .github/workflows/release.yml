@@ -28,6 +28,22 @@ jobs:
         with:
           name: dist
           path: dist/
+      # Biblioteca JavaScript, extensão e página: ficam em extras/ (o PyPI só aceita os arquivos do Python).
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+      - name: Biblioteca JavaScript e extensão
+        run: |
+          mkdir -p extras
+          (cd js && npm ci && npm run build && npm test && npm pack --pack-destination ../extras)
+          python scripts/empacotar_navegador.py
+          mv dist/veu-extensao-*.zip extras/
+      - uses: actions/upload-artifact@v7
+        with:
+          name: extras
+          path: extras/
 
   github-release:
     needs: build
@@ -40,6 +56,10 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: dist
+          path: dist/
+      - uses: actions/download-artifact@v7
+        with:
+          name: extras
           path: dist/
       - name: Notas a partir do CHANGELOG
         run: |
@@ -71,3 +91,49 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  # Imagem Docker em ghcr.io/guhttps/veu (usada pelo chart Helm em deploy/helm/veu).
+  docker:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - id: versao
+        run: echo "valor=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ steps.versao.outputs.valor }}
+            ghcr.io/${{ github.repository }}:latest
+          labels: |
+            org.opencontainers.image.version=${{ steps.versao.outputs.valor }}
+
+  # Publicação no npm por "trusted publishing". Para ativar: configure o pacote veu-js no npm
+  # (Settings > Trusted publishing > GitHub Actions) e crie a variável de repositório NPM_PUBLICAR = true.
+  npm:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') && vars.NPM_PUBLICAR == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+      - working-directory: js
+        run: npm ci && npm run build && npm publish --provenance --access public

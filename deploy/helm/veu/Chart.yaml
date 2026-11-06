@@ -1,0 +1,10 @@
+apiVersion: v2
+name: veu
+description: Gateway do Véu. Esconde dados pessoais e segredos antes de as requisições chegarem aos provedores de IA, sem instalar nada nos computadores.
+type: application
+version: 0.4.0
+appVersion: "0.4.0"
+home: https://github.com/guhttps/veu
+sources:
+  - https://github.com/guhttps/veu
+keywords: [lgpd, pii, llm, gateway, privacidade]

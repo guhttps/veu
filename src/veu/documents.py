@@ -203,12 +203,14 @@ def _transform_docx(source: Path, destination: Path, spans: Spans, text: Callabl
         for part in (section.header, section.footer, section.first_page_header, section.first_page_footer):
             if not part.is_linked_to_previous:
                 containers.append(part)
-    seen: set[int] = set()
+    # Guarda os próprios elementos, não id(): o lxml recria os objetos e reaproveita endereços de memória, e um
+    # parágrafo novo poderia parecer "já visto" (e ficar sem proteção).
+    seen: set = set()
     for container in containers:
         for paragraph in _docx_paragraphs(container):
-            if id(paragraph._p) in seen:
+            if paragraph._p in seen:
                 continue  # células mescladas aparecem mais de uma vez
-            seen.add(id(paragraph._p))
+            seen.add(paragraph._p)
             _rewrite(_docx_runs(paragraph), spans)
     properties = document.core_properties
     for field in ("author", "last_modified_by", "title", "subject", "comments", "keywords"):

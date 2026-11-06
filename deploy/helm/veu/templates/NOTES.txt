@@ -1,0 +1,9 @@
+O Véu está no ar em http://{{ include "veu.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}
+
+Aponte as aplicações para ele, trocando só a URL base:
+  OpenAI:     http://{{ include "veu.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/v1
+  Anthropic:  http://{{ include "veu.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/anthropic
+  e envie o token no cabeçalho X-Veu-Token.
+
+Prontidão: /veu/pronto   Métricas: /veu/metricas   Auditoria: logs do pod (log_auditoria = "-")
+Confira a cadeia da auditoria exportada com:  veu auditoria verificar auditoria.jsonl --segredo-env VEU_SEGREDO_AUDITORIA

@@ -24,7 +24,7 @@ from veu.anonymizer import normalize_operator
 from veu.config import Config, ConfigError, ProviderConfig, load_config
 from veu.core import Veu
 from veu.gateway import BlockedError, Gateway, detect_adapter, is_streaming
-from veu.server.state import AuditLog, SessionStore, Stats
+from veu.server.state import AuditLog, SessionStore, Stats, session_store
 
 HOP_HEADERS = frozenset({
     "host", "content-length", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te",
@@ -120,7 +120,9 @@ def _credential(request: Request) -> str:
 def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncBaseTransport | None = None) -> Starlette:
     config = config or load_config()
     exposed = not is_local_host(config.host)
-    if exposed and not config.token and not config.allow_no_token:
+    team_tokens = {team.token: team for team in config.teams.values() if team.token}
+    protected = bool(config.token or team_tokens)
+    if exposed and not protected and not config.allow_no_token:
         raise ConfigError(
             f"O Véu vai ouvir em {config.host}, fora do localhost, sem token. Defina VEU_TOKEN (recomendado) ou, "
             "numa rede interna isolada, VEU_PERMITIR_SEM_TOKEN=1."
@@ -134,10 +136,10 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         return gateways[operator]
 
     # Proxy e API REST têm sessões separadas: um identificador escolhido no proxy nunca é restaurável pela API.
-    proxy_sessions = SessionStore(veu.new_vault, ttl=config.session_ttl)
-    api_sessions = SessionStore(veu.new_vault, ttl=config.session_ttl)
+    proxy_sessions = session_store(config.session_backend, veu.new_vault, config.session_ttl, "veu:proxy:")
+    api_sessions = session_store(config.session_backend, veu.new_vault, config.session_ttl, "veu:api:")
     stats = Stats()
-    audit = AuditLog(config.audit_log)
+    audit = AuditLog(config.audit_log, config.audit_secret)
     operator_instances: dict[str, Veu] = {config.operator: veu}
     max_body = int(config.max_body_mb * 1024 * 1024)
     client = httpx.AsyncClient(
@@ -155,15 +157,24 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         # Com token, outro site não consegue mandar o X-Veu-Token; sem ele, a origem precisa ser o próprio Véu.
         origin = request.headers.get("origin")
         cross_site = origin is not None and (origin == "null" or urlsplit(origin).netloc != host_header)
-        if cross_site and not (exposed and config.token):
+        if cross_site and not (exposed and protected):
             return _error("Requisições de outros sites não são aceitas.", 403, "veu_origem_invalida")
-        if check_token and config.token:
+        request.state.team = None
+        if check_token and protected:
             given = request.headers.get("x-veu-token", "")
             if not given and allow_bearer:
                 given = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
-            if not hmac.compare_digest(given.encode(), config.token.encode()):
+            matched = bool(config.token) and hmac.compare_digest(given.encode(), config.token.encode())
+            for token, team in team_tokens.items():  # compara com todos, sem atalho
+                if hmac.compare_digest(given.encode(), token.encode()):
+                    matched, request.state.team = True, team
+            if not matched:
                 return _error("Token do Véu ausente ou inválido (cabeçalho X-Veu-Token).", 401, "veu_nao_autorizado")
         return None
+
+    def team_name(request: Request) -> str | None:
+        team = getattr(request.state, "team", None)
+        return team.name if team else None
 
     async def read_body(request: Request) -> bytes:
         declared = request.headers.get("content-length")
@@ -201,6 +212,12 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
     async def health(request: Request) -> Response:
         return JSONResponse({"status": "ok", "versao": __version__})
 
+    async def ready(request: Request) -> Response:
+        """Prontidão (Kubernetes): o armazenamento de sessões responde."""
+        if await run_in_threadpool(proxy_sessions.ping):
+            return JSONResponse({"status": "pronto", "versao": __version__})
+        return JSONResponse({"status": "indisponivel", "motivo": "armazenamento de sessões"}, status_code=503)
+
     async def statistics(request: Request) -> Response:
         return guard(request) or JSONResponse(stats.snapshot(len(proxy_sessions) + len(api_sessions)))
 
@@ -233,18 +250,19 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             return too_large()
         except ValueError as exc:
             return _error(str(exc), 400)
-        if data.get("sessao"):
-            # Só continua sessões criadas pelo servidor: identificadores escolhidos pelo cliente seriam adivinháveis.
-            session_id = str(data["sessao"])
-            vault = api_sessions.get(session_id, create=False)
-            if vault is None:
-                return _error("Sessão não encontrada ou expirada. Omita \"sessao\" para criar uma nova.", 404,
-                              "veu_sessao_inexistente")
-        else:
-            session_id = SessionStore.new_id()
-            vault = api_sessions.get(session_id)
-        result = await run_in_threadpool(instance.anonymize, data["texto"], vault)
-        stats.record("api", result.counts())
+        # Só continua sessões criadas pelo servidor: identificadores escolhidos pelo cliente seriam adivinháveis.
+        existing = bool(data.get("sessao"))
+        session_id = str(data["sessao"]) if existing else SessionStore.new_id()
+
+        def anonymize_in_session():
+            with api_sessions.session(session_id, create=not existing) as vault:
+                return None if vault is None else instance.anonymize(data["texto"], vault)
+
+        result = await run_in_threadpool(anonymize_in_session)
+        if result is None:
+            return _error("Sessão não encontrada ou expirada. Omita \"sessao\" para criar uma nova.", 404,
+                          "veu_sessao_inexistente")
+        stats.record("api", result.counts(), team=team_name(request))
         return JSONResponse({
             "texto": result.text,
             "sessao": session_id,
@@ -260,7 +278,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             return too_large()
         except ValueError as exc:
             return _error(str(exc), 400)
-        vault = api_sessions.get(str(data.get("sessao") or ""), create=False)
+        vault = await run_in_threadpool(api_sessions.get, str(data.get("sessao") or ""), False)
         if vault is None:
             return _error("Sessão não encontrada ou expirada.", 404, "veu_sessao_inexistente")
         return JSONResponse({"texto": await run_in_threadpool(vault.restore, data["texto"])})
@@ -313,10 +331,11 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         headers = _forward_headers(request, provider, config)
         adapter = detect_adapter(request.method, url.split("?", 1)[0])
         started = time.monotonic()
+        team = getattr(request.state, "team", None)
         if adapter is not None and not provider.anonymize:
             # Provedor configurado com anonimizar = false (por exemplo, um modelo local): repassa sem alterar.
-            stats.record(provider.name, Counter())
-            audit.write(provedor=provider.name, endpoint=adapter.name, sem_anonimizar=True)
+            stats.record(provider.name, Counter(), team=team_name(request))
+            audit.write(provedor=provider.name, endpoint=adapter.name, sem_anonimizar=True, equipe=team_name(request))
             return await passthrough(request, url, headers, body)
         if adapter is None:
             if request.method in ("GET", "HEAD") or config.unknown_endpoints == "repassar":
@@ -326,7 +345,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
                 'endpoints desconhecidos sem proteção, use endpoints_desconhecidos = "repassar" no veu.toml.',
                 501, "veu_endpoint_nao_suportado",
             )
-        operator = provider.operator or config.operator
+        operator = (team.operator if team else None) or provider.operator or config.operator
         requested = request.headers.get("x-veu-operador")
         if requested and config.request_operator:
             try:
@@ -334,37 +353,66 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             except ValueError as error:
                 return JSONResponse(adapter.error_body(str(error)), status_code=400)
         gateway = gateway_for(normalize_operator(operator))
-        vault = None
         session_id = request.headers.get("x-veu-sessao")
-        if session_id:
+        block = team.block if team is not None and team.block is not None else provider.block
+
+        def prepare():
+            if not session_id:
+                return gateway.prepare(adapter, body, None, request.url.path, block)
             key = hashlib.sha256(f"{_credential(request)}\0{session_id}".encode()).hexdigest()
-            vault = proxy_sessions.get(key)
+            with proxy_sessions.session(key) as vault:
+                return gateway.prepare(adapter, body, vault, request.url.path, block)
+
         try:
-            prepared = await run_in_threadpool(gateway.prepare, adapter, body, vault, request.url.path, provider.block)
+            prepared = await run_in_threadpool(prepare)
         except BlockedError as error:
-            stats.record(provider.name, error.counts, blocked=True)
+            stats.record(provider.name, error.counts, blocked=True, team=team_name(request))
             audit.write(provedor=provider.name, endpoint=adapter.name, bloqueado=sorted(error.labels),
-                        entidades=dict(error.counts), status=400)
+                        entidades=dict(error.counts), status=400, equipe=team_name(request))
             return JSONResponse(adapter.error_body(str(error)), status_code=400,
                                 headers={"x-veu-bloqueado": ",".join(error.labels)})
         except (ValueError, RecursionError) as error:
             return JSONResponse(adapter.error_body(f"Requisição inválida: {str(error)[:200]}"), status_code=400)
+
+        target = config.providers.get(config.route_to) if config.route_to else None
+        sensitive = bool(prepared.counts) and (not config.route_labels or bool(set(prepared.counts) & set(config.route_labels)))
+        if target is not None and sensitive and target.kind == provider.kind and provider.kind != "gemini":
+            # Desvio: com dados sensíveis, a requisição original vai inteira para o provedor interno.
+            original = body
+            if config.route_model:
+                import json
+
+                payload = json.loads(body or b"{}")
+                payload["model"] = config.route_model
+                original = json.dumps(payload, ensure_ascii=False).encode()
+            routed_headers = {name: value for name, value in headers.items() if name.lower() not in CREDENTIAL_HEADERS}
+            if target.key_env and os.environ.get(target.key_env):
+                key_value = os.environ[target.key_env]
+                if target.kind == "anthropic":
+                    routed_headers["x-api-key"] = key_value
+                else:
+                    routed_headers["authorization"] = f"Bearer {key_value}"
+            stats.record(target.name, prepared.counts, routed=True, team=team_name(request))
+            audit.write(provedor=provider.name, endpoint=adapter.name, desviado_para=target.name,
+                        entidades=dict(prepared.counts), equipe=team_name(request))
+            return await passthrough(request, target.url + url[len(provider.url):], routed_headers, original)
 
         upstream = client.build_request(request.method, url, headers=headers, content=prepared.body,
                                         params=request.query_params)
         try:
             response = await client.send(upstream, stream=True)
         except httpx.HTTPError as exc:
-            stats.record(provider.name, prepared.counts, error=True)
+            stats.record(provider.name, prepared.counts, error=True, team=team_name(request))
             return JSONResponse(
                 adapter.error_body(f"Não foi possível acessar o provedor {provider.name} ({type(exc).__name__})."),
                 status_code=502,
             )
 
         def finish(status: int) -> None:
-            stats.record(provider.name, prepared.counts, error=status >= 500)
+            stats.record(provider.name, prepared.counts, error=status >= 500, team=team_name(request))
             audit.write(provedor=provider.name, endpoint=adapter.name, status=status, stream=prepared.stream,
-                        entidades=dict(prepared.counts), duracao_ms=round((time.monotonic() - started) * 1000))
+                        entidades=dict(prepared.counts), duracao_ms=round((time.monotonic() - started) * 1000),
+                        equipe=team_name(request))
 
         response_headers = _response_headers(response, prepared.counts)
         content_type = response.headers.get("content-type", "")
@@ -395,6 +443,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
 
     routes = [
         Route("/veu/saude", health, methods=["GET"]),
+        Route("/veu/pronto", ready, methods=["GET"]),
         Route("/veu/estatisticas", statistics, methods=["GET"]),
         *([Route("/veu/metricas", metrics, methods=["GET"])] if config.metrics else []),
         Route("/veu/v1/detectar", detect, methods=["POST"]),

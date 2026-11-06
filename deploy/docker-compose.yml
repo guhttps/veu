@@ -1,0 +1,30 @@
+# Véu como gateway central, com sessões no Redis (duas réplicas) e auditoria encadeada.
+#
+#   cd deploy
+#   cp .env.exemplo .env            # preencha os tokens e as chaves
+#   docker compose up -d --scale veu=2
+#
+# As aplicações apontam para http://<servidor>:8787/v1 (OpenAI) ou /anthropic (Anthropic) com o cabeçalho
+# X-Veu-Token. Nenhum computador da empresa precisa instalar nada.
+services:
+  veu:
+    build: ..
+    image: ghcr.io/guhttps/veu:0.4.0
+    env_file: .env
+    environment:
+      VEU_CONFIG: /etc/veu/veu.toml
+      VEU_SESSOES: redis://:${REDIS_SENHA:?defina REDIS_SENHA no .env}@redis:6379/0
+    volumes:
+      - ./veu-empresa.toml:/etc/veu/veu.toml:ro
+    ports:
+      - "8787"
+    depends_on:
+      - redis
+    read_only: true
+    tmpfs: [/tmp]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--requirepass", "${REDIS_SENHA:?defina REDIS_SENHA no .env}", "--save", ""]
+    restart: unless-stopped

@@ -37,9 +37,11 @@ langchain = ["langchain-core>=0.3"]
 pandas = ["pandas>=2.0"]
 documentos = ["openpyxl>=3.1", "python-docx>=1.1", "pypdf>=5.0", "python-pptx>=1.0"]
 litellm = ["litellm>=1.70"]
-todos = ["veu[servidor,mcp,langchain,pandas,documentos]"]
+redis = ["redis>=5.0"]
+todos = ["veu[servidor,mcp,langchain,pandas,documentos,redis]"]
 dev = [
-    "veu[servidor,mcp,langchain,pandas,documentos]",
+    "veu[servidor,mcp,langchain,pandas,documentos,redis]",
+    "fakeredis>=2.20",
     "pytest>=8",
     "ruff>=0.6",
     "openai>=1.40",

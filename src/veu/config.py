@@ -28,6 +28,16 @@ class ProviderConfig:
     block: tuple[str, ...] | None = None
 
 
+@dataclass(frozen=True)
+class TeamConfig:
+    """Equipe com token próprio ([equipes.NOME]): a auditoria e as métricas mostram quem chamou."""
+
+    name: str
+    token: str | None
+    block: tuple[str, ...] | None = None
+    operator: str | None = None
+
+
 # Provedores conhecidos. "openai" inclui qualquer API compatível com OpenAI Chat Completions.
 BUILTIN_PROVIDERS: dict[str, ProviderConfig] = {
     provider.name: provider
@@ -113,6 +123,15 @@ class Config:
     # Troca links do Notion e do Google (e de outros domínios da lista) pelo conteúdo já protegido.
     expand_links: bool = False
     expand_domains: tuple[str, ...] = ("notion.so", "notion.site", "docs.google.com")
+    # "memoria" (padrão) ou uma URL redis://, para várias réplicas do servidor compartilharem as sessões.
+    session_backend: str = "memoria"
+    # Com segredo, cada linha da auditoria leva um HMAC encadeado: alterar ou apagar linhas fica detectável.
+    audit_secret: str | None = None
+    # Desvio: requisições com estes tipos (vazio = qualquer dado) vão inteiras para um provedor interno.
+    route_to: str | None = None
+    route_model: str | None = None
+    route_labels: tuple[str, ...] = ()
+    teams: dict[str, TeamConfig] = field(default_factory=dict)
     providers: dict[str, ProviderConfig] = field(default_factory=lambda: dict(BUILTIN_PROVIDERS))
 
     def __post_init__(self):
@@ -136,6 +155,21 @@ class Config:
                 re.compile(pattern)
             except re.error as exc:
                 raise ConfigError(f'Padrão inválido em ignorar_padroes "{pattern}": {exc}') from exc
+        if self.route_to is not None and self.route_to not in self.providers:
+            raise ConfigError(f'desviar_para: o provedor "{self.route_to}" não existe.')
+        bad_route = [label for label in self.route_labels if label not in LABELS]
+        if bad_route:
+            raise ConfigError(f"desviar_tipos: entidades desconhecidas: {', '.join(bad_route)}.")
+        if not (self.session_backend == "memoria" or self.session_backend.startswith(("redis://", "rediss://"))):
+            raise ConfigError('sessoes deve ser "memoria" ou uma URL redis:// (ou rediss://).')
+        for team in self.teams.values():
+            if not team.token:
+                raise ConfigError(f"[equipes.{team.name}] está sem token: defina a variável de token_env.")
+            if team.operator:
+                normalize_operator(team.operator)
+            unknown_block = [label for label in team.block or () if label not in LABELS]
+            if unknown_block:
+                raise ConfigError(f"[equipes.{team.name}] bloquear: entidades desconhecidas: {', '.join(unknown_block)}.")
         if self.unknown_endpoints not in ("bloquear", "repassar"):
             raise ConfigError('endpoints_desconhecidos deve ser "bloquear" ou "repassar".')
         if self.default_provider not in self.providers:
@@ -169,18 +203,36 @@ _SECTIONS = {
         "operador": "operator", "operadores": "operators", "instruir_modelo": "instruct_model",
         "vincular_nomes": "link_names", "segredo_env": None,
     },
-    "politica": {"bloquear": "block", "endpoints_desconhecidos": "unknown_endpoints"},
+    "politica": {
+        "bloquear": "block", "endpoints_desconhecidos": "unknown_endpoints", "desviar_para": "route_to",
+        "modelo_desvio": "route_model", "desviar_tipos": "route_labels",
+    },
     "servidor": {
         "host": "host", "porta": "port", "provedor_padrao": "default_provider", "playground": "playground",
         "log_auditoria": "audit_log", "sessao_ttl": "session_ttl", "injetar_chaves": "inject_keys",
         "timeout": "timeout", "token_env": None, "permitir_sem_token": "allow_no_token",
         "limite_corpo_mb": "max_body_mb", "operador_por_requisicao": "request_operator", "metricas": "metrics",
-        "expandir_links": "expand_links", "dominios_expandidos": "expand_domains",
+        "expandir_links": "expand_links", "dominios_expandidos": "expand_domains", "sessoes": "session_backend",
+        "segredo_auditoria_env": None,
     },
 }
 
 
 _PROVIDER_KEYS = {"tipo", "url", "chave_env", "anonimizar", "operador", "bloquear"}
+_TEAM_KEYS = {"token_env", "bloquear", "operador"}
+
+
+def _team_from_toml(name: str, options: dict) -> TeamConfig:
+    extra = set(options) - _TEAM_KEYS
+    if extra:
+        raise ConfigError(f"[equipes.{name}] não aceita {', '.join(sorted(extra))}. Opções: {', '.join(sorted(_TEAM_KEYS))}.")
+    if "token_env" not in options:
+        raise ConfigError(f"[equipes.{name}] precisa de token_env (a variável de ambiente com o token da equipe).")
+    block = options.get("bloquear")
+    return TeamConfig(
+        name, os.environ.get(options["token_env"]) or None,
+        tuple(label.upper() for label in block) if block is not None else None, options.get("operador"),
+    )
 
 
 def _provider_from_toml(name: str, options: dict, existing: ProviderConfig | None) -> ProviderConfig:
@@ -207,6 +259,9 @@ def _provider_from_toml(name: str, options: dict, existing: ProviderConfig | Non
 def _from_toml(data: dict, base: Config) -> dict:
     changes: dict = {}
     for section, values in data.items():
+        if section == "equipes":
+            changes["teams"] = {name: _team_from_toml(name, options) for name, options in values.items()}
+            continue
         if section == "provedores":
             providers = dict(base.providers)
             for name, options in values.items():
@@ -226,9 +281,11 @@ def _from_toml(data: dict, base: Config) -> dict:
                 changes["secret"] = os.environ.get(value)
             elif key == "token_env":
                 changes["token"] = os.environ.get(value)
+            elif key == "segredo_auditoria_env":
+                changes["audit_secret"] = os.environ.get(value)
             elif key == "operadores":
                 changes["operators"] = {label.upper(): op for label, op in value.items()}
-            elif key in ("entidades", "bloquear"):
+            elif key in ("entidades", "bloquear", "desviar_tipos"):
                 changes[mapping[key]] = [label.upper() for label in value]
             else:
                 changes[mapping[key]] = value
@@ -267,6 +324,10 @@ def _from_env(environ: dict[str, str], base: Config) -> dict:
         changes["token"] = environ["VEU_TOKEN"] or None
     if "VEU_PERMITIR_SEM_TOKEN" in environ:
         changes["allow_no_token"] = environ["VEU_PERMITIR_SEM_TOKEN"].strip().lower() in ("1", "true", "sim", "yes")
+    if "VEU_SESSOES" in environ:
+        changes["session_backend"] = environ["VEU_SESSOES"] or "memoria"
+    if "VEU_SEGREDO_AUDITORIA" in environ:
+        changes["audit_secret"] = environ["VEU_SEGREDO_AUDITORIA"] or None
     if "VEU_LIMITE_CORPO_MB" in environ:
         changes["max_body_mb"] = float(environ["VEU_LIMITE_CORPO_MB"])
     providers = dict(changes.get("providers", base.providers))

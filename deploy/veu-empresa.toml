@@ -1,0 +1,42 @@
+# Configuração de exemplo para o Véu como gateway central da empresa.
+
+[deteccao]
+detectores = ["padroes", "nomes", "enderecos", "segredos"]
+# Dados da própria empresa que podem ir para a IA.
+ignorar = ["contato@minhaempresa.example"]
+ignorar_padroes = ['@minhaempresa\.example$']
+
+[anonimizacao]
+operador = "token"
+
+[politica]
+# Chaves privadas nunca saem, nem escondidas.
+bloquear = ["CHAVE_PRIVADA"]
+# Opcional: requisições com documentos vão inteiras para um modelo interno, em vez de serem escondidas.
+# desviar_para = "interno"
+# modelo_desvio = "llama3.1:70b"
+# desviar_tipos = ["CPF", "CNPJ", "CARTAO_CREDITO"]
+
+[servidor]
+host = "0.0.0.0"
+porta = 8787
+playground = false
+log_auditoria = "-"
+segredo_auditoria_env = "VEU_SEGREDO_AUDITORIA"
+injetar_chaves = true
+token_env = "VEU_TOKEN"
+# Lê links do Notion e do Google enviados nas mensagens e manda o conteúdo já protegido (NOTION_TOKEN no .env).
+expandir_links = false
+
+# Uma seção por equipe, com o token no .env. A auditoria e as métricas mostram a equipe.
+[equipes.atendimento]
+token_env = "VEU_TOKEN_ATENDIMENTO"
+
+[equipes.juridico]
+token_env = "VEU_TOKEN_JURIDICO"
+bloquear = ["CARTAO_CREDITO", "CHAVE_PRIVADA"]
+
+# Modelo interno para o desvio (descomente desviar_para acima).
+# [provedores.interno]
+# tipo = "openai"
+# url = "http://vllm.interno:8000/v1"
