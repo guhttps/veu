@@ -4,10 +4,14 @@ O Véu se encaixa em vários pontos. Escolha pelo que você já usa; as opções
 
 | Jeito | Para quem | O que muda no seu código |
 |---|---|---|
+| **Navegador** | Quem usa ChatGPT, Claude ou Gemini pelo site | Nada: [página](https://guhttps.github.io/veu/) ou [extensão](extensao.md) |
 | **Proxy** (`veu servir`) | Qualquer linguagem, framework ou ferramenta que fale HTTP | Só a URL base do SDK |
 | **Dentro do Python** | Aplicações Python (SDKs, LangChain, qualquer função) | Uma linha na criação do cliente ou um decorador |
-| **Agentes (MCP)** | Claude Code, Claude Desktop, Cursor | Nada: o agente ganha ferramentas novas |
-| **Dados** | Arquivos CSV/JSON/JSONL, pandas, bases de RAG | Um comando ou uma função |
+| **Dentro do JavaScript** | Node, Deno, Bun, navegador, AI SDK da Vercel | `fetch: createFetch()` ou um middleware |
+| **Agentes** | Claude Code, Claude Desktop, Cursor | Nada: plugin, ganchos e ferramentas MCP |
+| **Fontes** | Notion, Google Docs/Sheets/Slides, links, Word, Excel, PowerPoint, PDF | `veu ler` ou a ferramenta `ler_protegido` |
+| **Dados** | Arquivos CSV/JSON/JSONL/Excel, pandas, bases de RAG | Um comando ou uma função |
+| **Empresas** | Gateway central, LiteLLM, extensão gerenciada | Veja o [guia para empresas](empresas.md) |
 | **Observabilidade** | Logs, Sentry, Prometheus | Um filtro ou processador |
 | **Repositórios** | pre-commit, GitHub Actions, aba Security | Um arquivo de configuração |
 
@@ -32,11 +36,16 @@ Cada seção diz se a integração é coberta pelos testes automatizados do proj
 
 **Agentes, linguagens e no-code:**
 [MCP](#mcp-claude-code-claude-desktop-cursor) ·
-[Node.js e outras linguagens](#nodejs-e-outras-linguagens) ·
+[Claude Code e Cursor](#claude-code-e-cursor) ·
+[JavaScript e TypeScript](#javascript-e-typescript) ·
 [API REST e n8n](#api-rest-n8n-make-qualquer-linguagem)
 
+**Fontes:**
+[Notion, Google e documentos](#notion-google-e-documentos) ·
+[Links no proxy](#links-no-proxy)
+
 **Dados:**
-[Arquivos](#arquivos-csv-json-e-jsonl) ·
+[Arquivos](#arquivos-csv-json-jsonl-e-office) ·
 [pandas](#pandas) ·
 [RAG](#rag)
 
@@ -314,8 +323,9 @@ Claude Desktop e Cursor (`claude_desktop_config.json` ou `.cursor/mcp.json`):
 
 | Ferramenta | O que faz | O agente vê os dados? |
 |---|---|---|
-| `verificar_arquivo` | Lista os dados pessoais de um arquivo (linha, coluna, tipo) | Não: só valores mascarados |
-| `anonimizar_arquivo` | Cria uma cópia anonimizada (texto, CSV, JSON, JSONL) | Não: só contagens |
+| `ler_protegido` | Lê um arquivo, uma página do Notion, um Google Docs/Sheets ou um link já com os dados trocados por marcadores | Só a versão protegida |
+| `verificar_arquivo` | Lista os dados pessoais e segredos de um arquivo (linha, coluna, tipo), inclusive Word, Excel e PDF | Não: só valores mascarados |
+| `anonimizar_arquivo` | Cria uma cópia anonimizada (texto, CSV, JSON, JSONL, Word, Excel, PowerPoint) | Não: só contagens |
 | `restaurar_arquivo` | Restaura um arquivo com um cofre salvo | Não |
 | `detectar` | Lista os dados pessoais de um texto | Não: só valores mascarados |
 | `anonimizar_texto` | Troca os dados de um texto por marcadores | Só a versão anonimizada |
@@ -324,19 +334,65 @@ Claude Desktop e Cursor (`claude_desktop_config.json` ou `.cursor/mcp.json`):
 
 Peça, por exemplo: "verifique se há dados pessoais em `dados/clientes.csv` e gere `dados/clientes-anonimo.csv` tratando a coluna cpf como CPF".
 
-### Node.js e outras linguagens
+### Claude Code e Cursor
 
-*Não coberto pelos testes automatizados; usa o proxy, que é coberto.*
+*Coberto pelos testes: ganchos, plugin (validado com `claude plugin validate`) e ferramentas MCP.*
 
-```javascript
-import OpenAI from "openai";
-import Anthropic from "@anthropic-ai/sdk";
+O plugin junta três peças:
 
-const openai = new OpenAI({ baseURL: "http://127.0.0.1:8787/v1" });
-const claude = new Anthropic({ baseURL: "http://127.0.0.1:8787" });
+- **Ganchos:**
+  - um prompt com chave de API, senha ou chave privada não é enviado;
+  - um prompt com dados pessoais gera um aviso;
+  - um arquivo com segredos não é lido. O agente recebe o motivo e a sugestão de usar `ler_protegido`.
+- **Servidor MCP:** as ferramentas da tabela acima.
+- **Skill `protecao-de-dados`:** ensina o agente a ler planilhas, documentos e páginas do Notion protegidos, a manter os marcadores e a nunca escrever segredos no código.
+
+```text
+/plugin install veu --marketplace guhttps/veu
 ```
 
-Go, Java, C#, PHP e Ruby funcionam do mesmo jeito: troque a URL base do cliente.
+O plugin chama o comando `veu`, que precisa estar instalado: `pipx install "veu[mcp,documentos] @ git+https://github.com/guhttps/veu"`.
+
+Sem o plugin, os ganchos também funcionam sozinhos, no `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "veu gancho prompt" }] }],
+    "PreToolUse": [{ "matcher": "Read", "hooks": [{ "type": "command", "command": "veu gancho arquivo" }] }]
+  }
+}
+```
+
+Opções do gancho:
+
+| Opção | Efeito |
+|---|---|
+| `--modo bloquear` | Também bloqueia prompts com dados pessoais (o padrão só avisa) |
+| `--dados-pessoais permitir`, `perguntar` (padrão) ou `negar` | O que fazer com arquivos que têm dados pessoais, mas não segredos |
+| `--bloquear CPF,CARTAO_CREDITO` | Troca a lista de tipos que sempre bloqueiam (padrão: os segredos) |
+
+No **Cursor**, use o [`examples/cursor-hooks.json`](../examples/cursor-hooks.json) em `.cursor/hooks.json` (formato `--formato cursor`). O servidor MCP entra no `.cursor/mcp.json`, como acima.
+
+A skill também pode ser usada sozinha. No Claude.ai, compacte a pasta `plugin/skills/protecao-de-dados` e envie em Configurações > Skills.
+
+### JavaScript e TypeScript
+
+*Coberto pelos testes, com os SDKs oficiais da OpenAI e da Anthropic e o AI SDK da Vercel.*
+
+A biblioteca [`veu-js`](../js/README.md) traz a mesma detecção da versão em Python, sem dependências e sem servidor:
+
+```ts
+import OpenAI from "openai";
+import { createFetch } from "veu-js/fetch";
+import { wrapLanguageModel } from "ai";
+import { veuMiddleware } from "veu-js/ai-sdk";
+
+const openai = new OpenAI({ fetch: createFetch() });                       // também a Anthropic
+const model = wrapLanguageModel({ model: openai("gpt-5-mini"), middleware: veuMiddleware() });
+```
+
+Outras linguagens (Go, Java, C#, PHP, Ruby) usam o proxy: troque a URL base do cliente para `http://127.0.0.1:8787/v1`.
 
 ### API REST (n8n, Make, qualquer linguagem)
 
@@ -365,11 +421,56 @@ A `sessao` é criada pelo servidor na primeira chamada; envie-a de volta para co
 
 ---
 
-## Dados
+## Notion, Google e documentos
 
-### Arquivos (CSV, JSON e JSONL)
+*Coberto pelos testes, com respostas simuladas das APIs do Notion e do Google e documentos reais do Office e PDF.*
+
+`veu ler` busca o conteúdo, converte para texto (Markdown, com tabelas) e já entrega protegido:
+
+```bash
+veu ler https://www.notion.so/empresa/Atendimento-1f2e3d4c5b6a79788796a5b4c3d2e1f0
+veu ler https://docs.google.com/spreadsheets/d/1AbC.../edit#gid=0 --cofre cofre.json
+veu ler contrato.pdf --json
+veu ler https://site.example/politica-de-privacidade
+```
+
+| Fonte | Como acessar |
+|---|---|
+| **Notion** (páginas e bases de dados) | Crie uma [integração interna](https://www.notion.so/profile/integrations), compartilhe a página com ela (••• > Conexões) e defina `NOTION_TOKEN` |
+| **Google Docs, Sheets e Slides** | Público pelo link: funciona sem nada. Privado: `GOOGLE_ACCESS_TOKEN` com um token OAuth de leitura do Drive |
+| **Links** | Qualquer página HTML, texto, JSON ou documento por URL |
+| **Word, Excel, PowerPoint e PDF** | Arquivos locais (`pip install "veu[documentos]"`) |
+
+Com `--cofre`, a resposta da IA pode ser restaurada depois: `veu restaurar resposta.txt --cofre cofre.json`. Para agentes, a ferramenta MCP `ler_protegido` faz o mesmo.
+
+### Links no proxy
 
 *Coberto pelos testes.*
+
+Com `expandir_links = true`, quando alguém manda um link do Notion ou do Google pelo proxy, o Véu lê o conteúdo com os tokens do servidor e o acrescenta à mensagem já protegido. O modelo recebe o conteúdo, e não só o link:
+
+```toml
+[servidor]
+expandir_links = true
+dominios_expandidos = ["notion.so", "notion.site", "docs.google.com", "wiki.minhaempresa.example"]
+```
+
+Só domínios da lista e só HTTPS são lidos, contra SSRF. O conteúdo fica em cache por 10 minutos, e argumentos de ferramentas não são expandidos.
+
+## Dados
+
+### Arquivos (CSV, JSON, JSONL e Office)
+
+*Coberto pelos testes.*
+
+Word, Excel e PowerPoint são anonimizados **no próprio formato**: a formatação, as tabelas, os cabeçalhos, os rodapés e as fórmulas continuam iguais, e só os dados mudam. Os metadados do arquivo (autor, por exemplo) também são protegidos. PDF sai como texto.
+
+```bash
+veu anonimizar planilha.xlsx --forcar cpf=CPF -o planilha-protegida.xlsx --cofre cofre.json
+veu anonimizar contrato.docx -o contrato-protegido.docx --cofre cofre.json
+veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
+veu anonimizar laudo.pdf -o laudo.txt
+```
 
 Um único cofre para o arquivo inteiro: o mesmo CPF vira o mesmo marcador em todas as linhas, então contagens, junções e análises continuam funcionando.
 
@@ -559,6 +660,23 @@ Para casos simples, um padrão no `veu.toml` basta: veja `[[deteccao.personaliza
 ignorar = ["11.222.333/0001-81"]                       # valores exatos
 ignorar_padroes = ['@minhaempresa\.com\.br$', '^0800']   # expressões regulares
 ```
+
+### LiteLLM
+
+*Coberto pelos testes, com o LiteLLM instalado (`pip install "veu[litellm]"`).*
+
+Se a empresa já usa o LiteLLM Proxy, o Véu entra como guardrail, sem proxy novo:
+
+```yaml
+guardrails:
+  - guardrail_name: veu
+    litellm_params:
+      guardrail: veu.integrations.litellm.VeuGuardrail
+      mode: [pre_call, post_call]
+      default_on: true
+```
+
+Detalhes no [guia para empresas](empresas.md#litellm).
 
 ### Docker
 

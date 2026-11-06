@@ -176,3 +176,9 @@ def test_deploy_configs_load(monkeypatch, tmp_path):
     path.write_text(toml, encoding="utf-8")
     helm = load_config(str(path))
     assert helm.audit_log == "-" and helm.inject_keys and "segredos" in helm.detectors
+
+
+def test_demonstrar(capsys):
+    assert main(["demonstrar"]) == 0
+    output = capsys.readouterr().out
+    assert output.count("VAZOU") == 7 and "nenhum dos valores chegou ao provedor" in output

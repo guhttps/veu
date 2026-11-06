@@ -5,6 +5,67 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-06
+
+Além do proxy e além dos dados brasileiros: segredos, navegador, JavaScript, Notion e documentos, empresas e agentes.
+
+### Detecção
+- **Segredos:**
+  - chaves de API de mais de 30 serviços (OpenAI, Anthropic, AWS, Google, GitHub, GitLab, Stripe, Slack, Hugging Face, Groq, Notion, Mercado Pago, Asaas...);
+  - JWT, tokens Bearer e Basic;
+  - senhas em configuração e em prosa;
+  - chaves privadas, inclusive dentro de JSON;
+  - URLs de conexão com senha;
+  - campos como `api_key: ...`.
+- Novo detector `segredos`, ligado por padrão. As regras com prefixo ficam em `data/segredos.json`, compartilhadas com a versão em JavaScript.
+- IBAN (módulo 97) e telefones internacionais.
+- Operadores `sintetico` (chave falsa no mesmo formato) e `mascara` (`sk-proj-****`) para segredos.
+
+### Navegador e JavaScript
+- **Página web** (GitHub Pages): proteger, copiar e restaurar sem instalar nada. A detecção roda no navegador e a página bloqueia conexões.
+- **Extensão para Chrome e Edge:**
+  - funciona em ChatGPT, Claude, Gemini, Copilot, Perplexity, DeepSeek e outros;
+  - modos avisar, proteger e bloquear;
+  - protege ao colar e ao enviar e restaura as respostas na tela;
+  - menu do botão direito em qualquer site;
+  - política gerenciada para empresas.
+- **`veu-js`**, a biblioteca JavaScript e TypeScript:
+  - a mesma detecção da versão em Python, garantida por um teste de conformidade;
+  - `createFetch()` para os SDKs da OpenAI e da Anthropic;
+  - middleware para o AI SDK da Vercel;
+  - pacote para o navegador.
+- Teste de ponta a ponta num Chrome de verdade.
+
+### Notion, Google e documentos
+- `veu ler` lê páginas e bases do Notion, Google Docs, Sheets e Slides, links, Word, Excel, PowerPoint e PDF, já protegidos.
+- `veu anonimizar` e `veu restaurar` tratam Word, Excel e PowerPoint no próprio formato, mantendo a formatação, as fórmulas, os cabeçalhos e os metadados. PDF sai como texto.
+- Ferramenta MCP `ler_protegido`. `verificar_arquivo` e `anonimizar_arquivo` aceitam documentos.
+- `expandir_links` no proxy: links do Notion e do Google viram o conteúdo protegido, só para domínios permitidos.
+
+### Empresas
+- Equipes com token e política próprios (`[equipes.NOME]`), com a equipe na auditoria e nas métricas.
+- Auditoria encadeada (hash da linha anterior e HMAC opcional) e `veu auditoria verificar`.
+- Sessões no Redis (`sessoes = "redis://..."`) com trava por sessão, para várias réplicas.
+- Desvio de requisições com dados sensíveis para um modelo interno (`desviar_para`, `modelo_desvio`, `desviar_tipos`).
+- Prontidão em `/veu/pronto`.
+- Guardrail para o LiteLLM Proxy (`veu.integrations.litellm.VeuGuardrail`).
+- Chart Helm (HPA, PodDisruptionBudget, NetworkPolicy, ServiceMonitor, contêiner sem root e só leitura) e docker-compose com Redis.
+- A imagem Docker passa a ser publicada em `ghcr.io/guhttps/veu` a cada release.
+
+### Agentes
+- `veu gancho prompt` e `veu gancho arquivo` para Claude Code e Cursor:
+  - prompts com segredos são bloqueados;
+  - o agente não lê arquivos com segredos e recebe a sugestão de usar `ler_protegido`.
+- Plugin do Claude Code com skill, ganchos e servidor MCP, instalável pelo marketplace deste repositório.
+
+### Corrigido
+- Linhas de bases de dados do Notion saíam sem a coluna de título.
+- Documentos do Word podiam deixar parágrafos sem proteção quando o lxml reaproveitava endereços de memória (`id()` trocado pelo próprio elemento).
+
+### Outros
+- `veu demonstrar` mostra, sem chave de API, o que chegaria ao provedor com e sem o Véu.
+- Novos extras: `documentos`, `litellm` e `redis`.
+
 ## [0.3.0] - 2026-11-05
 
 Muitas integrações novas e mais flexibilidade.
@@ -82,7 +143,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/guhttps/veu/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/guhttps/veu/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/guhttps/veu/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/guhttps/veu/releases/tag/v0.1.0

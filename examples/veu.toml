@@ -50,7 +50,11 @@ DATA_NASCIMENTO = "mascara"
 
 [politica]
 # Tipos que fazem a requisição ser recusada em vez de só escondida.
-bloquear = []
+bloquear = ["CHAVE_PRIVADA"]
+# Desvio: requisições com estes tipos vão inteiras para um provedor interno (vazio = qualquer dado pessoal).
+# desviar_para = "interno"
+# modelo_desvio = "llama3.1:70b"
+# desviar_tipos = ["CPF", "CARTAO_CREDITO"]
 # "bloquear" (padrão) ou "repassar" os POST para endpoints que o Véu não sabe proteger.
 endpoints_desconhecidos = "bloquear"
 
@@ -75,6 +79,19 @@ limite_corpo_mb = 20
 operador_por_requisicao = true
 # Expõe /veu/metricas no formato do Prometheus.
 metricas = true
+# Lê links do Notion e do Google enviados nas mensagens e manda o conteúdo já protegido (NOTION_TOKEN no ambiente).
+expandir_links = false
+dominios_expandidos = ["notion.so", "notion.site", "docs.google.com"]
+# "memoria" ou uma URL redis:// (várias réplicas compartilhando as sessões; o Redis guarda dados reais).
+sessoes = "memoria"
+# Com segredo, cada linha da auditoria leva um HMAC encadeado. Confira com: veu auditoria verificar arquivo.jsonl
+# segredo_auditoria_env = "VEU_SEGREDO_AUDITORIA"
+
+# Equipes: cada uma com o próprio token (no cabeçalho X-Veu-Token) e, se quiser, a própria política.
+# [equipes.juridico]
+# token_env = "VEU_TOKEN_JURIDICO"
+# bloquear = ["CARTAO_CREDITO"]
+# operador = "sintetico"
 
 # Provedor próprio: acessível em http://127.0.0.1:8787/interno/v1
 [provedores.interno]

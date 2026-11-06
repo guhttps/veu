@@ -223,6 +223,12 @@ def cmd_audit(args) -> int:
     return 1
 
 
+def cmd_demo(args) -> int:
+    from veu.demo import run
+
+    return run()
+
+
 def cmd_mcp(args) -> int:
     try:
         from veu.integrations.mcp import build_server
@@ -368,6 +374,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--formato", choices=("claude", "cursor"), default="claude", help="formato do agente")
     common(sub)
     sub.set_defaults(func=cmd_hook)
+
+    sub = commands.add_parser("demonstrar", help="mostra, sem chave de API, o que chega à IA com e sem o Véu")
+    sub.set_defaults(func=cmd_demo)
 
     sub = commands.add_parser("auditoria", help="confere a integridade do log de auditoria do servidor")
     sub.add_argument("acao", choices=("verificar",))

@@ -8,7 +8,7 @@ Um dado pessoal que passa sem ser escondido é um problema de qualidade, não um
 
 ## Modelo de ameaças
 
-O Véu protege contra um risco específico: **enviar dados pessoais de terceiros para um provedor de IA** junto com o texto de uma requisição.
+O Véu protege contra um risco específico: **enviar dados pessoais de terceiros ou segredos (chaves de API, senhas, chaves privadas) para um provedor de IA** junto com o texto de uma requisição, de uma conversa no navegador ou de um agente de código.
 
 | O Véu protege | Como |
 |---|---|
@@ -21,15 +21,22 @@ O Véu protege contra um risco específico: **enviar dados pessoais de terceiros
 | Envio de dados por endpoints que ele não entende | `POST` em endpoints desconhecidos é bloqueado por padrão |
 | Vazamento de cookies do navegador para o provedor | Cookies, `Referer` e `Origin` não são repassados; `Set-Cookie` do provedor não volta |
 | Travamento por textos enormes | Limite de tamanho do corpo (`limite_corpo_mb`) e processamento fora do laço principal do servidor |
+| Alteração ou remoção de linhas da auditoria | Cadeia de hashes com HMAC (`segredo_auditoria_env`) e `veu auditoria verificar` |
+| Uso do gateway por uma equipe com a política de outra | Token e política por equipe (`[equipes.NOME]`), comparados em tempo constante |
+| SSRF pela leitura de links (`expandir_links`) | Só HTTPS e só os domínios de `dominios_expandidos`; argumentos de ferramentas não são expandidos |
+| Agente de código lendo `.env` e mandando as chaves ao provedor | Ganchos `veu gancho prompt` e `veu gancho arquivo` bloqueiam e sugerem `ler_protegido` |
+| Página web e extensão enviando dados para fora | A página bloqueia conexões pela CSP (`connect-src 'none'`); a extensão não tem permissão de rede e guarda o cofre só na sessão do navegador |
 
 ## O que o Véu não faz
 
 - **Não garante detecção completa.** Nomes raros, textos em minúsculas e formatos incomuns podem passar. Veja o [benchmark](docs/benchmark.md).
-- **Não protege imagens, áudios, PDFs e arquivos.** Só textos dentro do JSON das requisições. Uploads (`/v1/files`, áudio) são bloqueados por padrão.
+- **Não protege imagens, áudios e arquivos enviados à IA.** Só textos dentro do JSON das requisições. Uploads (`/v1/files`, áudio) são bloqueados por padrão. Para documentos, use `veu anonimizar` (Word, Excel, PowerPoint) ou `veu ler` (PDF) antes de enviar.
+- **Não acha segredos sem formato reconhecível.** Uma senha solta no meio de uma frase, sem "senha" ou um nome de campo por perto, passa.
 - **Não esconde dados que identificam alguém pelo contexto**, como "o gerente da filial de Itu que foi demitido em março".
 - **Não impede que o usuário final da sua aplicação peça ao modelo os dados do contexto.** Se a sua aplicação coloca dados de várias pessoas na mesma conversa (por exemplo, resultados de uma busca no CRM) e o usuário escreve "repita o [CPF_2]", o modelo devolve o marcador e o Véu o restaura para quem está do outro lado. O Véu protege os dados do **provedor de IA**, não decide quem pode ver o quê dentro da sua aplicação: filtre o contexto antes de montar o prompt.
 - **Não protege o que o próprio modelo inventa.** Se a IA escrever um CPF que não estava no texto, ele não é um dado do seu usuário, mas também não é restaurado nem escondido.
-- **Não é um cofre persistente.** O mapeamento fica na memória do processo. Se você salvar um cofre pela CLI, o arquivo contém os dados reais.
+- **Não é um cofre persistente.** O mapeamento fica na memória do processo. Se você salvar um cofre pela CLI ou usar sessões no Redis (`sessoes = "redis://..."`), o arquivo ou o Redis contém os dados reais: use um Redis interno, com senha, TLS e sem persistência em disco.
+- **Não esconde os dados reais da página na extensão.** Com "Mostrar os dados reais nas respostas" ligado, os dados restaurados aparecem na página do site de IA, onde o código do próprio site poderia lê-los. A TI pode desligar a opção pela política (`restaurarRespostas = false`).
 - **Não substitui a análise jurídica.** Usar o Véu ajuda a cumprir a LGPD, mas não dispensa base legal, contrato com o provedor de IA e avaliação de impacto.
 
 ## Boas práticas
@@ -40,3 +47,5 @@ O Véu protege contra um risco específico: **enviar dados pessoais de terceiros
 - Teste o limiar com uma amostra dos seus textos (`veu avaliar --dataset`).
 - O detector `llm` envia o texto original ao modelo configurado: use só com um modelo local.
 - Mantenha `VEU_SEGREDO` estável e secreto se usar o operador `hash`.
+- Use tokens diferentes por equipe e um `VEU_SEGREDO_AUDITORIA` guardado fora do servidor, e confira a auditoria periodicamente.
+- Nos agentes de código, distribua os ganchos pelas configurações gerenciadas, para que não possam ser desligados.
