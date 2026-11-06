@@ -9,9 +9,10 @@ from dataclasses import dataclass, field
 
 from veu._text import fold
 from veu.analyzer import Analyzer
-from veu.entities import Entity
+from veu.entities import SECRET_LABELS, Entity
 from veu.recognizers.base import folded_set
 from veu.recognizers.persons import CONNECTORS
+from veu.recognizers.secrets import secret_prefix
 from veu.surrogates import make_surrogate
 from veu.vault import Vault
 
@@ -87,6 +88,12 @@ def mask_value(label: str, value: str) -> str:
         return f"{local[:1]}***@{domain}"
     if label == "PESSOA":
         return " ".join(word if fold(word) in CONNECTORS else word[:1] + "***" for word in value.split())
+    if label in ("SENHA", "CHAVE_PRIVADA"):
+        return "********"
+    if label == "URL_CONEXAO" and "://" in value:
+        return value.split("://", 1)[0] + "://****"
+    if label in SECRET_LABELS:
+        return secret_prefix(value) + "****"
     positions = [index for index, char in enumerate(value) if char.isalnum()]
     keep = set(positions[-2:]) if len(positions) > 4 else set()
     return "".join(char if (not char.isalnum() or index in keep) else "*" for index, char in enumerate(value))

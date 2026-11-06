@@ -8,14 +8,21 @@ from collections.abc import Iterable
 
 from veu._text import fold, only_digits
 from veu.entities import Entity
-from veu.recognizers import AddressRecognizer, Candidate, PatternRecognizer, PersonRecognizer, Recognizer
+from veu.recognizers import (
+    AddressRecognizer,
+    Candidate,
+    PatternRecognizer,
+    PersonRecognizer,
+    Recognizer,
+    SecretRecognizer,
+)
 from veu.validators import normalize_cnpj
 
 DEFAULT_THRESHOLD = 0.5
 
 
 def default_recognizers() -> list[Recognizer]:
-    return [PatternRecognizer(), PersonRecognizer(), AddressRecognizer()]
+    return [PatternRecognizer(), PersonRecognizer(), AddressRecognizer(), SecretRecognizer()]
 
 
 class Analyzer:

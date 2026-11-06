@@ -224,6 +224,22 @@ def is_valid_phone(value: str) -> bool:
     return False
 
 
+def is_valid_iban(value: str) -> bool:
+    """IBAN pelo módulo 97 (ISO 13616). Vale para qualquer país, inclusive o Brasil (BR + 27 caracteres)."""
+    compact = re.sub(r"[\s-]", "", value).upper()
+    if not re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{11,30}", compact):
+        return False
+    rearranged = compact[4:] + compact[:4]
+    number = "".join(str(int(char, 36)) for char in rearranged)
+    return int(number) % 97 == 1
+
+
+def is_valid_intl_phone(value: str) -> bool:
+    """Telefone em formato internacional (+código do país): de 8 a 15 dígitos, sem repetição óbvia."""
+    digits = only_digits(value)
+    return 8 <= len(digits) <= 15 and not _repeated(digits[-8:])
+
+
 def is_valid_ipv4(value: str) -> bool:
     try:
         address = ipaddress.IPv4Address(value)

@@ -1,4 +1,4 @@
-"""Detectores por padrão: documentos, contatos e números brasileiros."""
+"""Detectores por padrão: documentos, contatos e números brasileiros, além de IBAN e telefones internacionais."""
 
 from __future__ import annotations
 
@@ -86,6 +86,7 @@ CTX_BIRTH = (
 CTX_ACCOUNT = ("conta", "conta corrente", "conta-corrente", "c/c", "cc", "agencia", "ag", "ag.", "poupanca", "conta poupanca")
 CTX_PROCESS = ("processo", "autos", "proc", "proc.", "acao", "numero do processo")
 CTX_EMAIL = ("email", "e-mail")
+CTX_IBAN = ("iban", "swift", "bic", "transferencia internacional", "conta internacional")
 
 
 def _phone_adjust(value: str, score: float) -> float | None:
@@ -144,6 +145,11 @@ DEFAULT_SPECS: list[PatternSpec] = [
         Scores(0.85, None, 0.95), v.is_valid_phone, CTX_PHONE, adjust=_phone_adjust,
     ),
     PatternSpec("TELEFONE", B + r"9\d{4}-\d{4}" + E, Scores(0.7, None, 0.9), None, CTX_PHONE),
+    # Internacional: +código do país (menos o 55, coberto acima) e grupos de dígitos.
+    PatternSpec(
+        "TELEFONE", r"(?<![\w+])\+(?!55)[1-9]\d{0,2}(?:[\s.-]?\(?\d{1,4}\)?){1,2}(?:[\s.-]?\d{2,4}){2,4}" + E,
+        Scores(0.8, None, 0.95), v.is_valid_intl_phone, CTX_PHONE,
+    ),
     PatternSpec("TELEFONE", B + r"[2-5]\d{3}-\d{4}" + E, Scores(None, None, 0.8), None, CTX_PHONE, before=25),
     # Localização e veículos
     PatternSpec("CEP", B + r"\d{5}-\d{3}" + E, Scores(0.75, None, 0.95), None, CTX_CEP),
@@ -155,6 +161,10 @@ DEFAULT_SPECS: list[PatternSpec] = [
     # Financeiro
     PatternSpec(
         "CARTAO_CREDITO", B + r"\d(?:[ -]?\d){12,18}" + E, Scores(0.85, None, 0.95, 0.6), v.is_valid_card, CTX_CARD,
+    ),
+    PatternSpec(
+        "IBAN", B + r"[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,4})?" + E, Scores(0.95, None, 1.0),
+        v.is_valid_iban, CTX_IBAN,
     ),
     PatternSpec(
         "CHAVE_PIX",

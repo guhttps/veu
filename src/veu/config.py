@@ -59,7 +59,7 @@ BUILTIN_PROVIDERS: dict[str, ProviderConfig] = {
     )
 }
 PROVIDER_KINDS = ("openai", "anthropic", "gemini", "ollama")
-DETECTORS = ("padroes", "nomes", "enderecos", "spacy", "llm")
+DETECTORS = ("padroes", "nomes", "enderecos", "segredos", "spacy", "llm")
 PLUGIN_GROUP = "veu.detectores"
 
 
@@ -78,7 +78,7 @@ class Config:
     allowlist: tuple[str, ...] = ()
     # Expressões regulares: valores que casarem nunca são escondidos (ex.: "@minhaempresa\\.com\\.br$").
     allow_patterns: tuple[str, ...] = ()
-    detectors: tuple[str, ...] = ("padroes", "nomes", "enderecos")
+    detectors: tuple[str, ...] = ("padroes", "nomes", "enderecos", "segredos")
     custom_patterns: tuple[dict, ...] = ()
     spacy_model: str = "pt_core_news_lg"
     llm_url: str | None = None

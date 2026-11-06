@@ -26,7 +26,17 @@ LABELS: dict[str, str] = {
     "DATA_NASCIMENTO": "Data de nascimento",
     "IP": "Endereço IP",
     "PROCESSO": "Número de processo judicial (CNJ)",
+    "IBAN": "IBAN (conta bancária internacional)",
+    "CHAVE_API": "Chave de API ou token de serviço (OpenAI, AWS, GitHub...)",
+    "TOKEN": "Token de acesso (JWT, Bearer)",
+    "SENHA": "Senha",
+    "CHAVE_PRIVADA": "Chave privada (PEM, SSH)",
+    "URL_CONEXAO": "URL de conexão com usuário e senha",
+    "SEGREDO": "Segredo em configuração (API_KEY=..., client_secret: ...)",
 }
+
+# Tipos que são segredos técnicos, não dados pessoais.
+SECRET_LABELS = frozenset({"CHAVE_API", "TOKEN", "SENHA", "CHAVE_PRIVADA", "URL_CONEXAO", "SEGREDO"})
 
 
 @dataclass(frozen=True, slots=True)

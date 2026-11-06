@@ -18,6 +18,7 @@ from veu.recognizers import (
     PatternRecognizer,
     PersonRecognizer,
     Recognizer,
+    SecretRecognizer,
     SpacyRecognizer,
     custom_spec,
 )
@@ -62,6 +63,8 @@ def build_recognizers(config: Config) -> list[Recognizer]:
             recognizers.append(PersonRecognizer())
         elif name == "enderecos":
             recognizers.append(AddressRecognizer())
+        elif name == "segredos":
+            recognizers.append(SecretRecognizer())
         elif name == "spacy":
             recognizers.append(SpacyRecognizer(config.spacy_model))
         elif name == "llm":

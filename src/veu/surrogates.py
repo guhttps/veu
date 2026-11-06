@@ -208,6 +208,43 @@ def fake_address(rng: random.Random, street_type: str | None = None, number: boo
     return f"{street}, {rng.randint(1, 3999)}" if number else street
 
 
+def fake_iban(rng: random.Random, country: str = "BR", length: int = 29) -> str:
+    """IBAN válido (módulo 97) do país e tamanho pedidos."""
+    bban = "".join(rng.choice("0123456789") for _ in range(length - 4))
+    number = "".join(str(int(char, 36)) for char in bban + country + "00")
+    return f"{country}{98 - int(number) % 97:02d}{bban}"
+
+
+def like_shape(value: str, rng: random.Random, keep: int = 0) -> str:
+    """Mesmo formato com outros caracteres: dígito vira dígito, minúscula vira minúscula (mantém os primeiros keep)."""
+    output = list(value[:keep])
+    for char in value[keep:]:
+        if char.isdigit():
+            output.append(rng.choice("0123456789"))
+        elif char.isascii() and char.islower():
+            output.append(rng.choice(_LETTERS.lower()))
+        elif char.isascii() and char.isupper():
+            output.append(rng.choice(_LETTERS))
+        else:
+            output.append(char)
+    return "".join(output)
+
+
+def fake_secret(label: str, original: str, rng: random.Random) -> str:
+    """Segredo falso no mesmo formato: "sk-proj-..." vira outro "sk-proj-...", que não funciona em lugar nenhum."""
+    from veu.recognizers.secrets import secret_prefix
+
+    if label == "CHAVE_PRIVADA":
+        # Troca todo o corpo e mantém só os marcadores BEGIN/END e as quebras escritas como \n (chave dentro de JSON).
+        parts = re.split(r"(-----[A-Z0-9 ]+-----|\\[nr])", original)
+        return "".join(part if index % 2 else like_shape(part, rng) for index, part in enumerate(parts))
+    if label == "URL_CONEXAO":
+        match = re.match(r"([^:]+://)[^:@]+:[^@]+@([^/:?#]+)(.*)", original, re.DOTALL)
+        if match:
+            return f"{match.group(1)}usuario:{like_shape('senha1234', rng)}@servidor.example{match.group(3)}"
+    return like_shape(original, rng, keep=len(secret_prefix(original)))
+
+
 def _match_case(template: str, value: str) -> str:
     if template.isupper():
         return value.upper()
@@ -270,6 +307,12 @@ def make_surrogate(label: str, original: str, rng: random.Random) -> str | None:
         if re.fullmatch(r"\d{4}-\d{2}-\d{2}", original):
             return fake_birthdate(rng, "iso")
         return fake_birthdate(rng)
+    if label == "IBAN":
+        compact = re.sub(r"[\s-]", "", original).upper()
+        new = fake_iban(rng, compact[:2], len(compact)) if len(compact) >= 15 else compact
+        return apply_format(original, new) if " " in original else new
+    if label in ("CHAVE_API", "TOKEN", "SENHA", "CHAVE_PRIVADA", "URL_CONEXAO", "SEGREDO"):
+        return fake_secret(label, original, rng)
     if label == "ENDERECO":
         street_type = original.split()[0] if original.split() else None
         return fake_address(rng, street_type=street_type, number=bool(re.search(r"\d", original)))
