@@ -57,11 +57,13 @@ def icone(tamanho: int) -> bytes:
 
 
 def main() -> None:
-    pasta = Path(__file__).resolve().parent.parent / "extensao" / "icones"
+    raiz = Path(__file__).resolve().parent.parent
+    pasta = raiz / "extensao" / "icones"
     pasta.mkdir(parents=True, exist_ok=True)
     for tamanho in (16, 32, 48, 128):
         (pasta / f"{tamanho}.png").write_bytes(icone(tamanho))
-    print(f"ícones em {pasta}")
+    (raiz / "plugin" / ".claude-plugin" / "icon.png").write_bytes(icone(512))
+    print("ícones da extensão e do plugin gerados")
 
 
 if __name__ == "__main__":

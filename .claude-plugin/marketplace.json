@@ -1,0 +1,19 @@
+{
+  "name": "veu",
+  "owner": {
+    "name": "guhttps",
+    "url": "https://github.com/guhttps"
+  },
+  "metadata": {
+    "description": "Plugins do Véu: proteção de dados pessoais e segredos para agentes de IA."
+  },
+  "plugins": [
+    {
+      "name": "veu",
+      "source": "./plugin",
+      "description": "Bloqueia segredos em prompts e arquivos e lê Notion, planilhas e documentos com os dados trocados por marcadores.",
+      "version": "0.4.0",
+      "category": "security"
+    }
+  ]
+}

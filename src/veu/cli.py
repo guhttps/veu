@@ -199,6 +199,15 @@ def cmd_check(args) -> int:
     return 0
 
 
+def cmd_hook(args) -> int:
+    """Gancho para agentes de código (Claude Code, Cursor): lê o evento em JSON da entrada padrão."""
+    from veu.entities import SECRET_LABELS
+    from veu.hooks import run
+
+    block = frozenset(label.strip().upper() for label in args.bloquear.split(",")) if args.bloquear else SECRET_LABELS
+    return run(args.evento, mode=args.modo, pii=args.dados_pessoais, block=block, fmt=args.formato, veu=_veu(args))
+
+
 def cmd_mcp(args) -> int:
     try:
         from veu.integrations.mcp import build_server
@@ -332,6 +341,18 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--nao-falhar", action="store_true", help="sai com código 0 mesmo encontrando dados")
     common(sub)
     sub.set_defaults(func=cmd_check)
+
+    sub = commands.add_parser("gancho", help="gancho para Claude Code e Cursor (prompt e leitura de arquivos)")
+    sub.add_argument("evento", choices=("prompt", "arquivo"),
+                     help="prompt: antes de enviar o prompt; arquivo: antes de o agente ler um arquivo")
+    sub.add_argument("--modo", choices=("avisar", "bloquear"), default="avisar",
+                     help="prompt com dados pessoais (que não são segredos): avisar (padrão) ou bloquear")
+    sub.add_argument("--dados-pessoais", choices=("permitir", "perguntar", "negar"), default="perguntar",
+                     help="arquivo com dados pessoais: permitir, perguntar (padrão) ou negar a leitura")
+    sub.add_argument("--bloquear", help="tipos que sempre bloqueiam (padrão: segredos, como CHAVE_API,SENHA)")
+    sub.add_argument("--formato", choices=("claude", "cursor"), default="claude", help="formato do agente")
+    common(sub)
+    sub.set_defaults(func=cmd_hook)
 
     sub = commands.add_parser("mcp", help="servidor MCP (stdio) para Claude Code, Claude Desktop, Cursor...")
     common(sub)

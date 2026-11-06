@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      { "command": "veu gancho prompt --formato cursor" }
+    ],
+    "beforeReadFile": [
+      { "command": "veu gancho arquivo --formato cursor" }
+    ]
+  }
+}

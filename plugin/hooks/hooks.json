@@ -1,0 +1,20 @@
+{
+  "description": "Véu: bloqueia segredos nos prompts e a leitura de arquivos com segredos (sugere ler_protegido).",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "veu gancho prompt", "timeout": 30 }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          { "type": "command", "command": "veu gancho arquivo", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}

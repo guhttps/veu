@@ -36,6 +36,7 @@ mcp = ["mcp>=2.0"]
 langchain = ["langchain-core>=0.3"]
 pandas = ["pandas>=2.0"]
 documentos = ["openpyxl>=3.1", "python-docx>=1.1", "pypdf>=5.0", "python-pptx>=1.0"]
+litellm = ["litellm>=1.70"]
 todos = ["veu[servidor,mcp,langchain,pandas,documentos]"]
 dev = [
     "veu[servidor,mcp,langchain,pandas,documentos]",
