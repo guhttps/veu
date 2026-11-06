@@ -28,7 +28,7 @@ No Windows, o ambiente virtual fica em `.venv/Scripts/`.
 - `src/veu/files.py`, `documents.py` e `sources.py`: arquivos (CSV, JSON, Word, Excel, PowerPoint, PDF) e fontes (Notion, Google, links).
 - `src/veu/reporting.py`: relatórios (texto, GitHub, SARIF, JSON). `src/veu/hooks.py`: ganchos para Claude Code e Cursor. `src/veu/demo.py`: `veu demonstrar`.
 - `src/veu/integrations/litellm.py`: guardrail do LiteLLM. `src/veu/server/state.py`: sessões (memória e Redis), auditoria encadeada e métricas.
-- `js/`: biblioteca `veu-js` (TypeScript), com `createFetch` e o middleware do AI SDK. Porte fiel do Python; `scripts/gerar-dados.mjs` copia as listas de `src/veu/data`.
+- `js/`: biblioteca `@guhttps/veu` (TypeScript), com `createFetch` e o middleware do AI SDK. Porte fiel do Python; `scripts/gerar-dados.mjs` copia as listas de `src/veu/data`.
 - `web/`: página do GitHub Pages. `extensao/`: extensão para Chrome e Edge. `plugin/` e `.claude-plugin/`: plugin do Claude Code com skill.
 - `deploy/`: chart Helm e docker-compose.
 - `action.yml`: GitHub Action composta (verifica dados pessoais no repositório).

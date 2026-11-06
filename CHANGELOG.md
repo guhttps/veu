@@ -29,7 +29,7 @@ Além do proxy e além dos dados brasileiros: segredos, navegador, JavaScript, N
   - protege ao colar e ao enviar e restaura as respostas na tela;
   - menu do botão direito em qualquer site;
   - política gerenciada para empresas.
-- **`veu-js`**, a biblioteca JavaScript e TypeScript:
+- **`@guhttps/veu`**, a biblioteca JavaScript e TypeScript:
   - a mesma detecção da versão em Python, garantida por um teste de conformidade;
   - `createFetch()` para os SDKs da OpenAI e da Anthropic;
   - middleware para o AI SDK da Vercel;

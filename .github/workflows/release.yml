@@ -120,7 +120,7 @@ jobs:
           labels: |
             org.opencontainers.image.version=${{ steps.versao.outputs.valor }}
 
-  # Publicação no npm por "trusted publishing". Para ativar: configure o pacote veu-js no npm
+  # Publicação no npm por "trusted publishing". Para ativar: configure o pacote @guhttps/veu no npm
   # (Settings > Trusted publishing > GitHub Actions) e crie a variável de repositório NPM_PUBLICAR = true.
   npm:
     needs: build

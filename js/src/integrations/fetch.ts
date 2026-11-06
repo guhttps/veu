@@ -1,7 +1,7 @@
 // fetch protegido: esconde os dados antes de a requisição sair e restaura a resposta, sem proxy.
 //
 //   import OpenAI from "openai";
-//   import { createFetch } from "veu-js/fetch";
+//   import { createFetch } from "@guhttps/veu/fetch";
 //   const client = new OpenAI({ fetch: createFetch() });
 //
 // Funciona com qualquer SDK ou código que aceite um fetch próprio (OpenAI, Anthropic, Ollama, APIs compatíveis).

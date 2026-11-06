@@ -380,13 +380,13 @@ A skill também pode ser usada sozinha. No Claude.ai, compacte a pasta `plugin/s
 
 *Coberto pelos testes, com os SDKs oficiais da OpenAI e da Anthropic e o AI SDK da Vercel.*
 
-A biblioteca [`veu-js`](../js/README.md) traz a mesma detecção da versão em Python, sem dependências e sem servidor:
+A biblioteca [`@guhttps/veu`](../js/README.md) traz a mesma detecção da versão em Python, sem dependências e sem servidor:
 
 ```ts
 import OpenAI from "openai";
-import { createFetch } from "veu-js/fetch";
+import { createFetch } from "@guhttps/veu/fetch";
 import { wrapLanguageModel } from "ai";
-import { veuMiddleware } from "veu-js/ai-sdk";
+import { veuMiddleware } from "@guhttps/veu/ai-sdk";
 
 const openai = new OpenAI({ fetch: createFetch() });                       // também a Anthropic
 const model = wrapLanguageModel({ model: openai("gpt-5-mini"), middleware: veuMiddleware() });

@@ -2,7 +2,7 @@
 //
 //   import { wrapLanguageModel, generateText } from "ai";
 //   import { openai } from "@ai-sdk/openai";
-//   import { veuMiddleware } from "veu-js/ai-sdk";
+//   import { veuMiddleware } from "@guhttps/veu/ai-sdk";
 //
 //   const model = wrapLanguageModel({ model: openai("gpt-5-mini"), middleware: veuMiddleware() });
 //

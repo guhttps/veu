@@ -1,4 +1,4 @@
-# veu-js
+# @guhttps/veu
 
 **Véu para JavaScript e TypeScript.** Esconde dados pessoais brasileiros e segredos (CPF, CNPJ, nomes, telefones, endereços, chaves de API, senhas) antes de o texto chegar a um modelo de IA, e devolve os dados reais na resposta.
 
@@ -14,13 +14,13 @@ Você recebe:    "Olá Maria Souza, ..."
 - **Funciona com o que você já usa:** SDKs da OpenAI e da Anthropic, AI SDK da Vercel e qualquer código que aceite um `fetch`.
 
 ```bash
-npm install veu-js
+npm install @guhttps/veu
 ```
 
 ## Uso básico
 
 ```ts
-import { Veu } from "veu-js";
+import { Veu } from "@guhttps/veu";
 
 const veu = new Veu();
 const resultado = veu.anonymize("Cliente Maria Souza, CPF 529.982.247-25");
@@ -43,7 +43,7 @@ for await (const pedaco of sessao.restoreStream(streamDeTexto)) process.stdout.w
 ```ts
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
-import { createFetch } from "veu-js/fetch";
+import { createFetch } from "@guhttps/veu/fetch";
 
 const openai = new OpenAI({ fetch: createFetch() });
 const anthropic = new Anthropic({ fetch: createFetch() });
@@ -63,7 +63,7 @@ Opções:
 ```ts
 import { generateText, wrapLanguageModel } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { veuMiddleware } from "veu-js/ai-sdk";
+import { veuMiddleware } from "@guhttps/veu/ai-sdk";
 
 const model = wrapLanguageModel({ model: openai("gpt-5-mini"), middleware: veuMiddleware() });
 const { text } = await generateText({ model, prompt: "Resuma o caso da cliente Maria Souza, CPF 529.982.247-25" });
@@ -74,7 +74,7 @@ Protege textos, argumentos de ferramentas e resultados de ferramentas, em `gener
 ## No navegador
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/veu-js@0.4.0/dist/veu.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@guhttps/veu@0.4.0/dist/veu.global.js"></script>
 <script>
   const resultado = new veu.Veu().anonymize(document.querySelector("textarea").value);
 </script>

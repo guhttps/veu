@@ -38,7 +38,7 @@ Você recebe    Olá, Maria Souza! Configurei sk-proj-4f... no .env.
 | **usa ChatGPT, Claude ou Gemini no navegador** e não programa | A [**página do Véu**](https://guhttps.github.io/veu/): cole, copie a versão protegida, traga a resposta de volta. Tudo roda no seu navegador. | nenhuma |
 | | A [**extensão**](docs/extensao.md) para Chrome e Edge, que protege o que você cola e digita nos sites das IAs | um clique |
 | **programa em Python** | `openai_client()`, `anthropic_client()`, LangChain, `@protect`, MCP | `pip install "veu @ git+https://github.com/guhttps/veu"` |
-| **programa em JavaScript ou TypeScript** | [`veu-js`](js/README.md): `createFetch()` para os SDKs da OpenAI e da Anthropic e middleware para o AI SDK da Vercel | `npm install veu-js` |
+| **programa em JavaScript ou TypeScript** | [`@guhttps/veu`](js/README.md): `createFetch()` para os SDKs da OpenAI e da Anthropic e middleware para o AI SDK da Vercel | `npm install @guhttps/veu` |
 | **usa Claude Code ou Cursor** | O [**plugin**](docs/integracoes.md#claude-code-e-cursor): bloqueia segredos nos prompts e nos arquivos e lê Notion, planilhas e documentos já protegidos | `/plugin install veu --marketplace guhttps/veu` |
 | **é da TI de uma empresa** | [**Gateway central**](docs/empresas.md) (Helm ou Docker), **guardrail para o LiteLLM** ou a **extensão gerenciada por política**. Nada é instalado nos computadores. | [guia para empresas](docs/empresas.md) |
 | **quer dar Notion, planilhas ou PDFs para a IA** | `veu ler <link ou arquivo>` e `veu anonimizar planilha.xlsx` | [fontes e documentos](docs/integracoes.md#notion-google-e-documentos) |
@@ -135,7 +135,7 @@ pip install "veu[servidor] @ git+https://github.com/guhttps/veu"
   pip install "veu[servidor,mcp,documentos] @ git+https://github.com/guhttps/veu"
   ```
 
-- **JavaScript e TypeScript:** `npm install veu-js`. Veja o [js/README.md](js/README.md).
+- **JavaScript e TypeScript:** `npm install @guhttps/veu`. Veja o [js/README.md](js/README.md).
 - **Navegador:** a [página](https://guhttps.github.io/veu/) ou a [extensão](docs/extensao.md).
 - **Docker:**
 
@@ -170,7 +170,7 @@ client = openai_client()         # igual a openai.OpenAI(...), mas protegido pel
 
 ```ts
 import OpenAI from "openai";
-import { createFetch } from "veu-js/fetch";
+import { createFetch } from "@guhttps/veu/fetch";
 
 const client = new OpenAI({ fetch: createFetch() });   // o mesmo para a Anthropic
 ```
@@ -203,7 +203,7 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 | **No navegador** | Página que roda localmente; extensão para ChatGPT, Claude, Gemini, Copilot, Perplexity, DeepSeek, Mistral, Grok e outros | [Extensão](docs/extensao.md) |
 | **Modelos de IA** (proxy) | OpenAI, Anthropic, Gemini, Ollama nativo, Azure OpenAI e 20 provedores prontos (Groq, OpenRouter, DeepSeek, Mistral, xAI, Maritaca, vLLM...) | [Modelos](docs/integracoes.md#modelos-de-ia) |
 | **Python** | `openai_client()`, `anthropic_client()`, transportes `httpx`, LangChain, `@protect`, `veu.session()` | [SDKs](docs/integracoes.md#atalhos-dos-sdks) |
-| **JavaScript** | `createFetch()` para os SDKs da OpenAI e da Anthropic, middleware do AI SDK da Vercel, uso no navegador | [veu-js](js/README.md) |
+| **JavaScript** | `createFetch()` para os SDKs da OpenAI e da Anthropic, middleware do AI SDK da Vercel, uso no navegador | [@guhttps/veu](js/README.md) |
 | **Agentes** | Servidor MCP (`ler_protegido`, `anonimizar_arquivo`...), ganchos e plugin com skill para Claude Code, ganchos para Cursor | [Agentes](docs/integracoes.md#claude-code-e-cursor) |
 | **Fontes** | Notion (páginas e bases), Google Docs/Sheets/Slides, links; Word, Excel, PowerPoint e PDF | [Fontes](docs/integracoes.md#notion-google-e-documentos) |
 | **Empresas** | Gateway com equipes, auditoria encadeada, Redis, desvio para modelo interno; guardrail do LiteLLM; Helm e docker-compose | [Empresas](docs/empresas.md) |
@@ -322,7 +322,7 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 
 ## Próximos passos
 
-- [ ] Publicar no PyPI (`pip install veu`), no npm (`veu-js`) e na Chrome Web Store
+- [ ] Publicar no PyPI (`pip install veu`), no npm (`@guhttps/veu`) e na Chrome Web Store
 - [ ] Operador sintético na versão JavaScript
 - [ ] Mais casos difíceis escritos à mão, de domínios reais (com dados fictícios)
 - [ ] Detector de nomes em minúsculas sem saudação ("o rayane esqueceu")
