@@ -1,0 +1,28 @@
+:root {
+  --fundo: #ffffff; --texto: #1d2522; --suave: #5b6662; --borda: #dcdcd4; --marca: #234e52; --marca-texto: #fff; --campo: #f6f5f1;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --fundo: #1c2321; --texto: #e7ece9; --suave: #9aa6a1; --borda: #2f3a36; --marca: #6fb3b8; --marca-texto: #0d1413; --campo: #161c1a; color-scheme: dark; }
+}
+body { width: 320px; margin: 0; padding: 14px; background: var(--fundo); color: var(--texto); font: 13px/1.45 system-ui, sans-serif; }
+header { display: flex; align-items: center; gap: 8px; }
+h1 { font-size: 17px; margin: 0; flex: 1; }
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--suave); margin: 14px 0 6px; }
+section { border-top: 1px solid var(--borda); margin-top: 12px; }
+.empresa { background: var(--campo); border-radius: 8px; padding: 6px 8px; margin: 10px 0 0; color: var(--suave); }
+.modos label, .linha { display: block; padding: 4px 0; cursor: pointer; }
+.modos span { color: var(--suave); }
+.contagem { margin: 0; }
+textarea { width: 100%; box-sizing: border-box; background: var(--campo); color: var(--texto); border: 1px solid var(--borda); border-radius: 8px; padding: 8px; font: 12px ui-monospace, Consolas, monospace; resize: vertical; }
+button { margin-top: 6px; width: 100%; border: 0; border-radius: 8px; padding: 8px; background: var(--marca); color: var(--marca-texto); font: 600 13px system-ui, sans-serif; cursor: pointer; }
+.resultado { color: var(--suave); min-height: 1em; margin: 6px 0 0; }
+footer { margin-top: 12px; color: var(--suave); font-size: 12px; }
+footer a { color: inherit; }
+.chave { position: relative; width: 38px; height: 22px; }
+.chave input { opacity: 0; width: 0; height: 0; }
+.chave span { position: absolute; inset: 0; border-radius: 22px; background: var(--borda); cursor: pointer; transition: background .15s; }
+.chave span::before { content: ""; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.chave input:checked + span { background: var(--marca); }
+.chave input:checked + span::before { transform: translateX(16px); }
+input:disabled + span, input:disabled { cursor: not-allowed; opacity: .6; }

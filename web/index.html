@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Véu: proteja seus dados antes de usar IA</title>
+  <meta name="description" content="Esconda CPF, nomes, telefones e senhas antes de colar no ChatGPT, Claude ou Gemini. Tudo acontece no seu navegador.">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23234e52'/%3E%3Cpath d='M8 12h16M8 17h12M8 22h8' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>Véu</h1>
+        <p>Esconda seus dados antes de usar IA. Nada sai do seu computador.</p>
+      </div>
+    </div>
+    <a class="discreto" href="https://github.com/guhttps/veu">Código aberto no GitHub</a>
+  </header>
+
+  <main>
+    <ol class="passos" aria-label="Como funciona">
+      <li><b>Cole</b> o texto com dados pessoais</li>
+      <li><b>Copie</b> a versão protegida e cole na IA</li>
+      <li><b>Cole a resposta</b> da IA para ver os dados reais de volta</li>
+    </ol>
+
+    <section class="painel" aria-labelledby="t1">
+      <div class="cabeca">
+        <h2 id="t1"><span class="num">1</span> Seu texto</h2>
+        <label class="botao secundario arquivo">
+          Abrir arquivo
+          <input id="arquivo" type="file" accept=".txt,.md,.csv,.tsv,.json,.jsonl,.log,.xml,.html,.yml,.yaml,.env,.ini,.sql">
+        </label>
+      </div>
+      <textarea id="entrada" rows="9" spellcheck="false"
+        placeholder="Ex.: A cliente Maria Souza, CPF 529.982.247-25, pediu o reembolso. O telefone dela é (11) 98765-4321."></textarea>
+      <div id="achados" class="achados" aria-live="polite"></div>
+    </section>
+
+    <section class="painel" aria-labelledby="t2">
+      <div class="cabeca">
+        <h2 id="t2"><span class="num">2</span> Texto protegido</h2>
+        <div class="acoes">
+          <select id="operador" aria-label="Como esconder">
+            <option value="token">Marcadores reversíveis ([CPF_1])</option>
+            <option value="mascara">Máscara (***.982.247-**)</option>
+            <option value="remover">Remover ([CPF])</option>
+          </select>
+          <button id="copiar-protegido" class="botao">Copiar para a IA</button>
+        </div>
+      </div>
+      <pre id="saida" class="saida" tabindex="0" aria-label="Texto protegido"></pre>
+      <p class="dica">Cole este texto no ChatGPT, Claude, Gemini ou qualquer IA. Ela não vê seus dados reais.</p>
+    </section>
+
+    <section class="painel" aria-labelledby="t3">
+      <div class="cabeca">
+        <h2 id="t3"><span class="num">3</span> Resposta da IA</h2>
+        <button id="copiar-restaurado" class="botao">Copiar com os dados reais</button>
+      </div>
+      <textarea id="resposta" rows="6" spellcheck="false" placeholder="Cole aqui a resposta da IA. Os marcadores, como [PESSOA_1], voltam a ser os dados reais."></textarea>
+      <pre id="restaurado" class="saida" tabindex="0" aria-label="Resposta com os dados reais"></pre>
+    </section>
+
+    <section class="rodape-acoes">
+      <button id="limpar" class="botao secundario">Apagar tudo</button>
+      <p class="privacidade">
+        Esta página não envia nada pela internet: a detecção roda no seu navegador e a página bloqueia conexões.
+        Os dados ficam só nesta aba até você apagar ou fechar.
+      </p>
+    </section>
+
+    <details class="mais">
+      <summary>O que o Véu encontra?</summary>
+      <p>Documentos brasileiros (CPF, CNPJ, RG, CNH, título, PIS, cartão do SUS), nomes, telefones, e-mails, endereços,
+        CEP, placas, cartões, contas, Pix, datas de nascimento, processos judiciais, IBAN, chaves de API, tokens, senhas e
+        chaves privadas. CPF, CNPJ e outros documentos são conferidos pelo dígito verificador.</p>
+      <p>Nenhuma detecção automática é perfeita: confira o texto protegido antes de enviar.</p>
+    </details>
+  </main>
+
+  <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+  <script src="veu.global.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

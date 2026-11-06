@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "properties": {
+    "ativo": {
+      "title": "Proteção ligada",
+      "description": "Liga ou desliga o Véu.",
+      "type": "boolean"
+    },
+    "modo": {
+      "title": "Modo",
+      "description": "avisar: mostra um aviso quando há dados pessoais. proteger: troca os dados por marcadores antes de enviar. bloquear: impede o envio até a pessoa proteger os dados.",
+      "type": "string",
+      "enum": ["avisar", "proteger", "bloquear"]
+    },
+    "tipos": {
+      "title": "Tipos detectados",
+      "description": "Lista de tipos a detectar (vazio = todos). Ex.: CPF, CNPJ, PESSOA, CHAVE_API.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "bloquearTipos": {
+      "title": "Tipos que impedem o envio",
+      "description": "Mesmo no modo avisar ou proteger, o envio é impedido se o texto tiver um destes tipos (ex.: CHAVE_PRIVADA, CARTAO_CREDITO).",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "ignorar": {
+      "title": "Valores que nunca são escondidos",
+      "description": "Dados da própria empresa, como o CNPJ e o e-mail de contato.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "ignorarPadroes": {
+      "title": "Expressões regulares de valores que nunca são escondidos",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "restaurarRespostas": {
+      "title": "Mostrar os dados reais nas respostas",
+      "description": "Troca os marcadores das respostas pelos dados reais, só na tela do usuário.",
+      "type": "boolean"
+    },
+    "travarConfiguracao": {
+      "title": "Impedir que o usuário mude a configuração",
+      "type": "boolean"
+    }
+  }
+}

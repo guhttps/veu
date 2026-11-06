@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Véu: proteção de dados para IA",
+  "short_name": "Véu",
+  "version": "0.4.0",
+  "description": "Esconde CPF, nomes, telefones, chaves de API e senhas antes de você enviar ao ChatGPT, Claude, Gemini e outras IAs. Tudo roda no seu navegador.",
+  "homepage_url": "https://github.com/guhttps/veu",
+  "minimum_chrome_version": "120",
+  "icons": {
+    "16": "icones/16.png",
+    "32": "icones/32.png",
+    "48": "icones/48.png",
+    "128": "icones/128.png"
+  },
+  "action": {
+    "default_title": "Véu",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icones/16.png",
+      "32": "icones/32.png"
+    }
+  },
+  "background": {
+    "service_worker": "fundo.js"
+  },
+  "permissions": ["storage", "contextMenus", "activeTab", "scripting"],
+  "storage": {
+    "managed_schema": "politica.json"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://aistudio.google.com/*",
+        "https://notebooklm.google.com/*",
+        "https://copilot.microsoft.com/*",
+        "https://m365.cloud.microsoft/*",
+        "https://www.perplexity.ai/*",
+        "https://chat.deepseek.com/*",
+        "https://chat.mistral.ai/*",
+        "https://grok.com/*",
+        "https://www.meta.ai/*",
+        "https://poe.com/*",
+        "https://huggingface.co/chat/*",
+        "https://chat.qwen.ai/*",
+        "https://www.kimi.com/*",
+        "https://maritaca.ai/*",
+        "https://chat.maritaca.ai/*"
+      ],
+      "js": ["veu.global.js", "conteudo.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}

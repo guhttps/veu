@@ -92,10 +92,34 @@ jobs:
             # Para não depender da execução direta de TypeScript, o Node 22 testa a versão compilada.
             npx tsc -p tsconfig.json --noEmit false --outDir build-test --rewriteRelativeImportExtensions
             cp test/conformidade.json build-test/test/
-            node --test build-test/test/
+            node --test "build-test/test/*.test.js"
           else
             npm test
           fi
+
+  navegador:
+    name: Extensão e página (Chrome)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+      - name: Biblioteca JavaScript
+        working-directory: js
+        run: npm ci && npm run build
+      - run: python scripts/empacotar_navegador.py
+      - name: Teste de ponta a ponta num Chrome de verdade
+        run: node extensao/teste/e2e.mjs "$(command -v google-chrome || command -v chromium)"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: extensao
+          path: dist/veu-extensao-*.zip
 
   package:
     name: Pacote instalável

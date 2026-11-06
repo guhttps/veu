@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Véu</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="icones/32.png" alt="" width="24" height="24">
+    <h1>Véu</h1>
+    <label class="chave" title="Ligar ou desligar">
+      <input id="ativo" type="checkbox">
+      <span></span>
+    </label>
+  </header>
+
+  <p id="empresa" class="empresa" hidden>Configurado pela sua empresa.</p>
+
+  <section>
+    <h2>Quando houver dados pessoais</h2>
+    <div class="modos" role="radiogroup" aria-label="Modo">
+      <label><input type="radio" name="modo" value="avisar"> <b>Avisar</b> <span>mostra um aviso e você decide</span></label>
+      <label><input type="radio" name="modo" value="proteger"> <b>Proteger</b> <span>troca os dados antes de enviar</span></label>
+      <label><input type="radio" name="modo" value="bloquear"> <b>Bloquear</b> <span>só envia depois de proteger</span></label>
+    </div>
+    <label class="linha"><input id="restaurar-respostas" type="checkbox"> Mostrar os dados reais nas respostas</label>
+  </section>
+
+  <section>
+    <h2>Nesta aba</h2>
+    <p id="contagem" class="contagem">Nenhum dado protegido ainda.</p>
+  </section>
+
+  <section>
+    <h2>Restaurar um texto</h2>
+    <textarea id="texto" rows="3" placeholder="Cole aqui um texto com [PESSOA_1], [CPF_1]..."></textarea>
+    <button id="restaurar">Copiar com os dados reais</button>
+    <p id="resultado" class="resultado" aria-live="polite"></p>
+  </section>
+
+  <footer>Tudo roda no seu navegador. <a href="https://github.com/guhttps/veu" target="_blank" rel="noreferrer">Sobre</a></footer>
+  <script src="veu.global.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
