@@ -1,6 +1,6 @@
 """Logs e relatórios de erro sem dados pessoais: Sentry, structlog e loguru.
 
-    pip install "veu @ git+https://github.com/guhttps/veu" sentry-sdk structlog loguru
+    pip install veu sentry-sdk structlog loguru
     python examples/observabilidade.py
 """
 

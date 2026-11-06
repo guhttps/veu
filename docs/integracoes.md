@@ -351,7 +351,7 @@ O plugin junta três peças:
 /plugin install veu --marketplace guhttps/veu
 ```
 
-O plugin chama o comando `veu`, que precisa estar instalado: `pipx install "veu[mcp,documentos] @ git+https://github.com/guhttps/veu"`.
+O plugin chama o comando `veu`, que precisa estar instalado: `pipx install "veu[mcp,documentos]"`.
 
 Sem o plugin, os ganchos também funcionam sozinhos, no `.claude/settings.json`:
 

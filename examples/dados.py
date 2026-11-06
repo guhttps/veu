@@ -1,6 +1,6 @@
 """Anonimizar uma planilha antes de compartilhar ou de mandar para análise por IA.
 
-    pip install "veu[pandas] @ git+https://github.com/guhttps/veu"
+    pip install "veu[pandas]"
     python examples/dados.py
 """
 

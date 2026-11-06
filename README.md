@@ -4,6 +4,8 @@
 
 <p align="center">
   <a href="https://github.com/guhttps/veu/actions/workflows/ci.yml"><img src="https://github.com/guhttps/veu/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://pypi.org/project/veu/"><img src="https://img.shields.io/pypi/v/veu" alt="PyPI"></a>
+  <a href="https://www.npmjs.com/package/@guhttps/veu"><img src="https://img.shields.io/npm/v/@guhttps/veu" alt="npm"></a>
   <img src="https://img.shields.io/badge/python-3.11%20a%203.14-3776AB" alt="Python 3.11 a 3.14">
   <img src="https://img.shields.io/badge/node-22%2B-5FA04E" alt="Node 22 ou mais novo">
   <img src="https://img.shields.io/badge/depend%C3%AAncias%20do%20n%C3%BAcleo-0-2ea44f" alt="Núcleo sem dependências">
@@ -37,7 +39,7 @@ Você recebe    Olá, Maria Souza! Configurei sk-proj-4f... no .env.
 |---|---|---|
 | **usa ChatGPT, Claude ou Gemini no navegador** e não programa | A [**página do Véu**](https://guhttps.github.io/veu/): cole, copie a versão protegida, traga a resposta de volta. Tudo roda no seu navegador. | nenhuma |
 | | A [**extensão**](docs/extensao.md) para Chrome e Edge, que protege o que você cola e digita nos sites das IAs | um clique |
-| **programa em Python** | `openai_client()`, `anthropic_client()`, LangChain, `@protect`, MCP | `pip install "veu @ git+https://github.com/guhttps/veu"` |
+| **programa em Python** | `openai_client()`, `anthropic_client()`, LangChain, `@protect`, MCP | `pip install veu` |
 | **programa em JavaScript ou TypeScript** | [`@guhttps/veu`](js/README.md): `createFetch()` para os SDKs da OpenAI e da Anthropic e middleware para o AI SDK da Vercel | `npm install @guhttps/veu` |
 | **usa Claude Code ou Cursor** | O [**plugin**](docs/integracoes.md#claude-code-e-cursor): bloqueia segredos nos prompts e nos arquivos e lê Notion, planilhas e documentos já protegidos | `/plugin install veu --marketplace guhttps/veu` |
 | **é da TI de uma empresa** | [**Gateway central**](docs/empresas.md) (Helm ou Docker), **guardrail para o LiteLLM** ou a **extensão gerenciada por política**. Nada é instalado nos computadores. | [guia para empresas](docs/empresas.md) |
@@ -111,13 +113,13 @@ O cofre com o mapeamento entre marcadores e dados reais fica só com você (na m
 ## Instalação
 
 ```bash
-pip install "veu[servidor] @ git+https://github.com/guhttps/veu"
+pip install "veu[servidor]"
 ```
 
 - **Biblioteca Python sem dependências:**
 
   ```bash
-  pip install "veu @ git+https://github.com/guhttps/veu"
+  pip install veu
   ```
 
 - **Extras opcionais:**
@@ -132,7 +134,7 @@ pip install "veu[servidor] @ git+https://github.com/guhttps/veu"
   Exemplo:
 
   ```bash
-  pip install "veu[servidor,mcp,documentos] @ git+https://github.com/guhttps/veu"
+  pip install "veu[servidor,mcp,documentos]"
   ```
 
 - **JavaScript e TypeScript:** `npm install @guhttps/veu`. Veja o [js/README.md](js/README.md).
@@ -322,7 +324,8 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 
 ## Próximos passos
 
-- [ ] Publicar no PyPI (`pip install veu`), no npm (`@guhttps/veu`) e na Chrome Web Store
+- [x] Publicar no PyPI (`pip install veu`) e no npm (`@guhttps/veu`)
+- [ ] Publicar a extensão na Chrome Web Store
 - [ ] Operador sintético na versão JavaScript
 - [ ] Mais casos difíceis escritos à mão, de domínios reais (com dados fictícios)
 - [ ] Detector de nomes em minúsculas sem saudação ("o rayane esqueceu")

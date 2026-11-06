@@ -1,6 +1,6 @@
 """Esconde dados pessoais dos logs da aplicação.
 
-    pip install "veu @ git+https://github.com/guhttps/veu"
+    pip install veu
     python examples/logs.py
 """
 

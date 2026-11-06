@@ -1,6 +1,6 @@
 """LangChain com o Véu: o modelo recebe [PESSOA_1] e [CPF_1]; a cadeia devolve os dados reais.
 
-    pip install "veu[langchain] @ git+https://github.com/guhttps/veu" langchain-openai
+    pip install "veu[langchain]" langchain-openai
     OPENAI_API_KEY=... python examples/langchain_chat.py
 """
 

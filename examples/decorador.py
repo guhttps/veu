@@ -1,6 +1,6 @@
 """@protect: protege qualquer função que chama um modelo de IA, com qualquer biblioteca.
 
-    pip install "veu @ git+https://github.com/guhttps/veu" requests
+    pip install veu requests
     python examples/decorador.py          # usa um "modelo" de mentira para mostrar o fluxo
 """
 

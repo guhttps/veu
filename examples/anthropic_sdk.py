@@ -1,6 +1,6 @@
 """Claude (Anthropic) protegido pelo Véu, sem proxy.
 
-    pip install "veu[httpx] @ git+https://github.com/guhttps/veu" anthropic
+    pip install "veu[httpx]" anthropic
     ANTHROPIC_API_KEY=... python examples/anthropic_sdk.py
 """
 

@@ -1,6 +1,6 @@
 """Chat com a OpenAI protegido pelo Véu, sem proxy.
 
-    pip install "veu[httpx] @ git+https://github.com/guhttps/veu" openai
+    pip install "veu[httpx]" openai
     OPENAI_API_KEY=... python examples/openai_sdk.py
 """
 
