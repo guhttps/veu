@@ -5,6 +5,30 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-06
+
+Instalação e uso sem saber programar.
+
+### Adicionado
+- **Instalador de um comando:**
+  - Windows: `irm https://guhttps.github.io/veu/instalar.ps1 | iex`;
+  - macOS e Linux: `curl -LsSf https://guhttps.github.io/veu/instalar.sh | sh`;
+  - instala o Python (pelo uv) e o Véu na pasta do usuário, sem administrador, cria o atalho Véu e abre o painel.
+- **Painel (`veu painel`)**, no navegador e só no computador local:
+  - protege e restaura planilhas, documentos, apresentações, PDFs e textos arrastando o arquivo;
+  - conecta o Claude Desktop e o Cursor com um botão;
+  - mostra o endereço para n8n, Make e Zapier;
+  - escolhe o que proteger com caixinhas, sem editar arquivo;
+  - liga o Véu junto com o computador;
+  - mostra a atividade.
+
+  Salvar as configurações reinicia o Véu sozinho, em menos de um segundo.
+- `veu atalhos`: atalho Véu na área de trabalho e no menu (Windows, macOS e Linux).
+- Página "Instalar no computador" no site, com os comandos prontos para copiar.
+
+### Alterado
+- README reorganizado para quem não programa e para quem programa.
+
 ## [0.4.0] - 2026-11-06
 
 Além do proxy e além dos dados brasileiros: segredos, navegador, JavaScript, Notion e documentos, empresas e agentes.
@@ -143,7 +167,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/guhttps/veu/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/guhttps/veu/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/guhttps/veu/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/guhttps/veu/compare/v0.1.0...v0.2.0

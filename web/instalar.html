@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Instalar o Véu</title>
+  <meta name="description" content="Instale o Véu no seu computador em 2 minutos, sem saber programar.">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23234e52'/%3E%3Cpath d='M8 12h16M8 17h12M8 22h8' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>Instalar o Véu</h1>
+        <p>Dois minutos, sem saber programar e sem pedir permissão de administrador.</p>
+      </div>
+    </div>
+    <a class="discreto" href="./">Voltar</a>
+  </header>
+
+  <main>
+    <section class="painel">
+      <h2>Precisa instalar?</h2>
+      <p>Para colar textos no ChatGPT, no Claude ou no Gemini, você <b>não precisa instalar nada</b>: use a <a href="./">página do Véu</a>.</p>
+      <p>Instale no computador para:</p>
+      <ul class="lista-simples">
+        <li>proteger <b>planilhas, documentos e PDFs</b> inteiros;</li>
+        <li>conectar o <b>Claude Desktop</b> ou o <b>Cursor</b>;</li>
+        <li>proteger aplicativos como <b>n8n, Make e Zapier</b>.</li>
+      </ul>
+    </section>
+
+    <section class="painel" aria-labelledby="windows">
+      <h2 id="windows"><span class="num">1</span> No Windows</h2>
+      <ol class="passos-instalar">
+        <li>Aperte a tecla <b>Windows</b>, digite <b>PowerShell</b> e aperte <b>Enter</b>.</li>
+        <li>Copie o comando abaixo, cole na janela azul (botão direito do mouse cola) e aperte <b>Enter</b>:
+          <div class="comando">
+            <code id="cmd-windows">irm https://guhttps.github.io/veu/instalar.ps1 | iex</code>
+            <button class="botao" data-copiar="cmd-windows">Copiar</button>
+          </div>
+        </li>
+        <li>Espere a mensagem <b>Pronto!</b>. O painel do Véu abre sozinho no navegador.</li>
+      </ol>
+      <p class="dica">Fica um atalho <b>Véu</b> na área de trabalho e no menu Iniciar. Se o Windows perguntar se pode continuar, responda que sim.</p>
+    </section>
+
+    <section class="painel" aria-labelledby="mac">
+      <h2 id="mac"><span class="num">2</span> No Mac ou no Linux</h2>
+      <ol class="passos-instalar">
+        <li>Abra o <b>Terminal</b> (no Mac: Command + Espaço, digite Terminal e aperte Enter).</li>
+        <li>Copie, cole e aperte <b>Enter</b>:
+          <div class="comando">
+            <code id="cmd-mac">curl -LsSf https://guhttps.github.io/veu/instalar.sh | sh</code>
+            <button class="botao" data-copiar="cmd-mac">Copiar</button>
+          </div>
+        </li>
+        <li>Quando aparecer <b>Pronto!</b>, o painel abre no navegador. Deixe a janela do Terminal aberta enquanto usar o Véu.</li>
+      </ol>
+    </section>
+
+    <section class="painel" aria-labelledby="usar">
+      <h2 id="usar"><span class="num">3</span> Usar</h2>
+      <p>O painel do Véu abre no navegador. Lá você:</p>
+      <ul class="lista-simples">
+        <li><b>Protege um arquivo:</b> arraste uma planilha, um documento ou um PDF e baixe a versão protegida para enviar à IA. Quando a IA devolver um arquivo, use <b>Colocar os dados de volta</b>.</li>
+        <li><b>Conecta o Claude Desktop ou o Cursor</b> com um clique.</li>
+        <li><b>Copia o endereço</b> para n8n, Make, Zapier e outros aplicativos.</li>
+        <li><b>Escolhe o que proteger</b> (nomes, documentos, cartões, senhas...) marcando caixinhas.</li>
+        <li>Marca <b>Ligar o Véu junto com o computador</b>, se quiser que ele fique sempre ligado.</li>
+      </ul>
+      <p class="dica">Para abrir de novo depois, use o atalho <b>Véu</b>. Seus dados não saem do computador: o Véu só manda para a IA a versão protegida.</p>
+    </section>
+
+    <details class="mais">
+      <summary>O que o instalador faz e como desinstalar</summary>
+      <p>Ele instala o <a href="https://docs.astral.sh/uv/">uv</a>, um gerenciador de Python conhecido e de código aberto, e com ele o Véu, na sua pasta de usuário. Ele não mexe no sistema nem precisa de administrador. O código do instalador está no <a href="https://github.com/guhttps/veu/blob/main/web/instalar.ps1">GitHub</a>.</p>
+      <p>Para desinstalar, rode no mesmo lugar: <code>veu atalhos --remover</code> e depois <code>uv tool uninstall veu</code>.</p>
+    </details>
+  </main>
+
+  <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+  <script src="instalar.js"></script>
+</body>
+</html>

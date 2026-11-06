@@ -22,7 +22,7 @@ export { StreamRestorer, Vault, normalizeValue } from "./vault.ts";
 export type { VaultData, VaultEntry } from "./vault.ts";
 export * as validators from "./validators.ts";
 
-export const VERSION = "0.4.0";
+export const VERSION = "0.5.0";
 
 export const DETECTORS = ["padroes", "nomes", "enderecos", "segredos"] as const;
 export type Detector = (typeof DETECTORS)[number];

@@ -5,6 +5,7 @@ O Véu se encaixa em vários pontos. Escolha pelo que você já usa; as opções
 | Jeito | Para quem | O que muda no seu código |
 |---|---|---|
 | **Navegador** | Quem usa ChatGPT, Claude ou Gemini pelo site | Nada: [página](https://guhttps.github.io/veu/) ou [extensão](extensao.md) |
+| **Painel** (`veu painel`) | Quem não programa e quer proteger arquivos ou conectar o Claude Desktop | Um comando instala; [veja como](../README.md#instalar-sem-saber-programar) |
 | **Proxy** (`veu servir`) | Qualquer linguagem, framework ou ferramenta que fale HTTP | Só a URL base do SDK |
 | **Dentro do Python** | Aplicações Python (SDKs, LangChain, qualquer função) | Uma linha na criação do cliente ou um decorador |
 | **Dentro do JavaScript** | Node, Deno, Bun, navegador, AI SDK da Vercel | `fetch: createFetch()` ou um middleware |

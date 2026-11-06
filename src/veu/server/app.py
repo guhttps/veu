@@ -117,7 +117,8 @@ def _credential(request: Request) -> str:
     return f"key:{request.query_params.get('key', '')}"
 
 
-def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncBaseTransport | None = None) -> Starlette:
+def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncBaseTransport | None = None,
+               panel=None) -> Starlette:
     config = config or load_config()
     exposed = not is_local_host(config.host)
     team_tokens = {team.token: team for team in config.teams.values() if team.token}
@@ -295,10 +296,16 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             "referrer-policy": "no-referrer",
         })
 
+    panel_routes: list[Route] = []
+    if panel is not None:
+        panel_routes = _panel_routes(panel, config, veu, api_sessions, stats, guard, read_body, too_large)
+
     async def unknown_veu_route(request: Request) -> Response:
         return _error(f"Rota do Véu inexistente ou desligada: {request.url.path}", 404, "veu_rota_inexistente")
 
     async def home(request: Request) -> Response:
+        if panel is not None:
+            return RedirectResponse("/veu/painel")
         if config.playground:
             return RedirectResponse("/veu/playground")
         return JSONResponse({"veu": __version__, "documentacao": "https://github.com/guhttps/veu#readme"})
@@ -452,6 +459,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
     ]
     if config.playground:
         routes.append(Route("/veu/playground", playground, methods=["GET"]))
+    routes.extend(panel_routes)
     routes.append(Route("/", home, methods=["GET"]))
     # Rotas do próprio Véu que não existem (ex.: métricas desligadas) nunca podem cair no proxy.
     routes.append(Route("/veu/{path:path}", unknown_veu_route,
@@ -468,6 +476,248 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
     app.state.veu = veu
     app.state.stats = stats
     return app
+
+
+PANEL_FILES = {
+    ".txt": "text/plain", ".md": "text/markdown", ".log": "text/plain", ".csv": "text/csv",
+    ".tsv": "text/tab-separated-values", ".json": "application/json", ".jsonl": "application/x-ndjson",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ".pdf": "text/plain",
+}
+PANEL_CSP = ("default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; "
+             "img-src 'self' data:; frame-ancestors 'none'; form-action 'none'; base-uri 'none'")
+
+
+def _panel_routes(panel, config: Config, veu: Veu, api_sessions, stats: Stats, guard, read_body, too_large) -> list[Route]:
+    """Rotas do painel (veu painel): só existem quando o Véu foi aberto pelo painel, sempre no localhost."""
+    import json
+    import tempfile
+    from pathlib import Path
+    from urllib.parse import quote
+
+    from starlette.background import BackgroundTask
+
+    from veu import atalhos
+    from veu.files import anonymize_file, restore_file
+    from veu.server import panel as panel_module
+
+    async def page(request: Request) -> Response:
+        if (blocked := guard(request, check_token=False)) is not None:
+            return blocked
+        html = resources.files("veu.server").joinpath("static", "painel.html").read_text(encoding="utf-8")
+        return HTMLResponse(html.replace("{{VERSAO}}", __version__), headers={
+            "content-security-policy": PANEL_CSP, "x-content-type-options": "nosniff", "referrer-policy": "no-referrer",
+        })
+
+    async def state(request: Request) -> Response:
+        if (blocked := guard(request, check_token=False)) is not None:
+            return blocked
+
+        def collect() -> dict:
+            return {
+                "versao": __version__,
+                "endereco": f"http://127.0.0.1:{config.port}",
+                "configuracoes": panel_module.settings_from_config(config),
+                "opcoes": {
+                    "categorias": panel_module.CATEGORIES, "bloquear": panel_module.BLOCK_OPTIONS,
+                    "operadores": panel_module.OPERATORS,
+                },
+                "estatisticas": stats.snapshot(len(api_sessions)),
+                "aplicativos": {app: panel_module.mcp_status(app) for app in panel_module.mcp_apps()},
+                "inicializacao": atalhos.autostart_enabled(),
+                "arquivo_config": str(panel.config_path),
+            }
+
+        return JSONResponse(await run_in_threadpool(collect))
+
+    async def read_payload(request: Request) -> dict:
+        try:
+            data = json.loads(await read_body(request) or b"{}")
+        except ValueError as exc:
+            raise ValueError("O corpo precisa ser um JSON válido.") from exc
+        if not isinstance(data, dict):
+            raise ValueError("O corpo precisa ser um objeto JSON.")
+        return data
+
+    async def save(request: Request) -> Response:
+        if (blocked := guard(request, check_token=False)) is not None:
+            return blocked
+        try:
+            settings = await read_payload(request)
+            await run_in_threadpool(panel_module.apply_settings, panel.config_path, settings)
+        except ValueError as exc:
+            return _error(str(exc), 400)
+        # Responde primeiro e depois reinicia com o veu.toml novo.
+        return JSONResponse({"ok": True, "reiniciando": True}, background=BackgroundTask(panel.stop, restart=True))
+
+    async def connect_app(request: Request) -> Response:
+        if (blocked := guard(request, check_token=False)) is not None:
+            return blocked
+        app = request.path_params["app"]
+        if app not in panel_module.mcp_apps():
+            return _error("Aplicativo desconhecido.", 404)
+        try:
+            data = await read_payload(request)
+            status = await run_in_threadpool(panel_module.connect_mcp, app, bool(data.get("conectar", True)))
+        except (ValueError, OSError) as exc:
+            return _error(str(exc), 400)
+        return JSONResponse(status)
+
+    async def startup(request: Request) -> Response:
+        if (blocked := guard(request, check_token=False)) is not None:
+            return blocked
+        try:
+            data = await read_payload(request)
+            await run_in_threadpool(atalhos.set_autostart, bool(data.get("ativo")))
+        except (ValueError, OSError) as exc:
+            return _error(str(exc), 400)
+        return JSONResponse({"inicializacao": await run_in_threadpool(atalhos.autostart_enabled)})
+
+    async def shutdown(request: Request) -> Response:
+        if (blocked := guard(request, check_token=False)) is not None:
+            return blocked
+        return JSONResponse({"ok": True}, background=BackgroundTask(panel.stop))
+
+    def file_name(request: Request) -> tuple[str, str]:
+        name = Path(request.query_params.get("nome", "")).name or "arquivo.txt"
+        suffix = Path(name).suffix.lower()
+        if suffix not in PANEL_FILES:
+            raise ValueError("Formato não suportado. Use Excel, Word, PowerPoint, PDF, CSV, JSON ou texto.")
+        return name, suffix
+
+    def download(content: bytes, name: str, suffix: str, headers: dict) -> Response:
+        disposition = f"attachment; filename*=UTF-8''{quote(name)}"
+        return Response(content, media_type=PANEL_FILES[suffix],
+                        headers={"content-disposition": disposition, "cache-control": "no-store", **headers})
+
+    async def protect_file(request: Request) -> Response:
+        if (blocked := guard(request, check_token=False)) is not None:
+            return blocked
+        try:
+            name, suffix = file_name(request)
+            body = await read_body(request)
+        except BodyTooLarge:
+            return too_large()
+        except ValueError as exc:
+            return _error(str(exc), 400)
+        output_suffix = ".txt" if suffix == ".pdf" else suffix
+        session_id = SessionStore.new_id()
+
+        def work() -> tuple[bytes, dict]:
+            with tempfile.TemporaryDirectory(prefix="veu-") as folder:
+                source, target = Path(folder) / f"entrada{suffix}", Path(folder) / f"saida{output_suffix}"
+                source.write_bytes(body)
+                with api_sessions.session(session_id) as vault:
+                    _, counts = anonymize_file(source, target, veu=veu, vault=vault)
+                return target.read_bytes(), dict(counts)
+
+        try:
+            content, counts = await run_in_threadpool(work)
+        except ImportError as exc:
+            return _error(str(exc), 400)
+        except (ValueError, OSError, UnicodeDecodeError) as exc:
+            return _error(f"Não consegui ler o arquivo: {str(exc)[:200]}", 400)
+        stats.record("painel", Counter(counts))
+        return download(content, f"{Path(name).stem}-protegido{output_suffix}", output_suffix,
+                        {"x-veu-sessao": session_id, "x-veu-escondidos": json.dumps(counts)})
+
+    async def restore_file_route(request: Request) -> Response:
+        if (blocked := guard(request, check_token=False)) is not None:
+            return blocked
+        try:
+            name, suffix = file_name(request)
+            body = await read_body(request)
+        except BodyTooLarge:
+            return too_large()
+        except ValueError as exc:
+            return _error(str(exc), 400)
+        if suffix == ".pdf":
+            return _error("Para restaurar, use o arquivo de texto gerado a partir do PDF.", 400)
+        vault = await run_in_threadpool(api_sessions.get, request.query_params.get("sessao", ""), False)
+        if vault is None:
+            return _error("Não encontrei os dados deste arquivo. Proteja de novo: o Véu guarda os dados reais "
+                          "só enquanto está ligado.", 404, "veu_sessao_inexistente")
+
+        def work() -> bytes:
+            with tempfile.TemporaryDirectory(prefix="veu-") as folder:
+                source, target = Path(folder) / f"entrada{suffix}", Path(folder) / f"saida{suffix}"
+                source.write_bytes(body)
+                restore_file(source, target, vault)
+                return target.read_bytes()
+
+        try:
+            content = await run_in_threadpool(work)
+        except (ImportError, ValueError, OSError, UnicodeDecodeError) as exc:
+            return _error(f"Não consegui ler o arquivo: {str(exc)[:200]}", 400)
+        stem = Path(name).stem.removesuffix("-protegido")
+        return download(content, f"{stem}-com-dados{suffix}", suffix, {})
+
+    return [
+        Route("/veu/painel", page, methods=["GET"]),
+        Route("/veu/painel/estado", state, methods=["GET"]),
+        Route("/veu/painel/configuracoes", save, methods=["POST"]),
+        Route("/veu/painel/aplicativos/{app}", connect_app, methods=["POST"]),
+        Route("/veu/painel/inicializacao", startup, methods=["POST"]),
+        Route("/veu/painel/desligar", shutdown, methods=["POST"]),
+        Route("/veu/painel/arquivos/proteger", protect_file, methods=["POST"]),
+        Route("/veu/painel/arquivos/restaurar", restore_file_route, methods=["POST"]),
+    ]
+
+
+def _already_running(port: int) -> bool:
+    import json
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/veu/saude", timeout=1.5) as response:  # noqa: S310
+            return "versao" in json.loads(response.read())
+    except (OSError, ValueError):
+        return False
+
+
+def run_panel(open_browser: bool = True, port: int | None = None) -> None:
+    """veu painel: liga o Véu no localhost e abre o painel no navegador. Salvar as configurações reinicia o servidor."""
+    import sys
+    import threading
+    import webbrowser
+
+    import uvicorn
+
+    from veu.server.panel import PanelController, user_config_path
+
+    path = user_config_path()
+    first = True
+    while True:
+        try:
+            config = load_config(path if path.is_file() else None)
+        except ConfigError as exc:
+            print(f"Erro no {path}: {exc}\nUsando a configuração padrão.", file=sys.stderr)
+            config = Config()
+        config = config.with_overrides(host="127.0.0.1", port=port or config.port,
+                                       session_ttl=max(config.session_ttl, 12 * 3600))
+        url = f"http://127.0.0.1:{config.port}/veu/painel"
+        if first and _already_running(config.port):
+            print(f"O Véu já está ligado: {url}")
+            if open_browser:
+                webbrowser.open(url)
+            return
+        controller = PanelController(path)
+        app = create_app(config, panel=controller)
+        server = uvicorn.Server(uvicorn.Config(app, host=config.host, port=config.port, log_level="warning",
+                                               access_log=False))
+        controller.server = server
+        if first:
+            print(f"\n  Véu {__version__} ligado.\n\n  Painel: {url}\n  Endereço para aplicativos: "
+                  f"http://127.0.0.1:{config.port}/v1\n\n  Pode minimizar esta janela. Fechar a janela desliga o Véu.\n")
+            if open_browser:
+                threading.Timer(1.2, webbrowser.open, [url]).start()
+        server.run()
+        first = False
+        if not controller.restart:
+            break
+        print("  Configuração salva. Reiniciando o Véu...")
 
 
 def run(config: Config | None = None) -> None:

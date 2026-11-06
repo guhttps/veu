@@ -1,6 +1,6 @@
 {
   "name": "veu",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Protege dados pessoais e segredos: bloqueia chaves de API e senhas em prompts e arquivos, e lê Notion, planilhas e documentos com os dados trocados por marcadores.",
   "author": {
     "name": "guhttps",

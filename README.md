@@ -7,152 +7,168 @@
   <a href="https://pypi.org/project/veu/"><img src="https://img.shields.io/pypi/v/veu" alt="PyPI"></a>
   <a href="https://www.npmjs.com/package/@guhttps/veu"><img src="https://img.shields.io/npm/v/@guhttps/veu" alt="npm"></a>
   <img src="https://img.shields.io/badge/python-3.11%20a%203.14-3776AB" alt="Python 3.11 a 3.14">
-  <img src="https://img.shields.io/badge/node-22%2B-5FA04E" alt="Node 22 ou mais novo">
   <img src="https://img.shields.io/badge/depend%C3%AAncias%20do%20n%C3%BAcleo-0-2ea44f" alt="Núcleo sem dependências">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/guhttps/veu" alt="Licença MIT"></a>
 </p>
 
 # Véu
 
-**O Véu esconde dados pessoais e segredos antes de um texto chegar a um modelo de IA e devolve os dados reais na resposta.** A IA trabalha com `[PESSOA_1]`, `[CPF_1]` e `[CHAVE_API_1]`. Quem usa vê "Maria Souza", "529.982.247-25" e a chave de verdade.
-
-Empresas estão colocando IA no atendimento, nos contratos, no RH e no código. Junto com cada pergunta vão CPF, nome e telefone de clientes, e também chaves de API, senhas e URLs de banco de dados. O Véu fica no meio do caminho:
-
-- **Entende documentos brasileiros de verdade:** confere os dígitos verificadores, inclusive do **CNPJ alfanumérico** de 2026.
-- **Reconhece segredos:** chaves de mais de 30 serviços, tokens, senhas e chaves privadas.
-- **Funciona em streaming.**
-- **Chega de vários jeitos:** página web, extensão de navegador, biblioteca Python ou JavaScript, proxy, gateway da empresa, plugin para agentes de código.
+**O Véu esconde dados pessoais e segredos antes de um texto chegar a uma IA e devolve os dados reais na resposta.** A IA trabalha com `[PESSOA_1]`, `[CPF_1]` e `[CHAVE_API_1]`. Você vê "Maria Souza", "529.982.247-25" e a chave de verdade.
 
 ```text
-Você envia     Sou a Maria Souza, CPF 529.982.247-25. Use a chave sk-proj-4f...
-A IA recebe    Sou a [PESSOA_1], CPF [CPF_1]. Use a chave [CHAVE_API_1]
-A IA responde  Olá, [PESSOA_1]! Configurei [CHAVE_API_1] no .env.
-Você recebe    Olá, Maria Souza! Configurei sk-proj-4f... no .env.
+Você envia     Sou a Maria Souza, CPF 529.982.247-25. Meu pedido atrasou.
+A IA recebe    Sou a [PESSOA_1], CPF [CPF_1]. Meu pedido atrasou.
+A IA responde  Olá, [PESSOA_1]! Localizei o pedido do CPF [CPF_1].
+Você recebe    Olá, Maria Souza! Localizei o pedido do CPF 529.982.247-25.
 ```
+
+Empresas e pessoas estão colocando IA no atendimento, nos contratos, no RH e no código. Junto com cada pergunta vão CPF, nome e telefone de clientes, e também chaves de API e senhas. O Véu fica no meio do caminho:
+
+- **Entende documentos brasileiros de verdade:** confere os dígitos verificadores, inclusive do CNPJ alfanumérico de 2026.
+- **Reconhece segredos:** chaves de mais de 30 serviços, tokens, senhas e chaves privadas.
+- **Funciona do jeito que você usa IA:** no navegador, no computador, no seu código ou no servidor da empresa.
 
 > [!IMPORTANT]
 > Nenhuma detecção automática é perfeita. O Véu **reduz** muito o risco de enviar dados pessoais, mas não o elimina. Veja os [números do benchmark](#benchmark) e as [limitações](SECURITY.md#o-que-o-véu-não-faz). Não é aconselhamento jurídico sobre a LGPD.
 
 ## Comece por aqui
 
-| Você... | Use | Instalação |
+| Você quer... | Use | Como |
 |---|---|---|
-| **usa ChatGPT, Claude ou Gemini no navegador** e não programa | A [**página do Véu**](https://guhttps.github.io/veu/): cole, copie a versão protegida, traga a resposta de volta. Tudo roda no seu navegador. | nenhuma |
-| | A [**extensão**](docs/extensao.md) para Chrome e Edge, que protege o que você cola e digita nos sites das IAs | um clique |
-| **programa em Python** | `openai_client()`, `anthropic_client()`, LangChain, `@protect`, MCP | `pip install veu` |
-| **programa em JavaScript ou TypeScript** | [`@guhttps/veu`](js/README.md): `createFetch()` para os SDKs da OpenAI e da Anthropic e middleware para o AI SDK da Vercel | `npm install @guhttps/veu` |
-| **usa Claude Code ou Cursor** | O [**plugin**](docs/integracoes.md#claude-code-e-cursor): bloqueia segredos nos prompts e nos arquivos e lê Notion, planilhas e documentos já protegidos | `/plugin install veu --marketplace guhttps/veu` |
-| **é da TI de uma empresa** | [**Gateway central**](docs/empresas.md) (Helm ou Docker), **guardrail para o LiteLLM** ou a **extensão gerenciada por política**. Nada é instalado nos computadores. | [guia para empresas](docs/empresas.md) |
-| **quer dar Notion, planilhas ou PDFs para a IA** | `veu ler <link ou arquivo>` e `veu anonimizar planilha.xlsx` | [fontes e documentos](docs/integracoes.md#notion-google-e-documentos) |
+| **colar textos no ChatGPT, no Claude ou no Gemini** sem expor dados | A [**página do Véu**](https://guhttps.github.io/veu/): cole, copie a versão protegida, traga a resposta de volta | Nada para instalar |
+| **proteger planilhas, documentos e PDFs** ou conectar o **Claude Desktop**, sem programar | O [**painel do Véu**](#instalar-sem-saber-programar), no seu computador | [Um comando, 2 minutos](#instalar-sem-saber-programar) |
+| **proteger aplicativos como n8n, Make e Zapier** | O painel mostra o endereço para colar no aplicativo | [Um comando, 2 minutos](#instalar-sem-saber-programar) |
+| **programar em Python** | `openai_client()`, `anthropic_client()`, LangChain, `@protect` | `pip install veu` |
+| **programar em JavaScript ou TypeScript** | [`@guhttps/veu`](js/README.md), com `createFetch()` e middleware do AI SDK | `npm install @guhttps/veu` |
+| **proteger o Claude Code ou o Cursor** | O [**plugin**](docs/integracoes.md#claude-code-e-cursor): bloqueia segredos em prompts e arquivos | `/plugin install veu --marketplace guhttps/veu` |
+| **proteger a empresa toda** sem instalar nada nos computadores | [**Gateway central**](docs/empresas.md), **guardrail do LiteLLM** ou **extensão gerenciada** | [Guia para empresas](docs/empresas.md) |
 
-Quer ver funcionando sem chave de API? Rode `veu demonstrar`: ele mostra, dado por dado, o que chegaria à IA com e sem o Véu.
+Quer ver funcionando antes? Depois de instalar, rode `veu demonstrar`. Ele mostra, dado por dado, o que chegaria à IA com e sem o Véu, sem precisar de chave de API.
+
+## Instalar sem saber programar
+
+**No Windows:** aperte a tecla Windows, digite **PowerShell**, aperte Enter e cole:
+
+```powershell
+irm https://guhttps.github.io/veu/instalar.ps1 | iex
+```
+
+**No Mac ou no Linux:** abra o **Terminal** e cole:
+
+```bash
+curl -LsSf https://guhttps.github.io/veu/instalar.sh | sh
+```
+
+Em cerca de dois minutos o instalador:
+
+- **prepara tudo:** instala o Python e o Véu na sua pasta de usuário, sem pedir administrador;
+- **cria o atalho:** o atalho **Véu** fica na área de trabalho;
+- **abre o painel:** o painel aparece no navegador.
+
+O passo a passo com imagens está em [guhttps.github.io/veu/instalar.html](https://guhttps.github.io/veu/instalar.html).
+
+<p align="center"><img src="docs/painel.png" alt="Painel do Véu: proteger um arquivo, proteger um texto e conectar aplicativos" width="90%"></p>
+
+No painel, tudo é feito com cliques:
+
+- **Proteger um arquivo:**
+  - arraste uma planilha, um documento, uma apresentação ou um PDF e baixe a versão protegida, no mesmo formato;
+  - quando a IA devolver um arquivo, **Colocar os dados de volta** restaura os dados reais.
+- **Proteger um texto:** cole, copie a versão protegida e cole a resposta da IA para ver os dados reais.
+- **Usar com aplicativos:**
+  - conecte o **Claude Desktop** ou o **Cursor** com um botão;
+  - copie o endereço para n8n, Make, Zapier e outros apps.
+- **O que proteger:**
+  - caixinhas para nomes, documentos, dados financeiros, senhas e outros;
+  - uma lista de dados da empresa que nunca devem ser escondidos;
+  - a opção de ligar o Véu junto com o computador.
+- **Atividade:** quantos dados foram protegidos (só contagens, nunca os valores).
+
+Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 
 ## Recursos
 
 - 🇧🇷 **28 tipos de dados:**
-  - documentos brasileiros: CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS e passaporte;
+  - documentos brasileiros: CPF, CNPJ, RG, CNH, título de eleitor, PIS/NIT, cartão do SUS e passaporte;
   - contatos e localização: nomes de pessoas, telefone (brasileiro e internacional), e-mail, endereço, CEP e IP;
   - financeiros: cartão, conta bancária, IBAN e chave Pix;
   - outros: placa, RENAVAM, data de nascimento e processo do CNJ;
   - **segredos**.
 - 🔑 **Segredos:**
-  - chaves da OpenAI, Anthropic, AWS, Google, GitHub, GitLab, Stripe, Slack, Hugging Face, Groq, Notion, Mercado Pago, Asaas e mais 20 serviços;
+  - chaves da OpenAI, Anthropic, AWS, Google, GitHub, Stripe, Slack, Hugging Face, Notion, Mercado Pago, Asaas e mais 20 serviços;
   - JWT e tokens Bearer;
   - senhas (`DB_PASSWORD=...`, "a senha é ...");
-  - chaves privadas;
-  - URLs de banco com senha;
-  - campos como `api_key: ...`.
+  - chaves privadas e URLs de banco com senha.
 - ✅ **Validação de verdade:**
-  - dígitos verificadores de CPF, CNPJ, PIS, CNS, CNH, título, RENAVAM, processo CNJ, IBAN e Luhn;
+  - dígitos verificadores de CPF, CNPJ, PIS, CNS, CNH, título, RENAVAM, processo CNJ, IBAN e cartões;
   - DDDs válidos.
 
   Um número qualquer de 11 dígitos não vira CPF, e `max_tokens: 2048` não vira segredo.
 - 🧠 **Nomes sem modelo de IA:**
   - listas de nomes brasileiros, capitalização e contexto ("Sr.", "cliente", "oi joão");
-  - não confunde "Banco do Brasil", "Rua Augusta" nem "São José dos Campos";
+  - não confunde "Banco do Brasil" nem "Rua Augusta";
   - opcionalmente, spaCy ou um modelo local.
 - 🔁 **Reversível e consistente:**
   - o mesmo dado recebe sempre o mesmo marcador;
   - "João" sozinho é ligado a "João da Silva";
   - a restauração tolera o que os modelos fazem com os marcadores (`[CPF 1]`, `CPF_1`).
-- 🌊 **Streaming de verdade:**
-  - marcadores partidos entre pedaços ("[PES" + "SOA_1]") são remontados;
-  - vale também para argumentos de ferramentas.
+- 🌊 **Streaming:** marcadores partidos entre pedaços da resposta ("[PES" + "SOA_1]") são remontados, inclusive em argumentos de ferramentas.
 - 📄 **Notion, Google e documentos:**
   - lê páginas e bases do Notion, Google Docs, Sheets e Slides, links e PDFs, já protegidos;
-  - anonimiza Word, Excel e PowerPoint **no próprio formato**, mantendo a formatação e as fórmulas.
+  - anonimiza Excel, Word e PowerPoint **no próprio formato**, mantendo a formatação e as fórmulas.
 - 🌐 **Python, JavaScript e navegador:**
   - a mesma detecção nas três versões;
   - um teste de conformidade com 235 casos exige resultados idênticos.
-- 🏢 **Pronto para empresas:**
-  - gateway central com tokens por equipe e auditoria encadeada à prova de adulteração;
-  - sessões no Redis para várias réplicas;
+- 🏢 **Empresas:**
+  - gateway com tokens por equipe, auditoria à prova de adulteração e sessões no Redis;
   - desvio de dados sensíveis para um modelo interno;
-  - chart Helm, guardrail para o LiteLLM e extensão com política gerenciada.
-- 🤖 **Agentes:**
-  - servidor MCP, ganchos para Claude Code e Cursor e plugin com skill;
-  - o agente consegue trabalhar com arquivos sensíveis sem ver os dados.
-- 🎭 **5 operadores:** marcador, valor sintético (outro CPF válido), máscara, remoção e hash estável.
+  - chart Helm, guardrail do LiteLLM e extensão com política gerenciada.
+- 🤖 **Agentes:** servidor MCP, ganchos para Claude Code e Cursor e plugin com skill. O agente trabalha com arquivos sensíveis sem ver os dados.
 - 🪶 **Leve:** o núcleo não tem dependências e processa cerca de 330 mil caracteres por segundo.
 
 ## Como funciona
 
 ```mermaid
 flowchart LR
-    A["Você ou sua aplicação<br/>(navegador, SDK, agente, n8n)"] -->|texto com dados reais| V
+    A["Você ou seu aplicativo<br/>(navegador, painel, SDK, agente, n8n)"] -->|texto com dados reais| V
     subgraph V["Véu"]
         D["Detectores<br/>documentos · nomes · endereços · segredos"] --> C["Cofre<br/>[CPF_1] ↔ 529.982.247-25"]
     end
-    V -->|só marcadores| L["Modelo de IA<br/>OpenAI · Anthropic · Gemini · Ollama"]
+    V -->|só marcadores| L["IA<br/>OpenAI · Anthropic · Gemini · Ollama"]
     L -->|resposta com marcadores| V
     V -->|resposta com os dados reais| A
 ```
 
-O cofre com o mapeamento entre marcadores e dados reais fica só com você (na memória, no navegador ou no seu servidor) e nunca é enviado ao modelo. Uma instrução curta avisa o modelo para repetir os marcadores sem tentar adivinhar os valores.
+O cofre com o mapeamento entre marcadores e dados reais fica só com você (no navegador, no seu computador ou no seu servidor) e nunca vai para a IA. Uma instrução curta avisa o modelo para repetir os marcadores sem tentar adivinhar os valores.
 
-## Instalação
+## Para programadores
+
+### Instalação
 
 ```bash
-pip install "veu[servidor]"
+pip install veu                              # biblioteca, sem dependências
+pip install "veu[servidor,mcp,documentos]"   # com o proxy, o painel, o MCP e Excel/Word/PDF
+npm install @guhttps/veu                     # JavaScript e TypeScript
+docker run -p 8787:8787 -e VEU_TOKEN=um-segredo ghcr.io/guhttps/veu
 ```
 
-- **Biblioteca Python sem dependências:**
+Extras opcionais do pacote Python:
 
-  ```bash
-  pip install veu
-  ```
+| Extra | Para |
+|---|---|
+| `servidor` | Proxy, painel e API REST |
+| `mcp` | Servidor MCP para agentes |
+| `documentos` | Excel, Word, PowerPoint e PDF |
+| `langchain`, `pandas` | Integrações com essas bibliotecas |
+| `litellm` | Guardrail do LiteLLM |
+| `redis` | Sessões compartilhadas entre réplicas |
+| `spacy` | Detector de nomes do spaCy |
+| `todos` | Tudo acima, menos `litellm` e `spacy` |
 
-- **Extras opcionais:**
-  - `mcp`: servidor para agentes;
-  - `documentos`: Word, Excel, PowerPoint e PDF;
-  - `langchain` e `pandas`;
-  - `litellm`: guardrail;
-  - `redis`: sessões compartilhadas;
-  - `spacy`;
-  - `todos`, que instala os anteriores.
-
-  Exemplo:
-
-  ```bash
-  pip install "veu[servidor,mcp,documentos]"
-  ```
-
-- **JavaScript e TypeScript:** `npm install @guhttps/veu`. Veja o [js/README.md](js/README.md).
-- **Navegador:** a [página](https://guhttps.github.io/veu/) ou a [extensão](docs/extensao.md).
-- **Docker:**
-
-  ```bash
-  docker run -p 8787:8787 -e VEU_TOKEN=um-segredo ghcr.io/guhttps/veu
-  ```
-
-  O token é obrigatório fora do localhost. Para a empresa toda, veja o [guia para empresas](docs/empresas.md).
-
-## Uso rápido
-
-### 1. Como proxy (qualquer linguagem, muda uma linha)
+### Como proxy (qualquer linguagem, muda uma linha)
 
 ```bash
-veu servir            # http://127.0.0.1:8787, com playground em /veu/playground
+veu servir            # http://127.0.0.1:8787
 ```
 
 ```python
@@ -162,7 +178,7 @@ client = OpenAI(base_url="http://127.0.0.1:8787/v1")            # OpenAI
 groq = OpenAI(base_url="http://127.0.0.1:8787/groq/v1")         # Groq, OpenRouter, Ollama, Maritaca...
 ```
 
-### 2. Dentro do seu código, sem proxy
+### Dentro do seu código, sem proxy
 
 ```python
 from veu.integrations.sdk import openai_client, anthropic_client
@@ -177,7 +193,7 @@ import { createFetch } from "@guhttps/veu/fetch";
 const client = new OpenAI({ fetch: createFetch() });   // o mesmo para a Anthropic
 ```
 
-### 3. Como biblioteca
+### Como biblioteca
 
 ```python
 import veu
@@ -189,7 +205,7 @@ veu.restore("Certo, [PESSOA_1]. Vou ligar no [TELEFONE_1].", resultado.vault)
 # 'Certo, João da Silva. Vou ligar no (11) 91234-5678.'
 ```
 
-### 4. Notion, planilhas e documentos
+### Notion, planilhas e documentos
 
 ```bash
 veu ler https://www.notion.so/minha-empresa/Atendimento-1f2e...   # NOTION_TOKEN no ambiente
@@ -198,20 +214,37 @@ veu anonimizar clientes.xlsx -o clientes-protegido.xlsx --cofre cofre.json
 veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 ```
 
+### Comandos
+
+| Comando | O que faz |
+|---|---|
+| `veu painel` | Liga o Véu e abre o painel no navegador |
+| `veu demonstrar` | Mostra o que chegaria à IA com e sem o Véu, sem chave de API |
+| `veu ler <link ou arquivo>` | Lê Notion, Google, links e documentos já protegidos |
+| `veu anonimizar` / `veu restaurar` | Protege e restaura textos, CSV, JSON, Excel, Word, PowerPoint e PDF |
+| `veu detectar` | Lista os dados encontrados num texto |
+| `veu verificar` | Falha se algum arquivo tiver dados pessoais ou segredos (pre-commit e CI) |
+| `veu servir` | Proxy para as APIs de IA, com playground e API REST |
+| `veu mcp` | Servidor MCP para Claude Desktop, Claude Code e Cursor |
+| `veu gancho prompt` / `veu gancho arquivo` | Ganchos para Claude Code e Cursor |
+| `veu auditoria verificar` | Confere a integridade do log de auditoria |
+| `veu atalhos` | Cria o atalho Véu na área de trabalho |
+| `veu avaliar` | Roda o benchmark |
+
 ## Integrações
 
 | Categoria | Integrações | Guia |
 |---|---|---|
-| **No navegador** | Página que roda localmente; extensão para ChatGPT, Claude, Gemini, Copilot, Perplexity, DeepSeek, Mistral, Grok e outros | [Extensão](docs/extensao.md) |
-| **Modelos de IA** (proxy) | OpenAI, Anthropic, Gemini, Ollama nativo, Azure OpenAI e 20 provedores prontos (Groq, OpenRouter, DeepSeek, Mistral, xAI, Maritaca, vLLM...) | [Modelos](docs/integracoes.md#modelos-de-ia) |
-| **Python** | `openai_client()`, `anthropic_client()`, transportes `httpx`, LangChain, `@protect`, `veu.session()` | [SDKs](docs/integracoes.md#atalhos-dos-sdks) |
+| **Sem programar** | Página que roda no navegador, painel no computador, extensão para ChatGPT, Claude, Gemini, Copilot, Perplexity e outros | [Instalar](#instalar-sem-saber-programar) · [Extensão](docs/extensao.md) |
+| **Modelos de IA** (proxy) | OpenAI, Anthropic, Gemini, Ollama, Azure OpenAI e 20 provedores prontos (Groq, OpenRouter, DeepSeek, Mistral, xAI, Maritaca, vLLM...) | [Modelos](docs/integracoes.md#modelos-de-ia) |
+| **Python** | `openai_client()`, `anthropic_client()`, transportes `httpx`, LangChain, `@protect`, `veu.session()` | [Python](docs/integracoes.md#python) |
 | **JavaScript** | `createFetch()` para os SDKs da OpenAI e da Anthropic, middleware do AI SDK da Vercel, uso no navegador | [@guhttps/veu](js/README.md) |
-| **Agentes** | Servidor MCP (`ler_protegido`, `anonimizar_arquivo`...), ganchos e plugin com skill para Claude Code, ganchos para Cursor | [Agentes](docs/integracoes.md#claude-code-e-cursor) |
-| **Fontes** | Notion (páginas e bases), Google Docs/Sheets/Slides, links; Word, Excel, PowerPoint e PDF | [Fontes](docs/integracoes.md#notion-google-e-documentos) |
-| **Empresas** | Gateway com equipes, auditoria encadeada, Redis, desvio para modelo interno; guardrail do LiteLLM; Helm e docker-compose | [Empresas](docs/empresas.md) |
+| **Agentes** | Servidor MCP (`ler_protegido`, `anonimizar_arquivo`...), plugin e ganchos para Claude Code, ganchos para Cursor | [Agentes](docs/integracoes.md#claude-code-e-cursor) |
+| **Fontes** | Notion (páginas e bases), Google Docs, Sheets e Slides, links, Excel, Word, PowerPoint e PDF | [Fontes](docs/integracoes.md#notion-google-e-documentos) |
+| **Empresas** | Gateway com equipes, auditoria encadeada, Redis e desvio para modelo interno; guardrail do LiteLLM; Helm e docker-compose | [Empresas](docs/empresas.md) |
 | **Dados** | CSV, JSON, JSONL, Excel, pandas e RAG, com o mesmo marcador em todas as linhas | [Dados](docs/integracoes.md#dados) |
 | **Observabilidade** | `logging`, structlog, loguru, Sentry e Prometheus | [Observabilidade](docs/integracoes.md#observabilidade) |
-| **Repositórios** | Pre-commit e GitHub Action com SARIF (agora também acham chaves e senhas) | [Repositórios](docs/integracoes.md#repositórios) |
+| **Repositórios** | Pre-commit e GitHub Action com SARIF, que também acham chaves e senhas | [Repositórios](docs/integracoes.md#repositórios) |
 
 ## O que é detectado
 
@@ -247,7 +280,7 @@ O operador `sintetico` ainda só existe em Python. Em JavaScript, use `token`, `
 
 ## Benchmark
 
-O Véu vem com um gerador de textos realistas (atendimento, saúde, jurídico, RH, conversas de WhatsApp, formulários) com dados **falsos** e anotados, e um conjunto de casos difíceis escritos à mão. A métrica principal é o **vazamento**: a fração dos dados pessoais que chegaria ao modelo sem estar totalmente escondida.
+O Véu vem com um gerador de textos realistas (atendimento, saúde, jurídico, RH, conversas de WhatsApp, formulários) com dados **falsos** e anotados, e com um conjunto de casos difíceis escritos à mão. A métrica principal é o **vazamento**: a fração dos dados pessoais que chegaria à IA sem estar totalmente escondida.
 
 ```bash
 veu avaliar --quantidade 1000
@@ -265,7 +298,6 @@ Como ler esses números com honestidade:
 - **O número que importa é o da validação.** O conjunto de desenvolvimento chega a 100% porque o detector foi ajustado olhando para ele.
 - **Documentos com dígitos verificadores** (CPF, CNPJ, cartão, processo...) ficaram em 0% de vazamento nos três conjuntos.
 - **Nomes são a parte difícil**, principalmente em minúsculas, em conversas sem saudação ("kkkk o rayane esqueceu").
-- **O detector de segredos não mudou a precisão:** com ele ligado, os números da validação são os mesmos.
 - **O spaCy reduz o vazamento de nomes para menos da metade, mas é cerca de 18 vezes mais lento.**
 - **Os textos são sintéticos.** Em dados reais, espere resultados piores. Teste com uma amostra dos seus próprios textos antes de confiar.
 
@@ -273,7 +305,7 @@ Detalhes da metodologia em [docs/benchmark.md](docs/benchmark.md).
 
 ## Configuração
 
-Tudo funciona sem configuração. Para ajustar, crie um `veu.toml` (exemplo completo em [examples/veu.toml](examples/veu.toml)):
+Quem usa o painel não precisa editar nada: as caixinhas gravam a configuração. Quem preferir pode escrever um `veu.toml` (exemplo completo em [examples/veu.toml](examples/veu.toml)):
 
 ```toml
 [deteccao]
@@ -284,26 +316,26 @@ ignorar = ["contato@minhaempresa.example"]      # valores que nunca são escondi
 operador = "token"
 
 [politica]
-bloquear = ["CARTAO_CREDITO", "CHAVE_PRIVADA"] # recusa a requisição em vez de só esconder
+bloquear = ["CARTAO_CREDITO", "CHAVE_PRIVADA"] # recusa o pedido em vez de só esconder
 
 [servidor]
 log_auditoria = "veu-auditoria.jsonl"          # só contagens, nunca os valores, em cadeia de hashes
 ```
 
-Equipes, sessões no Redis, desvio para modelo interno e expansão de links do Notion estão no [guia para empresas](docs/empresas.md).
+O painel guarda o arquivo em `%APPDATA%\veu\veu.toml` no Windows, `~/Library/Application Support/veu/veu.toml` no Mac e `~/.config/veu/veu.toml` no Linux. Equipes, sessões no Redis, desvio para modelo interno e leitura de links do Notion estão no [guia para empresas](docs/empresas.md).
 
 ## Segurança
 
 - **Acesso:**
-  - o Véu ouve só em `127.0.0.1` por padrão e recusa requisições de outros sites (CSRF e DNS rebinding);
-  - fora do localhost, ele **não inicia sem token**;
+  - o Véu ouve só em `127.0.0.1` por padrão e recusa pedidos de outros sites abertos no navegador (CSRF e DNS rebinding);
+  - fora do computador local, ele **não inicia sem token**;
   - cada equipe pode ter o seu token e a sua política.
 - **Dados:**
   - o cofre fica na memória (ou no seu Redis) e expira sem uso;
-  - sessões de credenciais diferentes nunca compartilham o cofre;
-  - a página e a extensão não enviam nada pela internet.
+  - a página web e a extensão não enviam nada pela internet;
+  - o painel só funciona no próprio computador.
 - **Auditoria:** o log tem só contagens, em cadeia de hashes (HMAC com segredo). `veu auditoria verificar` aponta linhas alteradas ou removidas.
-- **Limites:** o Véu protege os dados do provedor de IA, mas não decide quem pode ver o quê dentro da sua aplicação. Veja as [limitações](SECURITY.md#o-que-o-véu-não-faz).
+- **Limites:** o Véu protege os dados da IA, mas não decide quem pode ver o quê dentro do seu sistema. Veja as [limitações](SECURITY.md#o-que-o-véu-não-faz).
 
 Leia o [modelo de ameaças e as limitações](SECURITY.md) antes de usar em produção.
 
@@ -313,7 +345,7 @@ Leia o [modelo de ameaças e as limitações](SECURITY.md) antes de usar em prod
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 282 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 295 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 cd js && npm ci && npm test                       # biblioteca JavaScript (inclui a conformidade com o Python)
@@ -325,12 +357,12 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 ## Próximos passos
 
 - [x] Publicar no PyPI (`pip install veu`) e no npm (`@guhttps/veu`)
-- [ ] Publicar a extensão na Chrome Web Store
+- [x] Instalador de um comando e painel para quem não programa
+- [ ] Abrir Excel e Word direto na página web, sem instalar nada
 - [ ] Operador sintético na versão JavaScript
+- [ ] Bibliotecas para Go e Java
 - [ ] Mais casos difíceis escritos à mão, de domínios reais (com dados fictícios)
 - [ ] Detector de nomes em minúsculas sem saudação ("o rayane esqueceu")
-- [ ] Biblioteca para Go e Java
-- [ ] Suporte à API Realtime e a uploads de arquivos
 
 ## Licença
 

@@ -63,6 +63,7 @@ Ele falha se o vazamento do benchmark passar de 5%.
 | Extensão, página web e plugin do Claude Code | `extensao/`, `web/`, `plugin/` |
 | Gateway para empresas, Helm e LiteLLM | `src/veu/server/`, `deploy/`, `src/veu/integrations/litellm.py` |
 | Mudar o proxy ou a API REST | `src/veu/server/app.py` |
+| Painel, atalhos e instaladores | `src/veu/server/panel.py`, `static/painel.html`, `src/veu/atalhos.py`, `web/instalar.ps1`, `web/instalar.sh` |
 | Adicionar casos ao benchmark | `src/veu/bench/hard.py` (escritos à mão) ou `generator.py` |
 
 ## Regras do benchmark

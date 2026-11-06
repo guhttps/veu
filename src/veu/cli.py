@@ -256,6 +256,24 @@ def cmd_serve(args) -> int:
     return 0
 
 
+def cmd_panel(args) -> int:
+    try:
+        from veu.server import app as server
+    except ImportError:
+        print('O painel precisa do servidor: pip install "veu[servidor]"', file=sys.stderr)
+        return 2
+    server.run_panel(open_browser=not args.sem_abrir, port=args.porta)
+    return 0
+
+
+def cmd_shortcuts(args) -> int:
+    from veu.atalhos import create_shortcuts
+
+    for path in create_shortcuts(remove=args.remover):
+        print(("Removido: " if args.remover else "Atalho: ") + str(path))
+    return 0
+
+
 def cmd_evaluate(args) -> int:
     from veu.bench.evaluate import evaluate
     from veu.bench.generator import generate, load
@@ -387,6 +405,15 @@ def build_parser() -> argparse.ArgumentParser:
     sub = commands.add_parser("mcp", help="servidor MCP (stdio) para Claude Code, Claude Desktop, Cursor...")
     common(sub)
     sub.set_defaults(func=cmd_mcp)
+
+    sub = commands.add_parser("painel", help="liga o Véu e abre o painel no navegador (o jeito mais fácil)")
+    sub.add_argument("--porta", type=int, help="porta (padrão 8787)")
+    sub.add_argument("--sem-abrir", action="store_true", help="não abre o navegador (para iniciar com o computador)")
+    sub.set_defaults(func=cmd_panel)
+
+    sub = commands.add_parser("atalhos", help="cria o atalho Véu na área de trabalho e no menu")
+    sub.add_argument("--remover", action="store_true", help="remove os atalhos")
+    sub.set_defaults(func=cmd_shortcuts)
 
     sub = commands.add_parser("servir", help="inicia o proxy e o playground")
     sub.add_argument("--config", help="caminho do veu.toml")

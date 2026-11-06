@@ -96,3 +96,14 @@ mark { background: var(--destaque); color: inherit; border-radius: 4px; padding:
   .passos { grid-template-columns: 1fr; }
   .cabeca .acoes, .cabeca .acoes select, .cabeca .acoes .botao { width: 100%; }
 }
+.lista-simples { margin: 8px 0; padding-left: 20px; }
+.lista-simples li { margin: 4px 0; }
+.passos-instalar { padding-left: 20px; }
+.passos-instalar li { margin: 10px 0; }
+.comando { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.comando code { flex: 1; min-width: 0; background: var(--campo); border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; font: 14px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; overflow-wrap: anywhere; }
+.painel h2 { margin-bottom: 8px; }
+.destaque-instalar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.destaque-instalar p { margin: 0; color: var(--suave); }
+a.botao { display: inline-block; text-decoration: none; }
+main a:not(.botao) { color: var(--marca); }

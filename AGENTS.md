@@ -22,7 +22,8 @@ No Windows, o ambiente virtual fica em `.venv/Scripts/`.
 - `src/veu/analyzer.py`: junta detectores e resolve sobreposições.
 - `src/veu/anonymizer.py` e `vault.py`: operadores, cofre e restauração (inclusive em streaming).
 - `src/veu/gateway/`: formatos das APIs de IA (adaptadores e SSE), compartilhados pelo proxy e pelos transportes.
-- `src/veu/server/`: proxy Starlette, API REST e playground.
+- `src/veu/server/`: proxy Starlette, API REST, playground e painel (`panel.py`, `static/painel.html`, rotas em `_panel_routes` e `run_panel` no `app.py`).
+- `src/veu/atalhos.py`: atalhos e início com o computador (Windows, macOS, Linux). `web/instalar.ps1` e `web/instalar.sh`: instaladores de um comando (o `.ps1` precisa continuar só com ASCII).
 - `src/veu/integrations/`: transportes httpx/httpx2, atalhos de SDK, LangChain, MCP, decorador, pandas, logging, structlog, loguru e Sentry.
 - `src/veu/sessions.py`: cofre compartilhado por várias chamadas (base do decorador, LangChain e MCP).
 - `src/veu/files.py`, `documents.py` e `sources.py`: arquivos (CSV, JSON, Word, Excel, PowerPoint, PDF) e fontes (Notion, Google, links).

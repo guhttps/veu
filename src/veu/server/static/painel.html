@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Véu: painel</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23234e52'/%3E%3Cpath d='M8 12h16M8 17h12M8 22h8' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  --fundo: #f6f5f1; --cartao: #fff; --texto: #1d2522; --suave: #5b6662; --borda: #dcdcd4; --marca: #234e52;
+  --marca-texto: #fff; --campo: #fbfbf8; --ok: #1f6f43; --ok-fundo: #e3f3e9; --erro: #a8322b; --destaque: #fff1c2;
+  --destaque-borda: #e3c35b; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --fundo: #141917; --cartao: #1c2321; --texto: #e7ece9; --suave: #9aa6a1; --borda: #2f3a36; --marca: #6fb3b8;
+    --marca-texto: #0d1413; --campo: #161c1a; --ok: #7fd1a1; --ok-fundo: #1d3328; --erro: #f08a82; --destaque: #3d3519;
+    --destaque-borda: #8a7330; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fundo); color: var(--texto); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header, main { max-width: 920px; margin: 0 auto; padding: 0 16px; }
+header { display: flex; align-items: center; gap: 14px; padding-top: 24px; flex-wrap: wrap; }
+.logo { width: 42px; height: 42px; border-radius: 12px; background: var(--marca); position: relative; flex: none; }
+.logo::after { content: ""; position: absolute; inset: 12px 10px; border-top: 4px solid var(--marca-texto); border-bottom: 4px solid var(--marca-texto); }
+h1 { margin: 0; font-size: 26px; }
+.estado { display: inline-flex; align-items: center; gap: 6px; background: var(--ok-fundo); color: var(--ok); border-radius: 999px; padding: 3px 12px; font-size: 14px; font-weight: 600; }
+.estado::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.estado.desligado { background: var(--campo); color: var(--suave); }
+.espaco { flex: 1; }
+nav { display: flex; gap: 6px; flex-wrap: wrap; margin: 18px 0 4px; }
+nav a { color: var(--suave); text-decoration: none; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--borda); font-size: 14px; }
+nav a:hover { color: var(--texto); }
+section { background: var(--cartao); border: 1px solid var(--borda); border-radius: 14px; padding: 18px; margin: 14px 0; scroll-margin-top: 12px; }
+h2 { font-size: 19px; margin: 0 0 4px; }
+.sub { color: var(--suave); margin: 0 0 14px; font-size: 15px; }
+.botao { background: var(--marca); color: var(--marca-texto); border: 0; border-radius: 10px; padding: 9px 15px; font: 600 14px/1.2 inherit; cursor: pointer; }
+.botao.secundario { background: transparent; color: var(--texto); border: 1px solid var(--borda); }
+a.botao { display: block; text-align: center; text-decoration: none; }
+.botao:disabled { opacity: .5; cursor: not-allowed; }
+.botao:focus-visible, textarea:focus, input:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+textarea, .saida, input[type=text] { width: 100%; background: var(--campo); color: var(--texto); border: 1px solid var(--borda); border-radius: 10px; padding: 11px; font: 14px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace; }
+textarea { resize: vertical; overflow-wrap: anywhere; }
+.saida { white-space: pre-wrap; word-break: break-word; min-height: 52px; margin: 8px 0; }
+.saida:empty::before { content: "—"; color: var(--suave); }
+mark { background: var(--destaque); color: inherit; border-radius: 4px; outline: 1px solid var(--destaque-borda); padding: 0 2px; }
+.solta { display: block; border: 2px dashed var(--borda); border-radius: 12px; padding: 26px 16px; text-align: center; cursor: pointer; background: var(--campo); }
+.solta.ativa { border-color: var(--marca); }
+.solta b { display: block; font-size: 17px; }
+.solta span { color: var(--suave); font-size: 14px; }
+.lista { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 8px; }
+.lista li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; }
+.lista .nome { font-weight: 600; flex: 1; min-width: 180px; word-break: break-all; }
+.lista .info { color: var(--suave); font-size: 14px; width: 100%; }
+.grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+.app { border: 1px solid var(--borda); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.app h3 { margin: 0; font-size: 16px; }
+.app p { margin: 0; color: var(--suave); font-size: 14px; flex: 1; }
+.app .ok { color: var(--ok); font-weight: 600; font-size: 14px; }
+.copia { display: flex; gap: 6px; }
+.copia input { font-size: 13px; padding: 8px; flex: 1; min-width: 0; }
+.opcao { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--borda); cursor: pointer; }
+.opcao:last-child { border-bottom: 0; }
+.opcao input { margin-top: 4px; }
+.opcao span { color: var(--suave); font-size: 14px; display: block; }
+fieldset { border: 0; padding: 0; margin: 0 0 18px; }
+legend { font-weight: 700; margin-bottom: 4px; }
+.numeros { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 10px; }
+.numeros b { display: block; font-size: 28px; }
+.numeros span { color: var(--suave); font-size: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips span { border: 1px solid var(--borda); border-radius: 999px; padding: 2px 10px; font-size: 14px; }
+details { margin-top: 10px; }
+summary { cursor: pointer; font-weight: 600; }
+pre.codigo { background: var(--campo); border: 1px solid var(--borda); border-radius: 10px; padding: 10px; overflow-x: auto; font-size: 13px; }
+footer { color: var(--suave); font-size: 13px; margin: 18px 0 40px; }
+footer code { word-break: break-all; }
+.aviso { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--texto); color: var(--fundo); padding: 10px 16px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px); z-index: 5; }
+.aviso.visivel { opacity: 1; }
+.aviso.erro { background: var(--erro); color: #fff; }
+.desligado-tela { text-align: center; padding: 60px 16px; }
+@media (max-width: 600px) { .copia { flex-direction: column; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo" aria-hidden="true"></span>
+  <div><h1>Véu</h1></div>
+  <span id="estado" class="estado">Ligado</span>
+  <span class="espaco"></span>
+  <button id="desligar" class="botao secundario">Desligar o Véu</button>
+</header>
+
+<main id="principal">
+  <nav aria-label="Seções">
+    <a href="#arquivo">Proteger um arquivo</a>
+    <a href="#texto">Proteger um texto</a>
+    <a href="#aplicativos">Usar com aplicativos</a>
+    <a href="#configuracoes">O que proteger</a>
+    <a href="#atividade">Atividade</a>
+  </nav>
+
+  <section id="arquivo" aria-labelledby="t-arquivo">
+    <h2 id="t-arquivo">Proteger um arquivo</h2>
+    <p class="sub">Planilhas, documentos e apresentações saem no mesmo formato, com os dados trocados por marcadores como [CPF_1]. Envie o arquivo protegido para a IA. Quando ela devolver um arquivo, use <b>Colocar os dados de volta</b>.</p>
+    <label class="solta" id="soltar">
+      <b>Clique para escolher ou arraste um arquivo aqui</b>
+      <span>Excel, Word, PowerPoint, PDF, CSV ou texto. O arquivo não sai do seu computador.</span>
+      <input id="arquivo-entrada" type="file" hidden accept=".xlsx,.docx,.pptx,.pdf,.csv,.tsv,.json,.jsonl,.txt,.md,.log">
+    </label>
+    <ul id="arquivos" class="lista" aria-live="polite"></ul>
+    <input id="arquivo-volta" type="file" hidden accept=".xlsx,.docx,.pptx,.csv,.tsv,.json,.jsonl,.txt,.md,.log">
+  </section>
+
+  <section id="texto" aria-labelledby="t-texto">
+    <h2 id="t-texto">Proteger um texto</h2>
+    <p class="sub">Cole um texto, copie a versão protegida para a IA e depois cole a resposta para ver os dados reais.</p>
+    <textarea id="entrada" rows="5" placeholder="Ex.: A cliente Maria Souza, CPF 529.982.247-25, pediu reembolso."></textarea>
+    <div class="saida" id="protegido" aria-label="Texto protegido"></div>
+    <button id="copiar" class="botao">Copiar texto protegido</button>
+    <details>
+      <summary>Colocar os dados de volta na resposta da IA</summary>
+      <textarea id="resposta" rows="4" placeholder="Cole aqui a resposta da IA, com [PESSOA_1], [CPF_1]..."></textarea>
+      <div class="saida" id="restaurado"></div>
+    </details>
+  </section>
+
+  <section id="aplicativos" aria-labelledby="t-aplicativos">
+    <h2 id="t-aplicativos">Usar com aplicativos</h2>
+    <p class="sub">Escolha onde você usa IA. Cada opção mostra o que fazer, sem precisar programar.</p>
+    <div class="grade">
+      <div class="app">
+        <h3>ChatGPT, Claude e Gemini no navegador</h3>
+        <p>Use a página do Véu (nada para instalar) ou a extensão, que protege o que você cola nos sites das IAs.</p>
+        <a class="botao secundario" href="https://guhttps.github.io/veu/" target="_blank" rel="noreferrer">Abrir a página</a>
+        <a class="botao secundario" href="https://github.com/guhttps/veu/blob/main/docs/extensao.md" target="_blank" rel="noreferrer">Como instalar a extensão</a>
+      </div>
+      <div class="app" data-app="claude">
+        <h3>Claude Desktop</h3>
+        <p>O Claude passa a ler planilhas, documentos e páginas do Notion com os dados já protegidos.</p>
+        <span class="ok" hidden></span>
+        <button class="botao">Conectar</button>
+      </div>
+      <div class="app" data-app="cursor">
+        <h3>Cursor</h3>
+        <p>O Cursor ganha as ferramentas do Véu para ler arquivos sem expor dados e segredos.</p>
+        <span class="ok" hidden></span>
+        <button class="botao">Conectar</button>
+      </div>
+      <div class="app">
+        <h3>n8n, Make, Zapier e outros apps com IA</h3>
+        <p>Onde o aplicativo pede o endereço da OpenAI (Base URL), cole este. A chave da OpenAI continua a mesma.</p>
+        <div class="copia"><input id="url-openai" type="text" readonly aria-label="Endereço para aplicativos"><button class="botao" data-copiar="url-openai">Copiar</button></div>
+      </div>
+    </div>
+    <details>
+      <summary>Para programadores</summary>
+      <p class="sub">Troque só o endereço do cliente. Funciona com OpenAI, Anthropic, Gemini, Ollama e outros.</p>
+      <pre class="codigo" id="codigo"></pre>
+    </details>
+  </section>
+
+  <section id="configuracoes" aria-labelledby="t-config">
+    <h2 id="t-config">O que proteger</h2>
+    <p class="sub">Marque o que o Véu deve esconder antes de enviar para a IA. Ao salvar, o Véu reinicia em poucos segundos.</p>
+    <form id="formulario">
+      <fieldset id="categorias"><legend>Esconder</legend></fieldset>
+      <fieldset id="bloquear"><legend>Nem enviar (o pedido é recusado)</legend></fieldset>
+      <fieldset id="operadores"><legend>Como esconder</legend></fieldset>
+      <fieldset>
+        <legend>Nunca esconder</legend>
+        <p class="sub">Um por linha: dados da sua empresa, como o e-mail de contato ou o CNPJ.</p>
+        <textarea id="ignorar" rows="3" placeholder="contato@minhaempresa.com.br"></textarea>
+      </fieldset>
+      <button class="botao" type="submit">Salvar</button>
+    </form>
+    <label class="opcao" style="margin-top:16px">
+      <input id="inicializacao" type="checkbox">
+      <div><b>Ligar o Véu junto com o computador</b><span>Ele fica ligado em segundo plano, sem abrir o navegador.</span></div>
+    </label>
+  </section>
+
+  <section id="atividade" aria-labelledby="t-atividade">
+    <h2 id="t-atividade">Atividade</h2>
+    <p class="sub">Desde que o Véu foi ligado. Só contagens: o Véu não guarda os seus dados.</p>
+    <div class="numeros">
+      <div><b id="n-dados">0</b><span>dados protegidos</span></div>
+      <div><b id="n-pedidos">0</b><span>pedidos e arquivos</span></div>
+      <div><b id="n-bloqueados">0</b><span>pedidos recusados</span></div>
+    </div>
+    <div class="chips" id="por-tipo"></div>
+  </section>
+
+  <footer>Véu {{VERSAO}} · configuração em <code id="arquivo-config"></code> · <a href="https://github.com/guhttps/veu" target="_blank" rel="noreferrer">ajuda</a></footer>
+</main>
+
+<div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  let estado = null;
+  let sessaoTexto = null;
+
+  function avisar(mensagem, erro = false) {
+    const aviso = $("aviso");
+    aviso.textContent = mensagem;
+    aviso.className = "aviso visivel" + (erro ? " erro" : "");
+    clearTimeout(avisar.tempo);
+    avisar.tempo = setTimeout(() => { aviso.className = "aviso"; }, erro ? 6000 : 3200);
+  }
+
+  async function api(caminho, opcoes = {}) {
+    const resposta = await fetch(caminho, opcoes);
+    const tipo = resposta.headers.get("content-type") || "";
+    const dados = tipo.includes("json") ? await resposta.json() : null;
+    if (!resposta.ok) throw new Error(dados?.error?.message || `Erro ${resposta.status}`);
+    return dados;
+  }
+
+  const enviarJson = (caminho, corpo) => api(caminho, {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(corpo),
+  });
+
+  async function copiar(texto, mensagem = "Copiado.") {
+    try { await navigator.clipboard.writeText(texto); }
+    catch {
+      const area = document.createElement("textarea");
+      area.value = texto; document.body.append(area); area.select(); document.execCommand("copy"); area.remove();
+    }
+    avisar(mensagem);
+  }
+
+  function destacar(elemento, texto) {
+    elemento.replaceChildren();
+    let posicao = 0;
+    for (const achado of texto.matchAll(/\[[A-Z]+(?:_[A-Z]+)*_[0-9a-f]+\]/g)) {
+      elemento.append(texto.slice(posicao, achado.index));
+      const marca = document.createElement("mark");
+      marca.textContent = achado[0];
+      elemento.append(marca);
+      posicao = achado.index + achado[0].length;
+    }
+    elemento.append(texto.slice(posicao));
+  }
+
+  const nomeDoTipo = (rotulo) => rotulo.toLowerCase().replace(/_/g, " ");
+
+  // Estado -------------------------------------------------------------------------------------------------------
+  async function carregar() {
+    estado = await api("/veu/painel/estado");
+    $("url-openai").value = `${estado.endereco}/v1`;
+    $("arquivo-config").textContent = estado.arquivo_config;
+    $("codigo").textContent =
+      `# Python\nfrom openai import OpenAI\nclient = OpenAI(base_url="${estado.endereco}/v1")\n\n` +
+      `// JavaScript\nconst client = new OpenAI({ baseURL: "${estado.endereco}/v1" });\n\n` +
+      `# Anthropic\nclient = Anthropic(base_url="${estado.endereco}/anthropic")`;
+    montarConfiguracoes();
+    montarAplicativos();
+    montarAtividade();
+    $("inicializacao").checked = estado.inicializacao;
+  }
+
+  function opcao(tipo, nome, valor, titulo, detalhe, marcado) {
+    const rotulo = document.createElement("label");
+    rotulo.className = "opcao";
+    const entrada = document.createElement("input");
+    Object.assign(entrada, { type: tipo, name: nome, value: valor, checked: marcado });
+    const texto = document.createElement("div");
+    const forte = document.createElement("b");
+    forte.textContent = titulo;
+    texto.append(forte);
+    if (detalhe) {
+      const extra = document.createElement("span");
+      extra.textContent = detalhe;
+      texto.append(extra);
+    }
+    rotulo.append(entrada, texto);
+    return rotulo;
+  }
+
+  function montarConfiguracoes() {
+    const { opcoes, configuracoes } = estado;
+    const lugares = { categorias: $("categorias"), bloquear: $("bloquear"), operadores: $("operadores") };
+    for (const lugar of Object.values(lugares)) lugar.querySelectorAll(".opcao").forEach((item) => item.remove());
+    for (const [chave, grupo] of Object.entries(opcoes.categorias)) {
+      lugares.categorias.append(opcao("checkbox", "categorias", chave, grupo.titulo, grupo.exemplo,
+        configuracoes.categorias.includes(chave)));
+    }
+    for (const [chave, grupo] of Object.entries(opcoes.bloquear)) {
+      lugares.bloquear.append(opcao("checkbox", "bloquear", chave, grupo.titulo, "", configuracoes.bloquear.includes(chave)));
+    }
+    for (const [chave, titulo] of Object.entries(opcoes.operadores)) {
+      lugares.operadores.append(opcao("radio", "operador", chave, titulo, "", configuracoes.operador === chave));
+    }
+    $("ignorar").value = configuracoes.ignorar.join("\n");
+  }
+
+  function montarAplicativos() {
+    for (const cartao of document.querySelectorAll("[data-app]")) {
+      const app = estado.aplicativos[cartao.dataset.app];
+      const status = cartao.querySelector(".ok");
+      const botao = cartao.querySelector("button");
+      status.hidden = !app.conectado;
+      status.textContent = app.conectado ? "Conectado. Feche e abra o aplicativo para usar." : "";
+      botao.textContent = app.conectado ? "Desconectar" : app.instalado ? "Conectar" : "Conectar mesmo assim";
+      botao.className = app.conectado ? "botao secundario" : "botao";
+      botao.title = app.instalado ? "" : `${app.titulo} não foi encontrado neste computador.`;
+    }
+  }
+
+  function montarAtividade() {
+    const numeros = estado.estatisticas;
+    $("n-dados").textContent = numeros.dados_escondidos;
+    $("n-pedidos").textContent = numeros.requisicoes;
+    $("n-bloqueados").textContent = numeros.bloqueadas;
+    const chips = $("por-tipo");
+    chips.replaceChildren();
+    for (const [rotulo, quantidade] of Object.entries(numeros.por_entidade)) {
+      const chip = document.createElement("span");
+      chip.textContent = `${quantidade} ${nomeDoTipo(rotulo)}`;
+      chips.append(chip);
+    }
+  }
+
+  // Arquivos -----------------------------------------------------------------------------------------------------
+  const CHAVE = "veu-painel-arquivos";
+  let arquivos = [];
+  try { arquivos = JSON.parse(localStorage.getItem(CHAVE) || "[]"); } catch { arquivos = []; }
+  const guardar = () => { try { localStorage.setItem(CHAVE, JSON.stringify(arquivos.slice(0, 20))); } catch { /* sem armazenamento */ } };
+
+  function baixar(blob, nome) {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = nome;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+  }
+
+  function nomeDoDownload(resposta, padrao) {
+    const cabecalho = resposta.headers.get("content-disposition") || "";
+    const achado = /filename\*=UTF-8''([^;]+)/.exec(cabecalho);
+    return achado ? decodeURIComponent(achado[1]) : padrao;
+  }
+
+  async function enviarArquivo(caminho, arquivo) {
+    const resposta = await fetch(caminho, { method: "POST", body: arquivo });
+    if (!resposta.ok) {
+      let mensagem = `Erro ${resposta.status}`;
+      try { mensagem = (await resposta.json()).error.message; } catch { /* sem detalhe */ }
+      throw new Error(mensagem);
+    }
+    return resposta;
+  }
+
+  async function proteger(arquivo) {
+    avisar(`Protegendo ${arquivo.name}...`);
+    try {
+      const resposta = await enviarArquivo(`/veu/painel/arquivos/proteger?nome=${encodeURIComponent(arquivo.name)}`, arquivo);
+      const nome = nomeDoDownload(resposta, `protegido-${arquivo.name}`);
+      baixar(await resposta.blob(), nome);
+      const escondidos = JSON.parse(resposta.headers.get("x-veu-escondidos") || "{}");
+      arquivos.unshift({ original: arquivo.name, protegido: nome, sessao: resposta.headers.get("x-veu-sessao"), escondidos, quando: Date.now() });
+      guardar();
+      mostrarArquivos();
+      const total = Object.values(escondidos).reduce((soma, n) => soma + n, 0);
+      avisar(total ? `Pronto: ${total} dados protegidos. O arquivo "${nome}" foi baixado.` : `Nenhum dado pessoal encontrado. "${nome}" foi baixado.`);
+      carregar();
+    } catch (erro) {
+      avisar(erro.message, true);
+    }
+  }
+
+  let restaurando = null;
+  async function restaurar(arquivo) {
+    if (!restaurando) return;
+    try {
+      const resposta = await enviarArquivo(
+        `/veu/painel/arquivos/restaurar?nome=${encodeURIComponent(arquivo.name)}&sessao=${encodeURIComponent(restaurando.sessao)}`, arquivo);
+      const nome = nomeDoDownload(resposta, `com-dados-${arquivo.name}`);
+      baixar(await resposta.blob(), nome);
+      avisar(`Pronto: "${nome}" foi baixado com os dados reais.`);
+    } catch (erro) {
+      avisar(erro.message, true);
+    }
+    restaurando = null;
+  }
+
+  function mostrarArquivos() {
+    const lista = $("arquivos");
+    lista.replaceChildren();
+    for (const item of arquivos) {
+      const linha = document.createElement("li");
+      const nome = document.createElement("span");
+      nome.className = "nome";
+      nome.textContent = item.protegido;
+      const botao = document.createElement("button");
+      botao.className = "botao secundario";
+      botao.textContent = "Colocar os dados de volta";
+      botao.addEventListener("click", () => { restaurando = item; $("arquivo-volta").click(); });
+      const info = document.createElement("span");
+      info.className = "info";
+      const total = Object.values(item.escondidos || {}).reduce((soma, n) => soma + n, 0);
+      info.textContent = `De "${item.original}". ${total} dados protegidos. Para colocar os dados de volta, escolha o arquivo que a IA devolveu.`;
+      linha.append(nome, botao, info);
+      lista.append(linha);
+    }
+  }
+
+  const soltar = $("soltar");
+  $("arquivo-entrada").addEventListener("change", (evento) => {
+    for (const arquivo of evento.target.files) proteger(arquivo);
+    evento.target.value = "";
+  });
+  $("arquivo-volta").addEventListener("change", (evento) => {
+    if (evento.target.files[0]) restaurar(evento.target.files[0]);
+    evento.target.value = "";
+  });
+  for (const tipo of ["dragenter", "dragover"]) soltar.addEventListener(tipo, (e) => { e.preventDefault(); soltar.classList.add("ativa"); });
+  for (const tipo of ["dragleave", "drop"]) soltar.addEventListener(tipo, () => soltar.classList.remove("ativa"));
+  soltar.addEventListener("drop", (evento) => {
+    evento.preventDefault();
+    for (const arquivo of evento.dataTransfer.files) proteger(arquivo);
+  });
+
+  // Texto --------------------------------------------------------------------------------------------------------
+  let espera;
+  $("entrada").addEventListener("input", () => {
+    clearTimeout(espera);
+    espera = setTimeout(async () => {
+      const texto = $("entrada").value;
+      if (!texto.trim()) { $("protegido").replaceChildren(); return; }
+      try {
+        const resultado = await enviarJson("/veu/v1/anonimizar", sessaoTexto ? { texto, sessao: sessaoTexto } : { texto });
+        sessaoTexto = resultado.sessao;
+        destacar($("protegido"), resultado.texto);
+      } catch (erro) {
+        sessaoTexto = null;
+        avisar(erro.message, true);
+      }
+    }, 250);
+  });
+  $("copiar").addEventListener("click", () => {
+    const texto = $("protegido").textContent;
+    if (texto) copiar(texto, "Texto protegido copiado. Cole na IA.");
+  });
+  $("resposta").addEventListener("input", async () => {
+    const texto = $("resposta").value;
+    if (!texto || !sessaoTexto) { $("restaurado").textContent = texto ? "Primeiro proteja um texto acima." : ""; return; }
+    try { $("restaurado").textContent = (await enviarJson("/veu/v1/restaurar", { texto, sessao: sessaoTexto })).texto; }
+    catch (erro) { avisar(erro.message, true); }
+  });
+
+  // Aplicativos --------------------------------------------------------------------------------------------------
+  for (const cartao of document.querySelectorAll("[data-app]")) {
+    cartao.querySelector("button").addEventListener("click", async () => {
+      const app = cartao.dataset.app;
+      const conectar = !estado.aplicativos[app].conectado;
+      try {
+        estado.aplicativos[app] = await enviarJson(`/veu/painel/aplicativos/${app}`, { conectar });
+        montarAplicativos();
+        avisar(conectar ? `${estado.aplicativos[app].titulo} conectado. Feche e abra o aplicativo de novo.` : "Desconectado.");
+      } catch (erro) {
+        avisar(erro.message, true);
+      }
+    });
+  }
+  for (const botao of document.querySelectorAll("[data-copiar]")) {
+    botao.addEventListener("click", () => copiar($(botao.dataset.copiar).value));
+  }
+
+  // Configurações ------------------------------------------------------------------------------------------------
+  async function esperarVoltar() {
+    for (let tentativa = 0; tentativa < 40; tentativa += 1) {
+      await new Promise((pronto) => setTimeout(pronto, 500));
+      try { await api("/veu/saude"); return true; } catch { /* ainda reiniciando */ }
+    }
+    return false;
+  }
+
+  $("formulario").addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    const formulario = new FormData(evento.target);
+    const escolhas = {
+      categorias: formulario.getAll("categorias"),
+      bloquear: formulario.getAll("bloquear"),
+      operador: formulario.get("operador") || "token",
+      ignorar: $("ignorar").value.split("\n"),
+    };
+    try {
+      await enviarJson("/veu/painel/configuracoes", escolhas);
+      avisar("Salvo. Reiniciando o Véu...");
+      $("estado").textContent = "Reiniciando";
+      if (await esperarVoltar()) {
+        $("estado").textContent = "Ligado";
+        await carregar();
+        avisar("Pronto: o Véu já está usando a configuração nova.");
+      }
+    } catch (erro) {
+      avisar(erro.message, true);
+    }
+  });
+
+  $("inicializacao").addEventListener("change", async (evento) => {
+    try {
+      const resposta = await enviarJson("/veu/painel/inicializacao", { ativo: evento.target.checked });
+      evento.target.checked = resposta.inicializacao;
+      avisar(resposta.inicializacao ? "O Véu vai ligar junto com o computador." : "O Véu não liga mais sozinho.");
+    } catch (erro) {
+      evento.target.checked = !evento.target.checked;
+      avisar(erro.message, true);
+    }
+  });
+
+  $("desligar").addEventListener("click", async () => {
+    if (!confirm("Desligar o Véu? Os aplicativos conectados param de ser protegidos até você ligar de novo.")) return;
+    try { await enviarJson("/veu/painel/desligar", {}); } catch { /* já desligando */ }
+    $("principal").innerHTML = '<div class="desligado-tela"><h2>O Véu foi desligado.</h2><p class="sub">Para ligar de novo, abra o atalho <b>Véu</b> na área de trabalho.</p></div>';
+    $("estado").textContent = "Desligado";
+    $("estado").classList.add("desligado");
+    $("desligar").hidden = true;
+  });
+
+  mostrarArquivos();
+  carregar().catch((erro) => avisar(erro.message, true));
+  setInterval(() => { if (!document.hidden && estado) api("/veu/painel/estado").then((dados) => { estado.estatisticas = dados.estatisticas; montarAtividade(); }).catch(() => {}); }, 15000);
+})();
+</script>
+</body>
+</html>

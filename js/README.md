@@ -74,7 +74,7 @@ Protege textos, argumentos de ferramentas e resultados de ferramentas, em `gener
 ## No navegador
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@guhttps/veu@0.4.0/dist/veu.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@guhttps/veu@0.5.0/dist/veu.global.js"></script>
 <script>
   const resultado = new veu.Veu().anonymize(document.querySelector("textarea").value);
 </script>

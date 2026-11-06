@@ -63,6 +63,17 @@ def main() -> None:
     for tamanho in (16, 32, 48, 128):
         (pasta / f"{tamanho}.png").write_bytes(icone(tamanho))
     (raiz / "plugin" / ".claude-plugin" / "icon.png").write_bytes(icone(512))
+    # Ícone do Windows (.ico com imagens PNG dentro) para os atalhos criados por "veu atalhos".
+    tamanhos = (16, 32, 48, 256)
+    imagens = [icone(tamanho) for tamanho in tamanhos]
+    cabecalho = struct.pack("<HHH", 0, 1, len(imagens))
+    deslocamento = 6 + 16 * len(imagens)
+    entradas = b""
+    for tamanho, imagem in zip(tamanhos, imagens, strict=True):
+        lado = 0 if tamanho >= 256 else tamanho
+        entradas += struct.pack("<BBBBHHII", lado, lado, 0, 0, 1, 32, len(imagem), deslocamento)
+        deslocamento += len(imagem)
+    (raiz / "src" / "veu" / "server" / "static" / "veu.ico").write_bytes(cabecalho + entradas + b"".join(imagens))
     print("ícones da extensão e do plugin gerados")
 
 
