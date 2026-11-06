@@ -131,9 +131,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v7
+      # Sem registry-url: ele grava um token falso no .npmrc, e o npm usa o token em vez da publicação confiável.
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
-          registry-url: https://registry.npmjs.org
       - working-directory: js
         run: npm ci && npm run build && npm publish --provenance --access public
