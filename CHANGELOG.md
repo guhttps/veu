@@ -5,6 +5,19 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-06
+
+Ajustes do Linux, encontrados testando o instalador num Kali Linux de verdade.
+
+### Corrigido
+- Atalho do Linux e do macOS com ícone PNG (alguns menus do Linux não mostram o `.ico`).
+- A área de trabalho do Linux vem do próprio sistema (`xdg-user-dir`): em português ela pode se chamar "Área de Trabalho".
+- O atalho da área de trabalho já é marcado como confiável no GNOME e no Xfce, sem a pergunta "lançador não confiável".
+- A publicação automática no npm não usa mais um token falso no lugar da publicação confiável.
+
+### Adicionado
+- O CI roda o instalador de verdade no Ubuntu, no macOS e no Windows a cada mudança.
+
 ## [0.5.0] - 2026-11-06
 
 Instalação e uso sem saber programar.
@@ -167,7 +180,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/guhttps/veu/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/guhttps/veu/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/guhttps/veu/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/guhttps/veu/compare/v0.2.0...v0.3.0

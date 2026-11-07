@@ -97,6 +97,39 @@ jobs:
             npm test
           fi
 
+  instalador:
+    name: Instalador (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip wheel . --no-deps -w wheelhouse
+      - name: Linux e macOS (o mesmo comando que a pessoa cola no Terminal)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          export VEU_SEM_ABRIR=1 VEU_PACOTE="veu[servidor,mcp,documentos] @ file://$PWD/$(ls wheelhouse/*.whl)"
+          sh web/instalar.sh
+          "$HOME/.local/bin/veu" --versao
+          "$HOME/.local/bin/veu" demonstrar
+          ls "$HOME/.local/share/applications/veu.desktop" 2>/dev/null || ls "$HOME"/Desktop/*.command
+      - name: Windows (o mesmo comando que a pessoa cola no PowerShell)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $whl = (Get-ChildItem wheelhouse\*.whl).FullName -replace '\\', '/'
+          $env:VEU_SEM_ABRIR = "1"
+          $env:VEU_PACOTE = "veu[servidor,mcp,documentos] @ file:///$whl"
+          Get-Content web\instalar.ps1 -Raw | Invoke-Expression
+          & "$env:USERPROFILE\.local\bin\veu.exe" demonstrar
+          Test-Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Véu.lnk')
+
   helm:
     name: Chart Helm
     runs-on: ubuntu-latest

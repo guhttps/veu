@@ -174,6 +174,7 @@ def test_shortcuts_on_linux_and_macos(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / ".config"))
     (tmp_path / "Desktop").mkdir()
+    monkeypatch.setattr(atalhos, "desktop_folder", lambda: tmp_path / "Desktop")
     monkeypatch.setattr(sys, "platform", "linux")
     created = atalhos.create_shortcuts()
     assert {path.name for path in created} == {"veu.desktop"} and len(created) == 2
@@ -191,6 +192,34 @@ def test_shortcuts_on_linux_and_macos(tmp_path, monkeypatch):
     assert all(path.suffix == ".command" for path in created)
     atalhos.set_autostart(True)
     assert "<string>painel</string>" in atalhos._autostart_file().read_text(encoding="utf-8")
+
+
+def test_linux_desktop_folder_follows_the_system_language(tmp_path, monkeypatch):
+    import subprocess
+
+    folder = tmp_path / "Área de Trabalho"
+    monkeypatch.setattr(atalhos.shutil, "which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr(atalhos.subprocess, "run",
+                        lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout=f"{folder}\n", stderr=""))
+    assert atalhos.desktop_folder() == folder
+    monkeypatch.setattr(atalhos.shutil, "which", lambda name: None)
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    assert atalhos.desktop_folder() == tmp_path / "Desktop"
+
+
+def test_trust_marks_desktop_launchers(tmp_path, monkeypatch):
+    calls = []
+    launcher = tmp_path / "veu.desktop"
+    launcher.write_text("[Desktop Entry]\n", encoding="utf-8")
+    monkeypatch.setattr(atalhos.shutil, "which", lambda name: "/usr/bin/gio")
+    monkeypatch.setattr(atalhos.subprocess, "run", lambda args, **k: calls.append(args))
+    atalhos._trust(launcher)
+    assert [call[3] for call in calls] == ["metadata::trusted", "metadata::xfce-exe-checksum"]
+
+
+def test_icon_is_png_outside_windows(monkeypatch):
+    monkeypatch.setattr(sys, "platform", "linux")
+    assert atalhos.icon_path().endswith("veu.png") and Path(atalhos.icon_path()).is_file()
 
 
 def test_veu_command_finds_the_installed_cli():

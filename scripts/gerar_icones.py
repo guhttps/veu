@@ -74,6 +74,8 @@ def main() -> None:
         entradas += struct.pack("<BBBBHHII", lado, lado, 0, 0, 1, 32, len(imagem), deslocamento)
         deslocamento += len(imagem)
     (raiz / "src" / "veu" / "server" / "static" / "veu.ico").write_bytes(cabecalho + entradas + b"".join(imagens))
+    # PNG para os atalhos do Linux e do macOS (nem todo menu do Linux mostra .ico).
+    (raiz / "src" / "veu" / "server" / "static" / "veu.png").write_bytes(icone(256))
     print("ícones da extensão e do plugin gerados")
 
 

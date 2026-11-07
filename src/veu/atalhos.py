@@ -8,6 +8,8 @@ O painel liga e desliga o início automático com set_autostart().
 
 from __future__ import annotations
 
+import contextlib
+import hashlib
 import os
 import shutil
 import subprocess
@@ -29,7 +31,32 @@ def veu_command() -> list[str]:
 
 
 def icon_path() -> str:
-    return str(resources.files("veu.server").joinpath("static", "veu.ico"))
+    """Ícone dos atalhos: .ico no Windows e PNG no Linux e no macOS (nem todo menu do Linux mostra .ico)."""
+    name = "veu.ico" if sys.platform == "win32" else "veu.png"
+    return str(resources.files("veu.server").joinpath("static", name))
+
+
+def desktop_folder() -> Path:
+    """Área de trabalho do Linux pelo próprio sistema: em português ela pode se chamar "Área de Trabalho"."""
+    if shutil.which("xdg-user-dir"):
+        try:
+            result = subprocess.run(["xdg-user-dir", "DESKTOP"], capture_output=True, text=True, timeout=10, check=False)
+            folder = Path(result.stdout.strip())
+            if result.returncode == 0 and folder.is_absolute() and folder != Path.home():
+                return folder
+        except (OSError, subprocess.SubprocessError):
+            pass
+    return Path.home() / "Desktop"
+
+
+def _trust(launcher: Path) -> None:
+    """Marca o atalho da área de trabalho como confiável (GNOME e Xfce perguntam antes de abrir um não confiável)."""
+    if not shutil.which("gio"):
+        return
+    checksum = hashlib.sha256(launcher.read_bytes()).hexdigest()
+    for attribute, value in (("metadata::trusted", "true"), ("metadata::xfce-exe-checksum", checksum)):
+        with contextlib.suppress(OSError, subprocess.SubprocessError):
+            subprocess.run(["gio", "set", str(launcher), attribute, value], capture_output=True, timeout=10, check=False)
 
 
 def _powershell(script: str) -> str:
@@ -84,7 +111,7 @@ def create_shortcuts(remove: bool = False) -> list[Path]:
         targets = [home / "Desktop" / f"{NAME}.command", home / "Applications" / f"{NAME}.command"]
         content = f"#!/bin/sh\nexec {_shell_line('painel')}\n"
     else:
-        targets = [home / ".local" / "share" / "applications" / "veu.desktop", home / "Desktop" / "veu.desktop"]
+        targets = [home / ".local" / "share" / "applications" / "veu.desktop", desktop_folder() / "veu.desktop"]
         content = (f"[Desktop Entry]\nType=Application\nName={NAME}\nComment=Protege seus dados antes de usar IA\n"
                    f"Exec={_shell_line('painel')}\nIcon={icon_path()}\nTerminal=true\nCategories=Utility;\n")
     done = []
@@ -95,6 +122,8 @@ def create_shortcuts(remove: bool = False) -> list[Path]:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
             target.chmod(0o755)
+            if target.suffix == ".desktop" and "applications" not in target.parts:
+                _trust(target)
         else:
             continue
         done.append(target)
