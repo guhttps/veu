@@ -12,7 +12,7 @@
       "name": "veu",
       "source": "./plugin",
       "description": "Bloqueia segredos em prompts e arquivos e lê Notion, planilhas e documentos com os dados trocados por marcadores.",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "category": "security"
     }
   ]

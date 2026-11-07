@@ -208,7 +208,7 @@ veu.restore("Certo, [PESSOA_1]. Vou ligar no [TELEFONE_1].", resultado.vault)
 ### Notion, planilhas e documentos
 
 ```bash
-veu ler https://www.notion.so/minha-empresa/Atendimento-1f2e...   # NOTION_TOKEN no ambiente
+veu ler https://app.notion.com/p/Atendimento-1f2e...             # NOTION_TOKEN no ambiente
 veu ler https://docs.google.com/spreadsheets/d/.../edit           # público pelo link ou GOOGLE_ACCESS_TOKEN
 veu anonimizar clientes.xlsx -o clientes-protegido.xlsx --cofre cofre.json
 veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx

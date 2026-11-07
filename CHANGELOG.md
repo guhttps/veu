@@ -5,6 +5,14 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-11-07
+
+Ajustes do Notion, encontrados testando com uma conta de verdade.
+
+### Corrigido
+- Links do Notion no formato atual (`app.notion.com/p/...`) não eram reconhecidos e eram tratados como página comum. Agora `app.notion.com`, `notion.so` e `notion.site` funcionam no `veu ler`, no `ler_protegido` e na leitura de links do proxy.
+- Pessoas que o próprio Notion identifica (propriedades do tipo pessoa, "criado por" e menções @) passam a ser sempre escondidas, inclusive no título e no e-mail do usuário, mesmo quando a detecção automática não reconheceria o nome (como "fulano. Sobrenome").
+
 ## [0.5.1] - 2026-11-06
 
 Ajustes do Linux, encontrados testando o instalador num Kali Linux de verdade.
@@ -180,7 +188,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/guhttps/veu/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/guhttps/veu/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/guhttps/veu/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/guhttps/veu/compare/v0.3.0...v0.4.0
