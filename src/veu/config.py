@@ -90,6 +90,8 @@ class Config:
     # Expressões regulares: valores que casarem nunca são escondidos (ex.: "@minhaempresa\\.com\\.br$").
     allow_patterns: tuple[str, ...] = ()
     detectors: tuple[str, ...] = ("padroes", "nomes", "enderecos", "segredos")
+    # Itens no cache de detecção (0 desliga): agentes reenviam a conversa inteira a cada turno.
+    detection_cache: int = 2048
     custom_patterns: tuple[dict, ...] = ()
     spacy_model: str = "pt_core_news_lg"
     llm_url: str | None = None
@@ -218,7 +220,7 @@ _SECTIONS = {
     "deteccao": {
         "limiar": "threshold", "entidades": "labels", "ignorar": "allowlist", "detectores": "detectors",
         "personalizados": "custom_patterns", "modelo_spacy": "spacy_model", "llm": None,
-        "ignorar_padroes": "allow_patterns",
+        "ignorar_padroes": "allow_patterns", "cache": "detection_cache",
     },
     "anonimizacao": {
         "operador": "operator", "operadores": "operators", "instruir_modelo": "instruct_model",

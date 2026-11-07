@@ -1,4 +1,5 @@
 // Junta os detectores, filtra pela pontuação e resolve sobreposições (equivalente a veu/analyzer.py).
+import { DetectionCache } from "./cache.ts";
 import { AddressRecognizer } from "./addresses.ts";
 import type { Candidate, Entity, Recognizer } from "./entities.ts";
 import { PatternRecognizer } from "./patterns.ts";
@@ -22,10 +23,14 @@ export interface AnalyzerOptions {
   allowlist?: Iterable<string>;
   /** Expressões regulares: valores que casarem nunca são escondidos. */
   allowPatterns?: Iterable<string | RegExp>;
+  /** Itens no cache de detecção de textos longos (padrão 2048; 0 desliga). */
+  cache?: number;
 }
 
 export class Analyzer {
   recognizers: Recognizer[];
+  /** Cache de detecção (null quando desligado). */
+  readonly cache: DetectionCache | null;
   threshold: number;
   labels: Set<string> | null;
   private allowText: Set<string>;
@@ -35,6 +40,8 @@ export class Analyzer {
 
   constructor(recognizers?: Recognizer[], options: AnalyzerOptions = {}) {
     this.recognizers = recognizers ?? defaultRecognizers();
+    const size = options.cache ?? 2048;
+    this.cache = size > 0 ? new DetectionCache(size) : null;
     this.threshold = options.threshold ?? DEFAULT_THRESHOLD;
     const labels = options.labels ? [...options.labels] : [];
     this.labels = labels.length ? new Set(labels.map((label) => label.toUpperCase())) : null;
@@ -71,6 +78,17 @@ export class Analyzer {
   }
 
   analyze(text: string, threshold?: number): Entity[] {
+    const cache = this.cache && this.cache.usable(text) ? this.cache : null;
+    const extra = threshold === undefined ? "" : String(threshold);
+    if (cache) {
+      const found = cache.get(text, extra);
+      if (found) return found.map((c) => ({ ...c, text: text.slice(c.start, c.end) }));
+    }
+    if (cache && text) {
+      const chosen = resolveOverlaps(this.candidates(text, threshold));
+      cache.put(text, chosen, extra);
+      return chosen.map((c) => ({ ...c, text: text.slice(c.start, c.end) }));
+    }
     if (!text) return [];
     return resolveOverlaps(this.candidates(text, threshold)).map((c) => ({ ...c, text: text.slice(c.start, c.end) }));
   }

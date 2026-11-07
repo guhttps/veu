@@ -12,6 +12,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - `veu demonstrar` testa também ataques à restauração (CPF na URL de uma imagem, chave num link e num comando, marcador forjado) e tem um controle negativo: sai com 3 se o envio direto não vazar, porque nesse caso a demonstração não estaria medindo nada.
 - Documentos já mascarados pela metade (`529.982.***-**`, `***.982.247-**`, `11.222.333/****-**`, e RG, CNH e título com contexto), CNPJ, RG e CEP com espaços e CNH com hífen. No holdout do privacy-filter-br, o vazamento caiu de 20,2% para 6,4%.
 
+- **Cache de detecção** para agentes que reenviam a conversa inteira a cada turno (Python e JavaScript): textos longos já analisados não são analisados de novo. Guarda só posições e tipos, nunca o texto, com chave BLAKE2 e sal aleatório; no proxy, cada credencial tem o seu espaço. `[deteccao] cache = 0` desliga. Acertos e falhas aparecem em `/veu/estatisticas` e `/veu/metricas`.
+
 ### Alterado
 - `veu avaliar --max-vazamento` vale para a validação (e para o conjunto escolhido), não para o desafio, que existe para mostrar onde o Véu ainda erra.
 

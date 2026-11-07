@@ -131,7 +131,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
   - desvio de dados sensíveis para um modelo interno;
   - chart Helm, guardrail do LiteLLM e extensão com política gerenciada.
 - 🤖 **Agentes:** servidor MCP, ganchos para Claude Code e Cursor e plugin com skill. O agente trabalha com arquivos sensíveis sem ver os dados.
-- 🪶 **Leve:** o núcleo não tem dependências e processa cerca de 330 mil caracteres por segundo.
+- 🪶 **Leve:** o núcleo não tem dependências e processa cerca de 330 mil caracteres por segundo. Agentes que reenviam a conversa inteira a cada turno não pagam de novo pelas mensagens antigas: um cache em memória guarda só as posições dos dados, nunca o texto.
 
 ## Como funciona
 
@@ -378,7 +378,7 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 - [x] Instalador de um comando e painel para quem não programa
 - [x] Restauração segura contra injeção de prompt (links, ferramentas, marcadores forjados)
 - [x] Benchmark com dados em português de terceiros, comparado ao Presidio
-- [ ] Cache de detecção para agentes que reenviam a conversa inteira a cada turno
+- [x] Cache de detecção para agentes que reenviam a conversa inteira a cada turno
 - [ ] Nó para o n8n (WhatsApp com IA sem expor o CPF do cliente)
 - [ ] Documentos de outros países (Portugal, Argentina, México, Chile, Estados Unidos...)
 - [ ] Nomes de outras línguas sem precisar de modelo

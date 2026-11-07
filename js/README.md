@@ -88,6 +88,7 @@ new Veu({
   labels: ["CPF", "CNPJ", "CHAVE_API"],   // só estes tipos
   allowlist: ["contato@minhaempresa.com.br"],
   allowPatterns: ["@minhaempresa\\.com\\.br$"],
+  cache: 2048,                            // cache de textos longos (0 desliga); um Veu por cliente num servidor
   detectors: ["padroes", "segredos"],     // sem nomes e endereços
   operator: "mascara",                    // token (padrão), mascara, remover ou hash
   operators: { CARTAO_CREDITO: "remover" },
