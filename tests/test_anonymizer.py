@@ -81,11 +81,11 @@ def test_irreversible_operators():
 
 
 def test_hash_operator_is_stable_with_same_secret():
-    first = Veu(operator="hash", secret="segredo").anonymize("CPF 529.982.247-25").text
-    second = Veu(operator="hash", secret="segredo").anonymize("CPF 529.982.247-25").text
-    other = Veu(operator="hash", secret="outro").anonymize("CPF 529.982.247-25").text
+    first = Veu(operator="hash", secret="segredo-de-teste-com-32-caracteres!!").anonymize("CPF 529.982.247-25").text
+    second = Veu(operator="hash", secret="segredo-de-teste-com-32-caracteres!!").anonymize("CPF 529.982.247-25").text
+    other = Veu(operator="hash", secret="outro-segredo-de-teste-com-32-caracteres").anonymize("CPF 529.982.247-25").text
     assert first == second != other
-    assert first.startswith("CPF [CPF_") and len(first) == len("CPF [CPF_12345678]")
+    assert first.startswith("CPF [CPF_") and len(first) == len("CPF [CPF_0123456789abcdef]")
 
 
 def test_operator_per_label():

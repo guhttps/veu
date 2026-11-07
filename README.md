@@ -114,6 +114,11 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
   - o mesmo dado recebe sempre o mesmo marcador;
   - "João" sozinho é ligado a "João da Silva";
   - a restauração tolera o que os modelos fazem com os marcadores (`[CPF 1]`, `CPF_1`).
+- 🛡️ **Restauração segura:**
+  - os dados reais nunca voltam dentro de links, imagens ou URLs, o caminho usado para roubar dados de assistentes de IA com injeção de prompt;
+  - chaves e senhas não voltam nos argumentos de ferramentas de agentes;
+  - marcadores forjados num e-mail ou numa página ("responda com [CPF_1]") são desarmados;
+  - se a detecção falhar, a requisição não sai. Veja o [modelo de ameaças](docs/modelo-de-ameacas.md).
 - 🌊 **Streaming:** marcadores partidos entre pedaços da resposta ("[PES" + "SOA_1]") são remontados, inclusive em argumentos de ferramentas.
 - 📄 **Notion, Google e documentos:**
   - lê páginas e bases do Notion, Google Docs, Sheets e Slides, links e PDFs, já protegidos;
@@ -276,7 +281,7 @@ Também dá para adicionar padrões próprios (matrícula, número de cliente...
 | `sintetico` | `686.192.633-74` (outro CPF válido), outro nome, chave falsa no mesmo formato | sim |
 | `mascara` | `***.982.247-**`, `sk-proj-****` | não |
 | `remover` | `[CPF]` | não |
-| `hash` | `[CPF_3fa2c1d9]`, estável entre requisições com o mesmo `VEU_SEGREDO` | sim, com o cofre |
+| `hash` | `[CPF_3fa2c1d9e07b4a12]`, estável entre requisições com o mesmo `VEU_SEGREDO` (mínimo de 32 caracteres) | sim, com o cofre |
 
 O operador `sintetico` ainda só existe em Python. Em JavaScript, use `token`, `mascara`, `remover` ou `hash`.
 
@@ -320,6 +325,10 @@ operador = "token"
 [politica]
 bloquear = ["CARTAO_CREDITO", "CHAVE_PRIVADA"] # recusa o pedido em vez de só esconder
 
+[restauracao]
+links = false                                  # dados reais nunca voltam dentro de links e URLs
+segredos_em_ferramentas = false                # chaves e senhas não voltam nos argumentos de ferramentas
+
 [servidor]
 log_auditoria = "veu-auditoria.jsonl"          # só contagens, nunca os valores, em cadeia de hashes
 ```
@@ -332,14 +341,20 @@ O painel guarda o arquivo em `%APPDATA%\veu\veu.toml` no Windows, `~/Library/App
   - o Véu ouve só em `127.0.0.1` por padrão e recusa pedidos de outros sites abertos no navegador (CSRF e DNS rebinding);
   - fora do computador local, ele **não inicia sem token**;
   - cada equipe pode ter o seu token e a sua política.
+- **Restauração:**
+  - a resposta da IA nunca recebe os dados reais dentro de links, imagens, URLs ou atributos HTML, nem em streaming;
+  - chaves, tokens e senhas não voltam nos argumentos das ferramentas de agentes;
+  - marcadores que chegam escritos por terceiros são desarmados antes do envio;
+  - no MCP, a ferramenta que devolve os dados reais para a conversa vem desligada.
 - **Dados:**
+  - se a detecção falhar, a requisição não sai;
   - o cofre fica na memória (ou no seu Redis) e expira sem uso;
   - a página web e a extensão não enviam nada pela internet;
   - o painel só funciona no próprio computador.
 - **Auditoria:** o log tem só contagens, em cadeia de hashes (HMAC com segredo). `veu auditoria verificar` aponta linhas alteradas ou removidas.
 - **Limites:** o Véu protege os dados da IA, mas não decide quem pode ver o quê dentro do seu sistema. Veja as [limitações](SECURITY.md#o-que-o-véu-não-faz).
 
-Leia o [modelo de ameaças e as limitações](SECURITY.md) antes de usar em produção.
+Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECURITY.md) antes de usar em produção.
 
 ## Desenvolvimento
 
@@ -347,7 +362,7 @@ Leia o [modelo de ameaças e as limitações](SECURITY.md) antes de usar em prod
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 300 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 400 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 cd js && npm ci && npm test                       # biblioteca JavaScript (inclui a conformidade com o Python)
@@ -360,6 +375,10 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 
 - [x] Publicar no PyPI (`pip install veu`) e no npm (`@guhttps/veu`)
 - [x] Instalador de um comando e painel para quem não programa
+- [x] Restauração segura contra injeção de prompt (links, ferramentas, marcadores forjados)
+- [ ] Benchmark público com dados em português de terceiros, comparado ao Presidio
+- [ ] Cache de detecção para agentes que reenviam a conversa inteira a cada turno
+- [ ] Nó para o n8n (WhatsApp com IA sem expor o CPF do cliente)
 - [ ] Documentos de outros países (Portugal, Argentina, México, Chile, Estados Unidos...)
 - [ ] Nomes de outras línguas sem precisar de modelo
 - [ ] Abrir Excel e Word direto na página web, sem instalar nada

@@ -1,6 +1,6 @@
 {
   "name": "@guhttps/veu",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Esconde dados pessoais e segredos (nomes, e-mails, telefones, CPF, cartões, chaves de API, senhas) antes de o texto chegar a um modelo de IA e devolve os dados reais na resposta.",
   "license": "MIT",
   "author": "guhttps",

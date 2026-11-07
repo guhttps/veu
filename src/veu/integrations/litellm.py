@@ -29,6 +29,8 @@ from litellm.integrations.custom_guardrail import CustomGuardrail
 from veu.config import load_config
 from veu.core import Veu
 from veu.gateway.adapters import (
+    _TOOL_KEYS,
+    _TOOL_TYPES,
     AnthropicMessagesAdapter,
     Masker,
     OpenAIChatAdapter,
@@ -66,29 +68,35 @@ def _blocked(labels: list[str]) -> Exception:
         return BlockedError(message)
 
 
-def restore_in_place(value: Any, vault: Vault) -> Any:
-    """Restaura todos os textos de uma resposta (dicts, listas e objetos pydantic do LiteLLM)."""
+def restore_in_place(value: Any, vault: Vault, *, tool: bool = False) -> Any:
+    """Restaura todos os textos de uma resposta (dicts, listas e objetos pydantic do LiteLLM).
+
+    tool: o valor é argumento de uma chamada de ferramenta (segue a política do cofre para ferramentas).
+    """
     if isinstance(value, str):
-        return vault.restore(value)
+        return vault.restore(value, tool=tool)
     if isinstance(value, list):
         for index, item in enumerate(value):
-            value[index] = restore_in_place(item, vault)
+            value[index] = restore_in_place(item, vault, tool=tool)
         return value
     if isinstance(value, dict):
         if value.get("type") in _UNTOUCHED_TYPES:
             return value
+        call = value.get("type") in _TOOL_TYPES
         for key, item in list(value.items()):
             if key in _UNTOUCHED_KEYS:
                 continue
             if key in ("arguments", "partial_json") and isinstance(item, str):
                 value[key] = restore_json_string(item, vault)
             else:
-                value[key] = restore_in_place(item, vault)
+                in_tool = tool or key in _TOOL_KEYS or (call and key == "input")
+                value[key] = restore_in_place(item, vault, tool=in_tool)
         return value
     fields = getattr(type(value), "model_fields", None)
     if fields is not None:
         if getattr(value, "type", None) in _UNTOUCHED_TYPES:
             return value
+        call = getattr(value, "type", None) in _TOOL_TYPES
         names = list(fields) + list((getattr(value, "model_extra", None) or {}).keys())
         for name in names:
             if name in _UNTOUCHED_KEYS:
@@ -99,7 +107,8 @@ def restore_in_place(value: Any, vault: Vault) -> Any:
             if name in ("arguments", "partial_json") and isinstance(item, str):
                 new = restore_json_string(item, vault)
             else:
-                new = restore_in_place(item, vault)
+                in_tool = tool or name in _TOOL_KEYS or (call and name == "input")
+                new = restore_in_place(item, vault, tool=in_tool)
             if new is not item:
                 with contextlib.suppress(AttributeError, TypeError, ValueError):
                     setattr(value, name, new)

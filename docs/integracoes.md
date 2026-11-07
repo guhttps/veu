@@ -330,8 +330,11 @@ Claude Desktop e Cursor (`claude_desktop_config.json` ou `.cursor/mcp.json`):
 | `restaurar_arquivo` | Restaura um arquivo com um cofre salvo | Não |
 | `detectar` | Lista os dados pessoais de um texto | Não: só valores mascarados |
 | `anonimizar_texto` | Troca os dados de um texto por marcadores | Só a versão anonimizada |
-| `restaurar_texto` | Devolve os dados reais de uma sessão | **Sim** |
+| `restaurar_para_arquivo` | Grava num arquivo local a resposta com os dados reais de uma sessão | Não: só o caminho |
 | `listar_entidades` | Tipos suportados | — |
+| `restaurar_texto` | Devolve os dados reais de uma sessão. **Desligada por padrão**: só existe com `veu mcp --com-restauracao` | **Sim** |
+
+A restauração que devolve os dados reais para a conversa vem desligada porque um texto malicioso lido pelo agente (uma página, um e-mail) poderia mandá-lo chamá-la. Veja o [modelo de ameaças](modelo-de-ameacas.md).
 
 Peça, por exemplo: "verifique se há dados pessoais em `dados/clientes.csv` e gere `dados/clientes-anonimo.csv` tratando a coluna cpf como CPF".
 

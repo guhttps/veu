@@ -14,7 +14,7 @@ from veu.recognizers.base import folded_set
 from veu.recognizers.persons import CONNECTORS
 from veu.recognizers.secrets import secret_prefix
 from veu.surrogates import make_surrogate
-from veu.vault import Vault
+from veu.vault import RestorePolicy, Vault, neutralize_placeholders
 
 OPERATORS = {
     "token": "marcador reversível, como [CPF_1] (padrão)",
@@ -106,6 +106,7 @@ class Anonymizer:
     operators: operador por tipo, como {"CARTAO_CREDITO": "remover"}.
     link_names: aplica o marcador de um nome completo também às menções só ao primeiro nome ou ao
     sobrenome ("João da Silva" ... "João" viram o mesmo [PESSOA_1]).
+    policy: onde a restauração pode devolver os dados reais (veja veu.vault.RestorePolicy).
     """
 
     def __init__(
@@ -116,19 +117,25 @@ class Anonymizer:
         operators: dict[str, str] | None = None,
         link_names: bool = True,
         secret: bytes | None = None,
+        policy: RestorePolicy | None = None,
     ):
         self.analyzer = analyzer or Analyzer()
         self.operator = normalize_operator(operator)
         self.operators = {label.upper(): normalize_operator(op) for label, op in (operators or {}).items()}
         self.link_names = link_names
         self.secret = secret
+        self.policy = policy or RestorePolicy()
         self._ambiguous = folded_set("ambiguous.txt")
 
     def new_vault(self) -> Vault:
-        return Vault(secret=self.secret)
+        return Vault(secret=self.secret, policy=self.policy)
 
-    def anonymize(self, text: str, vault: Vault | None = None) -> AnonymizationResult:
+    def anonymize(self, text: str, vault: Vault | None = None, *, neutralize: bool = True) -> AnonymizationResult:
+        """neutralize: desarma marcadores que já vêm no texto ([CPF_1] vira [CPF#1]), para que um marcador
+        escrito por outra pessoa nunca vire um dado real na restauração."""
         vault = self.new_vault() if vault is None else vault
+        if neutralize:
+            text = neutralize_placeholders(text, vault.labels)
         entities = self.analyzer.analyze(text)
         canonical: dict[int, str] = {}
         if self.link_names and entities:

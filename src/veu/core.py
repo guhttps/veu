@@ -103,7 +103,7 @@ class Veu:
         )
         self.anonymizer = Anonymizer(
             self.analyzer, operator=config.operator, operators=config.operators, link_names=config.link_names,
-            secret=config.secret.encode() if config.secret else None,
+            secret=config.secret.encode() if config.secret else None, policy=config.restore_policy(),
         )
 
     def analyze(self, text: str) -> list[Entity]:
@@ -132,5 +132,6 @@ class Veu:
         clone.anonymizer = Anonymizer(
             self.analyzer, operator=operator, operators=self.config.operators, link_names=self.config.link_names,
             secret=self.config.secret.encode() if self.config.secret else None,
+            policy=self.config.restore_policy(),
         )
         return clone

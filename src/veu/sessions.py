@@ -43,8 +43,9 @@ class Session:
     def restore(self, text: str) -> str:
         return self.vault.restore(text)
 
-    def restore_data(self, data: Any) -> Any:
-        return restore_obj(data, self.vault)
+    def restore_data(self, data: Any, *, tool: bool = False) -> Any:
+        """tool: os dados são argumentos de uma chamada de ferramenta (segue a política do cofre)."""
+        return restore_obj(data, self.vault, tool=tool)
 
     def restorer(self) -> StreamRestorer:
         return self.vault.restorer()

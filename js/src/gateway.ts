@@ -54,28 +54,38 @@ export class Masker {
   }
 }
 
-export function restoreObj(value: Json, vault: Vault): Json {
-  if (typeof value === "string") return vault.restore(value);
-  if (Array.isArray(value)) return value.map((item) => restoreObj(item, vault));
+// Onde ficam os argumentos de chamadas de ferramenta nas respostas (OpenAI, Responses, Anthropic, Gemini, Ollama).
+const TOOL_KEYS = new Set(["arguments", "partial_json", "args", "functionCall", "function_call", "tool_calls"]);
+const TOOL_TYPES = new Set(["tool_use", "server_tool_use", "function_call", "custom_tool_call"]);
+
+/** Restaura todos os textos de uma resposta JSON. tool: o valor é argumento de uma chamada de ferramenta. */
+export function restoreObj(value: Json, vault: Vault, tool = false): Json {
+  if (typeof value === "string") return vault.restore(value, false, { tool });
+  if (Array.isArray(value)) return value.map((item) => restoreObj(item, vault, tool));
   if (isObject(value)) {
     if (UNTOUCHED_TYPES.has(value.type)) return value;
+    const call = TOOL_TYPES.has(value.type);
     const restored: Record<string, Json> = {};
     for (const [key, item] of Object.entries(value)) {
+      const inTool = tool || TOOL_KEYS.has(key) || (call && (key === "input" || key === "arguments"));
       if (UNTOUCHED_KEYS.has(key)) restored[key] = item;
       else if ((key === "arguments" || key === "partial_json") && typeof item === "string") restored[key] = restoreJsonString(item, vault);
-      else restored[key] = restoreObj(item, vault);
+      else restored[key] = restoreObj(item, vault, inTool);
     }
     return restored;
   }
   return value;
 }
 
-export function restoreJsonString(value: string, vault: Vault): string {
+/** Argumentos de ferramenta em texto JSON: restaura os valores sem quebrar o JSON. */
+export function restoreJsonString(value: string, vault: Vault, tool = true): string {
+  let parsed: Json;
   try {
-    return JSON.stringify(restoreObj(JSON.parse(value), vault));
+    parsed = JSON.parse(value);
   } catch {
-    return vault.restore(value, true);
+    return vault.restore(value, true, { tool });
   }
+  return JSON.stringify(restoreObj(parsed, vault, tool));
 }
 
 /** Um restaurador por campo de texto do stream (cada escolha, bloco ou argumento de ferramenta). */

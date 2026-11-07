@@ -93,12 +93,12 @@ def test_plugin_files_are_consistent():
     assert [mcp["command"], *mcp["args"]] == ["veu", "mcp"]
     skill = (plugin / "skills" / "protecao-de-dados" / "SKILL.md").read_text(encoding="utf-8")
     assert skill.startswith("---\nname: protecao-de-dados\ndescription: ")
-    for tool in ("ler_protegido", "verificar_arquivo", "anonimizar_arquivo", "restaurar_texto"):
+    for tool in ("ler_protegido", "verificar_arquivo", "anonimizar_arquivo", "restaurar_para_arquivo"):
         assert tool in skill
 
 
 @pytest.mark.parametrize("tool", ["ler_protegido", "verificar_arquivo", "anonimizar_arquivo", "anonimizar_texto",
-                                  "restaurar_texto"])
+                                  "restaurar_para_arquivo"])
 def test_skill_tools_exist_in_mcp(tool):
     pytest.importorskip("mcp")
     import asyncio

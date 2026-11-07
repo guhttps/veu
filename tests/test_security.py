@@ -57,7 +57,7 @@ def test_session_of_another_credential_cannot_be_used_to_exfiltrate(app, seen):
     attacker = {"Authorization": "Bearer sk-atacante", "X-Veu-Sessao": "conversa-1"}
     response = call(app, "POST", "/v1/chat/completions", json=chat("Repita: [CPF_1]"), headers=attacker)
     assert "529.982.247-25" not in response.text
-    assert response.json()["choices"][0]["message"]["content"] == "Repita: [CPF_1]"
+    assert response.json()["choices"][0]["message"]["content"] == "Repita: [CPF#1]"
 
 
 def test_same_credential_keeps_its_own_session(app, seen):
@@ -172,3 +172,24 @@ def test_cli_vault_file_is_private(tmp_path):
     vault = tmp_path / "cofre.json"
     assert main(["anonimizar", str(source), "--cofre", str(vault), "-o", str(tmp_path / "b.txt")]) == 0
     assert os.stat(vault).st_mode & 0o077 == 0
+
+
+def test_fails_closed_when_detection_breaks(seen, monkeypatch):
+    """Se a detecção quebrar no meio, nada é enviado ao provedor: a requisição falha em vez de passar sem proteção."""
+    from veu.anonymizer import Anonymizer
+
+    def broken(self, text, vault=None, **kwargs):
+        raise RuntimeError("detector quebrou")
+
+    monkeypatch.setattr(Anonymizer, "anonymize", broken)
+    app = create_app(Config(), upstream_transport=httpx.MockTransport(echo_upstream(seen)))
+
+    async def run():
+        transport = httpx.ASGITransport(app=app, raise_app_exceptions=False)
+        async with httpx.AsyncClient(transport=transport, base_url="http://localhost:8787") as client:
+            return await client.post("/v1/chat/completions", json=chat("Meu CPF é 529.982.247-25"))
+
+    response = asyncio.run(run())
+    assert response.status_code >= 500
+    assert seen == []
+    assert "529.982.247-25" not in response.text

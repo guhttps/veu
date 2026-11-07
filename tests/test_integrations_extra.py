@@ -182,7 +182,7 @@ def test_mcp_tools(tmp_path):
     source.write_text("nome,cpf\nJoana Prado,52998224725\n", encoding="utf-8")
 
     async def run():
-        async with Client(build_server()) as client:
+        async with Client(build_server(restore_text=True)) as client:
             names = {tool.name for tool in (await client.list_tools()).tools}
             check = await client.call_tool("verificar_arquivo", {"caminho": str(source)})
             copy = await client.call_tool("anonimizar_arquivo", {

@@ -13,7 +13,7 @@ from typing import Any
 
 from veu.anonymizer import Anonymizer
 from veu.gateway.sse import Event
-from veu.vault import StreamRestorer, Vault
+from veu.vault import StreamRestorer, Vault, neutralize_placeholders
 
 # Blocos assinados ou criptografados pelo provedor: alterar o texto invalidaria a assinatura.
 _UNTOUCHED_TYPES = frozenset({"thinking", "redacted_thinking"})
@@ -35,13 +35,16 @@ class Masker:
     def text(self, value: Any) -> Any:
         if not isinstance(value, str) or not value:
             return value
+        known = None
         if self.expand is not None and not self._in_arguments:
             value, known = self.expand(value)
-            if known:
-                from veu.sources import replace_known
+        # Marcadores que já vêm no texto são desarmados antes de o Véu inserir os seus.
+        value = neutralize_placeholders(value, self.vault.labels)
+        if known:
+            from veu.sources import replace_known
 
-                value = replace_known(value, known, self.anonymizer, self.vault, self.counts)
-        result = self.anonymizer.anonymize(value, self.vault)
+            value = replace_known(value, known, self.anonymizer, self.vault, self.counts)
+        result = self.anonymizer.anonymize(value, self.vault, neutralize=False)
         self.counts.update(result.counts())
         return result.text
 
@@ -71,35 +74,43 @@ class Masker:
         return value
 
 
-def restore_obj(value: Any, vault: Vault) -> Any:
-    """Restaura todos os textos de uma resposta JSON."""
+# Onde ficam os argumentos de chamadas de ferramenta nas respostas (OpenAI, Responses, Anthropic, Gemini, Ollama).
+_TOOL_KEYS = frozenset({"arguments", "partial_json", "args", "functionCall", "function_call", "tool_calls"})
+_TOOL_TYPES = frozenset({"tool_use", "server_tool_use", "function_call", "custom_tool_call"})
+
+
+def restore_obj(value: Any, vault: Vault, *, tool: bool = False) -> Any:
+    """Restaura todos os textos de uma resposta JSON. tool: o valor é argumento de uma chamada de ferramenta."""
     if isinstance(value, str):
-        return vault.restore(value)
+        return vault.restore(value, tool=tool)
     if isinstance(value, list):
-        return [restore_obj(item, vault) for item in value]
+        return [restore_obj(item, vault, tool=tool) for item in value]
     if isinstance(value, tuple):
-        return tuple(restore_obj(item, vault) for item in value)
+        return tuple(restore_obj(item, vault, tool=tool) for item in value)
     if isinstance(value, dict):
         if value.get("type") in _UNTOUCHED_TYPES:
             return value
+        call = value.get("type") in _TOOL_TYPES
         restored = {}
         for key, item in value.items():
+            in_tool = tool or key in _TOOL_KEYS or (call and key in ("input", "arguments"))
             if key in _UNTOUCHED_KEYS:
                 restored[key] = item
             elif key in ("arguments", "partial_json") and isinstance(item, str):
                 restored[key] = restore_json_string(item, vault)
             else:
-                restored[key] = restore_obj(item, vault)
+                restored[key] = restore_obj(item, vault, tool=in_tool)
         return restored
     return value
 
 
-def restore_json_string(value: str, vault: Vault) -> str:
+def restore_json_string(value: str, vault: Vault, *, tool: bool = True) -> str:
+    """Argumentos de ferramenta em texto JSON: restaura os valores sem quebrar o JSON."""
     try:
         parsed = json.loads(value)
     except ValueError:
-        return vault.restore(value, json_escape=True)
-    return json.dumps(restore_obj(parsed, vault), ensure_ascii=False)
+        return vault.restore(value, json_escape=True, tool=tool)
+    return json.dumps(restore_obj(parsed, vault, tool=tool), ensure_ascii=False)
 
 
 class StreamState:
