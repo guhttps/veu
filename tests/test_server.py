@@ -171,7 +171,9 @@ def test_audit_log_has_counts_but_no_values(upstream, tmp_path):
     call(app, "POST", "/v1/chat/completions", json=chat(PII))
     record = json.loads(log.read_text(encoding="utf-8").strip())
     assert record["entidades"] == {"CPF": 1, "PESSOA": 1}
-    assert "529" not in log.read_text(encoding="utf-8") and "Carlos" not in log.read_text(encoding="utf-8")
+    # O log tem hashes hexadecimais: procurar "529" sozinho falharia por acaso de vez em quando.
+    text = log.read_text(encoding="utf-8")
+    assert "529.982.247-25" not in text and "52998224725" not in text and "Carlos" not in text
     stats = call(app, "GET", "/veu/estatisticas").json()
     assert stats["dados_escondidos"] == 2 and stats["por_provedor"] == {"openai": 1}
 
