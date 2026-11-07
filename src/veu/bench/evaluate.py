@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -46,6 +47,30 @@ class Report:
     seconds: float = 0.0
     leaks: list[tuple[str, str, str]] = field(default_factory=list)
     false_positives: list[tuple[str, str, str]] = field(default_factory=list)
+    # Por amostra: {rótulo: (ocorrências, protegidas)}, para o intervalo de confiança.
+    per_sample: list[dict[str, tuple[int, int]]] = field(default_factory=list)
+    # Tipos anotados no conjunto que o Véu não cobre (só em conjuntos externos).
+    out_of_scope: dict[str, int] = field(default_factory=dict)
+
+    def leak_interval(self, label: str | None = None, rounds: int = 1000, seed: int = 7) -> tuple[float, float]:
+        """Intervalo de confiança de 95% do vazamento (bootstrap por amostra, com semente fixa)."""
+        rows = [(sum(v[0] for v in item.values()), sum(v[1] for v in item.values())) if label is None
+                else item.get(label, (0, 0)) for item in self.per_sample]
+        rows = [row for row in rows if row[0]]
+        if not rows:
+            return 0.0, 0.0
+        rng = random.Random(seed)
+        size = len(rows)
+        rates = []
+        for _ in range(rounds):
+            total = protected = 0
+            for _ in range(size):
+                count, safe = rows[rng.randrange(size)]
+                total += count
+                protected += safe
+            rates.append(1 - protected / total)
+        rates.sort()
+        return rates[int(rounds * 0.025)], rates[min(rounds - 1, int(rounds * 0.975))]
 
     @property
     def overall(self) -> LabelReport:
@@ -59,41 +84,61 @@ class Report:
         return total
 
     def to_dict(self) -> dict:
-        def row(report: LabelReport) -> dict:
+        def row(report: LabelReport, label: str | None) -> dict:
+            low, high = self.leak_interval(label)
             return {
                 "ocorrencias": report.total,
                 "precisao": round(report.precision, 4),
                 "revocacao": round(report.recall, 4),
                 "f1": round(report.f1, 4),
                 "vazamento": round(report.leak_rate, 4),
+                "vazamento_ic95": [round(low, 4), round(high, 4)],
                 "falsos_positivos": report.false_positives,
             }
 
-        return {
+        data = {
             "amostras": self.samples,
             "caracteres_por_segundo": round(self.characters / self.seconds) if self.seconds else None,
-            "geral": row(self.overall),
-            "por_entidade": {label: row(report) for label, report in sorted(self.labels.items())},
+            "geral": row(self.overall, None),
+            "por_entidade": {label: row(report, label) for label, report in sorted(self.labels.items())},
         }
+        if self.out_of_scope:
+            data["fora_do_escopo"] = dict(sorted(self.out_of_scope.items()))
+        return data
 
-    def to_markdown(self) -> str:
-        lines = [
-            "| Entidade | Ocorrências | Precisão | Revocação | F1 | Vazamento |",
-            "|---|---:|---:|---:|---:|---:|",
-        ]
+    def to_markdown(self, *, precision: bool = True) -> str:
+        """precision=False para conjuntos externos: as anotações deles não cobrem tudo o que o Véu esconde
+        (CEP dentro de endereços, datas), então a precisão por rótulo não seria justa."""
+
+        def line(name: str, report: LabelReport, label: str | None, bold: bool = False) -> str:
+            mark = "**" if bold else ""
+            low, high = self.leak_interval(label)
+            cells = [name, str(report.total)]
+            if precision:
+                cells.append(f"{report.precision:.1%}")
+            cells.append(f"{report.recall:.1%}")
+            if precision:
+                cells.append(f"{report.f1:.1%}")
+            cells += [f"{report.leak_rate:.1%}", f"{low:.1%} a {high:.1%}"]
+            return "| " + " | ".join(f"{mark}{cell}{mark}" for cell in cells) + " |"
+
+        if precision:
+            lines = ["| Entidade | Ocorrências | Precisão | Revocação | F1 | Vazamento | IC 95% do vazamento |",
+                     "|---|---:|---:|---:|---:|---:|---:|"]
+        else:
+            lines = ["| Entidade | Ocorrências | Revocação | Vazamento | IC 95% do vazamento |",
+                     "|---|---:|---:|---:|---:|"]
         for label, report in sorted(self.labels.items(), key=lambda item: -item[1].total):
-            if not report.total and not report.false_positives:
+            if not report.total and (not report.false_positives or not precision):
                 continue
-            lines.append(
-                f"| {label} | {report.total} | {report.precision:.1%} | {report.recall:.1%} | {report.f1:.1%} | "
-                f"{report.leak_rate:.1%} |"
-            )
-        overall = self.overall
-        lines.append(
-            f"| **Geral** | **{overall.total}** | **{overall.precision:.1%}** | **{overall.recall:.1%}** | "
-            f"**{overall.f1:.1%}** | **{overall.leak_rate:.1%}** |"
-        )
-        return "\n".join(lines).replace(".", ",").replace("|---,", "|---.")
+            lines.append(line(label, report, label))
+        lines.append(line("Geral", self.overall, None, bold=True))
+        text = "\n".join(lines).replace(".", ",").replace("|---,", "|---.")
+        if self.out_of_scope:
+            items = ", ".join(f"{label} ({count})"
+                              for label, count in sorted(self.out_of_scope.items(), key=lambda item: -item[1]))
+            text += f"\n\nAnotados no conjunto, mas fora do que o Véu esconde: {items}."
+        return text
 
 
 def _covered(start: int, end: int, text: str, spans: list[tuple[int, int]]) -> bool:
@@ -110,12 +155,14 @@ def evaluate(samples: list[Sample], veu: Veu | None = None) -> Report:
     for sample in samples:
         predictions = veu.anonymize(sample.text).entities
         report.samples += 1
+        counts: dict[str, list[int]] = {}
         report.characters += len(sample.text)
         spans = [(entity.start, entity.end) for entity in predictions]
         matched_predictions: set[int] = set()
         for start, end, label in sample.entities:
             stats = report.labels[label]
             stats.total += 1
+            counts.setdefault(label, [0, 0])[0] += 1
             hit = next(
                 (i for i, e in enumerate(predictions) if e.label == label and e.start < end and start < e.end), None
             )
@@ -126,6 +173,7 @@ def evaluate(samples: list[Sample], veu: Veu | None = None) -> Report:
                 matched_predictions.add(hit)
             if _covered(start, end, sample.text, spans):
                 stats.protected += 1
+                counts[label][1] += 1
             else:
                 report.leaks.append((label, sample.text[start:end], sample.text))
         for index, entity in enumerate(predictions):
@@ -136,5 +184,6 @@ def evaluate(samples: list[Sample], veu: Veu | None = None) -> Report:
             if not same:
                 report.labels[entity.label].false_positives += 1
                 report.false_positives.append((entity.label, entity.text, sample.text))
+        report.per_sample.append({label: (total, safe) for label, (total, safe) in counts.items()})
     report.seconds = time.perf_counter() - started
     return report

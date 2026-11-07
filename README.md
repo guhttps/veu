@@ -48,7 +48,7 @@ E funciona do jeito que você usa IA: no navegador, no computador, no seu códig
 | **proteger o Claude Code ou o Cursor** | O [**plugin**](docs/integracoes.md#claude-code-e-cursor): bloqueia segredos em prompts e arquivos | `/plugin install veu --marketplace guhttps/veu` |
 | **proteger a empresa toda** sem instalar nada nos computadores | [**Gateway central**](docs/empresas.md), **guardrail do LiteLLM** ou **extensão gerenciada** | [Guia para empresas](docs/empresas.md) |
 
-Quer ver funcionando antes? Depois de instalar, rode `veu demonstrar`. Ele mostra, dado por dado, o que chegaria à IA com e sem o Véu, sem precisar de chave de API.
+Quer ver funcionando antes? Depois de instalar, rode `veu demonstrar`. Ele mostra, dado por dado, o que chegaria à IA com e sem o Véu e o que acontece quando a IA é manipulada para mandar os dados para fora, sem precisar de chave de API. Em CI, ele sai com erro se algo vazar.
 
 ## Instalar sem saber programar
 
@@ -125,7 +125,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
   - anonimiza Excel, Word e PowerPoint **no próprio formato**, mantendo a formatação e as fórmulas.
 - 🌐 **Python, JavaScript e navegador:**
   - a mesma detecção nas três versões;
-  - um teste de conformidade com 235 casos exige resultados idênticos.
+  - um teste de conformidade com 279 casos exige resultados idênticos.
 - 🏢 **Empresas:**
   - gateway com tokens por equipe, auditoria à prova de adulteração e sessões no Redis;
   - desvio de dados sensíveis para um modelo interno;
@@ -226,7 +226,7 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 | Comando | O que faz |
 |---|---|
 | `veu painel` | Liga o Véu e abre o painel no navegador |
-| `veu demonstrar` | Mostra o que chegaria à IA com e sem o Véu, sem chave de API |
+| `veu demonstrar` | Mostra o que chegaria à IA com e sem o Véu e testa ataques à restauração, sem chave de API |
 | `veu ler <link ou arquivo>` | Lê Notion, Google, links e documentos já protegidos |
 | `veu anonimizar` / `veu restaurar` | Protege e restaura textos, CSV, JSON, Excel, Word, PowerPoint e PDF |
 | `veu detectar` | Lista os dados encontrados num texto |
@@ -236,7 +236,7 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 | `veu gancho prompt` / `veu gancho arquivo` | Ganchos para Claude Code e Cursor |
 | `veu auditoria verificar` | Confere a integridade do log de auditoria |
 | `veu atalhos` | Cria o atalho Véu na área de trabalho |
-| `veu avaliar` | Roda o benchmark |
+| `veu avaliar` | Roda o benchmark (`--externo todos` para os conjuntos públicos de terceiros) |
 
 ## Integrações
 
@@ -287,26 +287,27 @@ O operador `sintetico` ainda só existe em Python. Em JavaScript, use `token`, `
 
 ## Benchmark
 
-O Véu vem com um gerador de textos realistas (atendimento, saúde, jurídico, RH, conversas de WhatsApp, formulários) com dados **falsos** e anotados, e com um conjunto de casos difíceis escritos à mão. A métrica principal é o **vazamento**: a fração dos dados pessoais que chegaria à IA sem estar totalmente escondida.
+A métrica principal é o **vazamento**: a fração dos dados pessoais que chegaria à IA sem estar totalmente escondida. O Véu é medido com conjuntos próprios e com **dois conjuntos públicos escritos por outras equipes**, e comparado com o Microsoft Presidio nos mesmos textos.
 
 ```bash
-veu avaliar --quantidade 1000
+veu avaliar                    # conjuntos próprios
+veu avaliar --externo todos    # BR-Agentic e privacy-filter-br (baixados uma vez, versão fixa)
 ```
 
-| Conjunto | Textos | Precisão | Revocação | Vazamento geral | Vazamento de nomes |
-|---|---:|---:|---:|---:|---:|
-| Validação (modelos de texto **não usados** para ajustar o detector) | 1.000 | 100,0% | 97,5% | **2,5%** | 6,5% |
-| Validação, com o detector spaCy ligado | 1.000 | 97,8% | 98,6% | **1,2%** | 3,0% |
-| Casos difíceis escritos à mão | 25 | 100,0% | 100,0% | 0,0% | 0,0% |
-| Desenvolvimento (modelos usados no ajuste) | 1.000 | 100,0% | 100,0% | 0,0% | 0,0% |
+| Conjunto | Véu | Véu + spaCy | Presidio |
+|---|---:|---:|---:|
+| Desafio: 41 textos escritos à mão e congelados | **28,0%** | — | 50,0% |
+| [BR-Agentic](https://huggingface.co/datasets/guardion/BR-Agentic-PII-Benchmark): conversas bancárias com ferramentas | **23,3%** | 17,7% | 53,1% |
+| [privacy-filter-br](https://huggingface.co/datasets/lucianfialho/privacy-filter-br-dataset): 3.000 documentos | **2,6%** | 0,6% | 52,0% |
+| Validação própria: 1.000 textos de modelos não usados no ajuste | **2,5%** | 1,2% | — |
 
 Como ler esses números com honestidade:
 
-- **O número que importa é o da validação.** O conjunto de desenvolvimento chega a 100% porque o detector foi ajustado olhando para ele.
-- **Documentos com dígitos verificadores** (CPF, CNPJ, cartão, processo...) ficaram em 0% de vazamento nos três conjuntos.
-- **Nomes são a parte difícil**, principalmente em minúsculas, em conversas sem saudação ("kkkk o rayane esqueceu").
-- **O spaCy reduz o vazamento de nomes para menos da metade, mas é cerca de 18 vezes mais lento.**
-- **Os textos são sintéticos.** Em dados reais, espere resultados piores. Teste com uma amostra dos seus próprios textos antes de confiar.
+- **Os conjuntos externos são o número que importa.** O ajuste dos detectores nunca olha para eles nem para o desafio. Os números próprios são melhores porque o gerador e o detector foram escritos pela mesma pessoa.
+- **Documentos brasileiros são a maior vantagem:** o Presidio não tem reconhecedores de CPF, CNPJ, RG ou endereços brasileiros e vaza 90% dos CPFs; o Véu, menos de 1%.
+- **Nomes são a parte difícil.** Sem contexto ("kkkk a kamilly esqueceu") ou de outras origens, passam. O detector spaCy reduz muito esse vazamento, mas deixa o Véu dez vezes mais lento.
+- **Endereços completos e contas sem a palavra "conta"** ainda vazam no BR-Agentic.
+- **Todos os textos são sintéticos.** Em dados reais, espere resultados piores. Teste com uma amostra dos seus textos (`veu avaliar --dataset`).
 
 Detalhes da metodologia em [docs/benchmark.md](docs/benchmark.md).
 
@@ -362,7 +363,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 400 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 430 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 cd js && npm ci && npm test                       # biblioteca JavaScript (inclui a conformidade com o Python)
@@ -376,7 +377,7 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 - [x] Publicar no PyPI (`pip install veu`) e no npm (`@guhttps/veu`)
 - [x] Instalador de um comando e painel para quem não programa
 - [x] Restauração segura contra injeção de prompt (links, ferramentas, marcadores forjados)
-- [ ] Benchmark público com dados em português de terceiros, comparado ao Presidio
+- [x] Benchmark com dados em português de terceiros, comparado ao Presidio
 - [ ] Cache de detecção para agentes que reenviam a conversa inteira a cada turno
 - [ ] Nó para o n8n (WhatsApp com IA sem expor o CPF do cliente)
 - [ ] Documentos de outros países (Portugal, Argentina, México, Chile, Estados Unidos...)

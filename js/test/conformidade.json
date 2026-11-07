@@ -249,6 +249,87 @@
    "mascarado": "Março foi bom para o M*** e para a Rosa."
   },
   {
+   "texto": "CPF: 529.982.***-** e ***.982.247-**; CNPJ 11.222.333/****-** e 11 222 333 0001 81",
+   "entidades": [
+    [
+     "CPF",
+     5,
+     19,
+     0.97
+    ],
+    [
+     "CPF",
+     22,
+     36,
+     0.97
+    ],
+    [
+     "CNPJ",
+     43,
+     61,
+     0.97
+    ],
+    [
+     "CNPJ",
+     64,
+     82,
+     0.95
+    ]
+   ],
+   "anonimizado": "CPF: [CPF_1] e [CPF_2]; CNPJ [CNPJ_1] e [CNPJ_2]",
+   "mascarado": "CPF: ***.*82.***-** e ***.***.*47-**; CNPJ **.***.*33/****-** e ** *** *** **** 81"
+  },
+  {
+   "texto": "RG nº 12.34***-*, CNH nº 02650******, Título de Eleitor nº 1023****0191, CEP 01310 100",
+   "entidades": [
+    [
+     "RG",
+     6,
+     16,
+     0.85
+    ],
+    [
+     "CNH",
+     25,
+     36,
+     0.9
+    ],
+    [
+     "TITULO_ELEITOR",
+     59,
+     71,
+     0.9
+    ],
+    [
+     "CEP",
+     77,
+     86,
+     0.85
+    ]
+   ],
+   "anonimizado": "RG nº [RG_1], CNH nº [CNH_1], Título de Eleitor nº [TITULO_ELEITOR_1], CEP [CEP_1]",
+   "mascarado": "RG nº **.*****-*, CNH nº ***50******, Título de Eleitor nº **********91, CEP ***** *00"
+  },
+  {
+   "texto": "RG 12 345 678 9 e CNH 0265030646-1; o campo ***.***.***-** veio vazio",
+   "entidades": [
+    [
+     "RG",
+     3,
+     15,
+     0.85
+    ],
+    [
+     "CNH",
+     22,
+     34,
+     0.97
+    ]
+   ],
+   "anonimizado": "RG [RG_1] e CNH [CNH_1]; o campo ***.***.***-** veio vazio",
+   "mascarado": "RG ** *** **8 9 e CNH *********6-1; o campo ***.***.***-** veio vazio"
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [
@@ -4436,6 +4517,525 @@
    "entidades": [],
    "anonimizado": "A versão 10.0.19045.3803 do Windows foi lançada.",
    "mascarado": "A versão 10.0.19045.3803 do Windows foi lançada."
+  },
+  {
+   "texto": "kkkk a kamilly esqueceu o carregador aqui dnv",
+   "entidades": [],
+   "anonimizado": "kkkk a kamilly esqueceu o carregador aqui dnv",
+   "mascarado": "kkkk a kamilly esqueceu o carregador aqui dnv"
+  },
+  {
+   "texto": "bom dia! aqui é o enzo gabriel, filho da dona cleide",
+   "entidades": [
+    [
+     "PESSOA",
+     18,
+     22,
+     0.6
+    ]
+   ],
+   "anonimizado": "bom dia! aqui é o [PESSOA_1] gabriel, filho da dona cleide",
+   "mascarado": "bom dia! aqui é o e*** gabriel, filho da dona cleide"
+  },
+  {
+   "texto": "manda o pix pro thiaguinho q ele paga o churras",
+   "entidades": [],
+   "anonimizado": "manda o pix pro thiaguinho q ele paga o churras",
+   "mascarado": "manda o pix pro thiaguinho q ele paga o churras"
+  },
+  {
+   "texto": "Oii, sou a Ayla, mãe do Anthony do 3º ano B",
+   "entidades": [],
+   "anonimizado": "Oii, sou a Ayla, mãe do Anthony do 3º ano B",
+   "mascarado": "Oii, sou a Ayla, mãe do Anthony do 3º ano B"
+  },
+  {
+   "texto": "meu cpf é 967 029 433 93, pode conferir?",
+   "entidades": [
+    [
+     "CPF",
+     10,
+     24,
+     0.95
+    ]
+   ],
+   "anonimizado": "meu cpf é [CPF_1], pode conferir?",
+   "mascarado": "meu cpf é *** 029 433 **, pode conferir?"
+  },
+  {
+   "texto": "me chama no zap 11 9 8123-4567 depois das 18h",
+   "entidades": [
+    [
+     "TELEFONE",
+     16,
+     30,
+     0.95
+    ]
+   ],
+   "anonimizado": "me chama no zap [TELEFONE_1] depois das 18h",
+   "mascarado": "me chama no zap ** * ****-**67 depois das 18h"
+  },
+  {
+   "texto": "o email dela é lu.martins.dev@example.com mas ela n responde",
+   "entidades": [
+    [
+     "EMAIL",
+     15,
+     41,
+     1.0
+    ]
+   ],
+   "anonimizado": "o email dela é [EMAIL_1] mas ela n responde",
+   "mascarado": "o email dela é l***@example.com mas ela n responde"
+  },
+  {
+   "texto": "A Heloísa Cristina Braga pediu reembolso e o Davi Lucca vai aprovar.",
+   "entidades": [
+    [
+     "PESSOA",
+     2,
+     24,
+     0.9
+    ],
+    [
+     "PESSOA",
+     45,
+     55,
+     0.9
+    ]
+   ],
+   "anonimizado": "A [PESSOA_1] pediu reembolso e o [PESSOA_2] vai aprovar.",
+   "mascarado": "A H*** C*** B*** pediu reembolso e o D*** L*** vai aprovar."
+  },
+  {
+   "texto": "Reunião com Kenji Watanabe e Priya Raghunathan às 15h.",
+   "entidades": [],
+   "anonimizado": "Reunião com Kenji Watanabe e Priya Raghunathan às 15h.",
+   "mascarado": "Reunião com Kenji Watanabe e Priya Raghunathan às 15h."
+  },
+  {
+   "texto": "O contrato foi assinado por Mohammed Al-Rashid e Olga Kowalczyk.",
+   "entidades": [
+    [
+     "PESSOA",
+     28,
+     39,
+     0.65
+    ],
+    [
+     "PESSOA",
+     49,
+     63,
+     0.8
+    ]
+   ],
+   "anonimizado": "O contrato foi assinado por [PESSOA_1]-Rashid e [PESSOA_2].",
+   "mascarado": "O contrato foi assinado por M*** A***-Rashid e O*** K***."
+  },
+  {
+   "texto": "Atendente: Jennifer O'Connor. Cliente: Sebastián Ortega Ruiz.",
+   "entidades": [
+    [
+     "PESSOA",
+     11,
+     28,
+     0.8
+    ],
+    [
+     "PESSOA",
+     39,
+     60,
+     0.65
+    ]
+   ],
+   "anonimizado": "Atendente: [PESSOA_1]. Cliente: [PESSOA_2].",
+   "mascarado": "Atendente: J*** O***. Cliente: S*** O*** R***."
+  },
+  {
+   "texto": "CPF: 184.123.***-**, conforme exibido no portal.",
+   "entidades": [
+    [
+     "CPF",
+     5,
+     19,
+     0.97
+    ]
+   ],
+   "anonimizado": "CPF: [CPF_1], conforme exibido no portal.",
+   "mascarado": "CPF: ***.*23.***-**, conforme exibido no portal."
+  },
+  {
+   "texto": "Fornecedor CNPJ 32 197 310 0001 34, nota emitida ontem.",
+   "entidades": [
+    [
+     "CNPJ",
+     16,
+     34,
+     0.95
+    ]
+   ],
+   "anonimizado": "Fornecedor CNPJ [CNPJ_1], nota emitida ontem.",
+   "mascarado": "Fornecedor CNPJ ** *** *** **** 34, nota emitida ontem."
+  },
+  {
+   "texto": "PIS/PASEP 762.43701.09-8 do colaborador novo.",
+   "entidades": [
+    [
+     "PIS",
+     10,
+     24,
+     1.0
+    ]
+   ],
+   "anonimizado": "PIS/PASEP [PIS_1] do colaborador novo.",
+   "mascarado": "PIS/PASEP ***.*****.*9-8 do colaborador novo."
+  },
+  {
+   "texto": "CNH nº 91036959969, categoria AB, validade 2030.",
+   "entidades": [
+    [
+     "CNH",
+     7,
+     18,
+     0.97
+    ]
+   ],
+   "anonimizado": "CNH nº [CNH_1], categoria AB, validade 2030.",
+   "mascarado": "CNH nº *********69, categoria AB, validade 2030."
+  },
+  {
+   "texto": "Título eleitoral 0674 9900 0175, zona 0123.",
+   "entidades": [
+    [
+     "TITULO_ELEITOR",
+     17,
+     31,
+     0.95
+    ]
+   ],
+   "anonimizado": "Título eleitoral [TITULO_ELEITOR_1], zona 0123.",
+   "mascarado": "Título eleitoral **** **** **75, zona 0123."
+  },
+  {
+   "texto": "Renavam do veículo: 69744314612.",
+   "entidades": [
+    [
+     "RENAVAM",
+     20,
+     31,
+     0.97
+    ]
+   ],
+   "anonimizado": "Renavam do veículo: [RENAVAM_1].",
+   "mascarado": "Renavam do veículo: *********12."
+  },
+  {
+   "texto": "CPF 25283426912 / CNPJ 45559704000137",
+   "entidades": [
+    [
+     "CPF",
+     4,
+     15,
+     0.95
+    ],
+    [
+     "CNPJ",
+     23,
+     37,
+     0.95
+    ]
+   ],
+   "anonimizado": "CPF [CPF_1] / CNPJ [CNPJ_1]",
+   "mascarado": "CPF ***834269** / CNPJ ************37"
+  },
+  {
+   "texto": "Entregar na Quadra 204 Sul, Alameda 12, lote 8, Palmas - TO.",
+   "entidades": [],
+   "anonimizado": "Entregar na Quadra 204 Sul, Alameda 12, lote 8, Palmas - TO.",
+   "mascarado": "Entregar na Quadra 204 Sul, Alameda 12, lote 8, Palmas - TO."
+  },
+  {
+   "texto": "Mora no Conjunto Residencial Bela Vista, casa 15, bloco C.",
+   "entidades": [],
+   "anonimizado": "Mora no Conjunto Residencial Bela Vista, casa 15, bloco C.",
+   "mascarado": "Mora no Conjunto Residencial Bela Vista, casa 15, bloco C."
+  },
+  {
+   "texto": "Endereço: Estrada do Cafundá, 1200 - Taquara, Rio de Janeiro/RJ, CEP 22725-031",
+   "entidades": [
+    [
+     "ENDERECO",
+     10,
+     34,
+     0.9
+    ],
+    [
+     "CEP",
+     69,
+     78,
+     0.95
+    ]
+   ],
+   "anonimizado": "Endereço: [ENDERECO_1] - Taquara, Rio de Janeiro/RJ, CEP [CEP_1]",
+   "mascarado": "Endereço: ******* ** *******, **00 - Taquara, Rio de Janeiro/RJ, CEP *****-*31"
+  },
+  {
+   "texto": "SQN 308 Bloco F apto 104, Brasília",
+   "entidades": [],
+   "anonimizado": "SQN 308 Bloco F apto 104, Brasília",
+   "mascarado": "SQN 308 Bloco F apto 104, Brasília"
+  },
+  {
+   "texto": "{\"cliente\": \"Rogério Tavares\", \"cpf\": \"018.833.096-89\", \"fone\": \"+55 21 99876-5432\"}",
+   "entidades": [
+    [
+     "PESSOA",
+     13,
+     28,
+     0.9
+    ],
+    [
+     "CPF",
+     39,
+     53,
+     1.0
+    ],
+    [
+     "TELEFONE",
+     65,
+     82,
+     0.95
+    ]
+   ],
+   "anonimizado": "{\"cliente\": \"[PESSOA_1]\", \"cpf\": \"[CPF_1]\", \"fone\": \"[TELEFONE_1]\"}",
+   "mascarado": "{\"cliente\": \"R*** T***\", \"cpf\": \"***.833.096-**\", \"fone\": \"+** ** *****-**32\"}"
+  },
+  {
+   "texto": "nome;cpf;email\nBeatriz Nogueira;80782922872;bia.nogueira@example.org",
+   "entidades": [
+    [
+     "PESSOA",
+     15,
+     31,
+     0.9
+    ],
+    [
+     "CPF",
+     32,
+     43,
+     0.95
+    ],
+    [
+     "EMAIL",
+     44,
+     68,
+     1.0
+    ]
+   ],
+   "anonimizado": "nome;cpf;email\n[PESSOA_1];[CPF_1];[EMAIL_1]",
+   "mascarado": "nome;cpf;email\nB*** N***;***829228**;b***@example.org"
+  },
+  {
+   "texto": "2026-11-03T10:22:01Z INFO login ok user=valeria.prates@example.com ip=187.45.20.113",
+   "entidades": [
+    [
+     "EMAIL",
+     40,
+     66,
+     0.95
+    ],
+    [
+     "IP",
+     70,
+     83,
+     0.9
+    ]
+   ],
+   "anonimizado": "2026-11-03T10:22:01Z INFO login ok user=[EMAIL_1] ip=[IP_1]",
+   "mascarado": "2026-11-03T10:22:01Z INFO login ok user=v***@example.com ip=***.**.**.*13"
+  },
+  {
+   "texto": "Paciente Benedita Aparecida dos Santos, 67 anos, deu entrada às 3h.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     38,
+     0.9
+    ]
+   ],
+   "anonimizado": "Paciente [PESSOA_1], 67 anos, deu entrada às 3h.",
+   "mascarado": "Paciente B*** A*** dos S***, 67 anos, deu entrada às 3h."
+  },
+  {
+   "texto": "Autor: Edvaldo Pereira Lins, representado pela defensoria.",
+   "entidades": [
+    [
+     "PESSOA",
+     7,
+     27,
+     0.9
+    ]
+   ],
+   "anonimizado": "Autor: [PESSOA_1], representado pela defensoria.",
+   "mascarado": "Autor: E*** P*** L***, representado pela defensoria."
+  },
+  {
+   "texto": "Cartão final 4242, número completo 5555 5555 5555 4444, titular Marcos V. Teles.",
+   "entidades": [
+    [
+     "CARTAO_CREDITO",
+     35,
+     54,
+     0.95
+    ],
+    [
+     "PESSOA",
+     64,
+     70,
+     0.8
+    ],
+    [
+     "PESSOA",
+     74,
+     79,
+     0.6
+    ]
+   ],
+   "anonimizado": "Cartão final 4242, número completo [CARTAO_CREDITO_1], titular [PESSOA_1] V. [PESSOA_2].",
+   "mascarado": "Cartão final 4242, número completo **** **** **** **44, titular M*** V. T***."
+  },
+  {
+   "texto": "Ag. 3456-7 C/C 12345-6, favorecida Joana Prado.",
+   "entidades": [
+    [
+     "CONTA_BANCARIA",
+     4,
+     10,
+     0.85
+    ],
+    [
+     "CONTA_BANCARIA",
+     15,
+     22,
+     0.85
+    ],
+    [
+     "PESSOA",
+     35,
+     46,
+     0.9
+    ]
+   ],
+   "anonimizado": "Ag. [CONTA_BANCARIA_1] C/C [CONTA_BANCARIA_2], favorecida [PESSOA_1].",
+   "mascarado": "Ag. ***6-7 C/C ****5-6, favorecida J*** P***."
+  },
+  {
+   "texto": "Nasci em 14/02/1990 e meu RG é 34.567.890-1.",
+   "entidades": [
+    [
+     "RG",
+     31,
+     43,
+     0.95
+    ]
+   ],
+   "anonimizado": "Nasci em 14/02/1990 e meu RG é [RG_1].",
+   "mascarado": "Nasci em 14/02/1990 e meu RG é **.***.**0-1."
+  },
+  {
+   "texto": "a senha do wifi do escritório é Pato#Azul77, não espalha",
+   "entidades": [
+    [
+     "SENHA",
+     32,
+     43,
+     0.8
+    ]
+   ],
+   "anonimizado": "a senha do wifi do escritório é [SENHA_1], não espalha",
+   "mascarado": "a senha do wifi do escritório é ********, não espalha"
+  },
+  {
+   "texto": "export DATABASE_URL=postgres://app:S3gr3d0!@db.interno:5432/prod",
+   "entidades": [
+    [
+     "URL_CONEXAO",
+     20,
+     64,
+     0.95
+    ]
+   ],
+   "anonimizado": "export DATABASE_URL=[URL_CONEXAO_1]",
+   "mascarado": "export DATABASE_URL=postgres://****"
+  },
+  {
+   "texto": "client_secret: 8f3c2b9e-7a41-4d6f-b2e8-91c0d5a7f3e2",
+   "entidades": [
+    [
+     "SEGREDO",
+     15,
+     51,
+     0.85
+    ]
+   ],
+   "anonimizado": "client_secret: [SEGREDO_1]",
+   "mascarado": "client_secret: ****"
+  },
+  {
+   "texto": "A Rosa dos Ventos aponta para o norte magnético.",
+   "entidades": [
+    [
+     "PESSOA",
+     2,
+     17,
+     0.8
+    ]
+   ],
+   "anonimizado": "A [PESSOA_1] aponta para o norte magnético.",
+   "mascarado": "A R*** dos V*** aponta para o norte magnético."
+  },
+  {
+   "texto": "O Grêmio venceu o Inter por 2 a 1 no Beira-Rio.",
+   "entidades": [],
+   "anonimizado": "O Grêmio venceu o Inter por 2 a 1 no Beira-Rio.",
+   "mascarado": "O Grêmio venceu o Inter por 2 a 1 no Beira-Rio."
+  },
+  {
+   "texto": "Agência de turismo em Natal oferece passeio às dunas de Genipabu.",
+   "entidades": [],
+   "anonimizado": "Agência de turismo em Natal oferece passeio às dunas de Genipabu.",
+   "mascarado": "Agência de turismo em Natal oferece passeio às dunas de Genipabu."
+  },
+  {
+   "texto": "O pedido 4815162342 foi enviado pelos Correios.",
+   "entidades": [],
+   "anonimizado": "O pedido 4815162342 foi enviado pelos Correios.",
+   "mascarado": "O pedido 4815162342 foi enviado pelos Correios."
+  },
+  {
+   "texto": "Leia o capítulo 3 de Dom Casmurro até sexta.",
+   "entidades": [],
+   "anonimizado": "Leia o capítulo 3 de Dom Casmurro até sexta.",
+   "mascarado": "Leia o capítulo 3 de Dom Casmurro até sexta."
+  },
+  {
+   "texto": "A temperatura máxima prevista para amanhã é de 31 graus em Cuiabá.",
+   "entidades": [],
+   "anonimizado": "A temperatura máxima prevista para amanhã é de 31 graus em Cuiabá.",
+   "mascarado": "A temperatura máxima prevista para amanhã é de 31 graus em Cuiabá."
+  },
+  {
+   "texto": "Versão 2.14.0 lançada com correções no módulo de pagamentos.",
+   "entidades": [],
+   "anonimizado": "Versão 2.14.0 lançada com correções no módulo de pagamentos.",
+   "mascarado": "Versão 2.14.0 lançada com correções no módulo de pagamentos."
+  },
+  {
+   "texto": "Reunião de alinhamento às 9h na sala Ipê Amarelo.",
+   "entidades": [],
+   "anonimizado": "Reunião de alinhamento às 9h na sala Ipê Amarelo.",
+   "mascarado": "Reunião de alinhamento às 9h na sala Ipê Amarelo."
   }
  ]
 }
