@@ -5,6 +5,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Alterado
+- README, banner, descrições do PyPI e do npm, GitHub Action, hook de pre-commit e servidor MCP passam a apresentar o Véu como proteção de dados pessoais e segredos em geral, com suporte completo a documentos brasileiros (e não só para dados brasileiros).
+
 ## [0.5.2] - 2026-11-07
 
 Ajustes do Notion, encontrados testando com uma conta de verdade.

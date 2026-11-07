@@ -1,4 +1,4 @@
-"""Véu: esconde dados pessoais brasileiros antes de enviar textos para modelos de IA.
+"""Véu: esconde dados pessoais e segredos antes de enviar textos para modelos de IA.
 
 Uso rápido:
 

@@ -1,6 +1,6 @@
 - id: veu
   name: Véu (dados pessoais)
-  description: Falha se algum arquivo tiver dados pessoais brasileiros (CPF, CNPJ, e-mails, nomes...).
+  description: Falha se algum arquivo tiver dados pessoais ou segredos (CPF, e-mails, nomes, chaves de API, senhas...).
   entry: veu verificar
   language: python
   types: [text]

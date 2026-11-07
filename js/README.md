@@ -1,6 +1,6 @@
 # @guhttps/veu
 
-**Véu para JavaScript e TypeScript.** Esconde dados pessoais brasileiros e segredos (CPF, CNPJ, nomes, telefones, endereços, chaves de API, senhas) antes de o texto chegar a um modelo de IA, e devolve os dados reais na resposta.
+**Véu para JavaScript e TypeScript.** Esconde dados pessoais e segredos (nomes, e-mails, telefones de qualquer país, CPF, CNPJ, cartões, chaves de API, senhas) antes de o texto chegar a um modelo de IA, e devolve os dados reais na resposta.
 
 ```
 Você escreve:   "Cliente Maria Souza, CPF 529.982.247-25, chave sk-proj-..."

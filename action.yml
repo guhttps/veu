@@ -1,5 +1,5 @@
 name: Véu - dados pessoais
-description: Procura dados pessoais brasileiros (CPF, CNPJ, nomes, e-mails, telefones...) nos arquivos do repositório.
+description: Procura dados pessoais e segredos (CPF, nomes, e-mails, telefones, chaves de API, senhas...) nos arquivos do repositório.
 author: guhttps
 branding:
   icon: shield
