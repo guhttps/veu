@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "veu"
 dynamic = ["version"]
-description = "Esconde dados pessoais brasileiros (CPF, nomes, telefones, endereços...) antes de enviar textos para modelos de IA e devolve os dados reais na resposta."
+description = "Esconde dados pessoais e segredos (nomes, e-mails, telefones, CPF, CNPJ, cartões, chaves de API, senhas) antes de enviar textos para modelos de IA e devolve os dados reais na resposta."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

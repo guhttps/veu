@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/banner.png" alt="Véu: esconde CPF, nomes, telefones e endereços antes de o texto chegar à IA e devolve os dados reais na resposta" width="100%">
+  <img src="docs/banner.png" alt="Véu: esconde dados pessoais e segredos antes de o texto chegar à IA e devolve os dados reais na resposta" width="100%">
 </p>
 
 <p align="center">
@@ -13,20 +13,25 @@
 
 # Véu
 
-**O Véu esconde dados pessoais e segredos antes de um texto chegar a uma IA e devolve os dados reais na resposta.** A IA trabalha com `[PESSOA_1]`, `[CPF_1]` e `[CHAVE_API_1]`. Você vê "Maria Souza", "529.982.247-25" e a chave de verdade.
+**O Véu esconde dados pessoais e segredos antes de um texto chegar a uma IA e devolve os dados reais na resposta.** A IA trabalha com `[PESSOA_1]`, `[EMAIL_1]` e `[CHAVE_API_1]`. Você vê os dados de verdade.
 
 ```text
-Você envia     Sou a Maria Souza, CPF 529.982.247-25. Meu pedido atrasou.
-A IA recebe    Sou a [PESSOA_1], CPF [CPF_1]. Meu pedido atrasou.
-A IA responde  Olá, [PESSOA_1]! Localizei o pedido do CPF [CPF_1].
-Você recebe    Olá, Maria Souza! Localizei o pedido do CPF 529.982.247-25.
+Você envia     Sou a Maria Souza (maria@example.com), CPF 529.982.247-25. Use a chave sk-proj-4f9a...
+A IA recebe    Sou a [PESSOA_1] ([EMAIL_1]), CPF [CPF_1]. Use a chave [CHAVE_API_1]
+A IA responde  Pronto, [PESSOA_1]! Configurei [CHAVE_API_1] no seu .env.
+Você recebe    Pronto, Maria Souza! Configurei sk-proj-4f9a... no seu .env.
 ```
 
-Empresas e pessoas estão colocando IA no atendimento, nos contratos, no RH e no código. Junto com cada pergunta vão CPF, nome e telefone de clientes, e também chaves de API e senhas. O Véu fica no meio do caminho:
+Empresas e pessoas estão colocando IA no atendimento, nos contratos, no RH e no código. Junto com cada pergunta vão nomes, documentos e contatos de clientes, e também chaves de API e senhas. O Véu fica no meio do caminho e protege:
 
-- **Entende documentos brasileiros de verdade:** confere os dígitos verificadores, inclusive do CNPJ alfanumérico de 2026.
-- **Reconhece segredos:** chaves de mais de 30 serviços, tokens, senhas e chaves privadas.
-- **Funciona do jeito que você usa IA:** no navegador, no computador, no seu código ou no servidor da empresa.
+- **Dados pessoais de qualquer país:** nomes, e-mails, telefones (com código de qualquer país), cartões, IBAN, endereços IP e datas de nascimento.
+- **Documentos brasileiros, conferidos de verdade:** CPF, CNPJ (inclusive o alfanumérico de 2026), RG, CNH, PIS, cartão do SUS e outros, pelos dígitos verificadores.
+- **Segredos de qualquer serviço:** chaves de API de mais de 30 serviços, tokens, senhas, chaves privadas e URLs de banco com senha.
+
+E funciona do jeito que você usa IA: no navegador, no computador, no seu código ou no servidor da empresa.
+
+> [!NOTE]
+> O Véu nasceu no Brasil: os documentos brasileiros têm o suporte mais completo e a interface está em português. E-mails, telefones internacionais, cartões, IBAN, IPs e segredos funcionam em textos de qualquer lugar. Os nomes são reconhecidos por listas de nomes brasileiros; para nomes de outras línguas, ligue o detector spaCy ou um modelo local. Documentos de outros países estão nos [próximos passos](#próximos-passos).
 
 > [!IMPORTANT]
 > Nenhuma detecção automática é perfeita. O Véu **reduz** muito o risco de enviar dados pessoais, mas não o elimina. Veja os [números do benchmark](#benchmark) e as [limitações](SECURITY.md#o-que-o-véu-não-faz). Não é aconselhamento jurídico sobre a LGPD.
@@ -88,12 +93,8 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 
 ## Recursos
 
-- 🇧🇷 **28 tipos de dados:**
-  - documentos brasileiros: CPF, CNPJ, RG, CNH, título de eleitor, PIS/NIT, cartão do SUS e passaporte;
-  - contatos e localização: nomes de pessoas, telefone (brasileiro e internacional), e-mail, endereço, CEP e IP;
-  - financeiros: cartão, conta bancária, IBAN e chave Pix;
-  - outros: placa, RENAVAM, data de nascimento e processo do CNJ;
-  - **segredos**.
+- 🌍 **Dados pessoais de qualquer lugar:** nomes, e-mails, telefones (brasileiros e de qualquer país, com +código), endereços, cartões de crédito, IBAN, endereços IP (v4 e v6) e datas de nascimento.
+- 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CEP, placa, RENAVAM, conta bancária, chave Pix e processo do CNJ.
 - 🔑 **Segredos:**
   - chaves da OpenAI, Anthropic, AWS, Google, GitHub, Stripe, Slack, Hugging Face, Notion, Mercado Pago, Asaas e mais 20 serviços;
   - JWT e tokens Bearer;
@@ -107,7 +108,8 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 - 🧠 **Nomes sem modelo de IA:**
   - listas de nomes brasileiros, capitalização e contexto ("Sr.", "cliente", "oi joão");
   - não confunde "Banco do Brasil" nem "Rua Augusta";
-  - opcionalmente, spaCy ou um modelo local.
+  - pessoas que o Notion identifica são sempre escondidas;
+  - para nomes de outras línguas, ligue o spaCy ou um modelo local.
 - 🔁 **Reversível e consistente:**
   - o mesmo dado recebe sempre o mesmo marcador;
   - "João" sozinho é ligado a "João da Silva";
@@ -345,7 +347,7 @@ Leia o [modelo de ameaças e as limitações](SECURITY.md) antes de usar em prod
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 295 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 300 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 cd js && npm ci && npm test                       # biblioteca JavaScript (inclui a conformidade com o Python)
@@ -358,6 +360,8 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 
 - [x] Publicar no PyPI (`pip install veu`) e no npm (`@guhttps/veu`)
 - [x] Instalador de um comando e painel para quem não programa
+- [ ] Documentos de outros países (Portugal, Argentina, México, Chile, Estados Unidos...)
+- [ ] Nomes de outras línguas sem precisar de modelo
 - [ ] Abrir Excel e Word direto na página web, sem instalar nada
 - [ ] Operador sintético na versão JavaScript
 - [ ] Bibliotecas para Go e Java

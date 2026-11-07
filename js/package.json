@@ -1,7 +1,7 @@
 {
   "name": "@guhttps/veu",
   "version": "0.5.2",
-  "description": "Esconde dados pessoais brasileiros e segredos (CPF, nomes, chaves de API) antes de o texto chegar a um modelo de IA e devolve os dados reais na resposta.",
+  "description": "Esconde dados pessoais e segredos (nomes, e-mails, telefones, CPF, cartões, chaves de API, senhas) antes de o texto chegar a um modelo de IA e devolve os dados reais na resposta.",
   "license": "MIT",
   "author": "guhttps",
   "homepage": "https://github.com/guhttps/veu/tree/main/js#readme",

@@ -1,0 +1,67 @@
+<!doctype html>
+<!--
+  Fonte do docs/banner.png (1280x640, também serve de imagem de compartilhamento do GitHub).
+  Para regerar depois de mudar o texto:
+    node docs/gerar-banner.mjs
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 1280px; height: 640px; overflow: hidden; font-family: "Segoe UI", system-ui, sans-serif; color: #e8ecf4;
+    background: radial-gradient(900px 500px at 0% 0%, #2c2252 0%, transparent 60%),
+                radial-gradient(700px 420px at 100% 100%, #123528 0%, transparent 60%), #0c0e15; }
+  .grade { display: grid; grid-template-columns: 560px 1fr; gap: 54px; padding: 64px 70px 0 76px; }
+  .selo { color: #9b8cff; letter-spacing: .18em; font-weight: 700; font-size: 15px; margin-bottom: 14px; }
+  h1 { font-size: 104px; line-height: .95; letter-spacing: -.03em; font-weight: 800; margin-bottom: 24px; }
+  .frase { font-size: 26px; line-height: 1.38; color: #c2c8d6; margin-bottom: 26px; }
+  .frase b { color: #fff; }
+  .chips { display: flex; flex-wrap: wrap; gap: 9px; }
+  .chips span { border: 1px solid #2c3140; background: #161a24; border-radius: 999px; padding: 6px 13px; font-size: 15px; font-weight: 600; color: #dfe4ee; }
+  .cartao { border: 1px solid #2a3040; background: #141824; border-radius: 16px; padding: 16px 20px; }
+  .cartao.volta { border-color: #2f6b55; background: #12201b; }
+  .rotulo { font-size: 12px; letter-spacing: .14em; font-weight: 700; color: #8b93a7; margin-bottom: 8px; }
+  .volta .rotulo { color: #59c995; }
+  .codigo { font: 600 18px/1.55 "Cascadia Mono", Consolas, monospace; color: #f2f4f8; }
+  .p { background: #3a2f6b; border-radius: 4px; padding: 0 3px; }
+  .d { background: #5b4313; border-radius: 4px; padding: 0 3px; }
+  .s { background: #14415c; border-radius: 4px; padding: 0 3px; }
+  .m { color: #b9a8ff; }
+  .seta { color: #8b93a7; font-size: 15px; margin: 9px 0 9px 4px; padding-left: 12px; border-left: 2px solid #3d8f78; }
+  .rodape { position: absolute; left: 76px; bottom: 34px; color: #8b93a7; font-size: 16px; }
+</style>
+</head>
+<body>
+  <div class="grade">
+    <div>
+      <div class="selo">PRIVACIDADE PARA IA</div>
+      <h1>Véu</h1>
+      <p class="frase">Esconde <b>dados pessoais e segredos</b> antes de o texto chegar à IA e devolve os dados reais na resposta.</p>
+      <div class="chips">
+        <span>Nomes · e-mails · telefones · cartões</span>
+        <span>Documentos brasileiros validados</span>
+        <span>Chaves de API e senhas</span>
+        <span>Notion · Excel · Word · PDF</span>
+        <span>OpenAI · Anthropic · Gemini · Ollama</span>
+      </div>
+    </div>
+    <div>
+      <div class="cartao">
+        <div class="rotulo">VOCÊ ENVIA</div>
+        <div class="codigo">Sou a <span class="p">Maria Souza</span>, CPF <span class="d">529.982.247-25</span>.<br>Use a chave <span class="s">sk-proj-4f9a…</span></div>
+      </div>
+      <div class="seta">a IA recebe</div>
+      <div class="cartao">
+        <div class="codigo">Sou a <span class="m">[PESSOA_1]</span>, CPF <span class="m">[CPF_1]</span>.<br>Use a chave <span class="m">[CHAVE_API_1]</span></div>
+      </div>
+      <div class="seta">a IA responde e o Véu restaura</div>
+      <div class="cartao volta">
+        <div class="rotulo">VOCÊ RECEBE DE VOLTA</div>
+        <div class="codigo">Pronto, Maria Souza! Configurei<br>sk-proj-4f9a… no seu .env.</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape">Página web · painel · extensão · Python · JavaScript · proxy · MCP · código aberto (MIT)</div>
+</body>
+</html>

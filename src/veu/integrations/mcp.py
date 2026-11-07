@@ -30,7 +30,7 @@ from veu.vault import Vault
 
 MAX_FILE_BYTES = 20 * 1024 * 1024
 INSTRUCTIONS = (
-    "O Véu encontra e esconde dados pessoais brasileiros e segredos (CPF, CNPJ, nomes, telefones, e-mails, endereços, "
+    "O Véu encontra e esconde dados pessoais e segredos (nomes, e-mails, telefones, endereços, CPF, CNPJ, cartões, "
     "chaves de API, senhas...). Para ler uma página do Notion, um Google Docs/Sheets, um link ou um documento (Word, "
     "Excel, PowerPoint, PDF), use ler_protegido: o conteúdo chega com os dados trocados por marcadores. Para arquivos, "
     "prefira verificar_arquivo e anonimizar_arquivo: eles processam os dados localmente e devolvem só contagens e "

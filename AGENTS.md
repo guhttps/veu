@@ -1,6 +1,8 @@
 # Instruções para agentes de código (Codex, Claude Code e outros)
 
-O Véu esconde dados pessoais brasileiros e segredos antes de textos irem para modelos de IA e restaura as respostas. Leia o README para a visão geral.
+O Véu esconde dados pessoais e segredos antes de textos irem para modelos de IA e restaura as respostas, com suporte completo a documentos brasileiros. Leia o README para a visão geral.
+
+Mantenha o README em dia: toda mudança visível (recurso, integração, comando, número de testes, versão) atualiza o README no mesmo commit, e também o banner (`docs/banner.html` + `node docs/gerar-banner.mjs`) e a descrição do repositório quando mudarem.
 
 ## Comandos
 
