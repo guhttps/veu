@@ -349,3 +349,59 @@ def test_cli_ler_and_office_files(tmp_path, capsys, monkeypatch):
     monkeypatch.delenv("NOTION_API_KEY", raising=False)
     assert main(["ler", "https://www.notion.so/Pagina-1f2e3d4c5b6a79788796a5b4c3d2e1f0"]) == 2
     assert "NOTION_TOKEN" in capsys.readouterr().err
+
+
+def fake_notion_people(monkeypatch):
+    page = "1f2e3d4c-5b6a-7978-8796-a5b4c3d2e1f0"
+
+    def http(url, *, method="GET", headers=None, body=None, **_):
+        if url.endswith(f"/pages/{page}"):
+            return json.dumps({"properties": {
+                "Nome": {"type": "title", "title": rich("rafael. Moura")},
+                "Pessoa": {"type": "people", "people": [{"name": "rafael. Moura", "person": {"email": "rafa@empresa.example"}}]},
+                "Criado por": {"type": "created_by", "created_by": {"name": "bia. Lopes"}},
+            }}).encode(), "application/json"
+        if f"/blocks/{page}/children" in url:
+            return json.dumps({"results": [{"id": "b1", "type": "paragraph", "paragraph": {"rich_text": [
+                {"type": "text", "plain_text": "Falar com "},
+                {"type": "mention", "plain_text": "@tom. Reis", "mention": {"type": "user", "user": {"name": "tom. Reis"}}},
+                {"type": "text", "plain_text": " sobre o contrato de rafael. Moura."},
+            ]}}], "has_more": False}).encode(), "application/json"
+        raise AssertionError(url)
+
+    monkeypatch.setattr(src, "http", http)
+    monkeypatch.setenv("NOTION_TOKEN", "token-de-teste")
+
+
+def test_notion_people_are_hidden_even_when_detection_misses(monkeypatch):
+    from veu.sources import protect_document
+
+    fake_notion_people(monkeypatch)
+    veu = Veu()
+    assert veu.analyze("rafael. Moura") == []  # a detecção sozinha não pega este formato
+    document = read_source("https://app.notion.com/p/Pagina-1f2e3d4c5b6a79788796a5b4c3d2e1f0")
+    assert document.known == {"rafael. Moura": "PESSOA", "rafa@empresa.example": "EMAIL", "bia. Lopes": "PESSOA",
+                              "tom. Reis": "PESSOA"}
+    title, text, counts = protect_document(document, veu.anonymizer, veu.new_vault())
+    assert title == "[PESSOA_1]"
+    for name in ("rafael", "Moura", "bia", "Lopes", "tom. Reis"):
+        assert name not in text
+    assert "@[PESSOA_3]" in text and counts["PESSOA"] >= 4
+
+
+def test_cli_ler_and_proxy_hide_notion_people(monkeypatch, capsys):
+    from veu.config import Config
+    from veu.gateway.adapters import detect_adapter
+    from veu.gateway.pipeline import Gateway
+
+    fake_notion_people(monkeypatch)
+    url = "https://app.notion.com/p/Pagina-1f2e3d4c5b6a79788796a5b4c3d2e1f0"
+    assert main(["ler", url, "--json"]) == 0
+    output = json.loads(capsys.readouterr().out)
+    assert "Moura" not in json.dumps(output) and output["escondidos"]["PESSOA"] >= 3
+
+    gateway = Gateway(Veu(Config(expand_links=True)))
+    body = json.dumps({"model": "m", "messages": [{"role": "user", "content": f"Resuma {url}"}]}).encode()
+    prepared = gateway.prepare(detect_adapter("POST", "/v1/chat/completions"), body)
+    sent = prepared.body.decode()
+    assert "[Conteúdo de" in sent and "Moura" not in sent and "Reis" not in sent

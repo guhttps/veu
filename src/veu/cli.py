@@ -165,9 +165,11 @@ def cmd_read(args) -> int:
     except (SourceError, ImportError) as exc:
         print(f"Erro: {exc}", file=sys.stderr)
         return 2
+    from veu.sources import protect_document
+
     session = veu.session(vault)
-    title = session.anonymize(document.title) if document.title else ""
-    text = session.anonymize(document.text)
+    title, text, counts = protect_document(document, session.anonymizer, session.vault)
+    session.counts.update(counts)
     if args.json:
         output = {**document.to_dict(), "titulo": title, "texto": text, "escondidos": dict(session.counts)}
         _write(json.dumps(output, ensure_ascii=False, indent=2) + "\n", args.saida)

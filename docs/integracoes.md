@@ -429,7 +429,7 @@ A `sessao` é criada pelo servidor na primeira chamada; envie-a de volta para co
 `veu ler` busca o conteúdo, converte para texto (Markdown, com tabelas) e já entrega protegido:
 
 ```bash
-veu ler https://www.notion.so/empresa/Atendimento-1f2e3d4c5b6a79788796a5b4c3d2e1f0
+veu ler https://app.notion.com/p/Atendimento-1f2e3d4c5b6a79788796a5b4c3d2e1f0
 veu ler https://docs.google.com/spreadsheets/d/1AbC.../edit#gid=0 --cofre cofre.json
 veu ler contrato.pdf --json
 veu ler https://site.example/politica-de-privacidade
@@ -442,6 +442,8 @@ veu ler https://site.example/politica-de-privacidade
 | **Links** | Qualquer página HTML, texto, JSON ou documento por URL |
 | **Word, Excel, PowerPoint e PDF** | Arquivos locais (`pip install "veu[documentos]"`) |
 
+Funcionam os links do Notion nos formatos `app.notion.com`, `notion.so` e `notion.site`. Pessoas que o próprio Notion identifica (propriedades do tipo pessoa, "criado por" e menções @) são sempre escondidas, mesmo quando o nome tem um formato que a detecção automática não reconheceria.
+
 Com `--cofre`, a resposta da IA pode ser restaurada depois: `veu restaurar resposta.txt --cofre cofre.json`. Para agentes, a ferramenta MCP `ler_protegido` faz o mesmo.
 
 ### Links no proxy
@@ -453,7 +455,7 @@ Com `expandir_links = true`, quando alguém manda um link do Notion ou do Google
 ```toml
 [servidor]
 expandir_links = true
-dominios_expandidos = ["notion.so", "notion.site", "docs.google.com", "wiki.minhaempresa.example"]
+dominios_expandidos = ["notion.so", "notion.com", "notion.site", "docs.google.com", "wiki.minhaempresa.example"]
 ```
 
 Só domínios da lista e só HTTPS são lidos, contra SSRF. O conteúdo fica em cache por 10 minutos, e argumentos de ferramentas não são expandidos.

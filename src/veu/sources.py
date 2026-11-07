@@ -2,7 +2,7 @@
 
 O conteúdo é lido na sua máquina e anonimizado antes de chegar à IA:
 
-    veu ler https://www.notion.so/minha-pagina-1f2e...          # NOTION_TOKEN no ambiente
+    veu ler https://app.notion.com/p/Minha-pagina-1f2e...      # NOTION_TOKEN no ambiente
     veu ler https://docs.google.com/spreadsheets/d/.../edit    # público pelo link ou GOOGLE_ACCESS_TOKEN
     veu ler contrato.docx
 
@@ -20,7 +20,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import dataclass
+from collections import Counter
+from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -45,9 +46,36 @@ class Document:
     title: str
     text: str
     kind: str
+    # Valores que a própria fonte diz serem dados pessoais (no Notion: propriedades do tipo pessoa, "criado por" e
+    # menções a usuários). São escondidos mesmo quando a detecção automática não os reconheceria ("gustavo. Cunha").
+    known: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {"fonte": self.source, "titulo": self.title, "tipo": self.kind, "texto": self.text}
+
+
+def replace_known(text: str, known: dict[str, str], anonymizer, vault, counts: Counter | None = None) -> str:
+    """Troca os valores conhecidos (do maior para o menor) respeitando o operador configurado."""
+    for value in sorted(known, key=len, reverse=True):
+        if value.strip() and value in text:
+            if counts is not None:
+                counts[known[value]] += text.count(value)
+            text = text.replace(value, anonymizer.replace_value(known[value], value, vault))
+    return text
+
+
+def protect_document(document: Document, anonymizer, vault) -> tuple[str, str, Counter]:
+    """Título e texto protegidos (valores conhecidos da fonte + detecção) e as contagens por tipo."""
+    counts: Counter = Counter()
+
+    def protect(text: str) -> str:
+        if not text:
+            return text
+        result = anonymizer.anonymize(replace_known(text, document.known, anonymizer, vault, counts), vault)
+        counts.update(result.counts())
+        return result.text
+
+    return protect(document.title), protect(document.text), counts
 
 
 # HTTP ---------------------------------------------------------------------------------------------------------------
@@ -91,7 +119,7 @@ def _decode(content: bytes, content_type: str) -> str:
 
 # Notion -------------------------------------------------------------------------------------------------------------
 
-_NOTION_HOSTS = ("notion.so", "notion.site")
+_NOTION_HOSTS = ("notion.so", "notion.com", "notion.site")
 # 32 dígitos hexadecimais (ou o UUID com hífens) que não estejam colados a outro dígito hexadecimal.
 _NOTION_ID = re.compile(
     r"(?<![0-9a-f])([0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?![0-9a-f])",
@@ -134,6 +162,28 @@ class NotionReader:
         self.max_depth = max_depth
         self.max_rows = max_rows
         self._blocks = 0
+        self.known: dict[str, str] = {}
+
+    def _person(self, user: dict | None) -> str:
+        """Nome de um usuário do Notion, guardado como dado pessoal (e o e-mail, se a API mandar)."""
+        user = user or {}
+        name = (user.get("name") or "").strip()
+        if name:
+            self.known[name] = "PESSOA"
+        email = ((user.get("person") or {}).get("email") or "").strip()
+        if email:
+            self.known[email] = "EMAIL"
+        return name
+
+    def _rich(self, items) -> str:
+        """Texto rico do Notion; menções a pessoas (@nome) entram como dado pessoal."""
+        for item in items or []:
+            mention = item.get("mention") or {}
+            if item.get("type") == "mention" and mention.get("type") == "user":
+                name = self._person(mention.get("user"))
+                if not name and item.get("plain_text", "").lstrip("@").strip():
+                    self.known[item["plain_text"].lstrip("@").strip()] = "PESSOA"
+        return _rich(items)
 
     def _call(self, path: str, method: str = "GET", body: dict | None = None) -> dict:
         content, _ = http(f"https://api.notion.com/v1/{path}", method=method, body=body, headers={
@@ -151,17 +201,18 @@ class NotionReader:
                 return self.read_database(url, identifier)
             except SourceError:
                 raise SourceError(f"{exc}. {NOTION_HELP}") from exc
-        title = next((_rich(p.get("title")) for p in page.get("properties", {}).values() if p.get("type") == "title"), "")
+        title = next((self._rich(p.get("title")) for p in page.get("properties", {}).values()
+                      if p.get("type") == "title"), "")
         lines = [f"# {title}"] if title else []
         properties = self._properties(page.get("properties", {}))
         if properties:
             lines.append("\n".join(f"- **{name}:** {value}" for name, value in properties if value))
         lines.extend(self._children(identifier, 0))
-        return Document(url, title, "\n\n".join(line for line in lines if line), "notion")
+        return Document(url, title, "\n\n".join(line for line in lines if line), "notion", dict(self.known))
 
     def read_database(self, url: str, identifier: str) -> Document:
         database = self._call(f"databases/{identifier}")
-        title = _rich(database.get("title"))
+        title = self._rich(database.get("title"))
         rows, cursor = [], None
         while len(rows) < self.max_rows:
             body = {"page_size": 100, **({"start_cursor": cursor} if cursor else {})}
@@ -177,7 +228,7 @@ class NotionReader:
         ]
         from veu.documents import _table_markdown
 
-        return Document(url, title, f"# {title}\n\n{_table_markdown(table)}", "notion")
+        return Document(url, title, f"# {title}\n\n{_table_markdown(table)}", "notion", dict(self.known))
 
     def _properties(self, properties: dict, include_title: bool = False) -> list[tuple[str, str]]:
         """Propriedades como texto. O título fica de fora na página (já vira o # título), mas não nas linhas de bases."""
@@ -188,11 +239,13 @@ class NotionReader:
             if kind == "title" and not include_title:
                 continue
             if kind in ("title", "rich_text"):
-                text = _rich(value)
+                text = self._rich(value)
             elif kind in ("select", "status"):
                 text = (value or {}).get("name", "")
-            elif kind in ("multi_select", "people"):
+            elif kind == "multi_select":
                 text = ", ".join(item.get("name", "") for item in value or [])
+            elif kind == "people":
+                text = ", ".join(self._person(item) for item in value or [])
             elif kind == "date":
                 text = (value or {}).get("start", "") or ""
             elif kind == "checkbox":
@@ -202,7 +255,7 @@ class NotionReader:
             elif kind in ("number", "email", "phone_number", "url", "created_time", "last_edited_time"):
                 text = "" if value is None else str(value)
             elif kind in ("created_by", "last_edited_by"):
-                text = (value or {}).get("name", "")
+                text = self._person(value)
             else:
                 text = ""
             output.append((name, text))
@@ -232,7 +285,7 @@ class NotionReader:
     def _block(self, block: dict, numbered: int) -> str:
         kind = block.get("type", "")
         data = block.get(kind, {}) or {}
-        text = _rich(data.get("rich_text"))
+        text = self._rich(data.get("rich_text"))
         prefix = {
             "heading_1": "# ", "heading_2": "## ", "heading_3": "### ", "bulleted_list_item": "- ", "quote": "> ",
             "toggle": "- ",
@@ -255,13 +308,13 @@ class NotionReader:
         if kind == "child_database":
             return f"## {data.get('title', '')} (base de dados)"
         if kind == "table_row":
-            return "| " + " | ".join(_rich(cell) for cell in data.get("cells", [])) + " |"
+            return "| " + " | ".join(self._rich(cell) for cell in data.get("cells", [])) + " |"
         if kind == "equation":
             return f"$${data.get('expression', '')}$$"
         if kind in ("bookmark", "link_preview", "embed"):
             return data.get("url", "")
         if kind in ("image", "file", "pdf", "video", "audio"):
-            caption = _rich(data.get("caption"))
+            caption = self._rich(data.get("caption"))
             return f"[{kind}{': ' + caption if caption else ''}]"
         return text
 
@@ -424,13 +477,13 @@ class LinkExpander:
     Só busca domínios da lista (proteção contra SSRF), guarda o conteúdo por alguns minutos e limita o tamanho.
     """
 
-    def __init__(self, domains: tuple[str, ...] = ("notion.so", "notion.site", "docs.google.com"), *,
+    def __init__(self, domains: tuple[str, ...] = ("notion.so", "notion.com", "notion.site", "docs.google.com"), *,
                  max_chars: int = 100_000, ttl: float = 600.0, reader=read_source):
         self.domains = tuple(domain.lower().lstrip(".") for domain in domains)
         self.max_chars = max_chars
         self.ttl = ttl
         self.reader = reader
-        self._cache: dict[str, tuple[float, str]] = {}
+        self._cache: dict[str, tuple[float, str, dict[str, str]]] = {}
         self._lock = threading.Lock()
 
     def allowed(self, url: str) -> bool:
@@ -438,23 +491,35 @@ class LinkExpander:
         host = (parts.hostname or "").lower()
         return parts.scheme == "https" and any(host == d or host.endswith("." + d) for d in self.domains)
 
-    def _content(self, url: str) -> str:
+    def _content(self, url: str) -> tuple[str, dict[str, str]]:
         now = time.monotonic()
         with self._lock:
             cached = self._cache.get(url)
             if cached and now - cached[0] < self.ttl:
-                return cached[1]
+                return cached[1], cached[2]
+        known: dict[str, str] = {}
         try:
             document = self.reader(url)
             text = document.text[: self.max_chars]
+            known = dict(getattr(document, "known", {}) or {})
             content = f"\n\n[Conteúdo de {url}]\n{text}\n[Fim do conteúdo]"
         except (SourceError, ImportError, ValueError) as exc:
             content = f"\n\n[O Véu não conseguiu ler {_safe_url(url)}: {exc}]"
         with self._lock:
-            self._cache[url] = (now, content)
-        return content
+            self._cache[url] = (now, content, known)
+        return content, known
+
+    def expand_with_known(self, text: str) -> tuple[str, dict[str, str]]:
+        """Texto com o conteúdo dos links permitidos e os dados pessoais que a fonte informou (para esconder)."""
+        urls = [match.group(0).rstrip(".,;:!?") for match in _URL.finditer(text)]
+        known: dict[str, str] = {}
+        additions = []
+        for url in dict.fromkeys(urls):
+            if self.allowed(url):
+                content, found = self._content(url)
+                additions.append(content)
+                known.update(found)
+        return (text + "".join(additions) if additions else text), known
 
     def expand(self, text: str) -> str:
-        urls = [match.group(0).rstrip(".,;:!?") for match in _URL.finditer(text)]
-        additions = [self._content(url) for url in dict.fromkeys(urls) if self.allowed(url)]
-        return text + "".join(additions) if additions else text
+        return self.expand_with_known(text)[0]

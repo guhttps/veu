@@ -122,7 +122,7 @@ class Config:
     metrics: bool = True
     # Troca links do Notion e do Google (e de outros domínios da lista) pelo conteúdo já protegido.
     expand_links: bool = False
-    expand_domains: tuple[str, ...] = ("notion.so", "notion.site", "docs.google.com")
+    expand_domains: tuple[str, ...] = ("notion.so", "notion.com", "notion.site", "docs.google.com")
     # "memoria" (padrão) ou uma URL redis://, para várias réplicas do servidor compartilharem as sessões.
     session_backend: str = "memoria"
     # Com segredo, cada linha da auditoria leva um HMAC encadeado: alterar ou apagar linhas fica detectável.

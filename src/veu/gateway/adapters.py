@@ -27,7 +27,8 @@ class Masker:
         self.anonymizer = anonymizer
         self.vault = vault
         self.counts: Counter[str] = Counter()
-        # expand(texto) acrescenta o conteúdo de links permitidos (Notion, Google) antes de esconder os dados.
+        # expand(texto) -> (texto, conhecidos): acrescenta o conteúdo de links permitidos (Notion, Google) e informa
+        # os dados pessoais que a fonte já marcou, para esconder antes da detecção.
         self.expand = expand
         self._in_arguments = False
 
@@ -35,7 +36,11 @@ class Masker:
         if not isinstance(value, str) or not value:
             return value
         if self.expand is not None and not self._in_arguments:
-            value = self.expand(value)
+            value, known = self.expand(value)
+            if known:
+                from veu.sources import replace_known
+
+                value = replace_known(value, known, self.anonymizer, self.vault, self.counts)
         result = self.anonymizer.anonymize(value, self.vault)
         self.counts.update(result.counts())
         return result.text

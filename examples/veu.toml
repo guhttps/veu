@@ -81,7 +81,7 @@ operador_por_requisicao = true
 metricas = true
 # Lê links do Notion e do Google enviados nas mensagens e manda o conteúdo já protegido (NOTION_TOKEN no ambiente).
 expandir_links = false
-dominios_expandidos = ["notion.so", "notion.site", "docs.google.com"]
+dominios_expandidos = ["notion.so", "notion.com", "notion.site", "docs.google.com"]
 # "memoria" ou uma URL redis:// (várias réplicas compartilhando as sessões; o Redis guarda dados reais).
 sessoes = "memoria"
 # Com segredo, cada linha da auditoria leva um HMAC encadeado. Confira com: veu auditoria verificar arquivo.jsonl

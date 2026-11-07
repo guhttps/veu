@@ -186,15 +186,10 @@ def build_server(veu: Veu | None = None) -> MCPServer:
         else:
             sessao = SessionStore.new_id()
             vault = sessions.get(sessao)
-        counts: Counter[str] = Counter()
-        title = ""
-        if document.title:
-            titled = instance.anonymize(document.title, vault)
-            title = titled.text
-            counts.update(titled.counts())
-        result = instance.anonymize(document.text, vault)
-        counts.update(result.counts())
-        return {"fonte": fonte, "titulo": title, "tipo": document.kind, "texto": result.text, "sessao": sessao,
+        from veu.sources import protect_document
+
+        title, text, counts = protect_document(document, instance.anonymizer, vault)
+        return {"fonte": fonte, "titulo": title, "tipo": document.kind, "texto": text, "sessao": sessao,
                 "escondidos": dict(counts)}
 
     @server.tool(description="Lista os dados pessoais de um texto (tipo, posição e valor mascarado).")

@@ -63,7 +63,7 @@ class Gateway:
         if not isinstance(payload, dict):
             raise ValueError("O corpo da requisição precisa ser um objeto JSON.")
         vault = self.veu.new_vault() if vault is None else vault
-        masker = Masker(self.veu.anonymizer, vault, self.expander.expand if self.expander else None)
+        masker = Masker(self.veu.anonymizer, vault, self.expander.expand_with_known if self.expander else None)
         adapter.mask(payload, masker)
         policy = set(self.config.block if block is None else block)
         blocked = sorted(label for label in masker.counts if label in policy)
