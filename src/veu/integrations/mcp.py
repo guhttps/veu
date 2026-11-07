@@ -230,11 +230,14 @@ def build_server(veu: Veu | None = None, *, restore_text: bool = False) -> MCPSe
 
     @server.tool(description="Grava num arquivo local o texto com os dados reais no lugar dos marcadores de uma "
                              "sessão (por exemplo, a resposta final para o usuário). Devolve só o caminho: os dados "
-                             "reais não voltam para a conversa. Links e URLs continuam com os marcadores.")
+                             "reais não voltam para a conversa. Links e URLs continuam com os marcadores. Não sobrescreve "
+                             "arquivos existentes.")
     @_expected_errors
     def restaurar_para_arquivo(texto: str, sessao: str, destino: str) -> TextoRestaurado:
         vault = _session_vault(sessao)
         target = Path(destino).expanduser()
+        if target.exists():  # nunca sobrescreve: o texto vem do modelo, que pode ter sido manipulado
+            raise ValueError(f"O arquivo {target} já existe. Escolha outro nome.")
         target.write_text(vault.restore(texto), encoding="utf-8")
         return {"destino": str(target), "restaurados": len(vault.restore_spans(texto))}
 
