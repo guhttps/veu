@@ -38,7 +38,7 @@
     if (-not (Get-Command uv -ErrorAction SilentlyContinue)) { Falhou "Nao consegui instalar o uv." }
 
     Passo "2 de 3: instalando o Veu (pode levar um minuto)..."
-    uv tool install --force --python 3.13 $pacote
+    uv tool install --force --refresh-package veu --python 3.13 $pacote
     if ($LASTEXITCODE -ne 0) { Falhou "Nao consegui instalar o Veu." }
     uv tool update-shell *> $null
     $veu = Join-Path ((uv tool dir --bin) | Out-String).Trim() "veu.exe"

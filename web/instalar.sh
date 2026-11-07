@@ -26,7 +26,7 @@ fi
 
 echo ""
 echo "  2 de 3: instalando o Véu (pode levar um minuto)..."
-uv tool install --force --python 3.13 "$pacote"
+uv tool install --force --refresh-package veu --python 3.13 "$pacote"
 uv tool update-shell >/dev/null 2>&1 || true
 veu="$(uv tool dir --bin)/veu"
 
