@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from veu import Veu  # noqa: E402
+from veu.bench.desafio import challenge_samples  # noqa: E402
 from veu.bench.generator import generate  # noqa: E402
 from veu.bench.hard import hard_samples  # noqa: E402
 
@@ -32,12 +33,16 @@ EXTRA = [
     "Encontro na Praça da Sé às 10h com a Dra. Ana Lúcia",
     "O Banco do Brasil e a Construtora Horizonte Ltda assinaram com João Pereira",
     "Março foi bom para o Marco e para a Rosa.",
+    "CPF: 529.982.***-** e ***.982.247-**; CNPJ 11.222.333/****-** e 11 222 333 0001 81",
+    "RG nº 12.34***-*, CNH nº 02650******, Título de Eleitor nº 1023****0191, CEP 01310 100",
+    "RG 12 345 678 9 e CNH 0265030646-1; o campo ***.***.***-** veio vazio",
 ]
 
 
 def main() -> None:
     veu = Veu()
     texts = EXTRA + [sample.text for sample in generate(200, seed=11)] + [sample.text for sample in hard_samples()]
+    texts += [sample.text for sample in challenge_samples()]  # só para conferir que as duas versões dão o mesmo
     cases = []
     for text in dict.fromkeys(texts):
         if any(ord(char) > 0xFFFF for char in text):

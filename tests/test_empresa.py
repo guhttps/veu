@@ -181,4 +181,23 @@ def test_deploy_configs_load(monkeypatch, tmp_path):
 def test_demonstrar(capsys):
     assert main(["demonstrar"]) == 0
     output = capsys.readouterr().out
-    assert output.count("VAZOU") == 7 and "nenhum dos valores chegou ao provedor" in output
+    assert output.count("VAZOU") == 7 and "nenhum valor chegou ao provedor" in output
+    assert output.count("bloqueado") == 3 and "desarmado" in output and "NÃO" not in output
+
+
+def test_demonstrar_fails_when_restoration_is_unsafe(capsys, monkeypatch):
+    from veu.vault import RestorePolicy
+
+    monkeypatch.setattr(RestorePolicy, "allows", lambda self, label, before, *, tool: True)
+    assert main(["demonstrar"]) == 1
+    output = capsys.readouterr().out
+    assert output.count("VAZOU") == 7 + 3 and "problema(s)" in output
+
+
+def test_demonstrar_negative_control(capsys, monkeypatch):
+    from veu import demo
+
+    original = demo._request
+    monkeypatch.setattr(demo, "_request", lambda: {**original(), "messages": original()["messages"][:1]})
+    assert main(["demonstrar"]) == 3
+    assert "Controle falhou" in capsys.readouterr().out

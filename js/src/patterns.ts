@@ -93,6 +93,13 @@ const CTX_IBAN = ["iban", "swift", "bic", "transferencia internacional", "conta 
 
 const phoneAdjust = (value: string, score: number): number => (/[()\s.+-]/u.test(value) ? score : score - 0.3);
 const isYear = (value: string): boolean => /^(?:19|20)\d{2}$/.test(value);
+// Documentos já mascarados pela metade ("324.327.***-**", "***.982.247-**"): os dígitos que sobram ainda
+// identificam a pessoa. Só valem com pelo menos 3 dígitos à mostra.
+const M = "[\\d*xX\\u2022]";
+const MB = "(?<![\\p{L}\\p{N}_*])";
+const ME = "(?![\\p{L}\\p{N}_*])";
+const partiallyMasked = (value: string): boolean =>
+  [...value].filter((char) => /\d/.test(char)).length >= 3 && /[*xX\u2022]/.test(value);
 const MONTHS = "janeiro|fevereiro|mar[cç]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro";
 
 export const DEFAULT_SPECS: PatternSpec[] = [
@@ -101,18 +108,29 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   spec("CPF", `${B}\\d{9}-\\d{2}${E}`, S(0.9, 0.4, 1.0, 0.65), { validator: v.isValidCpf, context: CTX_CPF }),
   spec("CPF", `${B}\\d{3}\\s\\d{3}\\s\\d{3}\\s\\d{2}${E}`, S(0.85, null, 0.95, 0.6), { validator: v.isValidCpf, context: CTX_CPF }),
   spec("CPF", `${B}\\d{11}${E}`, S(0.75, null, 0.95, 0.6), { validator: v.isValidCpf, context: CTX_CPF }),
+  spec("CPF", `${MB}${M}{3}\\.${M}{3}\\.${M}{3}-${M}{2}${ME}`, S(0.85, null, 0.97),
+    { validator: partiallyMasked, context: CTX_CPF, name: "mascarado" }),
   // CNPJ (numérico e alfanumérico)
   spec("CNPJ", `${B}[0-9A-Z]{2}\\.[0-9A-Z]{3}\\.[0-9A-Z]{3}/[0-9A-Z]{4}-\\d{2}${E}`, S(0.95, 0.5, 1.0, 0.7),
     { validator: v.isValidCnpj, context: CTX_CNPJ }),
   spec("CNPJ", `${B}\\d{14}${E}`, S(0.75, null, 0.95, 0.6), { validator: v.isValidCnpj, context: CTX_CNPJ }),
+  spec("CNPJ", `${B}\\d{2}\\s\\d{3}\\s\\d{3}\\s\\d{4}\\s\\d{2}${E}`, S(0.85, null, 0.95, 0.6),
+    { validator: v.isValidCnpj, context: CTX_CNPJ }),
+  spec("CNPJ", `${MB}${M}{2}\\.${M}{3}\\.${M}{3}/${M}{4}-${M}{2}${ME}`, S(0.85, null, 0.97),
+    { validator: partiallyMasked, context: CTX_CNPJ, name: "mascarado" }),
   spec("CNPJ", `${B}(?=[0-9A-Z]{12}\\d{2}${E})(?=[0-9]*[A-Z])[0-9A-Z]{12}\\d{2}${E}`, S(0.6, null, 0.95, 0.55),
     { validator: v.isValidCnpj, context: CTX_CNPJ }),
   // Documentos que dependem de contexto
   spec("PIS", `${B}\\d{3}\\.\\d{5}\\.\\d{2}-\\d${E}`, S(0.85, 0.45, 1.0, 0.75), { validator: v.isValidPis, context: CTX_PIS }),
   spec("PIS", `${B}\\d{11}${E}`, S(null, null, 0.97, 0.65), { validator: v.isValidPis, context: CTX_PIS, before: 25 }),
   spec("CNH", `${B}\\d{11}${E}`, S(null, null, 0.97, 0.75), { validator: v.isValidCnh, context: CTX_CNH, before: 30 }),
+  spec("CNH", `${B}\\d{10}-\\d${E}`, S(null, null, 0.97, 0.75), { validator: v.isValidCnh, context: CTX_CNH, before: 30 }),
+  spec("CNH", `${MB}${M}{11}${ME}`, S(null, null, 0.9),
+    { validator: partiallyMasked, context: CTX_CNH, before: 30, name: "mascarado" }),
   spec("TITULO_ELEITOR", `${B}\\d{4}\\s?\\d{4}\\s?\\d{4}${E}`, S(null, null, 0.95, 0.75),
     { validator: v.isValidTituloEleitor, context: CTX_TITULO, before: 30 }),
+  spec("TITULO_ELEITOR", `${MB}${M}{4}\\s?${M}{4}\\s?${M}{4}${ME}`, S(null, null, 0.9),
+    { validator: partiallyMasked, context: CTX_TITULO, before: 30, name: "mascarado" }),
   spec("RENAVAM", `${B}\\d{9,11}${E}`, S(null, null, 0.97, 0.75),
     { validator: v.isValidRenavam, context: CTX_RENAVAM, before: 25 }),
   spec("CNS", `${B}[12789]\\d{2}\\s?\\d{4}\\s?\\d{4}\\s?\\d{4}${E}`, S(0.6, null, 0.97, 0.65),
@@ -120,6 +138,9 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   spec("RG", `${B}\\d{1,2}\\.\\d{3}\\.\\d{3}-[\\dXx]${E}`, S(0.6, null, 0.95), { context: CTX_RG }),
   spec("RG", `${B}\\d{7,9}-?[\\dXx]?${E}`, S(null, null, 0.85), { context: CTX_RG, before: 20 }),
   spec("RG", `${B}[A-Z]{2}-?\\d{1,2}\\.?\\d{3}\\.?\\d{3}${E}`, S(null, null, 0.85), { context: CTX_RG, before: 20 }),
+  spec("RG", `${B}\\d{1,2}\\s\\d{3}\\s\\d{3}\\s[\\dXx]${E}`, S(null, null, 0.85), { context: CTX_RG, before: 20 }),
+  spec("RG", `${MB}${M}{1,2}\\.?${M}{3}\\.?${M}{2,3}-?${M}${ME}`, S(null, null, 0.85),
+    { validator: partiallyMasked, context: CTX_RG, before: 20, name: "mascarado" }),
   spec("PASSAPORTE", `${B}[A-Z]{2}\\d{6}${E}`, S(null, null, 0.9), { context: CTX_PASSAPORTE, before: 30 }),
   // Contatos
   spec("EMAIL", `(?<![\\p{L}\\p{N}_.+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}${E}`,
@@ -136,6 +157,7 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   spec("CEP", `${B}\\d{5}-\\d{3}${E}`, S(0.75, null, 0.95), { context: CTX_CEP }),
   spec("CEP", `${B}\\d{2}\\.\\d{3}-\\d{3}${E}`, S(0.8, null, 0.95), { context: CTX_CEP }),
   spec("CEP", `${B}\\d{8}${E}`, S(null, null, 0.85), { context: CTX_CEP, before: 15 }),
+  spec("CEP", `${B}\\d{5}\\s\\d{3}${E}`, S(null, null, 0.85), { context: CTX_CEP, before: 15 }),
   spec("PLACA", `${B}[A-Z]{3}-\\d{4}${E}`, S(0.8, null, 0.95), { context: CTX_PLATE }),
   spec("PLACA", `${B}[A-Z]{3}\\d[A-Z]\\d{2}${E}`, S(0.75, null, 0.95), { context: CTX_PLATE }),
   spec("PLACA", `${B}[A-Z]{3}\\d{4}${E}`, S(0.45, null, 0.9), { context: CTX_PLATE }),

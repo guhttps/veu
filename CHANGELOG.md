@@ -5,6 +5,16 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+- **Avaliação com dados de terceiros:** `veu avaliar --externo br-agentic|privacy-filter-br|todos` baixa uma vez (versão fixa, conferida pelo sha256) dois conjuntos públicos em português e mede o vazamento, com intervalo de confiança de 95% e a lista dos tipos que estão fora do escopo do Véu.
+- **Conjunto de desafio congelado** (41 textos escritos à mão), incluído no `veu avaliar`. Um teste impede editá-lo.
+- **Comparação com o Microsoft Presidio** nos mesmos textos (`scripts/comparar_presidio.py`): 2,6% de vazamento do Véu contra 52,0% do Presidio no privacy-filter-br, e 23,3% contra 53,1% no BR-Agentic.
+- `veu demonstrar` testa também ataques à restauração (CPF na URL de uma imagem, chave num link e num comando, marcador forjado) e tem um controle negativo: sai com 3 se o envio direto não vazar, porque nesse caso a demonstração não estaria medindo nada.
+- Documentos já mascarados pela metade (`529.982.***-**`, `***.982.247-**`, `11.222.333/****-**`, e RG, CNH e título com contexto), CNPJ, RG e CEP com espaços e CNH com hífen. No holdout do privacy-filter-br, o vazamento caiu de 20,2% para 6,4%.
+
+### Alterado
+- `veu avaliar --max-vazamento` vale para a validação (e para o conjunto escolhido), não para o desafio, que existe para mostrar onde o Véu ainda erra.
+
 ## [0.6.0] - 2026-11-07
 
 Restauração segura contra injeção de prompt. Como o provedor de IA só vê marcadores, o dado real só reaparece na restauração; agora ela segue regras fixas, que não dependem de o modelo obedecer.

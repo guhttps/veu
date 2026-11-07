@@ -40,7 +40,7 @@ No Windows, o ambiente virtual fica em `.venv/Scripts/`.
 ## Regras
 
 - Nunca use dados pessoais reais em código, testes, exemplos ou commits. Gere valores com `veu.surrogates`.
-- Não ajuste o detector olhando `VALIDATION_TEMPLATES` em `bench/generator.py`: esse conjunto mede a generalização.
+- Não ajuste o detector olhando `VALIDATION_TEMPLATES` em `bench/generator.py`, o conjunto de desafio (`bench/desafio.py`, congelado: um teste confere o sha256) nem os conjuntos externos de teste (`veu avaliar --externo`: BR-Agentic e o holdout do privacy-filter-br). Eles medem a generalização. Para investigar erros, use a parte de treino do privacy-filter-br.
 - Toda correção de detecção vem com um teste que falharia sem ela.
 - Identificadores em inglês; textos para o usuário, chaves do `veu.toml` e comandos da CLI em português do Brasil.
 - O núcleo (`veu` sem extras) não pode ganhar dependências. Servidor e integrações usam extras opcionais, importados só dentro do módulo da integração. A biblioteca JavaScript também não tem dependências de execução.

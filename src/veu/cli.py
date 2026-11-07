@@ -284,29 +284,50 @@ def cmd_shortcuts(args) -> int:
 
 
 def cmd_evaluate(args) -> int:
+    from veu.bench.desafio import challenge_samples
     from veu.bench.evaluate import evaluate
     from veu.bench.generator import generate, load
     from veu.bench.hard import hard_samples
 
     veu = _veu(args)
-    if args.dataset:
+    external = {}
+    if args.externo:
+        from veu.bench.external import TEST_SETS, load_external
+
+        names = list(TEST_SETS) if args.externo == "todos" else [args.externo]
+        sets = {}
+        for name in names:
+            samples, skipped, dataset = load_external(name, args.limite)
+            sets[name] = samples
+            external[name] = (skipped, dataset)
+    elif args.dataset:
         sets = {"arquivo": load(args.dataset)}
     else:
         sets = {
             "desenvolvimento": generate(args.quantidade, args.semente),
             "validacao": generate(args.quantidade, args.semente + 1, validation=True),
             "dificeis": hard_samples(),
+            # Escrito à mão e congelado: mede a generalização, não é usado para ajustar os detectores.
+            "desafio": challenge_samples(),
         }
     reports = {name: evaluate(samples, veu) for name, samples in sets.items()}
+    for name, (skipped, _) in external.items():
+        reports[name].out_of_scope = dict(skipped)
     if args.json:
         print(json.dumps({name: report.to_dict() for name, report in reports.items()}, ensure_ascii=False, indent=2))
     else:
         for name, report in reports.items():
             speed = report.to_dict()["caracteres_por_segundo"]
             print(f"\n## Conjunto: {name} ({report.samples} textos, {speed} caracteres/s)\n")
-            print(report.to_markdown())
+            if name in external:
+                dataset = external[name][1]
+                print(f"{dataset.title}, licença {dataset.license}: {dataset.page}\n")
+            print(report.to_markdown(precision=name not in external))
     if args.max_vazamento is not None:
-        worst = max(report.overall.leak_rate for report in reports.values())
+        # O desafio mostra onde o Véu ainda erra; o limite vale para os outros conjuntos (com os gerados, o que
+        # importa é a validação, que o ajuste dos detectores não vê).
+        gated = [report for name, report in reports.items() if name not in ("desafio", "desenvolvimento")]
+        worst = max(report.overall.leak_rate for report in gated)
         if worst > args.max_vazamento:
             print(f"\nVazamento {worst:.2%} acima do máximo permitido ({args.max_vazamento:.2%}).", file=sys.stderr)
             return 1
@@ -439,7 +460,12 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--quantidade", type=int, default=1000)
     sub.add_argument("--semente", type=int, default=42)
     sub.add_argument("--json", action="store_true")
-    sub.add_argument("--max-vazamento", type=float, help="falha se o vazamento passar deste valor (0 a 1)")
+    sub.add_argument("--max-vazamento", type=float,
+                     help="falha se o vazamento da validação (ou do conjunto escolhido) passar deste valor (0 a 1)")
+    sub.add_argument("--externo", choices=("br-agentic", "privacy-filter-br", "privacy-filter-br-treino", "todos"),
+                     help="conjunto público de terceiros, baixado uma vez (versão fixa, conferida pelo sha256); "
+                          "todos = os dois de teste")
+    sub.add_argument("--limite", type=int, help="usa só as primeiras N amostras do conjunto externo")
     common(sub)
     sub.set_defaults(func=cmd_evaluate)
 

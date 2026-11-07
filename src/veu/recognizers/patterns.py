@@ -94,6 +94,15 @@ def _phone_adjust(value: str, score: float) -> float | None:
     return score if formatted else score - 0.3
 
 
+# Documentos já mascarados pela metade ("324.327.***-**", "***.982.247-**"): os dígitos que sobram ainda
+# identificam a pessoa. Só valem com pelo menos 3 dígitos à mostra.
+M = r"[\d*xX\u2022]"
+
+
+def _partially_masked(value: str) -> bool:
+    return sum(char.isdigit() for char in value) >= 3 and any(char in "*xX\u2022" for char in value)
+
+
 def _is_year(value: str) -> bool:
     return bool(re.fullmatch(r"(?:19|20)\d{2}", value))
 
@@ -106,12 +115,18 @@ DEFAULT_SPECS: list[PatternSpec] = [
     PatternSpec("CPF", B + r"\d{9}-\d{2}" + E, Scores(0.9, 0.4, 1.0, 0.65), v.is_valid_cpf, CTX_CPF),
     PatternSpec("CPF", B + r"\d{3}\s\d{3}\s\d{3}\s\d{2}" + E, Scores(0.85, None, 0.95, 0.6), v.is_valid_cpf, CTX_CPF),
     PatternSpec("CPF", B + r"\d{11}" + E, Scores(0.75, None, 0.95, 0.6), v.is_valid_cpf, CTX_CPF),
+    PatternSpec("CPF", rf"(?<![\w*]){M}{{3}}\.{M}{{3}}\.{M}{{3}}-{M}{{2}}(?![\w*])", Scores(0.85, None, 0.97),
+                _partially_masked, CTX_CPF, name="mascarado"),
     # CNPJ (numérico e alfanumérico)
     PatternSpec(
         "CNPJ", B + r"[0-9A-Z]{2}\.[0-9A-Z]{3}\.[0-9A-Z]{3}/[0-9A-Z]{4}-\d{2}" + E,
         Scores(0.95, 0.5, 1.0, 0.7), v.is_valid_cnpj, CTX_CNPJ,
     ),
     PatternSpec("CNPJ", B + r"\d{14}" + E, Scores(0.75, None, 0.95, 0.6), v.is_valid_cnpj, CTX_CNPJ),
+    PatternSpec("CNPJ", B + r"\d{2}\s\d{3}\s\d{3}\s\d{4}\s\d{2}" + E, Scores(0.85, None, 0.95, 0.6), v.is_valid_cnpj,
+                CTX_CNPJ),
+    PatternSpec("CNPJ", rf"(?<![\w*]){M}{{2}}\.{M}{{3}}\.{M}{{3}}/{M}{{4}}-{M}{{2}}(?![\w*])", Scores(0.85, None, 0.97),
+                _partially_masked, CTX_CNPJ, name="mascarado"),
     PatternSpec(
         "CNPJ", B + r"(?=[0-9A-Z]{12}\d{2}" + E + r")(?=[0-9]*[A-Z])[0-9A-Z]{12}\d{2}" + E,
         Scores(0.6, None, 0.95, 0.55), v.is_valid_cnpj, CTX_CNPJ,
@@ -120,10 +135,15 @@ DEFAULT_SPECS: list[PatternSpec] = [
     PatternSpec("PIS", B + r"\d{3}\.\d{5}\.\d{2}-\d" + E, Scores(0.85, 0.45, 1.0, 0.75), v.is_valid_pis, CTX_PIS),
     PatternSpec("PIS", B + r"\d{11}" + E, Scores(None, None, 0.97, 0.65), v.is_valid_pis, CTX_PIS, before=25),
     PatternSpec("CNH", B + r"\d{11}" + E, Scores(None, None, 0.97, 0.75), v.is_valid_cnh, CTX_CNH, before=30),
+    PatternSpec("CNH", B + r"\d{10}-\d" + E, Scores(None, None, 0.97, 0.75), v.is_valid_cnh, CTX_CNH, before=30),
+    PatternSpec("CNH", rf"(?<![\w*]){M}{{11}}(?![\w*])", Scores(None, None, 0.9), _partially_masked, CTX_CNH, before=30,
+                name="mascarado"),
     PatternSpec(
         "TITULO_ELEITOR", B + r"\d{4}\s?\d{4}\s?\d{4}" + E, Scores(None, None, 0.95, 0.75),
         v.is_valid_titulo_eleitor, CTX_TITULO, before=30,
     ),
+    PatternSpec("TITULO_ELEITOR", rf"(?<![\w*]){M}{{4}}\s?{M}{{4}}\s?{M}{{4}}(?![\w*])", Scores(None, None, 0.9),
+                _partially_masked, CTX_TITULO, before=30, name="mascarado"),
     PatternSpec(
         "RENAVAM", B + r"\d{9,11}" + E, Scores(None, None, 0.97, 0.75), v.is_valid_renavam, CTX_RENAVAM, before=25,
     ),
@@ -133,6 +153,9 @@ DEFAULT_SPECS: list[PatternSpec] = [
     PatternSpec("RG", B + r"\d{1,2}\.\d{3}\.\d{3}-[\dXx]" + E, Scores(0.6, None, 0.95), None, CTX_RG),
     PatternSpec("RG", B + r"\d{7,9}-?[\dXx]?" + E, Scores(None, None, 0.85), None, CTX_RG, before=20),
     PatternSpec("RG", B + r"[A-Z]{2}-?\d{1,2}\.?\d{3}\.?\d{3}" + E, Scores(None, None, 0.85), None, CTX_RG, before=20),
+    PatternSpec("RG", B + r"\d{1,2}\s\d{3}\s\d{3}\s[\dXx]" + E, Scores(None, None, 0.85), None, CTX_RG, before=20),
+    PatternSpec("RG", rf"(?<![\w*]){M}{{1,2}}\.?{M}{{3}}\.?{M}{{2,3}}-?{M}(?![\w*])", Scores(None, None, 0.85),
+                _partially_masked, CTX_RG, before=20, name="mascarado"),
     PatternSpec("PASSAPORTE", B + r"[A-Z]{2}\d{6}" + E, Scores(None, None, 0.9), None, CTX_PASSAPORTE, before=30),
     # Contatos
     PatternSpec(
@@ -155,6 +178,7 @@ DEFAULT_SPECS: list[PatternSpec] = [
     PatternSpec("CEP", B + r"\d{5}-\d{3}" + E, Scores(0.75, None, 0.95), None, CTX_CEP),
     PatternSpec("CEP", B + r"\d{2}\.\d{3}-\d{3}" + E, Scores(0.8, None, 0.95), None, CTX_CEP),
     PatternSpec("CEP", B + r"\d{8}" + E, Scores(None, None, 0.85), None, CTX_CEP, before=15),
+    PatternSpec("CEP", B + r"\d{5}\s\d{3}" + E, Scores(None, None, 0.85), None, CTX_CEP, before=15),
     PatternSpec("PLACA", B + r"[A-Z]{3}-\d{4}" + E, Scores(0.8, None, 0.95), None, CTX_PLATE),
     PatternSpec("PLACA", B + r"[A-Z]{3}\d[A-Z]\d{2}" + E, Scores(0.75, None, 0.95), None, CTX_PLATE),
     PatternSpec("PLACA", B + r"[A-Z]{3}\d{4}" + E, Scores(0.45, None, 0.9), None, CTX_PLATE),
