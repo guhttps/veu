@@ -69,6 +69,7 @@ BUILTIN_PROVIDERS: dict[str, ProviderConfig] = {
     )
 }
 PROVIDER_KINDS = ("openai", "anthropic", "gemini", "ollama")
+MIN_SECRET_LENGTH = 32
 DETECTORS = ("padroes", "nomes", "enderecos", "segredos", "spacy", "llm")
 PLUGIN_GROUP = "veu.detectores"
 
@@ -100,6 +101,11 @@ class Config:
     instruct_model: bool = True
     link_names: bool = True
     secret: str | None = None
+    # Restauração: onde os dados reais podem voltar (veja veu.vault.RestorePolicy).
+    restore_links: bool = False
+    restore_link_hosts: tuple[str, ...] = ()
+    restore_tools: bool = True
+    restore_secrets_in_tools: bool = False
     # Política
     block: tuple[str, ...] = ()
     unknown_endpoints: str = "bloquear"
@@ -135,6 +141,14 @@ class Config:
     providers: dict[str, ProviderConfig] = field(default_factory=lambda: dict(BUILTIN_PROVIDERS))
 
     def __post_init__(self):
+        for name, value in (("VEU_SEGREDO (segredo_env)", self.secret),
+                            ("VEU_SEGREDO_AUDITORIA (segredo_auditoria_env)", self.audit_secret)):
+            if value is not None and len(value) < MIN_SECRET_LENGTH:
+                raise ConfigError(
+                    f"{name} precisa ter pelo menos {MIN_SECRET_LENGTH} caracteres: um segredo curto pode ser "
+                    "adivinhado e revelar os dados por trás dos marcadores. Gere um com: "
+                    'python -c "import secrets; print(secrets.token_urlsafe(32))"'
+                )
         if not 0 <= self.threshold <= 1:
             raise ConfigError("O limiar precisa estar entre 0 e 1.")
         unknown = [label for label in (*self.labels, *self.block, *self.operators) if label not in LABELS
@@ -183,6 +197,13 @@ class Config:
             if unknown_block:
                 raise ConfigError(f'Provedor "{provider.name}": entidades desconhecidas em bloquear: {unknown_block}.')
 
+    def restore_policy(self):
+        from veu.vault import RestorePolicy
+
+        hosts = tuple(host.strip().lower().lstrip(".") for host in self.restore_link_hosts if host.strip())
+        return RestorePolicy(links=self.restore_links, link_hosts=hosts, tools=self.restore_tools,
+                             secrets_in_tools=self.restore_secrets_in_tools)
+
     def with_overrides(self, **changes) -> Config:
         allowed = {f.name for f in fields(self)}
         bad = set(changes) - allowed
@@ -202,6 +223,10 @@ _SECTIONS = {
     "anonimizacao": {
         "operador": "operator", "operadores": "operators", "instruir_modelo": "instruct_model",
         "vincular_nomes": "link_names", "segredo_env": None,
+    },
+    "restauracao": {
+        "links": "restore_links", "dominios_links": "restore_link_hosts", "ferramentas": "restore_tools",
+        "segredos_em_ferramentas": "restore_secrets_in_tools",
     },
     "politica": {
         "bloquear": "block", "endpoints_desconhecidos": "unknown_endpoints", "desviar_para": "route_to",

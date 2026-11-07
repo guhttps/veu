@@ -56,11 +56,11 @@ def test_teams_from_toml(tmp_path, monkeypatch):
         '[servidor]\nsessoes = "redis://cache:6379/0"\nsegredo_auditoria_env = "SEGREDO_AUD"\n',
         encoding="utf-8",
     )
-    monkeypatch.setenv("SEGREDO_AUD", "s3")
+    monkeypatch.setenv("SEGREDO_AUD", "s3" * 16)
     config = load_config(str(path))
     assert config.teams["juridico"] == TeamConfig("juridico", "abc", ("CPF",), "mascara")
     assert (config.route_to, config.route_model, config.route_labels) == ("ollama", "llama3.1", ("CPF",))
-    assert config.session_backend == "redis://cache:6379/0" and config.audit_secret == "s3"
+    assert config.session_backend == "redis://cache:6379/0" and config.audit_secret == "s3" * 16
     monkeypatch.delenv("TOKEN_JURIDICO")
     with pytest.raises(ConfigError, match="sem token"):
         load_config(str(path))
@@ -164,7 +164,7 @@ def test_deploy_configs_load(monkeypatch, tmp_path):
 
     root = Path(__file__).resolve().parent.parent
     for name in ("VEU_TOKEN", "VEU_TOKEN_ATENDIMENTO", "VEU_TOKEN_JURIDICO", "VEU_SEGREDO_AUDITORIA"):
-        monkeypatch.setenv(name, f"valor-{name.lower()}")
+        monkeypatch.setenv(name, f"valor-{name.lower()}".ljust(32, "x"))
     config = load_config(str(root / "deploy" / "veu-empresa.toml"))
     assert set(config.teams) == {"atendimento", "juridico"} and config.audit_secret
     create_app(config)  # fora do localhost, com token: inicia

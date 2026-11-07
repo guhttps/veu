@@ -284,9 +284,4 @@ def transform_document(source: str | Path, destination: str | Path, kind: str, *
 
 def restore_spans(vault: Vault, text: str) -> list[Span]:
     """Os marcadores de um texto e o valor real de cada um (para restaurar documentos mantendo a formatação)."""
-    spans = []
-    for match in vault._compiled().finditer(text):
-        original = vault._original_for(match)
-        if original is not None:
-            spans.append((match.start(), match.end(), original))
-    return spans
+    return vault.restore_spans(text)

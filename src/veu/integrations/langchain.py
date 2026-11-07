@@ -54,7 +54,7 @@ def _restore_message(message: BaseMessage, session) -> BaseMessage:
         update["content"] = session.restore_data(message.content)
     tool_calls = getattr(message, "tool_calls", None)
     if tool_calls:
-        update["tool_calls"] = [{**call, "args": session.restore_data(call.get("args", {}))} for call in tool_calls]
+        update["tool_calls"] = [{**call, "args": session.restore_data(call.get("args", {}), tool=True)} for call in tool_calls]
     return message.model_copy(update=update)
 
 

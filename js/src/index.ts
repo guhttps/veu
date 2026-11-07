@@ -18,11 +18,11 @@ export { AddressRecognizer } from "./addresses.ts";
 export { PatternRecognizer, customPattern, DEFAULT_SPECS } from "./patterns.ts";
 export { PersonRecognizer } from "./persons.ts";
 export { SecretRecognizer, keyKind, looksRandom, secretPrefix } from "./secrets.ts";
-export { StreamRestorer, Vault, normalizeValue } from "./vault.ts";
-export type { VaultData, VaultEntry } from "./vault.ts";
+export { StreamRestorer, Vault, linkContext, neutralizePlaceholders, normalizeValue, restoreAllowed, urlHost } from "./vault.ts";
+export type { RestoreContext, RestorePolicy, VaultData, VaultEntry } from "./vault.ts";
 export * as validators from "./validators.ts";
 
-export const VERSION = "0.5.2";
+export const VERSION = "0.6.0";
 
 export const DETECTORS = ["padroes", "nomes", "enderecos", "segredos"] as const;
 export type Detector = (typeof DETECTORS)[number];
@@ -145,8 +145,9 @@ export class Session {
     return this.vault.restore(text);
   }
 
-  restoreData<T>(value: T): T {
-    return mapStrings(value, (text) => this.vault.restore(text)) as T;
+  /** tool: os dados são argumentos de uma chamada de ferramenta (segue a política do cofre). */
+  restoreData<T>(value: T, tool = false): T {
+    return mapStrings(value, (text) => this.vault.restore(text, false, { tool })) as T;
   }
 
   restorer(): StreamRestorer {

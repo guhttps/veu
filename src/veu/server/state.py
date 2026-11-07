@@ -98,9 +98,8 @@ class RedisSessionStore:
         raw = self.client.get(self.prefix + session_id)
         if raw is None:
             return None
-        vault = Vault.from_dict(json.loads(raw))
-        vault._secret = self._new_vault()._secret  # mesmo segredo do operador hash em todas as réplicas
-        return vault
+        template = self._new_vault()  # mesmo segredo do operador hash e mesma política em todas as réplicas
+        return Vault.from_dict(json.loads(raw), secret=template._secret, policy=template.policy)
 
     def _save(self, session_id: str, vault: Vault) -> None:
         self.client.set(self.prefix + session_id, json.dumps(vault.to_dict(), ensure_ascii=False), ex=self.ttl)

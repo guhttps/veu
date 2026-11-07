@@ -59,7 +59,10 @@ test("nomes parciais usam o marcador do nome completo", () => {
 
 test("operador hash é igual ao do Python (HMAC-SHA256)", () => {
   const hashed = new Veu({ operator: "hash", secret: "segredo-de-teste" });
-  const expected = createHmac("sha256", "segredo-de-teste").update("CPF:52998224725").digest("hex").slice(0, 8);
+  // Chave derivada só para o operador hash, 64 bits na saída (mesmo valor do Python).
+  const key = createHmac("sha256", "segredo-de-teste").update("veu/hash/v2").digest();
+  const expected = createHmac("sha256", key).update("CPF:52998224725").digest("hex").slice(0, 16);
+  assert.equal(expected, "25cf014c9ab44c77");
   assert.equal(hashed.anonymize("CPF 529.982.247-25").text, `CPF [CPF_${expected}]`);
   assert.equal(toHex(sha256(new TextEncoder().encode("abc"))), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
   const long = "x".repeat(200);

@@ -5,6 +5,10 @@
 
 As ferramentas de arquivo processam os dados na sua máquina e devolvem só contagens e valores
 mascarados: o agente consegue auditar e anonimizar arquivos sem que os dados entrem na conversa.
+
+A restauração que devolve os dados reais para a conversa (restaurar_texto) fica desligada por padrão: um
+texto malicioso lido pelo agente poderia pedir que ele a chamasse. Para ligar: veu mcp --com-restauracao.
+As restaurações para arquivo (restaurar_para_arquivo, restaurar_arquivo) gravam no disco e devolvem só o caminho.
 """
 
 from __future__ import annotations
@@ -78,6 +82,11 @@ class ArquivoRestaurado(TypedDict):
     destino: str
 
 
+class TextoRestaurado(TypedDict):
+    destino: str
+    restaurados: int
+
+
 class FonteLida(TypedDict):
     fonte: str
     titulo: str
@@ -123,7 +132,8 @@ def _read(path: str) -> tuple[Path, str]:
     return file, file.read_text(encoding="utf-8-sig", errors="replace")
 
 
-def build_server(veu: Veu | None = None) -> MCPServer:
+def build_server(veu: Veu | None = None, *, restore_text: bool = False) -> MCPServer:
+    """restore_text: inclui restaurar_texto, que devolve os dados reais para a conversa."""
     instance = veu or Veu()
     sessions = SessionStore(instance.new_vault, ttl=3600)
     server = MCPServer(name="veu", title="Véu", instructions=INSTRUCTIONS, version=__version__,
@@ -169,8 +179,8 @@ def build_server(veu: Veu | None = None) -> MCPServer:
 
     @server.tool(description="Lê uma página do Notion, um Google Docs/Sheets/Slides, uma página web ou um documento "
                              "local (Word, Excel, PowerPoint, PDF, texto) e devolve o conteúdo já protegido: dados "
-                             "pessoais e segredos viram marcadores como [PESSOA_1]. Use a sessão devolvida com "
-                             "restaurar_texto se o usuário pedir a resposta com os dados reais.")
+                             "pessoais e segredos viram marcadores como [PESSOA_1]. Se o usuário pedir a resposta com "
+                             "os dados reais, use a sessão devolvida com restaurar_para_arquivo.")
     @_expected_errors
     def ler_protegido(fonte: str, sessao: str | None = None) -> FonteLida:
         from veu.sources import SourceError, read_source
@@ -212,14 +222,28 @@ def build_server(veu: Veu | None = None) -> MCPServer:
         result = engine.anonymize(texto, vault)
         return {"texto": result.text, "sessao": sessao, "escondidos": dict(result.counts())}
 
-    @server.tool(description="Devolve os dados reais no lugar dos marcadores de uma sessão. Atenção: o resultado "
-                             "contém os dados pessoais.")
-    @_expected_errors
-    def restaurar_texto(texto: str, sessao: str) -> str:
+    def _session_vault(sessao: str) -> Vault:
         vault = sessions.get(sessao, create=False)
         if vault is None:
             raise ValueError("Sessão não encontrada ou expirada.")
-        return vault.restore(texto)
+        return vault
+
+    @server.tool(description="Grava num arquivo local o texto com os dados reais no lugar dos marcadores de uma "
+                             "sessão (por exemplo, a resposta final para o usuário). Devolve só o caminho: os dados "
+                             "reais não voltam para a conversa. Links e URLs continuam com os marcadores.")
+    @_expected_errors
+    def restaurar_para_arquivo(texto: str, sessao: str, destino: str) -> TextoRestaurado:
+        vault = _session_vault(sessao)
+        target = Path(destino).expanduser()
+        target.write_text(vault.restore(texto), encoding="utf-8")
+        return {"destino": str(target), "restaurados": len(vault.restore_spans(texto))}
+
+    if restore_text:
+        @server.tool(description="Devolve os dados reais no lugar dos marcadores de uma sessão. Atenção: o "
+                                 "resultado contém os dados pessoais. Use só quando o usuário pedir.")
+        @_expected_errors
+        def restaurar_texto(texto: str, sessao: str) -> str:
+            return _session_vault(sessao).restore(texto)
 
     @server.tool(description="Restaura um arquivo anonimizado usando um cofre salvo por anonimizar_arquivo.")
     @_expected_errors

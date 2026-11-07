@@ -79,8 +79,15 @@ def cmd_detect(args) -> int:
     return 0
 
 
-def _load_vault(path: str) -> Vault:
-    return Vault.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+def _load_vault(path: str, args=None) -> Vault:
+    from veu.config import load_config
+
+    policy = load_config().restore_policy()
+    if getattr(args, "restaurar_links", False):
+        from dataclasses import replace
+
+        policy = replace(policy, links=True)
+    return Vault.from_dict(json.loads(Path(path).read_text(encoding="utf-8")), policy=policy)
 
 
 def _parse_force(values: list[str] | None) -> dict[str, str]:
@@ -147,10 +154,10 @@ def cmd_restore(args) -> int:
     if file_format in WRITABLE:
         if path is None or args.saida in (None, "-"):
             raise ValueError(f"Para {file_format}, informe o arquivo e a saída (-o).")
-        restore_file(path, args.saida, _load_vault(args.cofre))
+        restore_file(path, args.saida, _load_vault(args.cofre, args))
         print(f"Documento restaurado em {args.saida}.", file=sys.stderr)
         return 0
-    _write(restore_text(_read(args.arquivo), file_format, _load_vault(args.cofre)), args.saida)
+    _write(restore_text(_read(args.arquivo), file_format, _load_vault(args.cofre, args)), args.saida)
     return 0
 
 
@@ -237,7 +244,7 @@ def cmd_mcp(args) -> int:
     except ImportError:
         print('O servidor MCP precisa do extra: pip install "veu[mcp]"', file=sys.stderr)
         return 2
-    build_server(_veu(args)).run("stdio")
+    build_server(_veu(args), restore_text=args.com_restauracao).run("stdio")
     return 0
 
 
@@ -370,6 +377,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--formato", choices=FILE_FORMATS,
                      help="texto, csv, json, jsonl, docx, xlsx ou pptx (padrão: pela extensão)")
     sub.add_argument("-o", "--saida", help="arquivo de saída (padrão: saída padrão)")
+    sub.add_argument("--restaurar-links", action="store_true",
+                     help="restaura também dentro de links e URLs (por padrão eles continuam com os marcadores)")
     sub.set_defaults(func=cmd_restore)
 
     sub = commands.add_parser("verificar", help="falha se algum arquivo tiver dados pessoais (pre-commit, CI)")
@@ -406,6 +415,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub = commands.add_parser("mcp", help="servidor MCP (stdio) para Claude Code, Claude Desktop, Cursor...")
     common(sub)
+    sub.add_argument("--com-restauracao", action="store_true",
+                     help="inclui restaurar_texto, que devolve os dados reais para a conversa com a IA")
     sub.set_defaults(func=cmd_mcp)
 
     sub = commands.add_parser("painel", help="liga o Véu e abre o painel no navegador (o jeito mais fácil)")

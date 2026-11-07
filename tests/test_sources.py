@@ -309,7 +309,7 @@ def test_mcp_ler_protegido(tmp_path):
     document.save(path)
 
     async def run():
-        async with Client(build_server()) as client:
+        async with Client(build_server(restore_text=True)) as client:
             read = await client.call_tool("ler_protegido", {"fonte": str(path)})
             back = await client.call_tool("restaurar_texto", {"texto": "Olá [PESSOA_1]",
                                                               "sessao": read.structured_content["sessao"]})
