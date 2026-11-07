@@ -91,7 +91,7 @@ jobs:
           if [ "${{ matrix.node-version }}" = "22" ]; then
             # Para não depender da execução direta de TypeScript, o Node 22 testa a versão compilada.
             npx tsc -p tsconfig.json --noEmit false --outDir build-test --rewriteRelativeImportExtensions
-            cp test/conformidade.json build-test/test/
+            cp test/*.json build-test/test/
             node --test "build-test/test/*.test.js"
           else
             npm test
