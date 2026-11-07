@@ -2,6 +2,8 @@
 # (ou aponte VEU_CONFIG para ele) e apague o que não precisar: todas as opções têm padrão.
 
 [deteccao]
+# Cache de detecção de textos longos (itens; 0 desliga). Guarda só posições e tipos, nunca o texto.
+cache = 2048
 # Pontuação mínima de 0 a 1. O padrão 0,5 também esconde valores com formato de documento
 # mas dígitos verificadores errados (provável erro de digitação). Use 0,6 para exigir validade.
 limiar = 0.5

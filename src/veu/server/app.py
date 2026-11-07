@@ -21,6 +21,7 @@ from starlette.routing import Route
 
 from veu import __version__
 from veu.anonymizer import normalize_operator
+from veu.cache import cache_scope
 from veu.config import Config, ConfigError, ProviderConfig, load_config
 from veu.core import Veu
 from veu.gateway import BlockedError, Gateway, detect_adapter, is_streaming
@@ -220,13 +221,14 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         return JSONResponse({"status": "indisponivel", "motivo": "armazenamento de sessões"}, status_code=503)
 
     async def statistics(request: Request) -> Response:
-        return guard(request) or JSONResponse(stats.snapshot(len(proxy_sessions) + len(api_sessions)))
+        return guard(request) or JSONResponse(stats.snapshot(len(proxy_sessions) + len(api_sessions),
+                                                             veu.analyzer.cache))
 
     async def metrics(request: Request) -> Response:
         # O Prometheus envia "Authorization: Bearer <token>"; o X-Veu-Token também vale.
         if (blocked := guard(request, allow_bearer=True)) is not None:
             return blocked
-        text = stats.prometheus(len(proxy_sessions) + len(api_sessions), __version__)
+        text = stats.prometheus(len(proxy_sessions) + len(api_sessions), __version__, veu.analyzer.cache)
         return Response(text, media_type="text/plain; version=0.0.4; charset=utf-8")
 
     async def detect(request: Request) -> Response:
@@ -364,11 +366,13 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         block = team.block if team is not None and team.block is not None else provider.block
 
         def prepare():
-            if not session_id:
-                return gateway.prepare(adapter, body, None, request.url.path, block)
-            key = hashlib.sha256(f"{_credential(request)}\0{session_id}".encode()).hexdigest()
-            with proxy_sessions.session(key) as vault:
-                return gateway.prepare(adapter, body, vault, request.url.path, block)
+            # Cada credencial tem o seu espaço no cache de detecção (sem canal de tempo entre clientes).
+            with cache_scope(hashlib.sha256(_credential(request).encode()).hexdigest()):
+                if not session_id:
+                    return gateway.prepare(adapter, body, None, request.url.path, block)
+                key = hashlib.sha256(f"{_credential(request)}\0{session_id}".encode()).hexdigest()
+                with proxy_sessions.session(key) as vault:
+                    return gateway.prepare(adapter, body, vault, request.url.path, block)
 
         try:
             prepared = await run_in_threadpool(prepare)

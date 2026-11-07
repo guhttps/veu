@@ -183,9 +183,9 @@ class Stats:
             if team:
                 self.teams[team] += 1
 
-    def snapshot(self, sessions: int) -> dict:
+    def snapshot(self, sessions: int, cache=None) -> dict:
         with self._lock:
-            return {
+            data = {
                 "requisicoes": self.requests,
                 "bloqueadas": self.blocked,
                 "erros_upstream": self.errors,
@@ -197,9 +197,12 @@ class Stats:
                 "sessoes_ativas": sessions,
                 "ativo_desde": datetime.fromtimestamp(self.started, UTC).isoformat(timespec="seconds"),
             }
+        if cache is not None:
+            data["cache_deteccao"] = {"acertos": cache.hits, "falhas": cache.misses, "itens": len(cache)}
+        return data
 
 
-    def prometheus(self, sessions: int, version: str) -> str:
+    def prometheus(self, sessions: int, version: str, cache=None) -> str:
         """Métricas no formato texto do Prometheus (contadores; nenhum valor pessoal)."""
 
         def label(value: str) -> str:
@@ -234,6 +237,15 @@ class Stats:
                 "# HELP veu_ativo_desde_segundos Momento em que o servidor iniciou (epoch).",
                 "# TYPE veu_ativo_desde_segundos gauge",
                 f"veu_ativo_desde_segundos {self.started:.0f}",
+            ]
+        if cache is not None:
+            lines += [
+                "# HELP veu_cache_acertos_total Textos longos que não precisaram ser analisados de novo.",
+                "# TYPE veu_cache_acertos_total counter",
+                f"veu_cache_acertos_total {cache.hits}",
+                "# HELP veu_cache_falhas_total Textos longos analisados (ainda não estavam no cache).",
+                "# TYPE veu_cache_falhas_total counter",
+                f"veu_cache_falhas_total {cache.misses}",
             ]
         return "\n".join(lines) + "\n"
 

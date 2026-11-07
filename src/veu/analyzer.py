@@ -7,6 +7,7 @@ import re
 from collections.abc import Iterable
 
 from veu._text import fold, only_digits
+from veu.cache import DetectionCache
 from veu.entities import Entity
 from veu.recognizers import (
     AddressRecognizer,
@@ -32,6 +33,7 @@ class Analyzer:
     de documento, mas dígitos verificadores errados, também são escondidos.
     labels: limita a detecção a alguns tipos (por padrão, todos).
     allowlist: valores que nunca são escondidos, como o CNPJ ou o e-mail de contato da própria empresa.
+    cache: guarda o resultado de textos longos já analisados (veja veu.cache). None desliga.
     """
 
     def __init__(
@@ -42,7 +44,9 @@ class Analyzer:
         labels: Iterable[str] | None = None,
         allowlist: Iterable[str] = (),
         allow_patterns: Iterable[str] = (),
+        cache: DetectionCache | None = None,
     ):
+        self.cache = cache
         self.recognizers = list(default_recognizers() if recognizers is None else recognizers)
         self.threshold = threshold
         self.labels = {label.upper() for label in labels} if labels else None
@@ -78,7 +82,16 @@ class Analyzer:
     def analyze(self, text: str, threshold: float | None = None) -> list[Entity]:
         if not text:
             return []
+        cache = self.cache if self.cache is not None and self.cache.usable(text) else None
+        extra = "" if threshold is None else str(threshold)
+        if cache is not None:
+            spans = cache.get(text, extra)
+            if spans is not None:
+                return [Entity(label, start, end, score, text[start:end], recognizer)
+                        for label, start, end, score, recognizer in spans]
         chosen = resolve_overlaps(self.candidates(text, threshold))
+        if cache is not None:
+            cache.put(text, tuple((c.label, c.start, c.end, c.score, c.recognizer) for c in chosen), extra)
         return [
             Entity(c.label, c.start, c.end, c.score, text[c.start:c.end], c.recognizer)
             for c in chosen

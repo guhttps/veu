@@ -97,9 +97,12 @@ class Veu:
         if options:
             config = config.with_overrides(**options)
         self.config = config
+        from veu.cache import DetectionCache
+
         self.analyzer = Analyzer(
             [*build_recognizers(config), *extra_recognizers], threshold=config.threshold,
             labels=config.labels or None, allowlist=config.allowlist, allow_patterns=config.allow_patterns,
+            cache=DetectionCache(config.detection_cache) if config.detection_cache > 0 else None,
         )
         self.anonymizer = Anonymizer(
             self.analyzer, operator=config.operator, operators=config.operators, link_names=config.link_names,

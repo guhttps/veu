@@ -124,3 +124,16 @@ test("chave privada e máscaras de segredos", () => {
   assert.equal(maskValue("SENHA", "x"), "********");
   assert.deepEqual(summarize(`DB_PASSWORD=hunter2! e CPF 529.982.247-25`), { SENHA: 1, CPF: 1 });
 });
+
+test("cache de detecção: mesmo resultado, sem guardar texto, e desligável", () => {
+  const longo = "Histórico do atendimento. A cliente Maria Souza, CPF 529.982.247-25, pediu a segunda via. ".repeat(4);
+  const comCache = new Veu();
+  const primeiro = comCache.analyze(longo);
+  const segundo = comCache.analyze(longo);
+  assert.deepEqual(segundo, primeiro);
+  assert.equal(comCache.analyzer.cache!.hits, 1);
+  assert.ok(!JSON.stringify([...(comCache.analyzer.cache as unknown as { items: Map<string, unknown> }).items]).includes("Maria"));
+  assert.equal(new Veu({ cache: 0 }).analyzer.cache, null);
+  comCache.analyze("CPF 529.982.247-25");
+  assert.equal(comCache.analyzer.cache!.size, 1); // textos curtos não entram
+});
