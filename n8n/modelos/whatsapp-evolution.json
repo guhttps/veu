@@ -1,0 +1,77 @@
+{
+  "name": "WhatsApp com IA sem expor dados do cliente (Véu + Evolution API)",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "whatsapp-veu", "options": {} },
+      "name": "Mensagem do WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "notes": "Na Evolution API, configure o webhook do evento MESSAGES_UPSERT para esta URL."
+    },
+    {
+      "parameters": {
+        "operation": "esconder",
+        "texto": "={{ $json.body.data.message.conversation || $json.body.data.message.extendedTextMessage?.text }}",
+        "operador": "token",
+        "opcoes": { "bloquear": "CHAVE_PRIVADA,CARTAO_CREDITO" }
+      },
+      "name": "Véu: esconder",
+      "type": "@guhttps/n8n-nodes-veu.veu",
+      "typeVersion": 1,
+      "position": [240, 0],
+      "notes": "A IA recebe só marcadores, como [CPF_1]. O cofre (com os dados reais) fica no n8n."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-5-mini', messages: [ { role: 'system', content: 'Você é o atendente da empresa. Responda em português, de forma curta. Os dados pessoais aparecem como marcadores, como [PESSOA_1] e [CPF_1]: repita os marcadores exatamente e nunca tente adivinhar o valor.' }, { role: 'user', content: $json.textoProtegido } ] }) }}",
+        "options": {}
+      },
+      "name": "IA (OpenAI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "operation": "restaurar",
+        "texto": "={{ $json.choices[0].message.content }}",
+        "cofre": "={{ $('Véu: esconder').item.json.cofre }}"
+      },
+      "name": "Véu: restaurar",
+      "type": "@guhttps/n8n-nodes-veu.veu",
+      "typeVersion": 1,
+      "position": [720, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCIA }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "apikey", "value": "={{ $env.EVOLUTION_APIKEY }}" } ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $('Mensagem do WhatsApp').item.json.body.data.key.remoteJid, text: $json.textoRestaurado }) }}",
+        "options": {}
+      },
+      "name": "Responder no WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 0],
+      "notes": "Defina EVOLUTION_URL, EVOLUTION_INSTANCIA e EVOLUTION_APIKEY nas variáveis de ambiente do n8n."
+    }
+  ],
+  "connections": {
+    "Mensagem do WhatsApp": { "main": [[{ "node": "Véu: esconder", "type": "main", "index": 0 }]] },
+    "Véu: esconder": { "main": [[{ "node": "IA (OpenAI)", "type": "main", "index": 0 }]] },
+    "IA (OpenAI)": { "main": [[{ "node": "Véu: restaurar", "type": "main", "index": 0 }]] },
+    "Véu: restaurar": { "main": [[{ "node": "Responder no WhatsApp", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

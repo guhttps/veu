@@ -1,0 +1,47 @@
+{
+  "name": "@guhttps/n8n-nodes-veu",
+  "version": "0.6.0",
+  "description": "Nó do Véu para o n8n: esconde dados pessoais e segredos (CPF, nomes, telefones, e-mails, chaves de API) antes de mandar o texto para a IA e devolve os dados reais na resposta.",
+  "license": "MIT",
+  "author": "guhttps",
+  "homepage": "https://github.com/guhttps/veu/tree/main/n8n#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guhttps/veu.git",
+    "directory": "n8n"
+  },
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "pii",
+    "lgpd",
+    "whatsapp",
+    "privacy",
+    "cpf",
+    "llm"
+  ],
+  "type": "commonjs",
+  "main": "dist/nodes/Veu/Veu.node.js",
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [],
+    "nodes": [
+      "dist/nodes/Veu/Veu.node.js"
+    ]
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node build.mjs && node --test \"test/*.test.mjs\"",
+    "prepublishOnly": "npm test"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "n8n-workflow": "2.16.0"
+  }
+}

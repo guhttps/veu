@@ -96,6 +96,12 @@ jobs:
           else
             npm test
           fi
+      - name: Nó do n8n
+        working-directory: n8n
+        run: |
+          npm ci --ignore-scripts
+          npm test
+          ../js/node_modules/.bin/tsc -p tsconfig.json
 
   instalador:
     name: Instalador (${{ matrix.os }})
