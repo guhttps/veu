@@ -67,6 +67,25 @@ operador = "sintetico"                          # valores falsos realistas no lu
 
 A auditoria e as métricas (`veu_requisicoes_por_equipe_total`) mostram a equipe. Um token desconhecido recebe 401.
 
+### Login único (OIDC)
+
+Em vez de distribuir tokens, o gateway aceita os JWTs do provedor de identidade da empresa (Entra ID, Google, Keycloak, Okta) e escolhe a equipe pelos grupos do usuário:
+
+```toml
+[oidc]
+emissor = "https://login.microsoftonline.com/<tenant>/v2.0"
+publico = "api://veu"                    # o valor esperado na claim aud
+claim_equipe = "groups"                  # ou "roles", com papéis do app
+claim_usuario = "preferred_username"     # opcional: quem fez a requisição entra na auditoria
+
+[equipes.atendimento]
+grupos_oidc = ["<id do grupo>"]
+```
+
+A aplicação manda o token no `X-Veu-Token` (ou no `Authorization`, nas rotas do Véu). O gateway confere a assinatura com as chaves públicas do emissor (descobertas em `/.well-known/openid-configuration` e trocadas sozinhas quando o emissor muda de chave), o emissor, o público e a validade. Aceita RS256, PS256 e ES256 (e as variantes de 384 e 512 bits); recusa `none` e HMAC. Quem não está em nenhum grupo recebe 403 (`exigir_equipe = false` libera qualquer usuário válido, sem equipe). Numa rede sem acesso ao emissor, aponte `jwks` para um arquivo com as chaves. O JWT nunca é repassado ao provedor de IA. Requer `pip install "veu[oidc]"` (a imagem Docker já traz).
+
+No Entra ID, a claim `groups` some quando o usuário está em mais de 200 grupos; nesse caso, use papéis do app (`claim_equipe = "roles"`). Registrar o usuário (`claim_usuario`) grava um dado pessoal do funcionário na auditoria: inclua isso no registro do tratamento.
+
 ### Auditoria à prova de adulteração
 
 ```toml
@@ -93,6 +112,19 @@ veu auditoria verificar auditoria.jsonl --segredo-env VEU_SEGREDO_AUDITORIA --an
 Se a linha da âncora sumir, a verificação falha. Cada linha também registra quantos valores reais voltaram na resposta (`restaurados`, por tipo, sem os valores), e `[restauracao] max_por_resposta` limita esse número: uma IA manipulada que tenta despejar todos os dados de uma sessão para no limite.
 
 Com várias réplicas, cada uma escreve a própria cadeia. Guarde os logs separados por pod ou use a saída padrão, que o coletor já separa.
+
+### SIEM (syslog e Splunk)
+
+Cada linha da auditoria pode ir também para o SIEM, a mesma linha do arquivo, com o hash da cadeia:
+
+```toml
+[siem]
+syslog = "tls://siem.interna:6514"       # udp://, tcp:// ou tls:// (RFC 5424; TCP e TLS com contagem de octetos)
+hec_url = "https://splunk.interna:8088/services/collector/event"
+hec_token_env = "VEU_HEC_TOKEN"
+```
+
+No syslog, a facilidade é 13 (auditoria) e a severidade diz o que houve: informativo (requisição normal), aviso (bloqueada) ou erro (falha do provedor). O ID da mensagem é `requisicao`, `bloqueado` ou `desviado`, e o corpo é o JSON da linha. No Splunk, o `sourcetype` é `veu:auditoria`. O envio roda numa fila separada: um SIEM lento ou fora do ar nunca atrasa as requisições. Cada lote tem uma nova tentativa; o que não chega aparece em `veu_siem_falhas_total`, e o que não cabe na fila, em `veu_siem_descartados_total`. O arquivo de auditoria continua com tudo, então a cadeia pode ser conferida no SIEM e no servidor.
 
 ### Várias réplicas (Redis)
 
@@ -188,6 +220,8 @@ A extensão lê a política gerenciada (`3rdparty`) com o esquema de [`extensao/
 | `tipos` | lista (vazio = todos) | Tipos detectados |
 | `ignorar`, `ignorarPadroes` | listas | Dados da própria empresa que podem ir para a IA |
 | `restaurarRespostas` | `true` ou `false` | Mostrar os dados reais nas respostas, só na tela do usuário |
+| `orientacao` | texto (até 500 caracteres) | Mensagem da empresa nos avisos, ex.: "Dados de clientes só no assistente interno." |
+| `linkOrientacao` | endereço `https://` | Link "Saiba mais" do aviso, com a política de uso de IA |
 | `travarConfiguracao` | `true` | O usuário não muda nada no ícone da extensão |
 | `ativo` | `true` ou `false` | Liga ou desliga |
 
@@ -198,6 +232,8 @@ HKLM\Software\Policies\Google\Chrome\3rdparty\extensions\<id>\policy
     modo               REG_SZ     bloquear
     travarConfiguracao REG_DWORD  1
     bloquearTipos      REG_SZ     ["CHAVE_PRIVADA","CARTAO_CREDITO","CHAVE_API"]
+    orientacao         REG_SZ     Dados de clientes só no assistente interno.
+    linkOrientacao     REG_SZ     https://intranet.minhaempresa.example/ia
 ```
 
 No Google Admin, envie o JSON equivalente na configuração da extensão:

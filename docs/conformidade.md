@@ -18,7 +18,7 @@ O Véu **ajuda a cumprir** os princípios de necessidade e minimização (art. 6
 |---|---|---|
 | **LGPD, art. 6º, III** (necessidade) | Só marcadores saem para o provedor; `bloquear` recusa tipos que nunca devem sair | Decidir quais dados a tarefa precisa |
 | **LGPD, art. 46** (segurança) | Detecção antes do envio, falha fechada, restauração que não devolve dados em links nem segredos em ferramentas, cofre cifrado no Redis ([modelo de ameaças](modelo-de-ameacas.md)) | Gestão de acessos, chaves e infraestrutura |
-| **LGPD, art. 37** (registro das operações) | Auditoria encadeada, só com metadados, e `veu auditoria relatorio` (abaixo) | Manter o registro completo do tratamento |
+| **LGPD, art. 37** (registro das operações) | Auditoria encadeada, só com metadados, envio ao SIEM (syslog ou Splunk) e `veu auditoria relatorio` (abaixo) | Manter o registro completo do tratamento |
 | **LGPD, art. 38** (RIPD) | [Modelo de RIPD](modelo-ripd.md) para "uso de IA externa com o Véu" | Preencher, avaliar e aprovar |
 | **LGPD, art. 33** (transferência internacional) | Reduz o volume e a identificabilidade do que vai a provedores no exterior; `desviar_para` manda textos com certos tipos a um modelo interno | O mecanismo de transferência (cláusulas-padrão da Resolução CD/ANPD nº 19/2024 ou adequação: Brasil e UE se reconheceram mutuamente em janeiro de 2026) |
 | **ANPD, Nota Técnica nº 1/2026** (IA generativa) | A ANPD afirmou que a LGPD alcança prompts e saídas, não só o treinamento: é esse o tráfego que o Véu protege | — |

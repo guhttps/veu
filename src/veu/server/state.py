@@ -233,13 +233,13 @@ class Stats:
     def remember(self, **fields) -> None:
         """Guarda os metadados de uma requisição (nunca valores) para a lista de recentes."""
         allowed = ("provedor", "endpoint", "status", "entidades", "restaurados", "bloqueado", "desviado_para",
-                   "sem_anonimizar", "duracao_ms", "stream", "equipe")
+                   "sem_anonimizar", "duracao_ms", "stream", "equipe", "usuario")
         record = {"quando": datetime.now(UTC).isoformat(timespec="seconds")}
         record.update({key: value for key, value in fields.items() if key in allowed and value not in (None, {}, [])})
         with self._lock:
             self.recent.append(record)
 
-    def snapshot(self, sessions: int, cache=None) -> dict:
+    def snapshot(self, sessions: int, cache=None, siem=None) -> dict:
         with self._lock:
             data = {
                 "requisicoes": self.requests,
@@ -257,10 +257,12 @@ class Stats:
             }
         if cache is not None:
             data["cache_deteccao"] = {"acertos": cache.hits, "falhas": cache.misses, "itens": len(cache)}
+        if siem is not None:
+            data["siem"] = {"enviados": siem.sent, "falhas": siem.failures, "descartados": siem.dropped}
         return data
 
 
-    def prometheus(self, sessions: int, version: str, cache=None) -> str:
+    def prometheus(self, sessions: int, version: str, cache=None, siem=None) -> str:
         """Métricas no formato texto do Prometheus (contadores; nenhum valor pessoal)."""
 
         def label(value: str) -> str:
@@ -308,6 +310,18 @@ class Stats:
                 "# TYPE veu_cache_falhas_total counter",
                 f"veu_cache_falhas_total {cache.misses}",
             ]
+        if siem is not None:
+            lines += [
+                "# HELP veu_siem_enviados_total Linhas da auditoria entregues ao SIEM.",
+                "# TYPE veu_siem_enviados_total counter",
+                f"veu_siem_enviados_total {siem.sent}",
+                "# HELP veu_siem_falhas_total Linhas da auditoria que o SIEM não recebeu (depois de uma nova tentativa).",
+                "# TYPE veu_siem_falhas_total counter",
+                f"veu_siem_falhas_total {siem.failures}",
+                "# HELP veu_siem_descartados_total Linhas descartadas com a fila de envio cheia.",
+                "# TYPE veu_siem_descartados_total counter",
+                f"veu_siem_descartados_total {siem.dropped}",
+            ]
         return "\n".join(lines) + "\n"
 
 
@@ -327,13 +341,15 @@ class AuditLog:
     As linhas são encadeadas: cada uma traz o hash da anterior ("anterior") e o próprio ("hash"). Com um segredo
     (segredo_auditoria_env), o hash vira um HMAC e quem não tem o segredo não consegue refazer a cadeia depois de
     alterar ou apagar linhas. Confira com: veu auditoria verificar arquivo.jsonl
-    path "-" escreve na saída padrão (para coletores de log no Kubernetes).
+    path "-" escreve na saída padrão (para coletores de log no Kubernetes). sink recebe cada linha pronta, com o
+    hash (o envio ao SIEM).
     """
 
-    def __init__(self, path: str | None, secret: str | None = None):
+    def __init__(self, path: str | None, secret: str | None = None, sink=None):
         self.path = Path(path) if path and path != "-" else None
         self.stdout = path == "-"
         self.secret = secret
+        self.sink = sink
         self._lock = threading.Lock()
         self._last = self._last_hash()
 
@@ -351,19 +367,22 @@ class AuditLog:
         return GENESIS
 
     def write(self, **fields) -> None:
-        if self.path is None and not self.stdout:
+        if self.path is None and not self.stdout and self.sink is None:
             return
         with self._lock:
             record = {"quando": datetime.now(UTC).isoformat(timespec="milliseconds"), **fields, "anterior": self._last}
             digest = _digest(record, self.secret)
-            line = json.dumps({**record, "hash": digest}, ensure_ascii=False) + "\n"
+            complete = {**record, "hash": digest}
+            line = json.dumps(complete, ensure_ascii=False) + "\n"
             if self.stdout:
                 sys.stdout.write(line)
                 sys.stdout.flush()
-            else:
+            elif self.path is not None:
                 with self.path.open("a", encoding="utf-8") as handle:
                     handle.write(line)
             self._last = digest
+        if self.sink is not None:
+            self.sink(complete)
 
 
 def verify_audit(path: str | Path, secret: str | None = None, anchor: str | None = None) -> tuple[bool, int, str | None]:

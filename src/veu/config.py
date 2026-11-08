@@ -7,6 +7,7 @@ import re
 import tomllib
 from dataclasses import dataclass, field, fields, replace
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from veu.anonymizer import normalize_operator
 from veu.entities import LABELS
@@ -36,6 +37,8 @@ class TeamConfig:
     token: str | None
     block: tuple[str, ...] | None = None
     operator: str | None = None
+    # Grupos do provedor de identidade ([oidc]) que entram como esta equipe.
+    oidc_groups: tuple[str, ...] = ()
 
 
 # Provedores conhecidos. "openai" inclui qualquer API compatível com OpenAI Chat Completions.
@@ -195,6 +198,17 @@ class Config:
     route_labels: tuple[str, ...] = ()
     teams: dict[str, TeamConfig] = field(default_factory=dict)
     providers: dict[str, ProviderConfig] = field(default_factory=lambda: dict(BUILTIN_PROVIDERS))
+    # Auditoria também no SIEM: syslog (udp://, tcp://, tls://) e Splunk HEC.
+    siem_syslog: str | None = None
+    siem_hec_url: str | None = None
+    siem_hec_token: str | None = None
+    # Login único: JWTs do provedor de identidade da empresa valem como token, e os grupos escolhem a equipe.
+    oidc_issuer: str | None = None
+    oidc_audience: str | None = None
+    oidc_team_claim: str = "groups"
+    oidc_user_claim: str | None = None
+    oidc_jwks: str | None = None
+    oidc_require_team: bool = True
 
     def __post_init__(self):
         for name, value in (("VEU_SEGREDO (segredo_env)", self.secret),
@@ -241,13 +255,30 @@ class Config:
                 "cofre ser cifrado, ou permitir_cofre_sem_cifra = true num Redis isolado."
             )
         for team in self.teams.values():
-            if not team.token:
+            if not team.token and not team.oidc_groups:
                 raise ConfigError(f"[equipes.{team.name}] está sem token: defina a variável de token_env.")
+            if team.oidc_groups and not self.oidc_issuer:
+                raise ConfigError(f"[equipes.{team.name}] grupos_oidc precisa da seção [oidc] (emissor e publico).")
             if team.operator:
                 normalize_operator(team.operator)
             unknown_block = [label for label in team.block or () if label not in LABELS]
             if unknown_block:
                 raise ConfigError(f"[equipes.{team.name}] bloquear: entidades desconhecidas: {', '.join(unknown_block)}.")
+        if self.siem_syslog:
+            parts = urlsplit(self.siem_syslog)
+            if parts.scheme not in ("udp", "tcp", "tls") or not parts.hostname:
+                raise ConfigError('[siem] syslog: use udp://, tcp:// ou tls:// com o servidor (ex.: "tls://siem:6514").')
+        if self.siem_hec_url:
+            if not self.siem_hec_url.startswith(("https://", "http://")):
+                raise ConfigError("[siem] hec_url precisa ser uma URL https:// do HTTP Event Collector.")
+            if not self.siem_hec_token:
+                raise ConfigError("[siem] hec_url precisa do token: defina a variável de hec_token_env.")
+        if self.oidc_issuer:
+            issuer = urlsplit(self.oidc_issuer)
+            if issuer.scheme != "https" and not (issuer.scheme == "http" and issuer.hostname in ("localhost", "127.0.0.1")):
+                raise ConfigError("[oidc] emissor precisa ser https:// (http só para localhost, em testes).")
+            if not self.oidc_audience:
+                raise ConfigError("[oidc] precisa de publico: o valor esperado na claim aud (o ID ou a URI do app).")
         if self.unknown_endpoints not in ("bloquear", "repassar"):
             raise ConfigError('endpoints_desconhecidos deve ser "bloquear" ou "repassar".')
         if self.default_provider not in self.providers:
@@ -309,23 +340,30 @@ _SECTIONS = {
         "expandir_links": "expand_links", "dominios_expandidos": "expand_domains", "sessoes": "session_backend",
         "segredo_auditoria_env": None, "chave_cofre_env": None, "permitir_cofre_sem_cifra": "allow_plain_vault",
     },
+    "siem": {"syslog": "siem_syslog", "hec_url": "siem_hec_url", "hec_token_env": None},
+    "oidc": {
+        "emissor": "oidc_issuer", "publico": "oidc_audience", "claim_equipe": "oidc_team_claim",
+        "claim_usuario": "oidc_user_claim", "jwks": "oidc_jwks", "exigir_equipe": "oidc_require_team",
+    },
 }
 
 
 _PROVIDER_KEYS = {"tipo", "url", "chave_env", "anonimizar", "operador", "bloquear"}
-_TEAM_KEYS = {"token_env", "bloquear", "operador"}
+_TEAM_KEYS = {"token_env", "bloquear", "operador", "grupos_oidc"}
 
 
 def _team_from_toml(name: str, options: dict) -> TeamConfig:
     extra = set(options) - _TEAM_KEYS
     if extra:
         raise ConfigError(f"[equipes.{name}] não aceita {', '.join(sorted(extra))}. Opções: {', '.join(sorted(_TEAM_KEYS))}.")
-    if "token_env" not in options:
-        raise ConfigError(f"[equipes.{name}] precisa de token_env (a variável de ambiente com o token da equipe).")
+    if "token_env" not in options and "grupos_oidc" not in options:
+        raise ConfigError(f"[equipes.{name}] precisa de token_env (a variável de ambiente com o token da equipe) "
+                          "ou de grupos_oidc (com a seção [oidc]).")
     block = options.get("bloquear")
     return TeamConfig(
-        name, os.environ.get(options["token_env"]) or None,
+        name, os.environ.get(options["token_env"]) or None if "token_env" in options else None,
         tuple(label.upper() for label in block) if block is not None else None, options.get("operador"),
+        tuple(str(group) for group in options.get("grupos_oidc", ())),
     )
 
 
@@ -383,6 +421,8 @@ def _from_toml(data: dict, base: Config) -> dict:
                 changes["audit_secret"] = os.environ.get(value)
             elif key == "chave_cofre_env":
                 changes["vault_key"] = os.environ.get(value)
+            elif key == "hec_token_env":
+                changes["siem_hec_token"] = os.environ.get(value)
             elif key == "operadores":
                 changes["operators"] = {label.upper(): op for label, op in value.items()}
             elif key in ("entidades", "bloquear", "desviar_tipos"):

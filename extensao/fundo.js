@@ -10,6 +10,8 @@ const PADRAO = {
   ignorarPadroes: [],
   restaurarRespostas: false, // na página, o código do site também leria os dados reais
   travarConfiguracao: false,
+  orientacao: "", // mensagem da empresa nos avisos (política gerenciada)
+  linkOrientacao: "",
 };
 
 async function politica() {

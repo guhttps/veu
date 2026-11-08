@@ -28,9 +28,23 @@ token_env = "VEU_TOKEN"
 # Lê links do Notion e do Google enviados nas mensagens e manda o conteúdo já protegido (NOTION_TOKEN no .env).
 expandir_links = false
 
-# Uma seção por equipe, com o token no .env. A auditoria e as métricas mostram a equipe.
+# Opcional: cada linha da auditoria também vai para o SIEM (só metadados, com o hash da cadeia).
+# [siem]
+# syslog = "tls://siem.interna:6514"
+# hec_url = "https://splunk.interna:8088/services/collector/event"
+# hec_token_env = "VEU_HEC_TOKEN"
+
+# Opcional: login único. JWTs do provedor de identidade valem como token; os grupos escolhem a equipe.
+# [oidc]
+# emissor = "https://login.microsoftonline.com/<tenant>/v2.0"
+# publico = "api://veu"
+# claim_equipe = "groups"
+# claim_usuario = "preferred_username"   # registra quem fez a requisição na auditoria
+
+# Uma seção por equipe, com o token no .env (ou grupos_oidc, com [oidc]). A auditoria e as métricas mostram a equipe.
 [equipes.atendimento]
 token_env = "VEU_TOKEN_ATENDIMENTO"
+# grupos_oidc = ["<id do grupo no Entra ID>"]
 
 [equipes.juridico]
 token_env = "VEU_TOKEN_JURIDICO"

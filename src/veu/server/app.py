@@ -26,6 +26,7 @@ from veu.cache import cache_scope
 from veu.config import Config, ConfigError, ProviderConfig, load_config
 from veu.core import Veu
 from veu.gateway import BlockedError, Gateway, detect_adapter, is_streaming
+from veu.server.siem import forwarder_from_config
 from veu.server.state import AuditLog, SessionStore, Stats, VaultCipher, session_store
 from veu.vault import count_restorations
 
@@ -120,12 +121,24 @@ def _credential(request: Request) -> str:
     return f"key:{request.query_params.get('key', '')}"
 
 
+def _scope(request: Request) -> str:
+    """Credencial mais a identidade do Véu (equipe ou usuário do OIDC): com as chaves injetadas pelo gateway,
+    duas equipes com o mesmo X-Veu-Sessao não podem cair no mesmo cofre."""
+    identity = getattr(request.state, "identity", None)
+    return _credential(request) + (f"\0{identity}" if identity else "")
+
+
 def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncBaseTransport | None = None,
                panel=None) -> Starlette:
     config = config or load_config()
     exposed = not is_local_host(config.host)
     team_tokens = {team.token: team for team in config.teams.values() if team.token}
-    protected = bool(config.token or team_tokens)
+    oidc = None
+    if config.oidc_issuer:
+        from veu.server.oidc import OIDCVerifier
+
+        oidc = OIDCVerifier(config.oidc_issuer, config.oidc_audience or "", config.oidc_jwks)
+    protected = bool(config.token or team_tokens or oidc)
     if exposed and not protected and not config.allow_no_token:
         raise ConfigError(
             f"O Véu vai ouvir em {config.host}, fora do localhost, sem token. Defina VEU_TOKEN (recomendado) ou, "
@@ -144,11 +157,18 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
     proxy_sessions = session_store(config.session_backend, veu.new_vault, config.session_ttl, "veu:proxy:", cipher)
     api_sessions = session_store(config.session_backend, veu.new_vault, config.session_ttl, "veu:api:", cipher)
     stats = Stats()
-    audit = AuditLog(config.audit_log, config.audit_secret)
+    siem = forwarder_from_config(config)
+    audit = AuditLog(config.audit_log, config.audit_secret, sink=siem.submit if siem else None)
 
     def log_request(**fields) -> None:
         audit.write(**fields)
         stats.remember(**fields)
+
+    def team_for_claims(claims: dict):
+        from veu.server.oidc import claim_values
+
+        groups = claim_values(claims, config.oidc_team_claim)
+        return next((team for team in config.teams.values() if groups & set(team.oidc_groups)), None)
     operator_instances: dict[str, Veu] = {config.operator: veu}
     max_body = int(config.max_body_mb * 1024 * 1024)
     client = httpx.AsyncClient(
@@ -169,6 +189,8 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         if cross_site and not (exposed and protected):
             return _error("Requisições de outros sites não são aceitas.", 403, "veu_origem_invalida")
         request.state.team = None
+        request.state.identity = None
+        request.state.user = None
         if check_token and protected:
             given = request.headers.get("x-veu-token", "")
             if not given and allow_bearer:
@@ -177,9 +199,31 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             for token, team in team_tokens.items():  # compara com todos, sem atalho
                 if hmac.compare_digest(given.encode(), token.encode()):
                     matched, request.state.team = True, team
+                    request.state.identity = f"equipe:{team.name}"
+            if not matched and oidc is not None:
+                from veu.server.oidc import OIDCError, looks_like_jwt
+
+                if looks_like_jwt(given):
+                    try:
+                        claims = oidc.verify(given)
+                    except OIDCError as exc:
+                        return _error(f"Token OIDC recusado: {exc}.", 401, "veu_nao_autorizado")
+                    team = team_for_claims(claims)
+                    if team is None and config.oidc_require_team:
+                        return _error("Seu usuário não está em nenhum grupo com acesso ao Véu ([equipes] grupos_oidc).",
+                                      403, "veu_sem_equipe")
+                    matched, request.state.team = True, team
+                    request.state.identity = f"oidc:{claims.get('iss')}|{claims.get('sub')}"
+                    if config.oidc_user_claim and claims.get(config.oidc_user_claim):
+                        request.state.user = str(claims[config.oidc_user_claim])[:200]
             if not matched:
                 return _error("Token do Véu ausente ou inválido (cabeçalho X-Veu-Token).", 401, "veu_nao_autorizado")
         return None
+
+    def who(request: Request) -> dict:
+        """Equipe e, com [oidc] claim_usuario, o usuário: entram na auditoria."""
+        user = getattr(request.state, "user", None)
+        return {"equipe": team_name(request), **({"usuario": user} if user else {})}
 
     def team_name(request: Request) -> str | None:
         team = getattr(request.state, "team", None)
@@ -229,13 +273,13 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
 
     async def statistics(request: Request) -> Response:
         return guard(request) or JSONResponse(stats.snapshot(len(proxy_sessions) + len(api_sessions),
-                                                             veu.analyzer.cache))
+                                                             veu.analyzer.cache, siem))
 
     async def metrics(request: Request) -> Response:
         # O Prometheus envia "Authorization: Bearer <token>"; o X-Veu-Token também vale.
         if (blocked := guard(request, allow_bearer=True)) is not None:
             return blocked
-        text = stats.prometheus(len(proxy_sessions) + len(api_sessions), __version__, veu.analyzer.cache)
+        text = stats.prometheus(len(proxy_sessions) + len(api_sessions), __version__, veu.analyzer.cache, siem)
         return Response(text, media_type="text/plain; version=0.0.4; charset=utf-8")
 
     async def detect(request: Request) -> Response:
@@ -351,7 +395,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         if adapter is not None and not provider.anonymize:
             # Provedor configurado com anonimizar = false (por exemplo, um modelo local): repassa sem alterar.
             stats.record(provider.name, Counter(), team=team_name(request))
-            log_request(provedor=provider.name, endpoint=adapter.name, sem_anonimizar=True, equipe=team_name(request))
+            log_request(provedor=provider.name, endpoint=adapter.name, sem_anonimizar=True, **who(request))
             return await passthrough(request, url, headers, body)
         if adapter is None:
             if request.method in ("GET", "HEAD") or config.unknown_endpoints == "repassar":
@@ -374,10 +418,10 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
 
         def prepare():
             # Cada credencial tem o seu espaço no cache de detecção (sem canal de tempo entre clientes).
-            with cache_scope(hashlib.sha256(_credential(request).encode()).hexdigest()):
+            with cache_scope(hashlib.sha256(_scope(request).encode()).hexdigest()):
                 if not session_id:
                     return gateway.prepare(adapter, body, None, request.url.path, block)
-                key = hashlib.sha256(f"{_credential(request)}\0{session_id}".encode()).hexdigest()
+                key = hashlib.sha256(f"{_scope(request)}\0{session_id}".encode()).hexdigest()
                 with proxy_sessions.session(key) as vault:
                     return gateway.prepare(adapter, body, vault, request.url.path, block)
 
@@ -386,7 +430,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         except BlockedError as error:
             stats.record(provider.name, error.counts, blocked=True, team=team_name(request))
             log_request(provedor=provider.name, endpoint=adapter.name, bloqueado=sorted(error.labels),
-                        entidades=dict(error.counts), status=400, equipe=team_name(request))
+                        entidades=dict(error.counts), status=400, **who(request))
             return JSONResponse(adapter.error_body(str(error)), status_code=400,
                                 headers={"x-veu-bloqueado": ",".join(error.labels)})
         except (ValueError, RecursionError) as error:
@@ -412,7 +456,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
                     routed_headers["authorization"] = f"Bearer {key_value}"
             stats.record(target.name, prepared.counts, routed=True, team=team_name(request))
             log_request(provedor=provider.name, endpoint=adapter.name, desviado_para=target.name,
-                        entidades=dict(prepared.counts), equipe=team_name(request))
+                        entidades=dict(prepared.counts), **who(request))
             return await passthrough(request, target.url + url[len(provider.url):], routed_headers, original)
 
         upstream = client.build_request(request.method, url, headers=headers, content=prepared.body,
@@ -433,7 +477,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
                          restored=restored)
             log_request(provedor=provider.name, endpoint=adapter.name, status=status, stream=prepared.stream,
                         entidades=dict(prepared.counts), restaurados=dict(restored),
-                        duracao_ms=round((time.monotonic() - started) * 1000), equipe=team_name(request))
+                        duracao_ms=round((time.monotonic() - started) * 1000), **who(request))
 
         response_headers = _response_headers(response, prepared.counts)
         content_type = response.headers.get("content-type", "")
@@ -490,10 +534,13 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
     async def lifespan(app):
         yield
         await client.aclose()
+        if siem is not None:
+            await run_in_threadpool(siem.close)
 
     app = Starlette(routes=routes, lifespan=lifespan)
     app.state.config = config
     app.state.veu = veu
+    app.state.siem = siem
     app.state.stats = stats
     return app
 

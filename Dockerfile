@@ -15,7 +15,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
-RUN pip install ".[servidor,redis,documentos]" && useradd --create-home --uid 10001 veu
+RUN pip install ".[servidor,redis,documentos,oidc]" && useradd --create-home --uid 10001 veu
 
 USER veu
 EXPOSE 8787
