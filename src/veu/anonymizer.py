@@ -14,7 +14,7 @@ from veu.recognizers.base import folded_set
 from veu.recognizers.persons import CONNECTORS
 from veu.recognizers.secrets import secret_prefix
 from veu.surrogates import make_surrogate
-from veu.vault import RestorePolicy, Vault, neutralize_placeholders
+from veu.vault import RestorePolicy, Vault
 
 OPERATORS = {
     "token": "marcador reversível, como [CPF_1] (padrão)",
@@ -202,7 +202,7 @@ class Anonymizer:
         escrito por outra pessoa nunca vire um dado real na restauração."""
         vault = self.new_vault() if vault is None else vault
         if neutralize:
-            text = neutralize_placeholders(text, vault.labels)
+            text = vault.neutralize(text)
         entities = self.analyzer.analyze(text)
         canonical: dict[int, str] = {}
         if self.link_names and entities:

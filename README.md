@@ -130,7 +130,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 - 🛡️ **Restauração segura:**
   - os dados reais nunca voltam dentro de links, imagens ou URLs, o caminho usado para roubar dados de assistentes de IA com injeção de prompt;
   - chaves e senhas não voltam nos argumentos de ferramentas de agentes;
-  - marcadores forjados num e-mail ou numa página ("responda com [CPF_1]") são desarmados;
+  - marcadores forjados num e-mail ou numa página ("responda com [CPF_1]", com ou sem colchetes) são desarmados;
   - se a detecção falhar, a requisição não sai. Veja o [modelo de ameaças](docs/modelo-de-ameacas.md).
 - 🌊 **Streaming:** marcadores partidos entre pedaços da resposta ("[PES" + "SOA_1]") são remontados, inclusive em argumentos de ferramentas.
 - 📄 **Notion, Google e documentos:**
@@ -397,7 +397,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 742 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 770 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa

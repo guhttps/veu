@@ -50,6 +50,23 @@ def test_profile_from_toml_and_explicit_options_win(tmp_path):
     assert load_config(None, environ={"VEU_PERFIL": "saude"}).route_labels == ("CNS",)
 
 
+@pytest.mark.parametrize("apply", ["variavel", "flag"])
+def test_profile_from_environment_or_flag_never_loosens_the_file(tmp_path, apply):
+    # O arquivo bloqueia CPF; o perfil juridico só bloqueia segredos. O que está escrito no arquivo continua valendo.
+    path = tmp_path / "veu.toml"
+    path.write_text('[politica]\nbloquear = ["CPF", "CHAVE_API"]\n\n[anonimizacao.operadores]\nCPF = "remover"\n',
+                    encoding="utf-8")
+    environ = {"VEU_OPERADOR": "mascara"}
+    if apply == "variavel":
+        config = load_config(str(path), environ={**environ, "VEU_PERFIL": "juridico"})
+    else:
+        config = load_config(str(path), environ=environ).with_profile("juridico")
+    assert config.profile == "juridico"
+    assert config.block == ("CPF", "CHAVE_API") and config.operators == {"CPF": "remover"}
+    assert config.operator == "mascara"  # VEU_* também vale mais que o perfil
+    assert Config().with_profile("juridico").block != ("CPF", "CHAVE_API")  # sem arquivo, vale o perfil
+
+
 def test_unknown_profile():
     with pytest.raises(ConfigError, match="Perfil desconhecido"):
         Config(profile="inventado")

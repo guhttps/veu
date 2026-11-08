@@ -5,7 +5,7 @@ import { CONNECTORS, ambiguousNames, capitalizedOnlyNames } from "./persons.ts";
 import { secretPrefix } from "./secrets.ts";
 import { parseDate } from "./validators.ts";
 import { bisectRight, counter, escapeRegex, fold } from "./text.ts";
-import { Vault, neutralizePlaceholders, type RestorePolicy } from "./vault.ts";
+import { Vault, type RestorePolicy } from "./vault.ts";
 
 export const OPERATORS: Record<string, string> = {
   token: "marcador reversível, como [CPF_1] (padrão)",
@@ -195,7 +195,7 @@ export class Anonymizer {
    * marcador escrito por outra pessoa nunca vire um dado real na restauração.
    */
   anonymize(text: string, vault: Vault = this.newVault(), neutralize = true): AnonymizationResult {
-    if (neutralize) text = neutralizePlaceholders(text, vault.labels);
+    if (neutralize) text = vault.neutralize(text);
     let entities = this.analyzer.analyze(text);
     let canonical = new Map<number, string>();
     if (this.linkNames && entities.length) [entities, canonical] = this.linkPartialNames(text, entities);

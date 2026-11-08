@@ -5,6 +5,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Segurança
+- **Gancho de comando:** `env | grep KEY`, `cd x && env`, `/usr/bin/env`, `set | grep`, `export -p` e `declare -x` também são bloqueados (antes, só `env` sozinho). `env FOO=1 pytest`, que roda um programa, continua liberado.
+- **Marcadores forjados sem colchetes:** um `CPF_1` escrito por uma página ou um e-mail não vira mais o CPF real quando a IA o repete. O texto não é reescrito (pode ser um nome no código), mas a forma solta deixa de ser restaurada na sessão (Python e JavaScript).
+- **Ferramentas de arquivo do MCP** (`restaurar_para_arquivo`, `anonimizar_arquivo`, `restaurar_arquivo` e `salvar_cofre`): só criam documentos novos, nunca scripts nem arquivos em pastas ocultas, e nunca sobrescrevem (a criação é exclusiva). Um modelo manipulado não consegue mais gravar um `.bat` na inicialização do Windows nem apagar uma planilha.
+- **Perfis:** `--perfil` e `VEU_PERFIL` não afrouxam mais o que está escrito no `veu.toml` ou em `VEU_*` (antes, `--perfil juridico` apagava um `bloquear = ["CPF"]` do arquivo).
+- `veu servir --workers N --perfil X`: os processos recebem o perfil (antes, só o principal o aplicava).
+
 ### Adicionado
 - **Avaliação com dados de terceiros:** `veu avaliar --externo br-agentic|privacy-filter-br|todos` baixa uma vez (versão fixa, conferida pelo sha256) dois conjuntos públicos em português e mede o vazamento, com intervalo de confiança de 95% e a lista dos tipos que estão fora do escopo do Véu.
 - **Conjunto de desafio congelado** (41 textos escritos à mão), incluído no `veu avaliar`. Um teste impede editá-lo.
@@ -66,6 +73,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - O nó do n8n ganhou instruções em inglês, e o `server.json` (validado com o esquema oficial) e a linha `mcp-name` no README preparam a publicação no MCP Registry.
 
 ### Corrigido
+- **Restauração em tempo linear:** uma linha longa sem espaços antes de um marcador (base64 num argumento de ferramenta, por exemplo) levava segundos para restaurar; agora leva milissegundos. Um trecho sem espaços com mais de 2.048 caracteres logo antes do marcador não é analisado, e o marcador fica como está.
+- **Open WebUI:** o fim retido da resposta se perdia quando o último pedaço do streaming vinha com `"delta": {}`.
+- **OIDC:** a busca das chaves do emissor não trava mais o servidor; roda no início e depois numa thread.
+- **SIEM:** com o SIEM fora do ar e a fila cheia, o servidor não fica mais preso no encerramento.
+- `veu auditoria ancorar` num log vazio explica que não há o que ancorar, em vez de gerar uma âncora que nunca conferia.
 - **Sessões isoladas por equipe:** com as chaves do provedor injetadas pelo gateway, duas equipes (ou dois usuários do OIDC) que usassem o mesmo `X-Veu-Sessao` caíam no mesmo cofre, e a resposta de uma podia restaurar um dado da outra. O cofre passa a considerar também a equipe ou o usuário.
 - Nomes ambíguos que o dicionário marca como palavras (sobrenomes como Costa e Nascimento) só se propagam com inicial maiúscula: "data de nascimento" não vira mais nome de pessoa. O gerador de listas passou a ler também as regras de sufixo do dicionário.
 - Restauração em streaming: um marcador solto colado a uma palavra (`_CPF_1`, `xCPF_1`) era restaurado quando chegava num pedaço separado, embora no texto inteiro não fosse. Achado pelos testes de propriedade.

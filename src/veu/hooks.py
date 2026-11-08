@@ -35,7 +35,41 @@ SKIP_DIRS = frozenset({".git", "node_modules", ".venv", "venv", "__pycache__", "
 # Variáveis que costumam guardar segredos: echo $OPENAI_API_KEY, $env:GITHUB_TOKEN, ${DB_PASSWORD}.
 SECRET_VARIABLE = re.compile(r"\$(?:env:)?\{?[A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|SENHA|CREDENTIAL)"
                              r"[A-Za-z0-9_]*", re.IGNORECASE)
-ENV_DUMP = frozenset({"env", "printenv", "set", "export", "declare", "compgen"})
+ENV_DUMP = frozenset({"env", "printenv", "set", "export", "declare", "typeset", "compgen"})
+_SEGMENTS = re.compile(r"\|\||&&|[;|&\n]")
+_PREFIXES = frozenset({"sudo", "command", "builtin", "exec", "nohup", "time"})
+_ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*")
+
+
+def dumps_environment(command: str) -> bool:
+    """O comando mostra as variáveis de ambiente (em qualquer trecho: depois de |, ;, && ou com o caminho completo)?
+
+    env só despeja o ambiente quando não roda nenhum programa ("env | grep KEY", e não "env FOO=1 pytest").
+    """
+    if re.search(r"Get-ChildItem\s+env:|\b(?:gci|ls|dir)\s+env:|GetEnvironmentVariables", command, re.IGNORECASE):
+        return True
+    for segment in _SEGMENTS.split(command):
+        words = segment.split()
+        while words and words[0] in _PREFIXES:
+            words = words[1:]
+        if not words:
+            continue
+        name, rest = words[0].rsplit("/", 1)[-1], words[1:]
+        if name not in ENV_DUMP:
+            continue
+        if name == "printenv":
+            return True
+        if name == "env":
+            index = 0
+            while index < len(rest) and (rest[index].startswith("-") or _ASSIGNMENT.fullmatch(rest[index])):
+                index += 2 if rest[index] in ("-u", "-C", "-S", "--unset", "--chdir") else 1
+            if index >= len(rest):
+                return True
+            continue
+        # set, export, declare, typeset e compgen: sem argumentos, ou só com as opções que listam (-p, -x).
+        if not rest or all(re.fullmatch(r"-[px]+", word) for word in rest):
+            return True
+    return False
 # Endereços do proxy do Véu para --exigir-proxy.
 PROXY_HOSTS = ("http://127.0.0.1:", "http://localhost:", "https://127.0.0.1:", "https://localhost:")
 
@@ -200,9 +234,7 @@ def check_command(data: dict, veu: Veu, *, block: frozenset[str] = SECRET_LABELS
         return _result(True, "", fmt, "comando")
     if not isinstance(command, str) or not command.strip():
         return _result(True, "", fmt, "comando")
-    words = command.strip().split()
-    if words[0] in ENV_DUMP and (len(words) == 1 or words[0] in ("printenv",)) or "Get-ChildItem env:" in command \
-            or re.search(r"\b(?:gci|ls|dir)\s+env:", command, re.IGNORECASE):
+    if dumps_environment(command):
         return _result(False, "Véu: o comando mostraria as variáveis de ambiente, que costumam guardar chaves de API. "
                               "Para conferir se uma variável existe, use por exemplo: test -n \"$NOME\" && echo definida.",
                        fmt, "comando")
