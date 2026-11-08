@@ -92,11 +92,14 @@ class Filter:
             return event
         restorer = self._restorers.setdefault(chat_id, vault.restorer())
         for choice in event.get("choices") or []:
-            delta = choice.get("delta") or {}
+            delta = choice.get("delta") if isinstance(choice.get("delta"), dict) else {}
             if isinstance(delta.get("content"), str):
                 delta["content"] = restorer.feed(delta["content"])
             if choice.get("finish_reason"):
-                delta["content"] = (delta.get("content") or "") + restorer.flush()
+                tail = restorer.flush()
+                if tail:
+                    delta["content"] = (delta.get("content") or "") + tail
+                    choice["delta"] = delta  # o último pedaço costuma vir com "delta": {}; o resto vai nele
                 self._restorers.pop(chat_id, None)
         return event
 

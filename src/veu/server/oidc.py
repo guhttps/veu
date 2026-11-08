@@ -19,11 +19,13 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import logging
 import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
 
+logger = logging.getLogger("veu.oidc")
 MAX_TOKEN_LENGTH = 16_384
 REFRESH_EVERY = 3600.0      # as chaves do emissor mudam de tempos em tempos
 MIN_REFRESH_INTERVAL = 60.0  # um token com kid desconhecido não pode forçar uma busca a cada requisição
@@ -60,7 +62,10 @@ class OIDCVerifier:
     """Confere JWTs assinados com RS256/384/512, PS256/384/512 ou ES256/384 (nunca "none" nem HMAC)."""
 
     def __init__(self, issuer: str, audience: str, jwks: str | dict | None = None, leeway: int = 60,
-                 fetch: Callable[[str], dict] = _http_get_json, clock: Callable[[], float] = time.time):
+                 fetch: Callable[[str], dict] = _http_get_json, clock: Callable[[], float] = time.time,
+                 background: bool = False):
+        """background: busca as chaves numa thread, sem segurar quem chamou verify() (o servidor usa assim, para
+        um emissor lento nunca travar as requisições; um token com chave nova recebe 401 até ela chegar)."""
         try:
             from cryptography.hazmat.primitives import hashes
         except ImportError as exc:
@@ -74,6 +79,8 @@ class OIDCVerifier:
         self._lock = threading.Lock()
         self._keys: dict[str, tuple[str, object, str | None]] = {}  # kid -> (kty, chave, alg declarado)
         self._fetched_at: float | None = None
+        self._background = background
+        self._fetching = False
         self._static: dict | None = None
         self._jwks_uri: str | None = None
         if isinstance(jwks, dict):
@@ -113,26 +120,52 @@ class OIDCVerifier:
             return
         with self._lock:
             now = self._clock()
+            if self._fetching:
+                return
             if self._fetched_at is not None:
                 age = now - self._fetched_at
                 # Sem chaves (a última busca falhou), tenta de novo depois de um minuto, mesmo sem ser forçado.
                 if age < MIN_REFRESH_INTERVAL or (not force and self._keys and age < REFRESH_EVERY):
                     return
             self._fetched_at = now
-            try:
-                if self._jwks_uri is None:
-                    discovery = self._fetch(self.issuer + "/.well-known/openid-configuration")
-                    if str(discovery.get("issuer", "")).rstrip("/") != self.issuer:
-                        raise OIDCError("o documento de descoberta é de outro emissor")
-                    uri = str(discovery.get("jwks_uri", ""))
-                    if not uri.startswith("https://"):
-                        raise OIDCError("o emissor não informou um jwks_uri https")
-                    self._jwks_uri = uri
-                self._load(self._fetch(self._jwks_uri))
-            except OIDCError:
-                raise
-            except Exception as exc:  # noqa: BLE001 - rede, JSON: o token é recusado, o servidor segue
-                raise OIDCError(f"não consegui buscar as chaves do emissor ({type(exc).__name__})") from exc
+            if self._background:
+                self._fetching = True
+                threading.Thread(target=self._download_in_background, name="veu-oidc", daemon=True).start()
+                return
+            self._download()
+
+    def _download_in_background(self) -> None:
+        try:
+            self._download()
+        except OIDCError as exc:
+            logger.warning("OIDC: %s", exc)
+        finally:
+            with self._lock:
+                self._fetching = False
+
+    def prefetch(self) -> None:
+        """Busca as chaves agora (no início do servidor), sem esperar o primeiro token."""
+        if self._static is None:
+            with self._lock:
+                self._fetched_at = self._clock()
+                self._download()
+
+    def _download(self) -> None:
+        """Descoberta e JWKS. Quem chama segura a trava ou está na thread de busca."""
+        try:
+            if self._jwks_uri is None:
+                discovery = self._fetch(self.issuer + "/.well-known/openid-configuration")
+                if str(discovery.get("issuer", "")).rstrip("/") != self.issuer:
+                    raise OIDCError("o documento de descoberta é de outro emissor")
+                uri = str(discovery.get("jwks_uri", ""))
+                if not uri.startswith("https://"):
+                    raise OIDCError("o emissor não informou um jwks_uri https")
+                self._jwks_uri = uri
+            self._load(self._fetch(self._jwks_uri))
+        except OIDCError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - rede, JSON: o token é recusado, o servidor segue
+            raise OIDCError(f"não consegui buscar as chaves do emissor ({type(exc).__name__})") from exc
 
     # Verificação -----------------------------------------------------------------------------------------------
 
@@ -158,6 +191,8 @@ class OIDCVerifier:
             [] if kid is not None else list(self._keys.values()))
         signed = f"{header_part}.{payload_part}".encode("ascii")
         signature = _b64decode(signature_part)
+        if not self._keys:
+            raise OIDCError("as chaves do emissor ainda não foram carregadas; tente de novo em instantes")
         if not any(self._check(algorithm, kty, key, declared, signed, signature)
                    for kty, key, declared in candidates):
             raise OIDCError("assinatura inválida ou chave desconhecida")

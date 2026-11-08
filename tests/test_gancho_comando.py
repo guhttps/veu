@@ -37,6 +37,9 @@ def bash(command, cwd):
     "cat .env", "head -n 5 .env", "grep OPENAI .env", "less config/secrets.yaml", "cat ./.env | head",
     "printenv", "env", "printenv OPENAI_API_KEY", "echo $OPENAI_API_KEY", 'echo "${GITHUB_TOKEN}"',
     "Get-ChildItem env:", "Write-Output $env:OPENAI_API_KEY",
+    # O ambiente inteiro também sai por um pipe, depois de outro comando ou pelo caminho completo.
+    "env | grep -i token", "env | sort", "cd /tmp && env", "/usr/bin/env", "env -0", "env -u DEBUG", "sudo printenv",
+    "set | grep KEY", "export -p", "declare -x", "typeset -p", "[Environment]::GetEnvironmentVariables()",
 ])
 def test_blocks_commands_that_show_secrets(project, command):
     assert decision(bash(command, project)) == "deny"
@@ -46,6 +49,8 @@ def test_blocks_commands_that_show_secrets(project, command):
 
 @pytest.mark.parametrize("command", [
     "cat README.md", "python app.py", "ls -la", "git status", "env PYTHONPATH=src pytest", 'test -n "$OPENAI_API_KEY"',
+    "env -u DEBUG python app.py", "set -o pipefail", "set -e && make", "export FOO=bar", "declare -a lista",
+    "git log --format=%an | sort",
 ])
 def test_allows_ordinary_commands(project, command):
     assert decision(bash(command, project)) == "allow"

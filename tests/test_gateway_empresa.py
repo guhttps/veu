@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 import socket
 
 import httpx
@@ -103,6 +104,16 @@ def test_audit_anchor(tmp_path, capsys, monkeypatch):
     assert printed["registros"] == 2
 
 
+def test_anchor_of_an_empty_log(tmp_path):
+    # Logo depois de implantar, ainda sem requisições: não há o que ancorar (antes saía uma âncora que nunca conferia).
+    path = tmp_path / "auditoria.jsonl"
+    path.write_text("", encoding="utf-8")
+    with pytest.raises(ValueError, match="ainda não tem registros"):
+        audit_anchor(path)
+    AuditLog(str(path)).write(status=200)
+    assert verify_audit(path, None, "0" * 64)[0]  # âncoras antigas do log vazio (o começo da cadeia) conferem
+
+
 @pytest.mark.parametrize("address", ["10.0.0.5", "127.0.0.1", "169.254.169.254", "::1", "100.64.0.1"])
 def test_link_reading_refuses_internal_addresses(monkeypatch, address):
     from veu.sources import _PUBLIC_ONLY, SourceError, check_public_url
@@ -149,6 +160,24 @@ def test_workers_need_shared_sessions(monkeypatch):
 
     with pytest.raises(ConfigError, match="Redis"):
         server.run(Config(), workers=2)
+
+
+def test_workers_get_the_profile_from_the_command_line(monkeypatch):
+    import sys
+    import types
+
+    from veu.server import app as server
+
+    for name in ("VEU_PERFIL", "VEU_HOST", "VEU_PORTA"):
+        monkeypatch.setenv(name, "")  # o monkeypatch devolve os valores originais no fim
+    calls = []
+    monkeypatch.setitem(sys.modules, "uvicorn", types.SimpleNamespace(run=lambda *a, **k: calls.append((a, k))))
+    monkeypatch.setattr(server, "create_app", lambda config, **kw: object())
+    config = Config(session_backend="redis://cache:6379/0", allow_plain_vault=True).with_profile("setor-publico")
+    server.run(config, workers=2)
+    assert calls and calls[0][1]["workers"] == 2
+    assert os.environ["VEU_PERFIL"] == "setor-publico"  # veu servir --perfil setor-publico --workers 2
+    assert server.load_config(None, environ=dict(os.environ)).profile == "setor-publico"
 
 
 def test_each_worker_writes_its_own_audit_chain(monkeypatch, tmp_path):

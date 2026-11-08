@@ -13,7 +13,7 @@ from typing import Any
 
 from veu.anonymizer import Anonymizer
 from veu.gateway.sse import Event
-from veu.vault import StreamRestorer, Vault, neutralize_placeholders
+from veu.vault import StreamRestorer, Vault
 
 # Blocos assinados ou criptografados pelo provedor: alterar o texto invalidaria a assinatura.
 _UNTOUCHED_TYPES = frozenset({"thinking", "redacted_thinking"})
@@ -39,7 +39,7 @@ class Masker:
         if self.expand is not None and not self._in_arguments:
             value, known = self.expand(value)
         # Marcadores que já vêm no texto são desarmados antes de o Véu inserir os seus.
-        value = neutralize_placeholders(value, self.vault.labels)
+        value = self.vault.neutralize(value)
         if known:
             from veu.sources import replace_known
 

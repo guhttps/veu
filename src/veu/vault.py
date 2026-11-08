@@ -37,6 +37,7 @@ _BARE = r"(?<![\w\[])(?P<bare_label>[A-Z]+(?:_[A-Z]+)*)_(?P<bare_id>\d{1,6}|[0-9
 _FORGED = re.compile(
     r"\[(?P<open>\s*)(?P<label>[A-Za-z]+(?:_[A-Za-z]+)*)(?P<sep>[_\s-]+)(?P<id>[0-9A-Fa-f]{1,16})(?=\s*\]|(?![\w]))"
 )
+_BARE_IN_INPUT = re.compile(_BARE)
 _TRAILING_WORD = re.compile(r"[A-Za-z0-9_]+$")
 _DIGIT_SEPARATOR = r"[\s.\-/()]*"
 MAX_HOLDBACK = 48
@@ -84,8 +85,11 @@ _URL_START = re.compile(
 _LINK_ATTRIBUTE = re.compile(
     r"(?i)(?:\b(?:src|href|action|formaction|srcset|poster|ping|cite|background|lowsrc|data)\s*=\s*|\burl\(\s*)[\"']?$"
 )
-_ANGLE_DESTINATION = re.compile(r"\]\(\s*<[^>\n]*$")
-_RUN = re.compile(r"[^\s\"'<>`]*$")
+_ANGLE_OPEN = re.compile(r"\]\(\s*<")
+_RUN_DELIMITERS = frozenset("\"'<>`")
+# Um trecho sem espaços maior que isto logo antes do marcador (base64, código minificado) não é analisado: o marcador
+# fica como está, que é o lado seguro, e o custo não cresce com o quadrado do tamanho da linha.
+MAX_RUN = 2048
 _HOST = re.compile(r"(?i)^(?:[a-z][a-z0-9+.\-]*:)?//([^/?#\\\s]*)[/?#\\]")
 _JSON_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})|\\(/)")
 
@@ -108,16 +112,27 @@ def link_context(before: str) -> str | None:
     line = before[before.rfind("\n") + 1:]
     if "\\" in line:  # argumentos de ferramenta em JSON: "https:\/\/..." ou "/"
         line = _JSON_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)) if m.group(1) else "/", line)
-    angle = _ANGLE_DESTINATION.search(line)
+    # Destino entre < > ("[x](<https://site/a b>)"), que aceita espaços: o primeiro "](<" depois do último ">".
+    angle = _ANGLE_OPEN.search(line, line.rfind(">") + 1)
     if angle:
-        return line[line.index("<", angle.start()) + 1:]
-    run = _RUN.search(line).group(0)
+        return line[angle.end():]
+    run = _trailing_run(line)
+    if len(run) > MAX_RUN:
+        return run  # sem esquema nem domínio reconhecível, url_host() fica vazio e o marcador não é restaurado
     start = _URL_START.search(run)
     if start:
         return run[start.end():] if start.group(0).startswith("]") else run[start.start():]
     if _LINK_ATTRIBUTE.search(line[:len(line) - len(run)]):
         return run
     return None
+
+
+def _trailing_run(line: str) -> str:
+    """O trecho final da linha sem espaços, aspas, < > ou crase. Varre do fim: tempo proporcional ao trecho."""
+    index = len(line)
+    while index and not (line[index - 1].isspace() or line[index - 1] in _RUN_DELIMITERS):
+        index -= 1
+    return line[index:]
 
 
 def url_host(url: str) -> str:
@@ -181,6 +196,8 @@ class Vault:
         self._pattern: re.Pattern | None = None
         self._digit_surrogates: dict[str, VaultEntry] = {}
         self._text_surrogates: dict[str, VaultEntry] = {}
+        # Marcadores soltos ("CPF_1", sem colchetes) que já vieram no texto de entrada: nunca são restaurados.
+        self._forged_bare: set[str] = set()
         # Cofres de sessão são usados por várias requisições ao mesmo tempo: sem a trava, duas
         # requisições poderiam dar o mesmo [CPF_2] a valores diferentes.
         self._lock = threading.RLock()
@@ -252,6 +269,20 @@ class Vault:
     def entries(self) -> list[VaultEntry]:
         return list(self._entries.values())
 
+    def neutralize(self, text: str) -> str:
+        """Desarma os marcadores que já vêm no texto de entrada, antes de o Véu inserir os seus.
+
+        "[CPF_1]" vira "[CPF#1]". Um "CPF_1" solto não é reescrito (pode ser um nome no código, como TOKEN_1),
+        mas fica marcado: a forma solta nunca mais é restaurada neste cofre; só "[CPF_1]", que só o Véu cria.
+        """
+        labels = self.labels
+        found = {f"[{m.group('bare_label')}_{m.group('bare_id')}]" for m in _BARE_IN_INPUT.finditer(text)
+                 if m.group("bare_label") in LABELS or m.group("bare_label") in labels}
+        if found:
+            with self._lock:
+                self._forged_bare |= found
+        return neutralize_placeholders(text, labels)
+
     @property
     def labels(self) -> set[str]:
         return {entry.label for entry in self._entries.values()}
@@ -289,6 +320,8 @@ class Vault:
             key = f"[{match.group('ph_label').upper()}_{match.group('ph_id').lower()}]"
         elif match.group("bare_label"):
             key = f"[{match.group('bare_label')}_{match.group('bare_id')}]"
+            if key in self._forged_bare:
+                return None
         else:
             text = match.group(0)
             return self._digit_surrogates.get(only_digits(text)) or self._text_surrogates.get(fold(text))
@@ -373,6 +406,7 @@ class Vault:
                 for e in self._entries.values()
             ],
             "chaves": [{"entidade": label, "valor": value, "substituto": rep} for (label, value), rep in self._by_key.items()],
+            **({"forjados": sorted(self._forged_bare)} if self._forged_bare else {}),
         }
 
     @classmethod
@@ -386,6 +420,7 @@ class Vault:
                 vault._counters[entry.label] = max(vault._counters[entry.label], int(match.group(1)))
         for item in data.get("chaves", []):
             vault._by_key.setdefault((item["entidade"], item["valor"]), item["substituto"])
+        vault._forged_bare = {str(key) for key in data.get("forjados", [])}
         return vault
 
 

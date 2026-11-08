@@ -393,7 +393,7 @@ def verify_audit(path: str | Path, secret: str | None = None, anchor: str | None
     """
     previous = None
     count = 0
-    anchored = anchor is None
+    anchored = anchor is None or anchor == GENESIS  # o começo da cadeia está em qualquer log íntegro
     with Path(path).open(encoding="utf-8") as handle:
         for number, raw in enumerate(handle, 1):
             if not raw.strip():
@@ -493,5 +493,7 @@ def audit_anchor(path: str | Path, secret: str | None = None) -> dict:
         for raw in handle:
             if raw.strip():
                 last = json.loads(raw)["hash"]
-    return {"arquivo": str(path), "registros": count, "hash": last or GENESIS,
+    if last is None:
+        raise ValueError("O log ainda não tem registros: não há o que ancorar. Ancore depois da primeira requisição.")
+    return {"arquivo": str(path), "registros": count, "hash": last,
             "quando": datetime.now(UTC).isoformat(timespec="seconds")}

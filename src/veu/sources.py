@@ -74,9 +74,8 @@ def protect_document(document: Document, anonymizer, vault) -> tuple[str, str, C
     def protect(text: str) -> str:
         if not text:
             return text
-        from veu.vault import neutralize_placeholders
 
-        text = replace_known(neutralize_placeholders(text, vault.labels), document.known, anonymizer, vault, counts)
+        text = replace_known(vault.neutralize(text), document.known, anonymizer, vault, counts)
         result = anonymizer.anonymize(text, vault, neutralize=False)
         counts.update(result.counts())
         return result.text

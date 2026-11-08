@@ -127,6 +127,35 @@ def test_discovery_and_key_rotation_without_hammering_the_issuer(keys):
     assert calls[-1] == "https://login.example.com/keys"
 
 
+def test_background_mode_never_waits_for_a_slow_issuer(keys):
+    """No servidor, a busca das chaves roda numa thread: um emissor lento não trava as requisições."""
+    import threading
+
+    release = threading.Event()
+
+    def slow_fetch(url):
+        release.wait(5)
+        if url.endswith("/.well-known/openid-configuration"):
+            return {"issuer": ISSUER, "jwks_uri": "https://login.example.com/keys"}
+        return keys["jwks"]
+
+    check = OIDCVerifier(ISSUER, AUDIENCE, fetch=slow_fetch, clock=lambda: NOW, background=True)
+    token = sign(claims(), keys["rsa"])
+    started = time.monotonic()
+    with pytest.raises(OIDCError, match="ainda não foram carregadas"):
+        check.verify(token)
+    assert time.monotonic() - started < 1  # recusou na hora, sem esperar o emissor
+    release.set()
+    for _ in range(100):
+        if not check._fetching:
+            break
+        time.sleep(0.02)
+    assert check.verify(token)["sub"] == "u-1"
+    prefetched = OIDCVerifier(ISSUER, AUDIENCE, fetch=lambda url: slow_fetch(url), clock=lambda: NOW, background=True)
+    prefetched.prefetch()  # no início do servidor, busca de uma vez
+    assert prefetched.verify(token)["sub"] == "u-1"
+
+
 def test_discovery_must_match_the_issuer(keys):
     fetch = lambda url: {"issuer": "https://falso.example", "jwks_uri": "https://falso.example/keys"}  # noqa: E731
     with pytest.raises(OIDCError, match="outro emissor"):

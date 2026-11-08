@@ -209,6 +209,8 @@ class Config:
     oidc_user_claim: str | None = None
     oidc_jwks: str | None = None
     oidc_require_team: bool = True
+    # Opções escritas no veu.toml ou em variáveis VEU_*: um perfil aplicado depois (--perfil) não mexe nelas.
+    explicit_options: tuple[str, ...] = field(default=(), compare=False, repr=False)
 
     def __post_init__(self):
         for name, value in (("VEU_SEGREDO (segredo_env)", self.secret),
@@ -301,8 +303,9 @@ class Config:
                              max_per_response=self.restore_max_per_response)
 
     def with_profile(self, name: str) -> Config:
-        """Aplica um perfil por cima desta configuração (usado por --perfil e VEU_PERFIL)."""
-        return self.with_overrides(**profile_options(name), profile=name)
+        """Aplica um perfil (--perfil). As opções escritas no veu.toml ou em VEU_* continuam valendo."""
+        options = {key: value for key, value in profile_options(name).items() if key not in self.explicit_options}
+        return self.with_overrides(**options, profile=name)
 
     def with_overrides(self, **changes) -> Config:
         allowed = {f.name for f in fields(self)}
@@ -390,10 +393,6 @@ def _provider_from_toml(name: str, options: dict, existing: ProviderConfig | Non
 
 def _from_toml(data: dict, base: Config) -> dict:
     changes: dict = {}
-    # O perfil vem primeiro: as opções escritas no arquivo valem mais que as dele.
-    profile = (data.get("politica") or {}).get("perfil")
-    if profile:
-        changes.update(profile_options(profile))
     for section, values in data.items():
         if section == "equipes":
             changes["teams"] = {name: _team_from_toml(name, options) for name, options in values.items()}
@@ -438,8 +437,6 @@ def _from_env(environ: dict[str, str], base: Config) -> dict:
     def as_list(value: str) -> list[str]:
         return [item.strip() for item in value.split(",") if item.strip()]
 
-    if environ.get("VEU_PERFIL"):
-        changes.update(profile_options(environ["VEU_PERFIL"]), profile=environ["VEU_PERFIL"])
     if "VEU_LIMIAR" in environ:
         changes["threshold"] = float(environ["VEU_LIMIAR"])
     if "VEU_OPERADOR" in environ:
@@ -487,15 +484,21 @@ def _from_env(environ: dict[str, str], base: Config) -> dict:
 def load_config(path: str | os.PathLike | None = None, environ: dict[str, str] | None = None) -> Config:
     """Carrega o veu.toml (de path, de VEU_CONFIG ou da pasta atual) e aplica as variáveis VEU_*."""
     environ = dict(os.environ if environ is None else environ)
-    config = Config()
+    base = Config()
     candidate = path or environ.get("VEU_CONFIG")
     if candidate is None and Path("veu.toml").is_file():
         candidate = "veu.toml"
+    from_file: dict = {}
     if candidate is not None:
         file = Path(candidate)
         if not file.is_file():
             raise ConfigError(f"Arquivo de configuração não encontrado: {file}")
         with file.open("rb") as handle:
-            data = tomllib.load(handle)
-        config = config.with_overrides(**_from_toml(data, config))
-    return config.with_overrides(**_from_env(environ, config))
+            from_file = _from_toml(tomllib.load(handle), base)
+    # Ordem: padrões, perfil (VEU_PERFIL vale mais que o do arquivo), opções do arquivo, variáveis VEU_*.
+    profile = environ.get("VEU_PERFIL") or from_file.get("profile")
+    config = base.with_profile(profile) if profile else base
+    config = config.with_overrides(**{key: value for key, value in from_file.items() if key != "profile"})
+    from_env = _from_env(environ, config)  # depois do arquivo: VEU_URL_GROQ não apaga os provedores dele
+    config = config.with_overrides(**from_env)
+    return replace(config, explicit_options=tuple(sorted((set(from_file) | set(from_env)) - {"profile"})))

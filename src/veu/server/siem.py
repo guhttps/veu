@@ -12,6 +12,7 @@ mais novas são descartadas e contadas (veu_siem_descartados_total); o arquivo d
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -211,7 +212,10 @@ class SiemForwarder:
         return True
 
     def close(self, timeout: float = 5.0) -> None:
-        self._queue.put(None)
+        """Dá até timeout segundos para a fila esvaziar; com o SIEM fora do ar e a fila cheia, não trava o fim."""
+        # A thread é daemon: o que não couber no tempo fica só no arquivo de auditoria.
+        with contextlib.suppress(queue.Full):
+            self._queue.put_nowait(None)
         self._thread.join(timeout)
         for sender in self.senders:
             close = getattr(sender, "close", None)

@@ -129,6 +129,27 @@ def test_forwarder_drops_when_the_queue_is_full():
     forwarder.close()
 
 
+def test_close_does_not_hang_when_the_siem_is_down_and_the_queue_is_full():
+    import time
+
+    gate, entered = threading.Event(), threading.Event()
+
+    class Stuck:
+        def send(self, records):
+            entered.set()
+            gate.wait(10)
+
+    forwarder = SiemForwarder([Stuck()], max_queue=2, batch=1)
+    forwarder.submit({"n": 0})
+    assert entered.wait(5)  # a thread está presa no envio...
+    for n in range(1, 5):
+        forwarder.submit({"n": n})  # ...e a fila, cheia
+    started = time.monotonic()
+    forwarder.close(timeout=0.3)
+    assert time.monotonic() - started < 2
+    gate.set()
+
+
 def test_config_validation(monkeypatch, tmp_path):
     with pytest.raises(ConfigError, match="udp://"):
         Config(siem_syslog="http://siem:514")

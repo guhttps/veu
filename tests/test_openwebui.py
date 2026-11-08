@@ -33,6 +33,17 @@ def test_stream_restores_split_placeholders():
     assert output == f"Seu CPF é {CPF}."
 
 
+def test_stream_flushes_the_tail_into_an_empty_final_delta():
+    # O último pedaço do streaming da OpenAI costuma ser {"delta": {}, "finish_reason": "stop"}.
+    veu_filter = Filter()
+    veu_filter.inlet(chat(f"CPF {CPF}"), __metadata__={"chat_id": "c1"})
+    events = [{"choices": [{"delta": {"content": "Seu CPF é CPF_"}, "finish_reason": None}]},
+              {"choices": [{"delta": {}, "finish_reason": "stop"}]}]
+    output = "".join(veu_filter.stream(event, __metadata__={"chat_id": "c1"})["choices"][0]["delta"].get("content", "")
+                     for event in events)
+    assert output == "Seu CPF é CPF_"  # o pedaço retido ("CPF_" podia virar um marcador) volta no fim
+
+
 def test_conversations_never_share_vaults():
     veu_filter = Filter()
     veu_filter.inlet(chat(f"CPF {CPF}", "a"), __metadata__={"chat_id": "a"})

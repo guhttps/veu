@@ -48,8 +48,17 @@ export interface RestoreContext {
 // O último caso é um domínio solto seguido de "/" (evil.com/?d=...), que muitos sites transformam em link.
 const URL_START = /\b[a-z][a-z0-9+.-]*:\/\/|\bwww\.|\bmailto:|\]\(\s*<?|(?<![:/\p{L}\p{N}_])\/\/|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,24}(?::\d{1,5})?\//iu;
 const LINK_ATTRIBUTE = /(?:\b(?:src|href|action|formaction|srcset|poster|ping|cite|background|lowsrc|data)\s*=\s*|\burl\(\s*)["']?$/i;
-const ANGLE_DESTINATION = /\]\(\s*<[^>\n]*$/;
-const RUN = /[^\s"'<>`]*$/u;
+const ANGLE_OPEN = /\]\(\s*</g;
+const RUN_DELIMITER = /[\s"'<>`]/u;
+// Um trecho sem espaços maior que isto logo antes do marcador não é analisado: o marcador fica como está.
+export const MAX_RUN = 2048;
+
+/** O trecho final da linha sem espaços, aspas, < > ou crase. Varre do fim: tempo proporcional ao trecho. */
+function trailingRun(line: string): string {
+  let index = line.length;
+  while (index && !RUN_DELIMITER.test(line[index - 1])) index -= 1;
+  return line.slice(index);
+}
 const HOST = /^(?:[a-z][a-z0-9+.-]*:)?\/\/([^/?#\\\s]*)[/?#\\]/i;
 const JSON_ESCAPE = /\\u([0-9a-fA-F]{4})|\\(\/)/g;
 
@@ -59,9 +68,12 @@ export function linkContext(before: string): string | null {
   if (line.includes("\\")) {
     line = line.replace(JSON_ESCAPE, (_, hex: string | undefined) => (hex ? String.fromCharCode(parseInt(hex, 16)) : "/"));
   }
-  const angle = ANGLE_DESTINATION.exec(line);
-  if (angle) return line.slice(line.indexOf("<", angle.index) + 1);
-  const run = RUN.exec(line)![0];
+  // Destino entre < > ("[x](<https://site/a b>)"), que aceita espaços: o primeiro "](<" depois do último ">".
+  ANGLE_OPEN.lastIndex = line.lastIndexOf(">") + 1;
+  const angle = ANGLE_OPEN.exec(line);
+  if (angle) return line.slice(angle.index + angle[0].length);
+  const run = trailingRun(line);
+  if (run.length > MAX_RUN) return run; // sem esquema nem domínio reconhecível: o marcador não é restaurado
   const start = URL_START.exec(run);
   if (start) return start[0].startsWith("]") ? run.slice(start.index + start[0].length) : run.slice(start.index);
   if (LINK_ATTRIBUTE.test(line.slice(0, line.length - run.length))) return run;
@@ -125,6 +137,7 @@ export interface VaultData {
   versao: number;
   itens: { entidade: string; original: string; substituto: string; tipo?: string }[];
   chaves?: { entidade: string; valor: string; substituto: string }[];
+  forjados?: string[];
 }
 
 function randomSecret(): Uint8Array {
@@ -134,7 +147,11 @@ function randomSecret(): Uint8Array {
 }
 
 /** Mapeamento reversível entre dados reais e o que foi enviado ao modelo. Fica só na memória. */
+const BARE_IN_INPUT = new RegExp(BARE, "gu");
+
 export class Vault {
+  // Marcadores soltos ("CPF_1", sem colchetes) que já vieram no texto de entrada: nunca são restaurados.
+  private forgedBare = new Set<string>();
   private byKey = new Map<string, string>();
   private items = new Map<string, VaultEntry>();
   private counters = new Map<string, number>();
@@ -198,6 +215,19 @@ export class Vault {
     return [...this.items.values()];
   }
 
+  /**
+   * Desarma os marcadores que já vêm no texto de entrada: "[CPF_1]" vira "[CPF#1]". Um "CPF_1" solto não é
+   * reescrito (pode ser um nome no código), mas a forma solta nunca mais é restaurada neste cofre.
+   */
+  neutralize(text: string): string {
+    const labels = this.labels;
+    for (const match of text.matchAll(BARE_IN_INPUT)) {
+      const label = match.groups!.bare_label;
+      if (label in LABELS || labels.has(label)) this.forgedBare.add(`[${label}_${match.groups!.bare_id}]`);
+    }
+    return neutralizePlaceholders(text, labels);
+  }
+
   get labels(): Set<string> {
     return new Set([...this.items.values()].map((entry) => entry.label));
   }
@@ -210,6 +240,7 @@ export class Vault {
     const key = groups.ph_label
       ? `[${groups.ph_label.toUpperCase()}_${groups.ph_id!.toLowerCase()}]`
       : `[${groups.bare_label}_${groups.bare_id}]`;
+    if (!groups.ph_label && this.forgedBare.has(key)) return undefined;
     const entry = this.items.get(key);
     return entry && entry.kind === "marcador" ? entry : undefined;
   }
@@ -263,6 +294,7 @@ export class Vault {
         const [entidade, valor] = key.split("\u0000");
         return { entidade, valor, substituto };
       }),
+      ...(this.forgedBare.size ? { forjados: [...this.forgedBare].sort() } : {}),
     };
   }
 
@@ -281,6 +313,7 @@ export class Vault {
       const key = Vault.key(item.entidade, item.valor);
       if (!vault.byKey.has(key)) vault.byKey.set(key, item.substituto);
     }
+    for (const key of data.forjados ?? []) vault.forgedBare.add(String(key));
     return vault;
   }
 }

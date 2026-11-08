@@ -7,6 +7,7 @@ import hashlib
 import hmac
 import os
 import re
+import sys
 import time
 from collections import Counter
 from importlib import resources
@@ -137,7 +138,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
     if config.oidc_issuer:
         from veu.server.oidc import OIDCVerifier
 
-        oidc = OIDCVerifier(config.oidc_issuer, config.oidc_audience or "", config.oidc_jwks)
+        oidc = OIDCVerifier(config.oidc_issuer, config.oidc_audience or "", config.oidc_jwks, background=True)
     protected = bool(config.token or team_tokens or oidc)
     if exposed and not protected and not config.allow_no_token:
         raise ConfigError(
@@ -532,6 +533,14 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
 
     @contextlib.asynccontextmanager
     async def lifespan(app):
+        if oidc is not None:
+            from veu.server.oidc import OIDCError
+
+            try:
+                await run_in_threadpool(oidc.prefetch)  # as chaves do emissor já ficam prontas para o primeiro token
+            except OIDCError as exc:
+                print(f"Aviso: OIDC sem as chaves do emissor por enquanto ({exc}). O Véu tenta de novo sozinho.",
+                      file=sys.stderr)
         yield
         await client.aclose()
         if siem is not None:
@@ -813,7 +822,9 @@ def run(config: Config | None = None, workers: int = 1) -> None:
             raise ConfigError("Com --workers, cada processo teria o seu cofre na memória: use sessões no Redis "
                               "(sessoes = \"redis://...\" e VEU_CHAVE_COFRE).")
         create_app(config)  # confere a configuração antes de abrir os processos
+        # Cada processo monta a configuração de novo (VEU_CONFIG e VEU_*): o que veio da linha de comando vai junto.
         os.environ["VEU_HOST"], os.environ["VEU_PORTA"] = config.host, str(config.port)
+        os.environ["VEU_PERFIL"] = config.profile
         uvicorn.run("veu.server.app:app_from_environment", factory=True, workers=workers, host=config.host,
                     port=config.port, log_level="info", access_log=False)
         return

@@ -118,6 +118,37 @@ def _file(path: str) -> Path:
     return file
 
 
+# O modelo escolhe onde gravar e, em restaurar_para_arquivo, o que gravar; e ele pode ter sido manipulado por um
+# texto que leu. Por isso, as ferramentas só criam documentos novos: nada de scripts (.bat, .ps1, .sh), de pastas ou
+# arquivos ocultos (.ssh, .bashrc) nem de sobrescrever o que já existe.
+SAFE_OUTPUTS = frozenset({".txt", ".md", ".csv", ".tsv", ".json", ".jsonl", ".ndjson", ".docx", ".xlsx", ".pptx",
+                          ".pdf"})
+
+
+def _output(path: str, extensions: frozenset[str] = SAFE_OUTPUTS) -> Path:
+    target = Path(path).expanduser()
+    if any(part.startswith(".") and part not in (".", "..") for part in target.parts):
+        raise ValueError(f"O Véu não grava em pastas ou arquivos ocultos ({target}). Escolha outro lugar.")
+    if target.suffix.lower() not in extensions:
+        raise ValueError(f"O Véu só grava documentos ({', '.join(sorted(extensions))}). Escolha outro nome.")
+    if target.exists():
+        raise ValueError(f"O arquivo {target} já existe. Escolha outro nome.")
+    return target
+
+
+def _create(target: Path, write) -> None:
+    """Cria o arquivo de forma exclusiva (se outro processo criar no meio do caminho, falha) e depois grava."""
+    try:
+        target.open("x").close()
+    except FileExistsError as exc:
+        raise ValueError(f"O arquivo {target} já existe. Escolha outro nome.") from exc
+    try:
+        write()
+    except BaseException:
+        target.unlink(missing_ok=True)
+        raise
+
+
 def _read(path: str) -> tuple[Path, str]:
     """Texto do arquivo; Word, Excel, PowerPoint e PDF são convertidos em texto."""
     from veu.documents import document_kind, read_document
@@ -170,11 +201,21 @@ def build_server(veu: Veu | None = None, *, restore_text: bool = False) -> MCPSe
                            forcar: dict[str, str] | None = None, operador: str | None = None,
                            salvar_cofre: str | None = None) -> ArquivoAnonimizado:
         source = _file(origem)
+        target = _output(destino)
+        vault_file = _output(salvar_cofre, frozenset({".json"})) if salvar_cofre else None
         engine = instance.with_operator(normalize_operator(operador)) if operador else instance
-        vault, counts = anonymize_file(source, destino, veu=engine, file_format=formato, fields=campos, force=forcar)
-        if salvar_cofre:
-            Path(salvar_cofre).write_text(json.dumps(vault.to_dict(), ensure_ascii=False), encoding="utf-8")
-        return {"destino": str(Path(destino)), "formato": detect_format(source, formato),
+        result: dict = {}
+
+        def write() -> None:
+            result["vault"], result["counts"] = anonymize_file(source, target, veu=engine, file_format=formato,
+                                                               fields=campos, force=forcar)
+
+        _create(target, write)
+        vault, counts = result["vault"], result["counts"]
+        if vault_file is not None:
+            _create(vault_file, lambda: vault_file.write_text(json.dumps(vault.to_dict(), ensure_ascii=False),
+                                                              encoding="utf-8"))
+        return {"destino": str(target), "formato": detect_format(source, formato),
                 "escondidos": dict(counts), "cofre": salvar_cofre}
 
     @server.tool(description="Lê uma página do Notion, um Google Docs/Sheets/Slides, uma página web ou um documento "
@@ -235,10 +276,8 @@ def build_server(veu: Veu | None = None, *, restore_text: bool = False) -> MCPSe
     @_expected_errors
     def restaurar_para_arquivo(texto: str, sessao: str, destino: str) -> TextoRestaurado:
         vault = _session_vault(sessao)
-        target = Path(destino).expanduser()
-        if target.exists():  # nunca sobrescreve: o texto vem do modelo, que pode ter sido manipulado
-            raise ValueError(f"O arquivo {target} já existe. Escolha outro nome.")
-        target.write_text(vault.restore(texto), encoding="utf-8")
+        target = _output(destino)  # o texto vem do modelo: só documentos novos, nunca scripts nem sobrescrever
+        _create(target, lambda: target.write_text(vault.restore(texto), encoding="utf-8"))
         return {"destino": str(target), "restaurados": len(vault.restore_spans(texto))}
 
     if restore_text:
@@ -254,8 +293,9 @@ def build_server(veu: Veu | None = None, *, restore_text: bool = False) -> MCPSe
         from veu.files import restore_file
 
         vault = Vault.from_dict(json.loads(Path(cofre).read_text(encoding="utf-8")))
-        restore_file(origem, destino, vault, file_format=formato)
-        return {"destino": str(Path(destino))}
+        target = _output(destino)
+        _create(target, lambda: restore_file(_file(origem), target, vault, file_format=formato))
+        return {"destino": str(target)}
 
     @server.tool(description="Lista os tipos de dados pessoais que o Véu detecta.")
     def listar_entidades() -> dict[str, str]:
