@@ -30,6 +30,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 - **Extensão para Firefox** (128 ou mais novo): o empacotamento gera também `veu-extensao-firefox-<versão>.zip`, com o manifesto que o Firefox espera.
 
+- `veu servir --workers N` abre vários processos (exige sessões no Redis; uma cadeia de auditoria por processo).
+- **Página web:** textos grandes (20 mil caracteres ou mais) são analisados num Web Worker, sem travar a página, e as instâncias do Véu são reaproveitadas entre as teclas.
+- **Testes de propriedade** (hypothesis): anonimizar e restaurar devolve o texto original; o streaming dá o mesmo resultado que o lote, cortado em qualquer ponto; o leitor de SSE remonta os eventos cortados em qualquer byte (inclusive no meio de um caractere UTF-8 e com CRLF); bytes aleatórios não derrubam os leitores de SSE e NDJSON. `VEU_HIPOTESES=5000` faz uma busca longa.
+
+### Corrigido
+- Restauração em streaming: um marcador solto colado a uma palavra (`_CPF_1`, `xCPF_1`) era restaurado quando chegava num pedaço separado, embora no texto inteiro não fosse. Achado pelos testes de propriedade.
+
 ### Alterado
 - **Extensão:** mostrar os dados reais direto na página passa a ser opcional (desligado por padrão), porque o código do site de IA também consegue ler a página. Os dados reais continuam a um clique: copiar a seleção, o campo Restaurar do ícone ou a opção no popup.
 - **Extensão:** o script roda antes da página (`document_start`), para tratar o colar antes do código do site, e reconhece os marcadores do operador `hash` com 16 caracteres.

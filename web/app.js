@@ -14,6 +14,21 @@
   // Valores que a pessoa desmarcou (falsos positivos): não são escondidos.
   const ignorados = new Set();
   const base = new Veu();
+  // Uma instância por configuração: montar as listas de nomes a cada tecla seria lento, e a mesma instância
+  // reaproveita o cache de detecção de textos longos.
+  const instancias = new Map();
+  function veuPara(lista, op) {
+    const chave = JSON.stringify([lista, op]);
+    if (!instancias.has(chave)) instancias.set(chave, new Veu({ allowlist: lista, operator: op }));
+    return instancias.get(chave);
+  }
+  // Textos grandes vão para um trabalhador (Web Worker): a página continua respondendo.
+  const GRANDE = 20000;
+  let trabalhador = null;
+  let pedido = 0;
+  try {
+    trabalhador = new Worker("trabalhador.js");
+  } catch { /* sem suporte a Worker: tudo roda aqui mesmo */ }
   let cofre = carregarCofre();
   let rascunho = null;
 
@@ -113,17 +128,30 @@
 
   function atualizar() {
     const texto = entrada.value;
-    const entidades = texto ? base.analyze(texto) : [];
-    mostrarAchados(entidades);
     if (!texto) {
+      mostrarAchados([]);
       rascunho = null;
       saida.replaceChildren();
       return;
     }
-    // A prévia usa uma cópia do cofre: a numeração continua a da conversa ([CPF_2] depois de [CPF_1]).
-    const veu = new Veu({ allowlist: [...ignorados], operator: operador.value });
+    if (trabalhador && texto.length >= GRANDE) {
+      // A prévia usa uma cópia do cofre: a numeração continua a da conversa ([CPF_2] depois de [CPF_1]).
+      const id = ++pedido;
+      saida.textContent = "Analisando o texto...";
+      trabalhador.onmessage = ({ data }) => {
+        if (data.id !== pedido) return; // chegou uma versão mais nova do texto
+        if (data.erro) return avisar("Não consegui analisar este texto.");
+        mostrarAchados(data.entidades);
+        rascunho = { texto: data.texto, cofre: Vault.fromJSON(data.cofre) };
+        mostrarComMarcadores(saida, data.texto);
+      };
+      trabalhador.postMessage({ id, texto, ignorar: [...ignorados], operador: operador.value, cofre: cofre.toJSON() });
+      return;
+    }
+    pedido += 1; // descarta respostas atrasadas do trabalhador
+    mostrarAchados(base.analyze(texto));
     const copia = Vault.fromJSON(cofre.toJSON());
-    const resultado = veu.anonymize(texto, copia);
+    const resultado = veuPara([...ignorados], operador.value).anonymize(texto, copia);
     rascunho = { texto: resultado.text, cofre: copia };
     mostrarComMarcadores(saida, resultado.text);
   }

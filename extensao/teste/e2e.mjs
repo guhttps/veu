@@ -154,6 +154,14 @@ try {
   await pausa(200);
   const restaurado = await web.avaliar(`document.getElementById("restaurado").textContent`);
   confere(restaurado === `Olá Maria Souza, seu CPF é ${CPF}.`, "página web restaura a resposta");
+  // Texto grande: analisado no trabalhador (Web Worker), sem travar a página.
+  await web.avaliar(`(() => { const e = document.getElementById("entrada"); e.value = "Relatório do atendimento. ".repeat(1200) + "Cliente Maria Souza, CPF ${CPF}."; e.dispatchEvent(new Event("input")); })()`);
+  let grande = "";
+  for (let tentativa = 0; tentativa < 40 && !grande.includes("[CPF_1]"); tentativa += 1) {
+    await pausa(150);
+    grande = await web.avaliar(`document.getElementById("saida").textContent`);
+  }
+  confere(grande.includes("[CPF_1]") && !grande.includes(CPF), "texto grande protegido pelo trabalhador da página");
   if (process.env.VEU_CAPTURA) {
     await cdp("Emulation.setDeviceMetricsOverride", { width: 900, height: 1250, deviceScaleFactor: 1, mobile: false }, web.sessionId);
     const { data } = await cdp("Page.captureScreenshot", { format: "png" }, web.sessionId);

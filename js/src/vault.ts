@@ -221,17 +221,20 @@ export class Vault {
     if (!text || !this.items.size) return text;
     const tool = context.tool ?? jsonEscape;
     const prefix = context.prefix ?? "";
-    return text.replace(RESTORE, (...args) => {
+    // O último caractere já emitido (streaming) entra só como contexto: "_" + "CPF_1" não é um marcador solto.
+    const lead = prefix.slice(-1);
+    return (lead + text).replace(RESTORE, (...args) => {
       const groups = args[args.length - 1] as Record<string, string | undefined>;
-      const offset = args[args.length - 3] as number;
       const match = args[0] as string;
+      if ((args[args.length - 3] as number) < lead.length) return match;
+      const offset = (args[args.length - 3] as number) - lead.length;
       const entry = this.entryFor(groups);
       if (!entry) return match;
       const newline = offset > 0 ? text.lastIndexOf("\n", offset - 1) : -1;
       const before = newline === -1 ? prefix + text.slice(0, offset) : text.slice(newline + 1, offset);
       if (!restoreAllowed(this.policy, entry.label, before, tool)) return match;
       return jsonEscape ? JSON.stringify(entry.original).slice(1, -1) : entry.original;
-    });
+    }).slice(lead.length);
   }
 
   restorer(jsonEscape = false, tool?: boolean): StreamRestorer {
@@ -326,11 +329,12 @@ export class StreamRestorer {
     const bracket = text.lastIndexOf("[");
     if (bracket !== -1 && !text.slice(bracket).includes("]") && text.length - bracket <= MAX_HOLDBACK) cut = bracket;
     const longest = Math.min(text.length, MAX_HOLDBACK);
-    const alnum = /[\p{L}\p{N}]/u;
+    // No meio de uma palavra ("_CPF_1"), um marcador solto não começa: cortar ali o separaria do contexto.
+    const word = /[\p{L}\p{N}_]/u;
     for (let size = longest; size > 0; size -= 1) {
       const start = text.length - size;
       if (start >= cut) break;
-      if (start > 0 && alnum.test(text[start - 1]) && alnum.test(text[start])) continue;
+      if (start > 0 && word.test(text[start - 1]) && word.test(text[start])) continue;
       if (this.vault.mightContinue(text.slice(start))) {
         cut = start;
         break;

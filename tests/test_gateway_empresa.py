@@ -142,3 +142,24 @@ def test_link_expander_turns_on_public_only():
     expander = LinkExpander(reader=reader)
     expander.expand_with_known("veja https://docs.google.com/document/d/abc")
     assert seen == [True] and _PUBLIC_ONLY.get() is False
+
+
+def test_workers_need_shared_sessions(monkeypatch):
+    from veu.server import app as server
+
+    with pytest.raises(ConfigError, match="Redis"):
+        server.run(Config(), workers=2)
+
+
+def test_each_worker_writes_its_own_audit_chain(monkeypatch, tmp_path):
+    import os
+
+    from veu.server import app as server
+
+    monkeypatch.setenv("VEU_LOG_AUDITORIA", str(tmp_path / "auditoria.jsonl"))
+    monkeypatch.delenv("VEU_CONFIG", raising=False)
+    monkeypatch.chdir(tmp_path)
+    created = []
+    monkeypatch.setattr(server, "create_app", lambda config, **kw: created.append(config) or object())
+    server.app_from_environment()
+    assert created[0].audit_log.endswith(f"auditoria.{os.getpid()}.jsonl")

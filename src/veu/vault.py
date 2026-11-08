@@ -305,12 +305,16 @@ class Vault:
         tool = json_escape if tool is None else tool
         policy = self.policy
         counter = _restored.get()
+        # O último caractere já emitido (streaming) entra só como contexto: "_" + "CPF_1" não é um marcador solto.
+        lead = prefix[-1:]
 
         def replace(match: re.Match) -> str:
+            if match.start() < len(lead):
+                return match.group(0)
             entry = self._entry_for(match)
             if entry is None:
                 return match.group(0)
-            start = match.start()
+            start = match.start() - len(lead)
             newline = text.rfind("\n", 0, start)
             before = prefix + text[:start] if newline == -1 else text[newline + 1:start]
             if not policy.allows(entry.label, before, tool=tool):
@@ -321,7 +325,7 @@ class Vault:
                 counter[entry.label] += 1
             return json.dumps(entry.original, ensure_ascii=False)[1:-1] if json_escape else entry.original
 
-        return self._compiled().sub(replace, text)
+        return self._compiled().sub(replace, lead + text)[len(lead):]
 
     def restore_spans(self, text: str) -> list[tuple[int, int, str]]:
         """(início, fim, valor real) de cada marcador que a política deixa restaurar (para documentos)."""
@@ -383,6 +387,10 @@ class Vault:
         return vault
 
 
+def _word_char(char: str) -> bool:
+    return char.isalnum() or char == "_"
+
+
 class StreamRestorer:
     """Restaura uma resposta que chega em pedaços (streaming).
 
@@ -430,7 +438,9 @@ class StreamRestorer:
             start = len(text) - size
             if start >= cut:
                 break
-            if start > 0 and text[start - 1].isalnum() and text[start].isalnum():
+            # No meio de uma palavra ("_CPF_1", "xCPF_1"), um marcador solto não começa: cortar ali separaria o
+            # marcador do que vem antes, e ele seria restaurado no pedaço seguinte sem esse contexto.
+            if start > 0 and _word_char(text[start - 1]) and _word_char(text[start]):
                 continue
             if self.vault._might_continue(text[start:]):
                 cut = start
