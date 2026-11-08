@@ -62,3 +62,8 @@ def test_slugs():
 
 def test_alerts_become_admonitions():
     assert site.convert_alerts("> [!NOTE]\n> texto\n\nfim") == '!!! note "Nota"\n    texto\n\nfim\n'
+
+
+def test_site_loads_nothing_from_third_parties():
+    # Projeto de privacidade: o site não manda o IP de quem visita para o Google Fonts.
+    assert "font = false" in site.CONFIG

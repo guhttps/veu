@@ -31,7 +31,7 @@ O modelo completo, com as fronteiras de confiança e os riscos que sobram, está
 | Travamento por textos enormes | Limite de tamanho do corpo (`limite_corpo_mb`) e processamento fora do laço principal do servidor |
 | Alteração ou remoção de linhas da auditoria | Cadeia de hashes com HMAC (`segredo_auditoria_env`) e `veu auditoria verificar` |
 | Uso do gateway por uma equipe com a política de outra | Token e política por equipe (`[equipes.NOME]`), comparados em tempo constante |
-| SSRF pela leitura de links (`expandir_links`) | Só HTTPS e só os domínios de `dominios_expandidos`; argumentos de ferramentas não são expandidos |
+| SSRF pela leitura de links (`expandir_links` e `ler_protegido` do MCP) | Só HTTPS para endereços públicos, conferidos em cada redirecionamento e no endereço a que a conexão chegou (contra DNS rebinding); no proxy, só os domínios de `dominios_expandidos`, e argumentos de ferramentas não são expandidos |
 | Agente de código lendo `.env` e mandando as chaves ao provedor | Ganchos `veu gancho prompt` e `veu gancho arquivo` bloqueiam e sugerem `ler_protegido` |
 | Página web e extensão enviando dados para fora | A página bloqueia conexões pela CSP (`connect-src 'none'`); a extensão não tem permissão de rede e guarda o cofre só na sessão do navegador |
 

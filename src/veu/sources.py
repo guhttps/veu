@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import contextlib
 import contextvars
+import http.client
 import ipaddress
 import json
 import os
@@ -113,7 +114,49 @@ class _SafeRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-_OPENER = urllib.request.build_opener(_SafeRedirect)
+def _check_peer(sock: socket.socket) -> None:
+    """O endereço a que a conexão chegou de fato precisa ser público.
+
+    A checagem pelo DNS acontece antes, mas o urllib resolve o nome de novo para conectar: um domínio do atacante
+    pode responder com um IP público na primeira vez e com 127.0.0.1 na segunda (DNS rebinding).
+    """
+    peer = ipaddress.ip_address(str(sock.getpeername()[0]).split("%", 1)[0])
+    if not peer.is_global:
+        sock.close()
+        raise SourceError("O link aponta para um endereço interno e não foi lido.")
+
+
+class _PublicHTTPSConnection(http.client.HTTPSConnection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        create = self._create_connection
+
+        def checked(address, *more, **options):
+            sock = create(address, *more, **options)
+            # Com um proxy (HTTPS_PROXY), a conexão vai até o proxy da empresa, que costuma ter IP interno.
+            if _PUBLIC_ONLY.get() and not self._tunnel_host:
+                _check_peer(sock)
+            return sock
+
+        self._create_connection = checked
+
+
+class _PublicHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(_PublicHTTPSConnection, req, context=self._context)
+
+
+_OPENER = urllib.request.build_opener(_SafeRedirect, _PublicHTTPSHandler)
+
+
+@contextlib.contextmanager
+def only_public_links():
+    """Dentro do bloco, links e redirecionamentos só podem levar a endereços públicos, por https."""
+    token = _PUBLIC_ONLY.set(True)
+    try:
+        yield
+    finally:
+        _PUBLIC_ONLY.reset(token)
 
 
 def http(url: str, *, method: str = "GET", headers: dict | None = None, body: dict | None = None,

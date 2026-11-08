@@ -321,6 +321,30 @@ def test_mcp_file_tools_only_create_new_documents(tmp_path):
     assert not (tmp_path / "Startup").exists() and not (tmp_path / ".bashrc").exists()
 
 
+def test_mcp_read_tools_refuse_internal_links_and_hidden_files(tmp_path):
+    pytest.importorskip("mcp")
+    from mcp.client import Client
+
+    from veu.integrations.mcp import build_server
+
+    hidden = tmp_path / ".aws" / "credentials"
+    hidden.parent.mkdir()
+    hidden.write_text("[default]\naws_access_key_id = exemplo\n", encoding="utf-8")
+
+    async def run():
+        async with Client(build_server()) as client:
+            internal = await client.call_tool("ler_protegido", {"fonte": "http://169.254.169.254/latest/meta-data/"})
+            local = await client.call_tool("ler_protegido", {"fonte": "https://127.0.0.1/admin"})
+            secret_file = await client.call_tool("ler_protegido", {"fonte": str(hidden)})
+            check = await client.call_tool("verificar_arquivo", {"caminho": str(hidden)})
+            return internal, local, secret_file, check
+
+    internal, local, secret_file, check = asyncio.run(run())
+    assert internal.is_error and "https" in str(internal.content)
+    assert local.is_error and "interno" in str(local.content)
+    assert secret_file.is_error and check.is_error and "ocultos" in str(secret_file.content)
+
+
 # Proxy de ponta a ponta --------------------------------------------------------------------------------------------
 
 def exfiltrating_upstream(stream_mode: bool):

@@ -11,6 +11,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Ferramentas de arquivo do MCP** (`restaurar_para_arquivo`, `anonimizar_arquivo`, `restaurar_arquivo` e `salvar_cofre`): só criam documentos novos, nunca scripts nem arquivos em pastas ocultas, e nunca sobrescrevem (a criação é exclusiva). Um modelo manipulado não consegue mais gravar um `.bat` na inicialização do Windows nem apagar uma planilha.
 - **Perfis:** `--perfil` e `VEU_PERFIL` não afrouxam mais o que está escrito no `veu.toml` ou em `VEU_*` (antes, `--perfil juridico` apagava um `bloquear = ["CPF"]` do arquivo).
 - `veu servir --workers N --perfil X`: os processos recebem o perfil (antes, só o principal o aplicava).
+- **`ler_protegido` do MCP sem SSRF:** o modelo escolhe o link, então ele só pode levar a endereços públicos, por https, como na expansão de links do proxy (antes, uma injeção podia mandar ler 169.254.169.254 ou a rede interna). As ferramentas do MCP também não leem mais pastas e arquivos ocultos (`.ssh`, `.aws`).
+- **DNS rebinding:** a leitura de links confere o endereço a que a conexão chegou de fato, e não só a resposta do DNS na checagem.
+- **Site sem Google Fonts** (quem visita não manda o IP para terceiros), e a página abre a documentação em outra aba, que não compartilha o cofre guardado na aba.
 
 ### Adicionado
 - **Avaliação com dados de terceiros:** `veu avaliar --externo br-agentic|privacy-filter-br|todos` baixa uma vez (versão fixa, conferida pelo sha256) dois conjuntos públicos em português e mede o vazamento, com intervalo de confiança de 95% e a lista dos tipos que estão fora do escopo do Véu.
