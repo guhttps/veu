@@ -31,7 +31,7 @@ Empresas e pessoas estão colocando IA no atendimento, nos contratos, no RH e no
 E funciona do jeito que você usa IA: no navegador, no computador, no seu código ou no servidor da empresa.
 
 > [!NOTE]
-> O Véu nasceu no Brasil: os documentos brasileiros têm o suporte mais completo e a interface está em português. E-mails, telefones internacionais, cartões, IBAN, IPs e segredos funcionam em textos de qualquer lugar. Documentos de Portugal e de nove países da América Latina também são reconhecidos, com dígito verificador. Os nomes são reconhecidos pelas listas do Censo 2022; para nomes de outras línguas, ligue o detector spaCy ou um modelo local.
+> O Véu nasceu no Brasil: os documentos brasileiros têm o suporte mais completo e a interface está em português. E-mails, telefones internacionais, cartões, IBAN, IPs e segredos funcionam em textos de qualquer lugar. Documentos de mais 21 países (Portugal, América Latina, Angola, Moçambique, Estados Unidos, Canadá, Índia e seis países da Europa) também são reconhecidos, quase todos com dígito verificador, assim como passaportes (MRZ), chassis (VIN) e carteiras de Bitcoin e Ethereum. Os nomes são reconhecidos pelas listas do Censo 2022; para nomes de outras línguas, ligue o detector spaCy ou um modelo local.
 
 > [!IMPORTANT]
 > Nenhuma detecção automática é perfeita. O Véu **reduz** muito o risco de enviar dados pessoais, mas não o elimina. Veja os [números do benchmark](#benchmark) e as [limitações](SECURITY.md#o-que-o-véu-não-faz). Não é aconselhamento jurídico sobre a LGPD.
@@ -97,6 +97,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 - 🌍 **Dados pessoais de qualquer lugar:** nomes, e-mails, telefones (brasileiros e de qualquer país, com +código), endereços, cartões de crédito, IBAN, endereços IP (v4 e v6) e datas de nascimento.
 - 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CEP, placa, RENAVAM, conta bancária, chave Pix e processo do CNJ.
 - 🌎 **Portugal e América Latina:** NIF, Cartão de Cidadão e NISS; CUIT/CUIL, CURP, RFC, RUT, NIT, RUC, RIF, DNI e cédulas, também pelos dígitos verificadores.
+- 🌐 **África lusófona, EUA, Europa, Canadá e Índia:** NUIT e BI (Angola e Moçambique), SSN, ITIN e Medicare (EUA), DNI e NIE (Espanha), codice fiscale (Itália), NIR (França), Steuer-ID (Alemanha), National Insurance e NHS (Reino Unido), BSN (Países Baixos), SIN (Canadá), Aadhaar e PAN (Índia); também passaportes pela zona de leitura (MRZ), chassi (VIN) e carteiras de Bitcoin e Ethereum.
 - 🔑 **Segredos:**
   - chaves da OpenAI, Anthropic, AWS, Google, GitHub, Stripe, Slack, Hugging Face, Notion, Mercado Pago, Asaas e mais 20 serviços;
   - JWT e tokens Bearer;
@@ -281,8 +282,13 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 | `CHAVE_PRIVADA`, `URL_CONEXAO` | `-----BEGIN PRIVATE KEY-----`, `postgres://u:senha@host` | formato |
 | `NIF_PT`, `CC_PT`, `NISS_PT` | NIF 123 456 789, Cartão de Cidadão 12345678 9 ZZ1 | Portugal: dígitos verificadores e contexto |
 | `CUIT`, `DNI`, `CURP`, `RFC`, `RUT`, `CEDULA`, `NIT`, `RUC`, `RIF` | 20-12345678-6, XAXX900101HDFXXX03, 12.345.678-5 | Argentina, México, Chile, Uruguai, Colômbia, Peru, Equador, Paraguai e Venezuela: dígitos verificadores e contexto |
+| `NUIT`, `BI_AO`, `BI_MZ` | NUIT 123 456 785, BI 123456789LA123 | Moçambique e Angola: dígito verificador (NUIT), formato e contexto |
+| `SSN`, `MBI` | 123-45-6789, ITIN 900-70-1234, MBI 1EG4-TE5-MK73 | EUA: faixas válidas do SSN e do ITIN; Medicare com contexto |
+| `DNI_ES`, `CODICE_FISCALE`, `NIR`, `STEUER_ID`, `NINO`, `NHS`, `BSN` | 12345678Z, RSSMRA80A01H501U, AB 12 34 56 C | Espanha, Itália, França, Alemanha, Reino Unido e Países Baixos: dígitos verificadores e contexto |
+| `SIN`, `AADHAAR`, `PAN` | SIN 123 456 782, Aadhaar 2345 6789 0124 | Canadá (Luhn) e Índia (Verhoeff), com contexto |
+| `MRZ`, `VIN`, `CRIPTO` | `P<UTOERIKSSON<<ANNA<MARIA<<<...`, 1M8GDM9AXKP042788, `bc1q...` | passaporte (dígitos da ICAO 9303), chassi e carteiras (Base58Check, bech32) |
 
-Formatos estruturados (CURP, RFC, Cartão de Cidadão, CUIT e RIF com a pontuação típica) são reconhecidos sozinhos. Números puros, que um CPF ou um protocolo poderiam imitar, só com a palavra de contexto por perto ("NIF", "CUIT", "RUC", "cédula"). Num formato que existe nos dois lados, como `12.345.678-5`, sem contexto, vence o rótulo brasileiro.
+Formatos estruturados (CURP, RFC, Cartão de Cidadão, CUIT e RIF com a pontuação típica, SSN com hífens, DNI espanhol, codice fiscale, NIR com espaços, MRZ, VIN e carteiras) são reconhecidos sozinhos. Números puros, que um CPF ou um protocolo poderiam imitar, só com a palavra de contexto por perto ("NIF", "CUIT", "RUC", "cédula", "BSN", "SIN", "Aadhaar"). Num formato que existe nos dois lados, como `12.345.678-5`, sem contexto, vence o rótulo brasileiro.
 
 Também dá para adicionar padrões próprios (matrícula, número de cliente...) no [`veu.toml`](examples/veu.toml).
 
@@ -378,7 +384,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 570 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 697 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa
@@ -397,7 +403,7 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 - [x] Cache de detecção para agentes que reenviam a conversa inteira a cada turno
 - [x] Nó para o n8n (WhatsApp com IA sem expor o CPF do cliente)
 - [x] Documentos de Portugal e da América Latina (CUIT, CURP, RFC, RUT, NIT, RUC, RIF e cédulas)
-- [ ] Documentos de Angola, Moçambique, Estados Unidos e Europa; MRZ de passaporte, VIN e carteiras de criptomoeda
+- [x] Documentos de Angola, Moçambique, Estados Unidos, Canadá, Índia e Europa; MRZ de passaporte, VIN e carteiras de criptomoeda
 - [ ] Nomes de outras línguas sem precisar de modelo
 - [ ] Abrir Excel e Word direto na página web, sem instalar nada
 - [ ] Operador sintético na versão JavaScript

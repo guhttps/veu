@@ -105,6 +105,25 @@ const CTX_NIT = ["nit", "dian"];
 const CTX_RUC = ["ruc", "sunat", "sri", "set", "registro unico de contribuyentes"];
 const CTX_RIF = ["rif", "seniat"];
 const CUIT_PREFIX = "(?:20|23|24|27|30|33|34|50|51|55)";
+const CTX_NUIT = ["nuit", "autoridade tributaria", "numero unico de identificacao tributaria"];
+const CTX_BI_AFRICA = ["bi", "bilhete de identidade", "nif", "agt", "nuit"];
+const CTX_SSN = ["ssn", "social security", "soc sec", "itin", "taxpayer identification", "tin"];
+const CTX_MBI = ["mbi", "medicare", "beneficiary"];
+const CTX_DNI_ES = ["dni", "nie", "nif", "documento nacional de identidad"];
+const CTX_CF = ["codice fiscale", "c.f", "cod. fisc", "tessera sanitaria"];
+const CTX_NIR = ["nir", "insee", "securite sociale", "n° ss", "carte vitale"];
+const CTX_STEUER = ["steuer-id", "steuerid", "steueridentifikationsnummer", "idnr", "identifikationsnummer"];
+const CTX_NINO = ["national insurance", "ni number", "nino"];
+const CTX_NHS = ["nhs", "nhs number"];
+const CTX_BSN = ["bsn", "burgerservicenummer", "sofinummer"];
+const CTX_SIN = ["sin", "social insurance number", "numero d'assurance sociale"];
+const CTX_AADHAAR = ["aadhaar", "uidai", "uid number"];
+const CTX_PAN = ["pan", "permanent account number", "income tax"];
+const CTX_MRZ = ["passaporte", "passport", "mrz"];
+const CTX_VIN = ["chassi", "chassis", "vin", "numero do chassi"];
+const CTX_CRYPTO = ["carteira", "wallet", "bitcoin", "btc", "ethereum", "eth", "cripto", "usdt"];
+// 1ª linha da MRZ: "P<" + país + sobrenome<<nomes, completando com "<".
+const mrzNameLine = (value: string): boolean => value.slice(5).includes("<<") && /[A-Z]/.test(value.slice(5));
 
 const phoneAdjust = (value: string, score: number): number => (/[()\s.+-]/u.test(value) ? score : score - 0.3);
 const isYear = (value: string): boolean => /^(?:19|20)\d{2}$/.test(value);
@@ -223,6 +242,42 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   spec("NIT", `${B}\\d{8,15}-?\\d${E}`, S(null, null, 0.95, 0.75), { validator: v.isValidNitCo, context: CTX_NIT, before: 25 }),
   spec("RUC", `${B}(?:\\d{11}|\\d{13}|\\d{5,8}-\\d)${E}`, S(null, null, 0.96, 0.75), { validator: v.isValidRuc, context: CTX_RUC, before: 25 }),
   spec("RIF", `${B}[VEJPG]-?\\d{8}-?\\d${E}`, S(0.9, null, 0.97, 0.75), { validator: v.isValidRif, context: CTX_RIF }),
+  // África lusófona, EUA, Europa, Índia e identificadores transversais.
+  spec("NUIT", `${B}\\d{3}\\s?\\d{3}\\s?\\d{3}${E}`, S(null, null, 0.95), { validator: v.isValidNuit, context: CTX_NUIT, before: 30 }),
+  spec("BI_AO", `${B}\\d{9}[A-Z]{2}\\d{3}${E}`, S(0.85, null, 0.97), { context: CTX_BI_AFRICA }),
+  // 12 dígitos e uma letra também é o formato das datas de certificados X.509 ("261108123045Z"): só com contexto.
+  spec("BI_MZ", `${B}\\d{12}[A-Z]${E}`, S(null, null, 0.95), { context: CTX_BI_AFRICA, before: 30 }),
+  spec("SSN", `${B}\\d{3}-\\d{2}-\\d{4}${E}`, S(0.85, null, 0.97), { validator: v.isValidSsn, context: CTX_SSN }),
+  spec("SSN", `${B}\\d{3}\\s?\\d{2}\\s?\\d{4}${E}`, S(null, null, 0.95), { validator: v.isValidSsn, context: CTX_SSN, before: 30 }),
+  spec("MBI", `${B}[1-9][AC-HJKMNP-RT-Y][AC-HJKMNP-RT-Y\\d]\\d-?[AC-HJKMNP-RT-Y][AC-HJKMNP-RT-Y\\d]\\d-?[AC-HJKMNP-RT-Y]{2}\\d{2}${E}`,
+    S(null, null, 0.95), { context: CTX_MBI, before: 30 }),
+  spec("DNI_ES", `${B}[XYZ]?\\d{7,8}-?[A-Z]${E}`, S(0.85, null, 0.97), { validator: v.isValidDniEs, context: CTX_DNI_ES }),
+  spec("CODICE_FISCALE", `${B}[A-Z]{6}[\\dLMNP-V]{2}[ABCDEHLMPRST][\\dLMNP-V]{2}[A-Z][\\dLMNP-V]{3}[A-Z]${E}`,
+    S(0.95, 0.6, 1.0, 0.8), { validator: v.isValidCodiceFiscale, context: CTX_CF }),
+  // Sem os espaços, 15 dígitos começando com 1 ou 2 podem ser um protocolo: só com contexto.
+  spec("NIR", `${B}[12] \\d{2} \\d{2} (?:\\d{2}|2[AB]) \\d{3} \\d{3} \\d{2}${E}`, S(0.85, null, 0.97), { validator: v.isValidNir, context: CTX_NIR }),
+  spec("NIR", `${B}[12]\\d{4}(?:\\d{2}|2[AB])\\d{8}${E}`, S(null, null, 0.95), { validator: v.isValidNir, context: CTX_NIR, before: 30 }),
+  spec("STEUER_ID", `${B}\\d{2}\\s?\\d{3}\\s?\\d{3}\\s?\\d{3}${E}`, S(null, null, 0.95),
+    { validator: v.isValidSteuerId, context: CTX_STEUER, before: 35 }),
+  spec("NINO", `${B}[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z]\\s?\\d{2}\\s?\\d{2}\\s?\\d{2}\\s?[A-D]${E}`, S(0.85, null, 0.97),
+    { validator: v.isValidNino, context: CTX_NINO }),
+  spec("NINO", `${B}[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z]\\s?\\d{2}\\s?\\d{2}\\s?\\d{2}${E}`, S(null, null, 0.95),
+    { validator: v.isValidNino, context: CTX_NINO, before: 30 }),
+  spec("NHS", `${B}\\d{3}\\s?\\d{3}\\s?\\d{4}${E}`, S(null, null, 0.95), { validator: v.isValidNhs, context: CTX_NHS, before: 30 }),
+  spec("BSN", `${B}\\d{9}${E}`, S(null, null, 0.95), { validator: v.isValidBsn, context: CTX_BSN, before: 30 }),
+  spec("SIN", `${B}\\d{3}[\\s-]?\\d{3}[\\s-]?\\d{3}${E}`, S(null, null, 0.95), { validator: v.isValidSin, context: CTX_SIN, before: 30 }),
+  spec("AADHAAR", `${B}[2-9]\\d{3}\\s?\\d{4}\\s?\\d{4}${E}`, S(null, null, 0.95),
+    { validator: v.isValidAadhaar, context: CTX_AADHAAR, before: 30 }),
+  spec("PAN", `${B}[A-Z]{3}[PCHFATBLJGK][A-Z]\\d{4}[A-Z]${E}`, S(null, null, 0.95), { context: CTX_PAN, before: 30 }),
+  // MRZ de passaporte (TD3): a 1ª linha traz o nome; a 2ª, número, nascimento e validade com dígitos verificadores.
+  spec("MRZ", "(?<![A-Z0-9<])P[A-Z<][A-Z<]{3}[A-Z<]{39}(?![A-Z0-9<])", S(0.9, null, 0.97), { validator: mrzNameLine, context: CTX_MRZ }),
+  spec("MRZ", "(?<![A-Z0-9<])[A-Z0-9<]{9}\\d[A-Z<]{3}\\d{7}[MFX<]\\d{7}[A-Z0-9<]{14}[\\d<]\\d(?![A-Z0-9<])", S(0.95, null, 1.0),
+    { validator: v.isValidMrzLine, context: CTX_MRZ }),
+  // Chassi: o dígito da posição 9 só é obrigatório nos EUA e na China; sem ele, só com "chassi" ou "VIN" por perto.
+  spec("VIN", `${B}[A-HJ-NPR-Z0-9]{17}${E}`, S(0.85, null, 0.97, 0.8),
+    { validator: v.isValidVin, context: CTX_VIN, exclude: (value) => /^(?:\d+|[A-Z]+)$/.test(value) }),
+  spec("CRIPTO", `${B}(?:0x[0-9a-fA-F]{40}|[13][1-9A-HJ-NP-Za-km-z]{25,34}|(?:bc|tb)1[02-9ac-hj-np-z]{11,71})${E}`,
+    S(0.9, null, 0.97), { validator: v.isValidCryptoAddress, context: CTX_CRYPTO }),
 ];
 
 const round3 = (value: number): number => Math.round(value * 1000) / 1000;

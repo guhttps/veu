@@ -497,3 +497,230 @@ def is_valid_rif(value: str) -> bool:
     weights = (3, 2, 7, 6, 5, 4, 3, 2)
     total = _RIF_LETTERS[compact[0]] + sum(w * int(n) for w, n in zip(weights, compact[1:9], strict=True))
     return "00987654321"[total % 11] == compact[9]
+
+
+# África lusófona, EUA, Europa e identificadores transversais (python-stdnum 2.2 como referência) -----------------
+
+def is_valid_nuit(value: str) -> bool:
+    """NUIT de Moçambique: 9 dígitos, mod 11."""
+    d = only_digits(value)
+    if len(d) != 9:
+        return False
+    total = sum(w * int(n) for w, n in zip((8, 9, 4, 5, 6, 7, 8, 9), d[:8], strict=True))
+    return "01234567891"[total % 11] == d[8]
+
+
+_SSN_BLACKLIST = frozenset({"078051120", "457555462", "219099999"})
+
+
+def is_valid_ssn(value: str) -> bool:
+    """SSN ou ITIN dos EUA: sem dígito verificador, só as faixas que existem."""
+    d = only_digits(value)
+    if len(d) != 9 or d in _SSN_BLACKLIST:
+        return False
+    area, group, serial = d[:3], d[3:5], d[5:]
+    if area[0] == "9":  # ITIN: começa com 9 e o grupo fica entre 70 e 99 (menos 89 e 93)
+        return 70 <= int(group) <= 99 and group not in ("89", "93")
+    return area not in ("000", "666") and group != "00" and serial != "0000"
+
+
+_DNI_ES_LETTERS = "TRWAGMYFPDXBNJZSQVHLCKE"
+
+
+def is_valid_dni_es(value: str) -> bool:
+    """DNI ou NIE da Espanha: a letra final é o resto da divisão por 23."""
+    compact = re.sub(r"[\s-]", "", value).upper()
+    match = re.fullmatch(r"([XYZ]?)(\d{7,8})([A-Z])", compact)
+    if not match:
+        return False
+    prefix, number, letter = match.groups()
+    if prefix:
+        if len(number) != 7:
+            return False
+        number = str("XYZ".index(prefix)) + number
+    elif len(number) != 8:
+        return False
+    return _DNI_ES_LETTERS[int(number) % 23] == letter
+
+
+_CF_ODD = dict(zip("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                   (1, 0, 5, 7, 9, 13, 15, 17, 19, 21, 1, 0, 5, 7, 9, 13, 15, 17, 19, 21, 2, 4, 18, 20, 11, 3, 6, 8,
+                    12, 14, 16, 10, 22, 25, 24, 23), strict=True))
+_CF_EVEN = {**{str(i): i for i in range(10)}, **{chr(65 + i): i for i in range(26)}}
+
+
+def is_valid_codice_fiscale(value: str) -> bool:
+    """Codice fiscale da Itália: 16 caracteres com estrutura fixa e caractere de controle."""
+    v = value.upper()
+    if not re.fullmatch(r"[A-Z]{6}[\dLMNP-V]{2}[ABCDEHLMPRST][\dLMNP-V]{2}[A-Z][\dLMNP-V]{3}[A-Z]", v):
+        return False
+    total = sum(_CF_ODD[c] if i % 2 == 0 else _CF_EVEN[c] for i, c in enumerate(v[:15]))
+    return chr(65 + total % 26) == v[15]
+
+
+def is_valid_nir(value: str) -> bool:
+    """NIR (número de segurança social) da França: 15 caracteres, chave = 97 − (número mod 97)."""
+    compact = re.sub(r"\s", "", value).upper()
+    if not re.fullmatch(r"[12]\d{4}(?:\d{2}|2A|2B)\d{6}\d{2}", compact):
+        return False
+    number = compact[:13].replace("2A", "19").replace("2B", "18")
+    return 97 - int(number) % 97 == int(compact[13:])
+
+
+def is_valid_steuer_id(value: str) -> bool:
+    """Steuer-IdNr da Alemanha: 11 dígitos, um algarismo repetido, ISO 7064 MOD 11,10."""
+    d = only_digits(value)
+    if len(d) != 11 or d[0] == "0":
+        return False
+    counts = sorted(d[:10].count(n) for n in set(d[:10]))
+    if counts.count(2) + counts.count(3) != 1 or max(counts) > 3:
+        return False
+    check = 10
+    for n in d[:10]:
+        check = (int(n) + check) % 10 or 10
+        check = (check * 2) % 11
+    return (11 - check) % 10 == int(d[10])
+
+
+_NINO_PREFIX_BAD = frozenset({"BG", "GB", "KN", "NK", "NT", "TN", "ZZ"})
+
+
+def is_valid_nino(value: str) -> bool:
+    """National Insurance Number do Reino Unido: regras de formato da HMRC (sem dígito verificador)."""
+    compact = re.sub(r"\s", "", value).upper()
+    match = re.fullmatch(r"([A-CEGHJ-PR-TW-Z])([A-CEGHJ-NPR-TW-Z])(\d{6})([A-D]?)", compact)
+    return bool(match) and match.group(1) + match.group(2) not in _NINO_PREFIX_BAD
+
+
+def is_valid_nhs(value: str) -> bool:
+    """Número do NHS (Reino Unido): 10 dígitos, mod 11."""
+    d = only_digits(value)
+    if len(d) != 10:
+        return False
+    check = 11 - sum((10 - i) * int(n) for i, n in enumerate(d[:9])) % 11
+    return check != 10 and str(0 if check == 11 else check) == d[9]
+
+
+def is_valid_bsn(value: str) -> bool:
+    """BSN dos Países Baixos: prova dos 11."""
+    d = only_digits(value).zfill(9)
+    if len(d) != 9 or d == "000000000":
+        return False
+    return (sum((9 - i) * int(n) for i, n in enumerate(d[:8])) - int(d[8])) % 11 == 0
+
+
+def is_valid_sin(value: str) -> bool:
+    """SIN do Canadá: 9 dígitos com Luhn; não começa com 0 nem 8."""
+    d = only_digits(value)
+    if len(d) != 9 or d[0] in "08":
+        return False
+    total = sum(int(n) if i % 2 == 0 else (int(n) * 2 - 9 if int(n) * 2 > 9 else int(n) * 2) for i, n in enumerate(d))
+    return total % 10 == 0
+
+
+_VERHOEFF_D = [
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 0, 6, 7, 8, 9, 5], [2, 3, 4, 0, 1, 7, 8, 9, 5, 6],
+    [3, 4, 0, 1, 2, 8, 9, 5, 6, 7], [4, 0, 1, 2, 3, 9, 5, 6, 7, 8], [5, 9, 8, 7, 6, 0, 4, 3, 2, 1],
+    [6, 5, 9, 8, 7, 1, 0, 4, 3, 2], [7, 6, 5, 9, 8, 2, 1, 0, 4, 3], [8, 7, 6, 5, 9, 3, 2, 1, 0, 4],
+    [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+]
+_VERHOEFF_P = [
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 5, 7, 6, 2, 8, 3, 0, 9, 4], [5, 8, 0, 3, 7, 9, 6, 1, 4, 2],
+    [8, 9, 1, 6, 0, 4, 3, 5, 2, 7], [9, 4, 5, 3, 1, 2, 6, 8, 7, 0], [4, 2, 8, 6, 5, 7, 3, 9, 0, 1],
+    [2, 7, 9, 3, 8, 0, 6, 4, 1, 5], [7, 0, 4, 6, 9, 1, 3, 2, 5, 8],
+]
+
+
+def is_valid_aadhaar(value: str) -> bool:
+    """Aadhaar da Índia: 12 dígitos, não começa com 0 ou 1, não é palíndromo, dígito Verhoeff."""
+    d = only_digits(value)
+    if len(d) != 12 or d[0] in "01" or d == d[::-1]:
+        return False
+    check = 0
+    for i, n in enumerate(reversed(d)):
+        check = _VERHOEFF_D[check][_VERHOEFF_P[i % 8][int(n)]]
+    return check == 0
+
+
+def _mrz_value(char: str) -> int:
+    if char.isdigit():
+        return int(char)
+    if char == "<":
+        return 0
+    return ord(char) - 55
+
+
+def mrz_check_digit(field: str) -> str:
+    return str(sum(_mrz_value(c) * (7, 3, 1)[i % 3] for i, c in enumerate(field)) % 10)
+
+
+def is_valid_mrz_line(value: str) -> bool:
+    """2ª linha da MRZ de passaporte (ICAO 9303, TD3): número, nascimento e validade com dígitos 7-3-1."""
+    line = re.sub(r"\s", "", value).upper()
+    if not re.fullmatch(r"[A-Z0-9<]{9}\d[A-Z<]{3}\d{6}\d[MFX<]\d{6}\d[A-Z0-9<]{14}[\d<]\d", line):
+        return False
+    return (mrz_check_digit(line[0:9]) == line[9] and mrz_check_digit(line[13:19]) == line[19]
+            and mrz_check_digit(line[21:27]) == line[27]
+            and mrz_check_digit(line[0:10] + line[13:20] + line[21:43]) == line[43])
+
+
+_VIN_VALUES = {**{str(i): i for i in range(10)}, **dict(zip("ABCDEFGH", range(1, 9), strict=True)),
+               **dict(zip("JKLMN", range(1, 6), strict=True)), "P": 7, "R": 9,
+               **dict(zip("STUVWXYZ", range(2, 10), strict=True))}
+_VIN_WEIGHTS = (8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2)
+
+
+def is_valid_vin(value: str) -> bool:
+    """VIN (chassi): 17 caracteres sem I, O e Q, com o dígito verificador da posição 9."""
+    v = value.upper()
+    if not re.fullmatch(r"[A-HJ-NPR-Z0-9]{17}", v) or not re.search(r"\d", v) or not re.search(r"[A-Z]", v):
+        return False
+    check = sum(_VIN_VALUES[c] * w for c, w in zip(v, _VIN_WEIGHTS, strict=True)) % 11
+    return ("X" if check == 10 else str(check)) == v[8]
+
+
+_BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+
+
+def _base58check_ok(value: str) -> bool:
+    import hashlib
+
+    number = 0
+    for char in value:
+        number = number * 58 + _BASE58.index(char)
+    raw = number.to_bytes((number.bit_length() + 7) // 8, "big")
+    raw = b"\x00" * (len(value) - len(value.lstrip("1"))) + raw
+    if len(raw) != 25:
+        return False
+    digest = hashlib.sha256(hashlib.sha256(raw[:-4]).digest()).digest()
+    return digest[:4] == raw[-4:]
+
+
+_BECH32 = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+
+
+def _bech32_ok(value: str) -> bool:
+    lower = value.lower()
+    hrp, _, data = lower.rpartition("1")
+    if hrp not in ("bc", "tb") or len(data) < 6 or any(c not in _BECH32 for c in data):
+        return False
+    values = [ord(c) >> 5 for c in hrp] + [0] + [ord(c) & 31 for c in hrp] + [_BECH32.index(c) for c in data]
+    check = 1
+    for v in values:
+        top = check >> 25
+        check = (check & 0x1FFFFFF) << 5 ^ v
+        for i, generator in enumerate((0x3B6A57B2, 0x26508E6D, 0x1EA119FA, 0x3D4233DD, 0x2A1462B3)):
+            if (top >> i) & 1:
+                check ^= generator
+    return check in (1, 0x2BC830A3)  # bech32 (v0) e bech32m (Taproot)
+
+
+def is_valid_crypto_address(value: str) -> bool:
+    """Endereço de carteira: Bitcoin (Base58Check ou bech32) ou Ethereum (0x + 40 hexadecimais)."""
+    if re.fullmatch(r"0x[0-9a-fA-F]{40}", value):
+        return True
+    if re.fullmatch(r"[13][1-9A-HJ-NP-Za-km-z]{25,34}", value):
+        return _base58check_ok(value)
+    if re.fullmatch(r"(?:bc|tb)1[02-9ac-hj-np-z]{11,71}", value.lower()) and (value.islower() or value.isupper()):
+        return _bech32_ok(value)
+    return False
