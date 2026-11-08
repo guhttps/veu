@@ -17,10 +17,12 @@ ignorar = ["contato@minhaempresa.example", "11.222.333/0001-81"]
 ignorar_padroes = ['@minhaempresa\.example$', '^0800']
 
 # Detectores ligados: padroes, nomes, enderecos, segredos (chaves de API, tokens, senhas), spacy, llm,
+# ml (modelo BERT de nomes em português, pip install "veu[ml]"),
 # um plugin instalado ("matricula")
 # ou um caminho de importação ("meu_pacote.detectores:MeuDetector").
 detectores = ["padroes", "nomes", "enderecos", "segredos"]
 modelo_spacy = "pt_core_news_lg"
+modelo_ml = "linc42/pii-ner-pt-br-bertimbau"
 
 # Padrões próprios.
 [[deteccao.personalizados]]

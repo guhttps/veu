@@ -67,6 +67,10 @@ def build_recognizers(config: Config) -> list[Recognizer]:
             recognizers.append(SecretRecognizer())
         elif name == "spacy":
             recognizers.append(SpacyRecognizer(config.spacy_model))
+        elif name == "ml":
+            from veu.recognizers.optional import MLRecognizer
+
+            recognizers.append(MLRecognizer(config.ml_model))
         elif name == "llm":
             if not config.llm_url or not config.llm_model:
                 raise ValueError('O detector "llm" precisa de [deteccao.llm] url e modelo no veu.toml.')

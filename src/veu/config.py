@@ -117,7 +117,7 @@ def profile_options(name: str) -> dict:
     if name not in PROFILES:
         raise ConfigError(f"Perfil desconhecido: {name}. Use um de {', '.join(PROFILES)}.")
     return {key: value for key, value in PROFILES[name].items() if key != "descricao"}
-DETECTORS = ("padroes", "nomes", "enderecos", "segredos", "spacy", "llm")
+DETECTORS = ("padroes", "nomes", "enderecos", "segredos", "spacy", "llm", "ml")
 PLUGIN_GROUP = "veu.detectores"
 
 
@@ -137,6 +137,8 @@ class Config:
     # Expressões regulares: valores que casarem nunca são escondidos (ex.: "@minhaempresa\\.com\\.br$").
     allow_patterns: tuple[str, ...] = ()
     detectors: tuple[str, ...] = ("padroes", "nomes", "enderecos", "segredos")
+    # Modelo do detector "ml" (transformers, pip install "veu[ml]").
+    ml_model: str = "linc42/pii-ner-pt-br-bertimbau"
     # Itens no cache de detecção (0 desliga): agentes reenviam a conversa inteira a cada turno.
     detection_cache: int = 2048
     custom_patterns: tuple[dict, ...] = ()
@@ -285,7 +287,7 @@ _SECTIONS = {
     "deteccao": {
         "limiar": "threshold", "entidades": "labels", "ignorar": "allowlist", "detectores": "detectors",
         "personalizados": "custom_patterns", "modelo_spacy": "spacy_model", "llm": None,
-        "ignorar_padroes": "allow_patterns", "cache": "detection_cache",
+        "ignorar_padroes": "allow_patterns", "cache": "detection_cache", "modelo_ml": "ml_model",
     },
     "anonimizacao": {
         "operador": "operator", "operadores": "operators", "instruir_modelo": "instruct_model",
