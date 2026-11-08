@@ -130,11 +130,11 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
   - anonimiza Excel, Word e PowerPoint **no próprio formato**, mantendo a formatação e as fórmulas.
 - 🌐 **Python, JavaScript e navegador:**
   - a mesma detecção nas três versões;
-  - um teste de conformidade com 289 casos exige resultados idênticos.
+  - um teste de conformidade com 300 casos exige resultados idênticos.
 - 🏢 **Empresas:**
-  - gateway com tokens por equipe, auditoria à prova de adulteração (com âncora externa) e sessões no Redis com o cofre cifrado;
+  - gateway com tokens por equipe ou login único (OIDC), auditoria à prova de adulteração (com âncora externa e envio ao SIEM por syslog ou Splunk) e sessões no Redis com o cofre cifrado;
   - desvio de dados sensíveis para um modelo interno;
-  - chart Helm, guardrail do LiteLLM e extensão com política gerenciada;
+  - chart Helm, guardrail do LiteLLM e extensão com política gerenciada (inclusive uma mensagem de orientação da empresa nos avisos);
   - perfis prontos por setor (Judiciário, jurídico, saúde, financeiro, setor público, anonimização irreversível), registro das operações para o art. 37 da LGPD e modelo de RIPD ([conformidade](docs/conformidade.md)).
 - 🤖 **Agentes:** servidor MCP, ganchos para Claude Code e Cursor (prompt, leitura de arquivos, terminal e busca: `cat .env` e `printenv` também são bloqueados) e plugin com skill. Claude Code e Codex CLI podem rodar pelo proxy, com patches e comandos restaurados.
 - 🪶 **Leve:** o núcleo não tem dependências e processa cerca de 330 mil caracteres por segundo. Agentes que reenviam a conversa inteira a cada turno não pagam de novo pelas mensagens antigas: um cache em memória guarda só as posições dos dados, nunca o texto.
@@ -175,6 +175,7 @@ Extras opcionais do pacote Python:
 | `langchain`, `pandas` | Integrações com essas bibliotecas |
 | `litellm` | Guardrail do LiteLLM |
 | `redis` | Sessões compartilhadas entre réplicas, com o cofre cifrado |
+| `oidc` | Login único no gateway com o provedor de identidade da empresa |
 | `spacy` | Detector de nomes do spaCy |
 | `ml` | Detector de nomes por um modelo BERT em português (transformers e torch; cerca de 400 MB) |
 | `todos` | Tudo acima, menos `litellm`, `spacy` e `ml` |
@@ -259,7 +260,7 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 | **n8n** | Nó "Véu" (esconder e restaurar) e modelo de atendimento por WhatsApp com a Evolution API | [n8n](n8n/README.md) |
 | **Open WebUI** | Filtro que esconde os dados das mensagens e devolve os dados reais nas respostas (beta) | [Open WebUI](docs/integracoes.md#open-webui) |
 | **Fontes** | Notion (páginas e bases), Google Docs, Sheets e Slides, links, Excel, Word, PowerPoint e PDF | [Fontes](docs/integracoes.md#notion-google-e-documentos) |
-| **Empresas** | Gateway com equipes, auditoria encadeada, Redis e desvio para modelo interno; guardrail do LiteLLM; Helm e docker-compose | [Empresas](docs/empresas.md) |
+| **Empresas** | Gateway com equipes, login único (OIDC), auditoria encadeada com envio ao SIEM, Redis e desvio para modelo interno; guardrail do LiteLLM; Helm e docker-compose | [Empresas](docs/empresas.md) |
 | **Dados** | CSV, JSON, JSONL, Excel, pandas e RAG, com o mesmo marcador em todas as linhas | [Dados](docs/integracoes.md#dados) |
 | **Observabilidade** | `logging`, structlog, loguru, Sentry e Prometheus | [Observabilidade](docs/integracoes.md#observabilidade) |
 | **Repositórios** | Pre-commit e GitHub Action com SARIF, que também acham chaves e senhas | [Repositórios](docs/integracoes.md#repositórios) |
@@ -388,7 +389,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 703 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 733 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa

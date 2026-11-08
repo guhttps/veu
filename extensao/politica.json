@@ -40,6 +40,16 @@
       "description": "Troca os marcadores das respostas pelos dados reais na página. Desligado por padrão: o código do site de IA também consegue ler o que está na página.",
       "type": "boolean"
     },
+    "orientacao": {
+      "title": "Mensagem de orientação",
+      "description": "Texto da empresa mostrado quando a extensão avisa, protege ou impede o envio de dados pessoais (até 500 caracteres). Ex.: Dados de clientes só no assistente interno.",
+      "type": "string"
+    },
+    "linkOrientacao": {
+      "title": "Link da orientação",
+      "description": "Endereço https com a política de uso de IA da empresa, aberto pelo link Saiba mais do aviso.",
+      "type": "string"
+    },
     "travarConfiguracao": {
       "title": "Impedir que o usuário mude a configuração",
       "type": "boolean"

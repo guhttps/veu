@@ -38,6 +38,18 @@ exige_contexto = false
 url = "http://localhost:11434/v1"
 modelo = "qwen2.5:7b"
 
+# Auditoria também no SIEM (gateway): syslog e Splunk HEC.
+# [siem]
+# syslog = "udp://siem.interna:514"
+# hec_url = "https://splunk.interna:8088/services/collector/event"
+# hec_token_env = "VEU_HEC_TOKEN"
+
+# Login único (gateway): JWTs do provedor de identidade da empresa no lugar dos tokens (pip install "veu[oidc]").
+# [oidc]
+# emissor = "https://accounts.google.com"
+# publico = "<client id>"
+# claim_equipe = "groups"
+
 [anonimizacao]
 # token | sintetico | mascara | remover | hash
 operador = "token"

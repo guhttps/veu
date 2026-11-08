@@ -105,7 +105,17 @@
 
   // Aviso flutuante (shadow DOM: o CSS do site não interfere).
   let raiz = null;
-  function aviso(texto, acoes = [], tipo = "info") {
+  // Orientação da empresa (política gerenciada): só links https, sempre como texto, nunca como HTML.
+  function linkSeguro(valor) {
+    try {
+      const url = new URL(String(valor || ""));
+      return url.protocol === "https:" ? url.href : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function aviso(texto, acoes = [], tipo = "info", orientar = tipo !== "info") {
     if (!raiz) {
       const hospedeiro = document.createElement("div");
       hospedeiro.id = "veu-raiz";
@@ -121,7 +131,8 @@
         .texto { flex: 1 1 260px; } .marca { font-weight: 700; margin-right: 4px; }
         button { font: 600 13px system-ui, sans-serif; border-radius: 8px; padding: 7px 11px; cursor: pointer;
           border: 1px solid #4b5753; background: transparent; color: inherit; }
-        button.principal { background: #6fb3b8; border-color: #6fb3b8; color: #0d1413; }`;
+        button.principal { background: #6fb3b8; border-color: #6fb3b8; color: #0d1413; }
+        .orientacao { margin-top: 6px; color: #c9d4cf; font-size: 13px; } .orientacao a { color: #8fd0d4; }`;
       raiz.append(estilo);
     }
     raiz.querySelector(".caixa")?.remove();
@@ -135,6 +146,22 @@
     marca.className = "marca";
     marca.textContent = "Véu";
     conteudo.append(marca, texto);
+    const orientacao = orientar && config.orientacao ? String(config.orientacao).slice(0, 500) : "";
+    if (orientacao) {
+      const linha = document.createElement("div");
+      linha.className = "orientacao";
+      linha.textContent = orientacao;
+      const link = linkSeguro(config.linkOrientacao);
+      if (link) {
+        const ancora = document.createElement("a");
+        ancora.href = link;
+        ancora.target = "_blank";
+        ancora.rel = "noopener noreferrer";
+        ancora.textContent = "Saiba mais";
+        linha.append(" ", ancora);
+      }
+      conteudo.append(linha);
+    }
     caixa.append(conteudo);
     for (const acao of [...acoes, { rotulo: "Fechar", fazer: () => aviso("") }]) {
       const botao = document.createElement("button");
@@ -148,7 +175,7 @@
     }
     raiz.append(caixa);
     clearTimeout(aviso.tempo);
-    if (!acoes.length) aviso.tempo = setTimeout(() => caixa.remove(), 5000);
+    if (!acoes.length) aviso.tempo = setTimeout(() => caixa.remove(), orientacao ? 9000 : 5000);
   }
 
   function oferecerProtecao(campo, entidades) {
@@ -185,7 +212,7 @@
     evento.stopImmediatePropagation();
     const resultado = proteger(texto);
     inserir(campo, resultado.text);
-    aviso(`Protegido ao colar: ${resumo(entidades)}.`);
+    aviso(`Protegido ao colar: ${resumo(entidades)}.`, [], "info", true);
   }, true);
 
   // Enviar: Enter ou botão de enviar com dados ainda visíveis.
@@ -201,7 +228,7 @@
     }
     if (config.modo === "proteger" && !tiposBloqueados(entidades).length) {
       substituirTudo(campo, proteger(texto).text);
-      aviso("Protegi os dados antes de enviar. Confira e envie de novo.");
+      aviso("Protegi os dados antes de enviar. Confira e envie de novo.", [], "info", true);
       return true;
     }
     oferecerProtecao(campo, entidades);
