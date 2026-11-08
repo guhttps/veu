@@ -6,6 +6,7 @@ import contextlib
 import hashlib
 import hmac
 import json
+import os
 import secrets
 import sys
 import threading
@@ -71,6 +72,38 @@ class SessionStore:
         return True
 
 
+class VaultCipher:
+    """Cifra o cofre guardado no Redis (AES-256-GCM). A chave fica fora do Redis, em VEU_CHAVE_COFRE.
+
+    O nome da sessão entra como dado autenticado: o cofre de uma sessão não pode ser copiado para outra.
+    """
+
+    PREFIX = b"veu1:"
+
+    def __init__(self, key: str):
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        except ImportError as exc:
+            raise ImportError('O cofre cifrado precisa do pacote cryptography: pip install "veu[redis]"') from exc
+        self._aead = AESGCM(hmac.new(key.encode(), b"veu/cofre/v1", hashlib.sha256).digest())
+
+    def seal(self, data: bytes, name: str) -> bytes:
+        nonce = os.urandom(12)
+        return self.PREFIX + nonce + self._aead.encrypt(nonce, data, name.encode())
+
+    def open(self, blob: bytes, name: str) -> bytes | None:
+        """Os dados, ou None se o blob não for deste Véu, desta sessão ou tiver sido alterado."""
+        from cryptography.exceptions import InvalidTag
+
+        if not blob.startswith(self.PREFIX):
+            return None
+        nonce, ciphertext = blob[len(self.PREFIX):len(self.PREFIX) + 12], blob[len(self.PREFIX) + 12:]
+        try:
+            return self._aead.decrypt(nonce, ciphertext, name.encode())
+        except InvalidTag:
+            return None
+
+
 class RedisSessionStore:
     """Sessões no Redis, para várias réplicas do servidor (pip install "veu[redis]").
 
@@ -78,7 +111,8 @@ class RedisSessionStore:
     segundos sem uso, e uma trava por sessão impede que duas réplicas deem o mesmo marcador a valores diferentes.
     """
 
-    def __init__(self, url: str, new_vault, ttl: int = 3600, prefix: str = "veu:sessao:", client=None):
+    def __init__(self, url: str, new_vault, ttl: int = 3600, prefix: str = "veu:sessao:", client=None,
+                 cipher: VaultCipher | None = None):
         if client is None:
             try:
                 import redis
@@ -89,20 +123,28 @@ class RedisSessionStore:
         self._new_vault = new_vault
         self.ttl = ttl
         self.prefix = prefix
+        self.cipher = cipher
 
     @staticmethod
     def new_id() -> str:
         return SessionStore.new_id()
 
     def _load(self, session_id: str) -> Vault | None:
-        raw = self.client.get(self.prefix + session_id)
+        name = self.prefix + session_id
+        raw = self.client.get(name)
         if raw is None:
             return None
+        if self.cipher is not None:
+            raw = self.cipher.open(raw, name)
+            if raw is None:  # sem cifra, de outra sessão ou alterado: nunca é usado
+                return None
         template = self._new_vault()  # mesmo segredo do operador hash e mesma política em todas as réplicas
         return Vault.from_dict(json.loads(raw), secret=template._secret, policy=template.policy)
 
     def _save(self, session_id: str, vault: Vault) -> None:
-        self.client.set(self.prefix + session_id, json.dumps(vault.to_dict(), ensure_ascii=False), ex=self.ttl)
+        name = self.prefix + session_id
+        data = json.dumps(vault.to_dict(), ensure_ascii=False).encode()
+        self.client.set(name, self.cipher.seal(data, name) if self.cipher is not None else data, ex=self.ttl)
 
     def get(self, session_id: str, create: bool = True) -> Vault | None:
         vault = self._load(session_id)
@@ -153,9 +195,9 @@ class RedisSessionStore:
         return count
 
 
-def session_store(backend: str, new_vault, ttl: int, prefix: str):
+def session_store(backend: str, new_vault, ttl: int, prefix: str, cipher: VaultCipher | None = None):
     if backend.startswith(("redis://", "rediss://")):
-        return RedisSessionStore(backend, new_vault, ttl=ttl, prefix=prefix)
+        return RedisSessionStore(backend, new_vault, ttl=ttl, prefix=prefix, cipher=cipher)
     return SessionStore(new_vault, ttl=ttl)
 
 
@@ -166,15 +208,18 @@ class Stats:
         self.blocked = 0
         self.errors = 0
         self.entities: Counter[str] = Counter()
+        self.restored: Counter[str] = Counter()
         self.providers: Counter[str] = Counter()
         self.teams: Counter[str] = Counter()
         self.routed = 0
         self._lock = threading.Lock()
 
     def record(self, provider: str, counts: Counter[str], *, blocked: bool = False, error: bool = False,
-               team: str | None = None, routed: bool = False) -> None:
+               team: str | None = None, routed: bool = False, restored: Counter[str] | None = None) -> None:
         with self._lock:
             self.requests += 1
+            if restored:
+                self.restored.update(restored)
             self.blocked += int(blocked)
             self.errors += int(error)
             self.routed += int(routed)
@@ -190,6 +235,7 @@ class Stats:
                 "bloqueadas": self.blocked,
                 "erros_upstream": self.errors,
                 "dados_escondidos": sum(self.entities.values()),
+                "dados_restaurados": sum(self.restored.values()),
                 "por_entidade": dict(self.entities.most_common()),
                 "por_provedor": dict(self.providers.most_common()),
                 "por_equipe": dict(self.teams.most_common()),
@@ -225,6 +271,9 @@ class Stats:
                 "# HELP veu_dados_escondidos_total Dados pessoais escondidos, por tipo.",
                 "# TYPE veu_dados_escondidos_total counter",
                 *(f'veu_dados_escondidos_total{{entidade="{label(name)}"}} {count}' for name, count in sorted(self.entities.items())),
+                "# HELP veu_dados_restaurados_total Valores reais devolvidos nas respostas, por tipo.",
+                "# TYPE veu_dados_restaurados_total counter",
+                *(f'veu_dados_restaurados_total{{entidade="{label(name)}"}} {count}' for name, count in sorted(self.restored.items())),
                 "# HELP veu_requisicoes_por_equipe_total Requisições por equipe (tokens de [equipes]).",
                 "# TYPE veu_requisicoes_por_equipe_total counter",
                 *(f'veu_requisicoes_por_equipe_total{{equipe="{label(name)}"}} {count}' for name, count in sorted(self.teams.items())),
@@ -305,10 +354,15 @@ class AuditLog:
             self._last = digest
 
 
-def verify_audit(path: str | Path, secret: str | None = None) -> tuple[bool, int, str | None]:
-    """Confere a cadeia de um log de auditoria. Devolve (íntegro, linhas lidas, problema encontrado)."""
+def verify_audit(path: str | Path, secret: str | None = None, anchor: str | None = None) -> tuple[bool, int, str | None]:
+    """Confere a cadeia de um log de auditoria. Devolve (íntegro, linhas lidas, problema encontrado).
+
+    anchor: um hash guardado fora do servidor (veu auditoria ancorar). Se ele não estiver na cadeia, linhas foram
+    apagadas ou o log foi trocado, mesmo que a cadeia que sobrou esteja íntegra.
+    """
     previous = None
     count = 0
+    anchored = anchor is None
     with Path(path).open(encoding="utf-8") as handle:
         for number, raw in enumerate(handle, 1):
             if not raw.strip():
@@ -324,4 +378,21 @@ def verify_audit(path: str | Path, secret: str | None = None) -> tuple[bool, int
                 return False, count, f"linha {number}: conteúdo alterado (ou segredo errado)"
             previous = digest
             count += 1
+            anchored = anchored or hmac.compare_digest(digest, anchor)
+    if not anchored:
+        return False, count, "a âncora não está no log: linhas foram apagadas ou o log foi trocado"
     return True, count, None
+
+
+def audit_anchor(path: str | Path, secret: str | None = None) -> dict:
+    """O último hash da cadeia, para guardar fora do servidor (bilhete, e-mail, armazenamento imutável)."""
+    ok, count, problem = verify_audit(path, secret)
+    if not ok:
+        raise ValueError(f"O log não está íntegro: {problem}.")
+    last = None
+    with Path(path).open(encoding="utf-8") as handle:
+        for raw in handle:
+            if raw.strip():
+                last = json.loads(raw)["hash"]
+    return {"arquivo": str(path), "registros": count, "hash": last or GENESIS,
+            "quando": datetime.now(UTC).isoformat(timespec="seconds")}

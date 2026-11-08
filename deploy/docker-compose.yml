@@ -9,7 +9,7 @@
 services:
   veu:
     build: ..
-    image: ghcr.io/guhttps/veu:0.5.2
+    image: ghcr.io/guhttps/veu:0.6.0
     env_file: .env
     environment:
       VEU_CONFIG: /etc/veu/veu.toml

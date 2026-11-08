@@ -6,6 +6,8 @@ enviado ao modelo de IA.
 
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import hashlib
 import hmac
 import json
@@ -54,6 +56,9 @@ class RestorePolicy:
     link_hosts: tuple[str, ...] = ()
     tools: bool = True
     secrets_in_tools: bool = False
+    # Máximo de valores reais devolvidos numa resposta pelo proxy (0: sem limite). Uma IA manipulada que tenta
+    # despejar todos os dados da sessão para ao chegar no limite.
+    max_per_response: int = 0
 
     def allows(self, label: str, before: str, *, tool: bool) -> bool:
         """Pode restaurar um valor do tipo label, precedido por before (o texto da mesma linha)?"""
@@ -81,6 +86,19 @@ _ANGLE_DESTINATION = re.compile(r"\]\(\s*<[^>\n]*$")
 _RUN = re.compile(r"[^\s\"'<>`]*$")
 _HOST = re.compile(r"(?i)^(?:[a-z][a-z0-9+.\-]*:)?//([^/?#\\\s]*)[/?#\\]")
 _JSON_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})|\\(/)")
+
+
+_restored: contextvars.ContextVar[Counter | None] = contextvars.ContextVar("veu_restored", default=None)
+
+
+@contextlib.contextmanager
+def count_restorations(counter: Counter):
+    """Conta, por tipo, os valores reais devolvidos enquanto o bloco roda (o proxy usa por resposta)."""
+    token = _restored.set(counter)
+    try:
+        yield counter
+    finally:
+        _restored.reset(token)
 
 
 def link_context(before: str) -> str | None:
@@ -286,6 +304,7 @@ class Vault:
             return text
         tool = json_escape if tool is None else tool
         policy = self.policy
+        counter = _restored.get()
 
         def replace(match: re.Match) -> str:
             entry = self._entry_for(match)
@@ -296,6 +315,10 @@ class Vault:
             before = prefix + text[:start] if newline == -1 else text[newline + 1:start]
             if not policy.allows(entry.label, before, tool=tool):
                 return match.group(0)
+            if counter is not None:
+                if policy.max_per_response and sum(counter.values()) >= policy.max_per_response:
+                    return match.group(0)
+                counter[entry.label] += 1
             return json.dumps(entry.original, ensure_ascii=False)[1:-1] if json_escape else entry.original
 
         return self._compiled().sub(replace, text)

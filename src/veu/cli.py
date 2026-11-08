@@ -220,14 +220,19 @@ def cmd_hook(args) -> int:
 
 def cmd_audit(args) -> int:
     """Confere a cadeia de hashes de um log de auditoria do servidor."""
-    from veu.server.state import verify_audit
+    from veu.server.state import audit_anchor, verify_audit
 
     secret = os.environ.get(args.segredo_env) if args.segredo_env else None
     if args.segredo_env and not secret:
         raise ValueError(f"A variável {args.segredo_env} não está definida.")
-    ok, count, problem = verify_audit(args.arquivo, secret)
+    if args.acao == "ancorar":
+        print(json.dumps(audit_anchor(args.arquivo, secret), ensure_ascii=False))
+        print("Guarde esta linha fora do servidor. Para conferir depois: "
+              f"veu auditoria verificar {args.arquivo} --ancora <hash>", file=sys.stderr)
+        return 0
+    ok, count, problem = verify_audit(args.arquivo, secret, args.ancora)
     if ok:
-        print(f"Log íntegro: {count} registros, cadeia completa.")
+        print(f"Log íntegro: {count} registros, cadeia completa" + (", com a âncora." if args.ancora else "."))
         return 0
     print(f"Log comprometido depois de {count} registros válidos: {problem}.", file=sys.stderr)
     return 1
@@ -434,9 +439,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub.set_defaults(func=cmd_demo)
 
     sub = commands.add_parser("auditoria", help="confere a integridade do log de auditoria do servidor")
-    sub.add_argument("acao", choices=("verificar",))
+    sub.add_argument("acao", choices=("verificar", "ancorar"),
+                     help="verificar a cadeia, ou ancorar: mostrar o último hash para guardar fora do servidor")
     sub.add_argument("arquivo", help="log de auditoria (JSONL)")
     sub.add_argument("--segredo-env", help="variável de ambiente com o segredo da auditoria (se configurado)")
+    sub.add_argument("--ancora", help="hash guardado com 'veu auditoria ancorar': precisa estar na cadeia")
     sub.set_defaults(func=cmd_audit)
 
     sub = commands.add_parser("mcp", help="servidor MCP (stdio) para Claude Code, Claude Desktop, Cursor...")

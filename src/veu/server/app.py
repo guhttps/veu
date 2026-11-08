@@ -25,7 +25,8 @@ from veu.cache import cache_scope
 from veu.config import Config, ConfigError, ProviderConfig, load_config
 from veu.core import Veu
 from veu.gateway import BlockedError, Gateway, detect_adapter, is_streaming
-from veu.server.state import AuditLog, SessionStore, Stats, session_store
+from veu.server.state import AuditLog, SessionStore, Stats, VaultCipher, session_store
+from veu.vault import count_restorations
 
 HOP_HEADERS = frozenset({
     "host", "content-length", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te",
@@ -138,8 +139,9 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         return gateways[operator]
 
     # Proxy e API REST têm sessões separadas: um identificador escolhido no proxy nunca é restaurável pela API.
-    proxy_sessions = session_store(config.session_backend, veu.new_vault, config.session_ttl, "veu:proxy:")
-    api_sessions = session_store(config.session_backend, veu.new_vault, config.session_ttl, "veu:api:")
+    cipher = VaultCipher(config.vault_key) if config.vault_key else None
+    proxy_sessions = session_store(config.session_backend, veu.new_vault, config.session_ttl, "veu:proxy:", cipher)
+    api_sessions = session_store(config.session_backend, veu.new_vault, config.session_ttl, "veu:api:", cipher)
     stats = Stats()
     audit = AuditLog(config.audit_log, config.audit_secret)
     operator_instances: dict[str, Veu] = {config.operator: veu}
@@ -419,11 +421,14 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
                 status_code=502,
             )
 
+        restored: Counter = Counter()  # valores reais devolvidos nesta resposta, por tipo
+
         def finish(status: int) -> None:
-            stats.record(provider.name, prepared.counts, error=status >= 500, team=team_name(request))
+            stats.record(provider.name, prepared.counts, error=status >= 500, team=team_name(request),
+                         restored=restored)
             audit.write(provedor=provider.name, endpoint=adapter.name, status=status, stream=prepared.stream,
-                        entidades=dict(prepared.counts), duracao_ms=round((time.monotonic() - started) * 1000),
-                        equipe=team_name(request))
+                        entidades=dict(prepared.counts), restaurados=dict(restored),
+                        duracao_ms=round((time.monotonic() - started) * 1000), equipe=team_name(request))
 
         response_headers = _response_headers(response, prepared.counts)
         content_type = response.headers.get("content-type", "")
@@ -433,10 +438,12 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             async def events():
                 try:
                     async for chunk in response.aiter_bytes():
-                        output = transformer.feed(chunk)
+                        with count_restorations(restored):
+                            output = transformer.feed(chunk)
                         if output:
                             yield output
-                    tail = transformer.close()
+                    with count_restorations(restored):
+                        tail = transformer.close()
                     if tail:
                         yield tail
                 finally:
@@ -448,7 +455,11 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         content = await response.aread()
         await response.aclose()
         if "json" in response.headers.get("content-type", "") or content.startswith((b"{", b"[")):
-            content = await run_in_threadpool(gateway.restore_body, prepared, content)
+            def restore_counted(body: bytes) -> bytes:
+                with count_restorations(restored):
+                    return gateway.restore_body(prepared, body)
+
+            content = await run_in_threadpool(restore_counted, content)
         finish(response.status_code)
         return Response(content, status_code=response.status_code, headers=response_headers)
 
