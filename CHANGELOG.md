@@ -28,7 +28,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Âncora da auditoria:** `veu auditoria ancorar` mostra o último hash da cadeia para guardar fora do servidor, e `veu auditoria verificar --ancora` falha se ele sumir (linhas apagadas no fim ou log trocado).
 - **Leitura de links sem SSRF:** na expansão de links do proxy, o link e cada redirecionamento precisam ser https e apontar para endereços públicos (nada de 169.254.169.254, localhost ou rede interna).
 
+- **Extensão para Firefox** (128 ou mais novo): o empacotamento gera também `veu-extensao-firefox-<versão>.zip`, com o manifesto que o Firefox espera.
+
 ### Alterado
+- **Extensão:** mostrar os dados reais direto na página passa a ser opcional (desligado por padrão), porque o código do site de IA também consegue ler a página. Os dados reais continuam a um clique: copiar a seleção, o campo Restaurar do ícone ou a opção no popup.
+- **Extensão:** o script roda antes da página (`document_start`), para tratar o colar antes do código do site, e reconhece os marcadores do operador `hash` com 16 caracteres.
 - **Incompatível:** sessões no Redis exigem `VEU_CHAVE_COFRE` (ou `permitir_cofre_sem_cifra = true`). O extra `veu[redis]` passa a instalar o `cryptography`.
 - `veu avaliar --max-vazamento` vale para a validação (e para o conjunto escolhido), não para o desafio, que existe para mostrar onde o Véu ainda erra.
 

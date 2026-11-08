@@ -1,10 +1,10 @@
-# Extensão do Véu para Chrome e Edge
+# Extensão do Véu para Chrome, Edge e Firefox
 
 A extensão protege seus dados quando você usa IA pelo site, sem instalar nada além dela:
 
 - **Ao colar:** um texto com CPF, nome, telefone, chave de API ou senha entra no campo já com os dados trocados por marcadores, como `[CPF_1]`.
 - **Ao enviar:** a extensão avisa, troca os dados ou bloqueia o envio, conforme o modo.
-- **Nas respostas:** os marcadores viram os dados reais de novo, só na sua tela.
+- **Nas respostas:** você vê os dados reais quando quiser: selecione e copie, use o campo **Restaurar** do ícone ou ligue **Mostrar os dados reais nas respostas** para vê-los direto na página.
 
 Tudo roda no seu navegador. A extensão não envia nada para servidor nenhum.
 
@@ -16,6 +16,8 @@ Funciona em: ChatGPT, Claude, Gemini, AI Studio, NotebookLM, Copilot (inclusive 
 2. Abra `chrome://extensions` (ou `edge://extensions`) e ligue o **Modo do desenvolvedor**.
 3. Clique em **Carregar sem compactação** e escolha a pasta descompactada.
 4. Fixe o ícone do Véu na barra.
+
+No **Firefox** (128 ou mais novo), use o `veu-extensao-firefox-<versão>.zip`: abra `about:debugging#/runtime/this-firefox`, clique em **Carregar extensão temporária** e escolha o `manifest.json` de dentro do zip descompactado. Extensões temporárias somem quando o Firefox fecha; para uso permanente, a extensão precisa ser assinada pela Mozilla.
 
 Na sua empresa, a TI pode instalar e configurar a extensão para todos: veja o [guia para empresas](empresas.md#extensão-gerenciada-pela-ti).
 
@@ -41,5 +43,7 @@ Chaves privadas e outros tipos que a sua empresa bloquear nunca são enviados, e
 
 - **Detecção:** é automática e pode deixar passar algum dado. Confira antes de enviar.
 - **Arquivos anexados:** não são protegidos. Use a [página do Véu](https://guhttps.github.io/veu/) ou `veu anonimizar` antes de anexar.
-- **Dados na tela:** com **Mostrar os dados reais nas respostas** ligado, os dados reais aparecem na página. Em tese, o código do site poderia lê-los na tela. Se isso for um problema, desligue a opção e use o campo **Restaurar um texto**.
+- **Dados na tela:** a opção **Mostrar os dados reais nas respostas** vem desligada, porque, com ela ligada, os dados reais aparecem na página, e o código do site (inclusive ferramentas de análise e gravação de sessão) pode lê-los. Ligue só se isso não for um problema.
+- **O que você digita:** a extensão protege ao colar e ao enviar. O que você digita à mão fica no campo do site até o envio, e alguns sites salvam rascunhos enquanto você digita. Para textos com dados, cole em vez de digitar, ou use a [página do Véu](https://guhttps.github.io/veu/) antes.
+- **Não é uma barreira:** a extensão ajuda quem quer se proteger, mas não impede quem quer burlar (por exemplo, desligando-a). Para garantir, a TI pode travar a configuração pela política, e o proxy do Véu protege o tráfego de toda a empresa.
 - **Duração do cofre:** a correspondência entre marcadores e dados vale enquanto a aba e o navegador estiverem abertos.

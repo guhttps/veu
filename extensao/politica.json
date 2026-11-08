@@ -37,7 +37,7 @@
     },
     "restaurarRespostas": {
       "title": "Mostrar os dados reais nas respostas",
-      "description": "Troca os marcadores das respostas pelos dados reais, só na tela do usuário.",
+      "description": "Troca os marcadores das respostas pelos dados reais na página. Desligado por padrão: o código do site de IA também consegue ler o que está na página.",
       "type": "boolean"
     },
     "travarConfiguracao": {

@@ -165,7 +165,8 @@ try {
   const { id } = await cdp("Extensions.loadUnpacked", { path: extensao });
   confere(Boolean(id), "extensão carregada");
   const popup = await abrir(`chrome-extension://${id}/popup.html`);
-  await popup.avaliar(`chrome.storage.sync.set({ modo: "proteger" })`);
+  // A restauração na página vem desligada por padrão (o site também leria os dados); o teste liga.
+  await popup.avaliar(`chrome.storage.sync.set({ modo: "proteger", restaurarRespostas: true })`);
   await popup.fechar();
 
   const chat = await abrir(`${base}/chat`);

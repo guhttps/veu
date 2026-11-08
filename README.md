@@ -244,7 +244,7 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 
 | Categoria | Integrações | Guia |
 |---|---|---|
-| **Sem programar** | Página que roda no navegador, painel no computador, extensão para ChatGPT, Claude, Gemini, Copilot, Perplexity e outros | [Instalar](#instalar-sem-saber-programar) · [Extensão](docs/extensao.md) |
+| **Sem programar** | Página que roda no navegador, painel no computador, extensão (Chrome, Edge e Firefox) para ChatGPT, Claude, Gemini, Copilot, Perplexity e outros | [Instalar](#instalar-sem-saber-programar) · [Extensão](docs/extensao.md) |
 | **Modelos de IA** (proxy) | OpenAI, Anthropic, Gemini, Ollama, Azure OpenAI e 20 provedores prontos (Groq, OpenRouter, DeepSeek, Mistral, xAI, Maritaca, vLLM...) | [Modelos](docs/integracoes.md#modelos-de-ia) |
 | **Python** | `openai_client()`, `anthropic_client()`, transportes `httpx`, LangChain, `@protect`, `veu.session()` | [Python](docs/integracoes.md#python) |
 | **JavaScript** | `createFetch()` para os SDKs da OpenAI e da Anthropic, middleware do AI SDK da Vercel, uso no navegador | [@guhttps/veu](js/README.md) |

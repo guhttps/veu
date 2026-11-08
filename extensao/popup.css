@@ -26,3 +26,4 @@ footer a { color: inherit; }
 .chave input:checked + span { background: var(--marca); }
 .chave input:checked + span::before { transform: translateX(16px); }
 input:disabled + span, input:disabled { cursor: not-allowed; opacity: .6; }
+.linha .nota { display: block; margin: 2px 0 0 22px; font-size: 11px; color: var(--suave, #667); }

@@ -23,7 +23,12 @@
   "background": {
     "service_worker": "fundo.js"
   },
-  "permissions": ["storage", "contextMenus", "activeTab", "scripting"],
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "activeTab",
+    "scripting"
+  ],
   "storage": {
     "managed_schema": "politica.json"
   },
@@ -50,8 +55,11 @@
         "https://maritaca.ai/*",
         "https://chat.maritaca.ai/*"
       ],
-      "js": ["veu.global.js", "conteudo.js"],
-      "run_at": "document_idle",
+      "js": [
+        "veu.global.js",
+        "conteudo.js"
+      ],
+      "run_at": "document_start",
       "all_frames": false
     }
   ]
