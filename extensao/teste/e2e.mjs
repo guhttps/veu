@@ -169,6 +169,14 @@ try {
   }
   await web.fechar();
 
+  // Idiomas: ?lang= escolhe o português ou o inglês (sem ele, vale o idioma do navegador).
+  for (const [idioma, titulo, html] of [["en", "Your text", "en"], ["pt", "Seu texto", "pt-BR"]]) {
+    const pagina = await abrir(`${base}/web/index.html?lang=${idioma}`);
+    const visto = await pagina.avaliar(`[document.querySelector('[data-t="seuTexto"]').textContent, document.documentElement.lang]`);
+    confere(visto[0] === titulo && visto[1] === html, `página em ${idioma} (${visto.join(", ")})`);
+    await pagina.fechar();
+  }
+
   // Extensão
   const { id } = await cdp("Extensions.loadUnpacked", { path: extensao });
   confere(Boolean(id), "extensão carregada");

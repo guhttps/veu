@@ -38,6 +38,17 @@ A fórmula instala a roda (wheel) do PyPI num ambiente virtual com o Python do H
 
 O manifesto depende do Python do Scoop, baixa a roda do PyPI conferindo o hash e a instala num ambiente virtual, sem baixar mais nada. `checkver` e `autoupdate` deixam o bucket se atualizar sozinho com o `excavator` do Scoop.
 
+## MCP Registry
+
+O [`server.json`](../server.json) na raiz descreve o servidor MCP para o registro oficial (`io.github.guhttps/veu`, rodando com `uvx --from "veu[mcp]" veu mcp`). O README tem a linha `<!-- mcp-name: io.github.guhttps/veu -->`, que o registro usa para conferir que o pacote do PyPI é seu. Depois de publicar a versão no PyPI:
+
+```bash
+mcp-publisher login github
+mcp-publisher publish
+```
+
+Um teste confere que a versão do `server.json` é a do pacote; troque as duas juntas a cada versão.
+
 ## Por que ainda não no winget
 
 O winget instala programas com instalador próprio (`.exe`, `.msi` ou `.msix`). O Véu é um pacote Python e ainda não tem um executável assinado. Enquanto isso, o instalador de um comando e o Scoop cobrem o Windows. Quando houver um executável assinado (a assinatura gratuita do SignPath para projetos abertos é um caminho), o manifesto do winget passa a fazer sentido.

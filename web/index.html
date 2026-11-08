@@ -17,63 +17,64 @@
       <span class="logo" aria-hidden="true"></span>
       <div>
         <h1>Véu</h1>
-        <p>Esconda seus dados antes de usar IA. Nada sai do seu computador.</p>
+        <p data-t="subtitulo">Esconda seus dados antes de usar IA. Nada sai do seu computador.</p>
       </div>
     </div>
     <nav class="links">
-      <a class="discreto" href="docs/">Documentação</a>
-      <a class="discreto" href="https://github.com/guhttps/veu">Código aberto no GitHub</a>
+      <a class="discreto" id="idioma" href="?lang=en" data-t="idioma">English</a>
+      <a class="discreto" href="docs/" data-t="documentacao" data-t-href="documentacaoLink">Documentação</a>
+      <a class="discreto" href="https://github.com/guhttps/veu" data-t="github">Código aberto no GitHub</a>
     </nav>
   </header>
 
   <main>
-    <ol class="passos" aria-label="Como funciona">
-      <li><b>Cole</b> o texto com dados pessoais</li>
-      <li><b>Copie</b> a versão protegida e cole na IA</li>
-      <li><b>Cole a resposta</b> da IA para ver os dados reais de volta</li>
+    <ol class="passos" aria-label="Como funciona" data-t-aria="comoFunciona">
+      <li><b data-t="passo1b">Cole</b><span data-t="passo1"> o texto com dados pessoais</span></li>
+      <li><b data-t="passo2b">Copie</b><span data-t="passo2"> a versão protegida e cole na IA</span></li>
+      <li><b data-t="passo3b">Cole a resposta</b><span data-t="passo3"> da IA para ver os dados reais de volta</span></li>
     </ol>
 
     <section class="painel" aria-labelledby="t1">
       <div class="cabeca">
-        <h2 id="t1"><span class="num">1</span> Seu texto</h2>
+        <h2 id="t1"><span class="num">1</span> <span data-t="seuTexto">Seu texto</span></h2>
         <label class="botao secundario arquivo">
-          Abrir arquivo
+          <span data-t="abrirArquivo">Abrir arquivo</span>
           <input id="arquivo" type="file" accept=".txt,.md,.csv,.tsv,.json,.jsonl,.log,.xml,.html,.yml,.yaml,.env,.ini,.sql">
         </label>
       </div>
-      <textarea id="entrada" rows="9" spellcheck="false"
+      <textarea id="entrada" rows="9" spellcheck="false" data-t-placeholder="exemploEntrada"
         placeholder="Ex.: A cliente Maria Souza, CPF 529.982.247-25, pediu o reembolso. O telefone dela é (11) 98765-4321."></textarea>
       <div id="achados" class="achados" aria-live="polite"></div>
     </section>
 
     <section class="painel" aria-labelledby="t2">
       <div class="cabeca">
-        <h2 id="t2"><span class="num">2</span> Texto protegido</h2>
+        <h2 id="t2"><span class="num">2</span> <span data-t="textoProtegido">Texto protegido</span></h2>
         <div class="acoes">
-          <select id="operador" aria-label="Como esconder">
-            <option value="token">Marcadores reversíveis ([CPF_1])</option>
-            <option value="mascara">Máscara (***.982.247-**)</option>
-            <option value="remover">Remover ([CPF])</option>
+          <select id="operador" aria-label="Como esconder" data-t-aria="comoEsconder">
+            <option value="token" data-t="opToken">Marcadores reversíveis ([CPF_1])</option>
+            <option value="mascara" data-t="opMascara">Máscara (***.982.247-**)</option>
+            <option value="remover" data-t="opRemover">Remover ([CPF])</option>
           </select>
-          <button id="copiar-protegido" class="botao">Copiar para a IA</button>
+          <button id="copiar-protegido" class="botao" data-t="copiarParaIa">Copiar para a IA</button>
         </div>
       </div>
-      <pre id="saida" class="saida" tabindex="0" aria-label="Texto protegido"></pre>
-      <p class="dica">Cole este texto no ChatGPT, Claude, Gemini ou qualquer IA. Ela não vê seus dados reais.</p>
+      <pre id="saida" class="saida" tabindex="0" aria-label="Texto protegido" data-t-aria="textoProtegido"></pre>
+      <p class="dica" data-t="dica">Cole este texto no ChatGPT, Claude, Gemini ou qualquer IA. Ela não vê seus dados reais.</p>
     </section>
 
     <section class="painel" aria-labelledby="t3">
       <div class="cabeca">
-        <h2 id="t3"><span class="num">3</span> Resposta da IA</h2>
-        <button id="copiar-restaurado" class="botao">Copiar com os dados reais</button>
+        <h2 id="t3"><span class="num">3</span> <span data-t="respostaIa">Resposta da IA</span></h2>
+        <button id="copiar-restaurado" class="botao" data-t="copiarRestaurado">Copiar com os dados reais</button>
       </div>
-      <textarea id="resposta" rows="6" spellcheck="false" placeholder="Cole aqui a resposta da IA. Os marcadores, como [PESSOA_1], voltam a ser os dados reais."></textarea>
-      <pre id="restaurado" class="saida" tabindex="0" aria-label="Resposta com os dados reais"></pre>
+      <textarea id="resposta" rows="6" spellcheck="false" data-t-placeholder="exemploResposta" placeholder="Cole aqui a resposta da IA. Os marcadores, como [PESSOA_1], voltam a ser os dados reais."></textarea>
+      <pre id="restaurado" class="saida" tabindex="0" aria-label="Resposta com os dados reais" data-t-aria="respostaReal"></pre>
     </section>
 
     <section class="rodape-acoes">
-      <button id="limpar" class="botao secundario">Apagar tudo</button>
-      <p class="privacidade">
+      <button id="limpar" class="botao secundario" data-t="apagarTudo">Apagar tudo</button>
+      <p class="privacidade" data-t="privacidade">
         Esta página não envia nada pela internet: a detecção roda no seu navegador e a página bloqueia conexões.
         Os dados ficam só nesta aba até você apagar ou fechar.
       </p>
@@ -81,23 +82,25 @@
 
     <section class="painel destaque-instalar">
       <div>
-        <h2>Quer proteger planilhas, documentos e PDFs?</h2>
-        <p>Instale o Véu no computador em 2 minutos, sem saber programar.</p>
+        <h2 data-t="instalarTitulo">Quer proteger planilhas, documentos e PDFs?</h2>
+        <p data-t="instalarTexto">Instale o Véu no computador em 2 minutos, sem saber programar.</p>
       </div>
-      <a class="botao" href="instalar.html">Instalar no computador</a>
+      <a class="botao" href="instalar.html" data-t="instalarBotao">Instalar no computador</a>
     </section>
 
     <details class="mais">
-      <summary>O que o Véu encontra?</summary>
-      <p>Nomes, e-mails, telefones (de qualquer país), endereços, cartões, IBAN, endereços IP, datas de nascimento,
+      <summary data-t="maisTitulo">O que o Véu encontra?</summary>
+      <p data-t="mais1">Nomes, e-mails, telefones (de qualquer país), endereços, cartões, IBAN, endereços IP, datas de nascimento,
         chaves de API, tokens, senhas e chaves privadas. E também documentos brasileiros (CPF, CNPJ, RG, CNH, título, PIS,
-        cartão do SUS, CEP, placas, Pix, processos judiciais), conferidos pelo dígito verificador.</p>
-      <p>Nenhuma detecção automática é perfeita: confira o texto protegido antes de enviar.</p>
+        cartão do SUS, CEP, placas, Pix, processos judiciais), conferidos pelo dígito verificador, e documentos de mais 21 países,
+        como Portugal, Argentina, México, Estados Unidos e Espanha.</p>
+      <p data-t="mais2">Nenhuma detecção automática é perfeita: confira o texto protegido antes de enviar.</p>
     </details>
   </main>
 
   <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
   <script src="veu.global.js"></script>
+  <script src="textos.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

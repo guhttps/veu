@@ -61,6 +61,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Site de documentação** em [guhttps.github.io/veu/docs](https://guhttps.github.io/veu/docs/), com busca e um menu por perfil (sem programar, programadores, empresas, conformidade). É montado a partir do README e de `docs/` (`scripts/gerar_site.py`, com o Zensical), sem duplicar texto, e um teste confere que todo link interno aponta para uma página e uma âncora que existem.
 - **Homebrew e Scoop:** fórmula e manifesto prontos em `packaging/`, gerados com os hashes do PyPI (`scripts/atualizar_manifestos.py`) e testados (a fórmula no Homebrew para Linux, com `brew test`). Falta criar o tap e o bucket; o winget fica para quando houver um executável assinado.
 
+- **README em inglês** ([README.en.md](README.en.md)) e **demonstração animada** da página no topo dos dois (`docs/demo.gif` e `docs/demo-en.gif`, gravados por `scripts/gravar_demo.mjs`).
+- **Página em português e em inglês:** o idioma segue o navegador (ou `?lang=en`, `?lang=pt`), com um link para trocar; os nomes dos tipos também são traduzidos. Os marcadores continuam em português (`[PESSOA_1]`).
+- O nó do n8n ganhou instruções em inglês, e o `server.json` (validado com o esquema oficial) e a linha `mcp-name` no README preparam a publicação no MCP Registry.
+
 ### Corrigido
 - **Sessões isoladas por equipe:** com as chaves do provedor injetadas pelo gateway, duas equipes (ou dois usuários do OIDC) que usassem o mesmo `X-Veu-Sessao` caíam no mesmo cofre, e a resposta de uma podia restaurar um dado da outra. O cofre passa a considerar também a equipe ou o usuário.
 - Nomes ambíguos que o dicionário marca como palavras (sobrenomes como Costa e Nascimento) só se propagam com inicial maiúscula: "data de nascimento" não vira mais nome de pessoa. O gerador de listas passou a ler também as regras de sufixo do dicionário.

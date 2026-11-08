@@ -11,6 +11,33 @@
   const operador = $("operador");
   const CHAVE = "veu-cofre";
 
+  // Idioma: ?lang=pt|en, a escolha salva ou o idioma do navegador (português se algum for pt).
+  function idiomaInicial() {
+    const pedido = new URLSearchParams(location.search).get("lang");
+    if (pedido === "pt" || pedido === "en") {
+      try {
+        localStorage.setItem("veu-idioma", pedido);
+      } catch { /* sem armazenamento: vale só nesta visita */ }
+      return pedido;
+    }
+    try {
+      const salvo = localStorage.getItem("veu-idioma");
+      if (salvo === "pt" || salvo === "en") return salvo;
+    } catch { /* idem */ }
+    const idiomas = navigator.languages?.length ? navigator.languages : [navigator.language || ""];
+    return idiomas.some((idioma) => String(idioma).toLowerCase().startsWith("pt")) ? "pt" : "en";
+  }
+  const idioma = idiomaInicial();
+  const T = window.veuTextos[idioma];
+  document.documentElement.lang = idioma === "pt" ? "pt-BR" : "en";
+  document.title = T.titulo;
+  document.querySelector('meta[name="description"]')?.setAttribute("content", T.descricao);
+  for (const elemento of document.querySelectorAll("[data-t]")) elemento.textContent = T[elemento.dataset.t];
+  for (const elemento of document.querySelectorAll("[data-t-placeholder]")) elemento.placeholder = T[elemento.dataset.tPlaceholder];
+  for (const elemento of document.querySelectorAll("[data-t-aria]")) elemento.setAttribute("aria-label", T[elemento.dataset.tAria]);
+  for (const elemento of document.querySelectorAll("[data-t-href]")) elemento.href = T[elemento.dataset.tHref];
+  $("idioma").href = `?lang=${idioma === "pt" ? "en" : "pt"}`;
+
   // Valores que a pessoa desmarcou (falsos positivos): não são escondidos.
   const ignorados = new Set();
   const base = new Veu();
@@ -47,7 +74,8 @@
   }
 
   const normalizar = (texto) => texto.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().trim();
-  const nomeDoTipo = (rotulo) => (LABELS[rotulo] || rotulo).replace(/ \(.*\)$/, "");
+  const nomeDoTipo = (rotulo) => (idioma === "en" ? window.veuTextos.rotulosEn[rotulo] : null)
+    || (LABELS[rotulo] || rotulo).replace(/ \(.*\)$/, "");
 
   function avisar(mensagem) {
     const aviso = $("aviso");
@@ -59,7 +87,7 @@
 
   async function copiar(texto) {
     if (!texto) {
-      avisar("Nada para copiar ainda.");
+      avisar(T.nadaParaCopiar);
       return false;
     }
     try {
@@ -100,9 +128,7 @@
     const resumo = document.createElement("span");
     resumo.className = "resumo";
     const protegidos = [...unicos.values()].filter((e) => !ignorados.has(normalizar(e.text))).length;
-    resumo.textContent = unicos.size
-      ? `${protegidos} de ${unicos.size} ${unicos.size === 1 ? "dado será escondido" : "dados serão escondidos"}. Desmarque o que não for dado pessoal.`
-      : entrada.value.trim() ? "Nenhum dado pessoal encontrado." : "";
+    resumo.textContent = unicos.size ? T.resumo(protegidos, unicos.size) : entrada.value.trim() ? T.nenhum : "";
     achados.append(resumo);
     for (const entidade of unicos.values()) {
       const chave = normalizar(entidade.text);
@@ -137,10 +163,10 @@
     if (trabalhador && texto.length >= GRANDE) {
       // A prévia usa uma cópia do cofre: a numeração continua a da conversa ([CPF_2] depois de [CPF_1]).
       const id = ++pedido;
-      saida.textContent = "Analisando o texto...";
+      saida.textContent = T.analisando;
       trabalhador.onmessage = ({ data }) => {
         if (data.id !== pedido) return; // chegou uma versão mais nova do texto
-        if (data.erro) return avisar("Não consegui analisar este texto.");
+        if (data.erro) return avisar(T.erroAnalise);
         mostrarAchados(data.entidades);
         rascunho = { texto: data.texto, cofre: Vault.fromJSON(data.cofre) };
         mostrarComMarcadores(saida, data.texto);
@@ -170,16 +196,16 @@
   resposta.addEventListener("input", restaurar);
 
   $("copiar-protegido").addEventListener("click", async () => {
-    if (!rascunho) return avisar("Cole ou digite um texto primeiro.");
+    if (!rascunho) return avisar(T.colePrimeiro);
     cofre = rascunho.cofre;
     salvarCofre();
-    if (await copiar(rascunho.texto)) avisar("Copiado. Cole na IA e depois traga a resposta para o passo 3.");
+    if (await copiar(rascunho.texto)) avisar(T.copiado);
     restaurar();
   });
 
   $("copiar-restaurado").addEventListener("click", async () => {
     restaurar();
-    if (await copiar(restaurado.textContent)) avisar("Resposta copiada com os dados reais.");
+    if (await copiar(restaurado.textContent)) avisar(T.respostaCopiada);
   });
 
   $("limpar").addEventListener("click", () => {
@@ -192,18 +218,18 @@
     } catch { /* nada a apagar */ }
     atualizar();
     restaurar();
-    avisar("Tudo apagado.");
+    avisar(T.apagado);
   });
 
   $("arquivo").addEventListener("change", (evento) => {
     const arquivo = evento.target.files[0];
     if (!arquivo) return;
-    if (arquivo.size > 5 * 1024 * 1024) return avisar("Arquivo grande demais (máximo de 5 MB).");
+    if (arquivo.size > 5 * 1024 * 1024) return avisar(T.arquivoGrande);
     const leitor = new FileReader();
     leitor.onload = () => {
       entrada.value = String(leitor.result);
       atualizar();
-      avisar(`"${arquivo.name}" aberto. Ele não sai do seu computador.`);
+      avisar(T.arquivoAberto(arquivo.name));
     };
     leitor.readAsText(arquivo, "utf-8");
     evento.target.value = "";
