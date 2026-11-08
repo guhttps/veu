@@ -1,10 +1,11 @@
 name: Página
 
-# Publica a página do Véu (pasta web) no GitHub Pages. Tudo nela roda no navegador de quem usa.
+# Publica a página do Véu (pasta web) e o site de documentação (em /docs, montado a partir do README e de docs/)
+# no GitHub Pages. Tudo na página roda no navegador de quem usa.
 on:
   push:
     branches: [main]
-    paths: ["web/**", "js/**", ".github/workflows/pages.yml"]
+    paths: ["web/**", "js/**", "docs/**", "README.md", "n8n/README.md", "scripts/gerar_site.py", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -34,6 +35,11 @@ jobs:
         working-directory: js
         run: npm ci && npm run build
       - run: cp js/dist/veu.global.js web/
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Site de documentação
+        run: pip install zensical==0.1.0 && python scripts/gerar_site.py
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
