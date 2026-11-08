@@ -366,9 +366,10 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 500 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 510 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
+VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa
 cd js && npm ci && npm test                       # biblioteca JavaScript (inclui a conformidade com o Python)
 node extensao/teste/e2e.mjs                        # extensão e página num Chrome de verdade
 ```

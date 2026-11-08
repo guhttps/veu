@@ -42,6 +42,7 @@ todos = ["veu[servidor,mcp,langchain,pandas,documentos,redis]"]
 dev = [
     "veu[servidor,mcp,langchain,pandas,documentos,redis]",
     "fakeredis>=2.20",
+    "hypothesis>=6.100",
     "pytest>=8",
     "ruff>=0.6",
     "openai>=1.40",

@@ -10,6 +10,7 @@ import re
 import time
 from collections import Counter
 from importlib import resources
+from pathlib import Path
 from urllib.parse import urlsplit
 
 import httpx
@@ -735,13 +736,34 @@ def run_panel(open_browser: bool = True, port: int | None = None) -> None:
         print("  Configuração salva. Reiniciando o Véu...")
 
 
-def run(config: Config | None = None) -> None:
+def app_from_environment() -> Starlette:
+    """App de cada processo com --workers: a configuração vem do VEU_CONFIG e das variáveis VEU_*.
+
+    Cada processo escreve a sua própria cadeia de auditoria (auditoria.<pid>.jsonl), para todas continuarem
+    verificáveis com veu auditoria verificar.
+    """
+    config = load_config()
+    if config.audit_log and config.audit_log != "-":
+        path = Path(config.audit_log)
+        config = config.with_overrides(audit_log=str(path.with_name(f"{path.stem}.{os.getpid()}{path.suffix}")))
+    return create_app(config)
+
+
+def run(config: Config | None = None, workers: int = 1) -> None:
     import sys
 
     import uvicorn
 
     config = config or load_config()
-    app = create_app(config)
     print(f"Véu {__version__} em http://{config.host}:{config.port}  (playground: /veu/playground)", file=sys.stderr)
     # Sem log de acesso: a URL pode trazer a chave da API (?key= do Gemini). A auditoria do Véu não grava valores.
-    uvicorn.run(app, host=config.host, port=config.port, log_level="info", access_log=False)
+    if workers > 1:
+        if config.session_backend == "memoria":
+            raise ConfigError("Com --workers, cada processo teria o seu cofre na memória: use sessões no Redis "
+                              "(sessoes = \"redis://...\" e VEU_CHAVE_COFRE).")
+        create_app(config)  # confere a configuração antes de abrir os processos
+        os.environ["VEU_HOST"], os.environ["VEU_PORTA"] = config.host, str(config.port)
+        uvicorn.run("veu.server.app:app_from_environment", factory=True, workers=workers, host=config.host,
+                    port=config.port, log_level="info", access_log=False)
+        return
+    uvicorn.run(create_app(config), host=config.host, port=config.port, log_level="info", access_log=False)

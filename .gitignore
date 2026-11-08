@@ -28,3 +28,4 @@ js/src/data.ts
 js/build-test/
 extensao/veu.global.js
 web/veu.global.js
+.hypothesis/

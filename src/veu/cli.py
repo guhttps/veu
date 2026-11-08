@@ -267,7 +267,9 @@ def cmd_serve(args) -> int:
     if args.porta:
         overrides["port"] = args.porta
     config = config.with_overrides(**overrides) if overrides else config
-    server.run(config)
+    if args.config:
+        os.environ["VEU_CONFIG"] = str(Path(args.config).resolve())  # os processos de --workers leem o mesmo arquivo
+    server.run(config, workers=args.workers)
     return 0
 
 
@@ -465,6 +467,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--config", help="caminho do veu.toml")
     sub.add_argument("--host")
     sub.add_argument("--porta", type=int)
+    sub.add_argument("--workers", type=int, default=1,
+                     help="processos do servidor (mais de um exige sessões no Redis; um log de auditoria por processo)")
     sub.set_defaults(func=cmd_serve)
 
     sub = commands.add_parser("avaliar", help="mede precisão, revocação e vazamento no benchmark")

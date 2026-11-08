@@ -96,6 +96,8 @@ Com várias réplicas, cada uma escreve a própria cadeia. Guarde os logs separa
 
 ### Várias réplicas (Redis)
 
+Num servidor só, `veu servir --workers 4` abre quatro processos. Como cada processo tem a sua memória, mais de um processo exige sessões no Redis, e cada um escreve a própria cadeia de auditoria (`auditoria.<pid>.jsonl`). As estatísticas e métricas também são por processo.
+
 Com `VEU_SESSOES=rediss://...`, as conversas com `X-Veu-Sessao` funcionam em qualquer réplica: o `[CPF_1]` criado numa delas é restaurado na outra. Uma trava por sessão impede que duas réplicas deem o mesmo marcador a valores diferentes.
 
 O cofre tem os dados reais. Por isso, no Redis ele é **cifrado** (AES-256-GCM) com a chave de `VEU_CHAVE_COFRE`, que fica fora do Redis: quem copiar o banco não lê os dados, e um cofre não pode ser trocado de sessão. Sem a chave, o Véu não inicia com sessões no Redis (num Redis isolado e descartável, `permitir_cofre_sem_cifra = true` libera). Além disso:
