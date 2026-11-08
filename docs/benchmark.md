@@ -35,11 +35,11 @@ Todos os valores são fictícios: os conjuntos próprios usam dados gerados pelo
 
 | Conjunto | Véu | Véu + spaCy | Presidio |
 |---|---:|---:|---:|
-| Desafio (50 menções) | **28,0%** (14,0% a 43,2%) | — | 50,0% (34,6% a 65,3%) |
-| BR-Agentic (622 menções) | **23,3%** (19,8% a 27,0%) | 17,7% (14,2% a 21,3%) | 53,1% (49,5% a 57,0%) |
-| privacy-filter-br, 3.000 documentos (17.335 menções) | **2,6%** (2,4% a 2,9%) | 0,6% (0,4% a 0,7%) | 52,0% (51,4% a 52,7%) |
-| privacy-filter-br, holdout inteiro (107.594 menções) | **6,4%** (6,3% a 6,6%) | — | — |
-| Velocidade | ~330 mil caracteres/s | ~33 mil | 7 a 28 mil |
+| Desafio (50 menções) | **22,0%** (10,7% a 35,4%) | 14,0% (5,3% a 25,0%) | 50,0% (34,6% a 65,3%) |
+| BR-Agentic (622 menções) | **22,2%** (18,9% a 26,0%) | 16,9% (13,5% a 20,5%) | 53,1% (49,5% a 57,0%) |
+| privacy-filter-br, 3.000 documentos (17.335 menções) | **0,4%** (0,3% a 0,5%) | 0,3% (0,2% a 0,4%) | 52,0% (51,4% a 52,7%) |
+| privacy-filter-br, holdout inteiro (107.594 menções) | **3,3%** (3,2% a 3,5%) | — | — |
+| Velocidade | ~300 mil caracteres/s | ~19 mil | 7 a 28 mil |
 
 Vazamento (menor é melhor), com o IC 95% entre parênteses.
 
@@ -48,12 +48,14 @@ Vazamento (menor é melhor), com o IC 95% entre parênteses.
 O que os números mostram:
 
 - **Documentos brasileiros são a maior diferença.** No privacy-filter-br, o Presidio vaza 90% dos CPFs, 99% dos CNPJs e 99% dos endereços; o Véu, menos de 1% dos CPFs e CNPJs.
-- **Nomes em documentos formais são o ponto forte do Presidio**, graças ao modelo do spaCy: 7,7% de vazamento de nomes, contra 11,9% do Véu sem spaCy. Com o detector `spacy` ligado, o Véu cai para 1,5%, mas fica dez vezes mais lento.
+- **Nomes em documentos formais eram o ponto forte do Presidio**, graças ao modelo do spaCy: 7,7% de vazamento de nomes, contra 11,9% do Véu. Com as listas do Censo 2022 e a propagação de nomes confirmados, o Véu caiu para 0,9%, sem modelo e sem perder velocidade.
 - **No BR-Agentic, sobram endereços completos e contas.** As anotações contam como endereço também o bairro, a cidade e a UF ("Conjunto Exemplo, 100, Bairro, Cidade - UF"), e o Véu esconde a rua e o CEP, mas não a cidade. Contas e agências sem a palavra "conta" por perto também passam.
 
 ### O que mudou com a avaliação externa
 
 A primeira medição no holdout do privacy-filter-br deu **20,2%** de vazamento. Investigando só na parte de treino, apareceram formatos que o Véu não reconhecia: documentos já mascarados pela metade (`324.327.***-**`, `36.496.715/****-**`, `55886******`), CNPJ, RG e CEP com espaços e CNH com hífen. Com esses formatos, o holdout caiu para **6,4%** (CPF de 24,9% para 0,5%, CNPJ de 47,0% para 0,1%, RG de 50,7% para 2,8%), sem mudar a validação própria (2,5%).
+
+Nos nomes, a parte de treino mostrou que o Véu achava "Raul Viana", mas deixava de fora "Anthony": nomes comuns entre quem nasceu depois de 2000 não estavam nas listas. Com os 5 mil prenomes e 2 mil sobrenomes do Censo 2022 do IBGE, mais a propagação de nomes confirmados ("Rayane Souza" ... "a rayane"), o vazamento de nomes no holdout caiu de **15,4% para 1,4%**, e o geral, para **3,3%**. Para não esconder palavras comuns, os prenomes que também estão no dicionário pt_BR do LibreOffice ("Rosa", "Natal", "Glória") só contam com contexto, e municípios ("Belo Jardim") e sequências que começam com tipo de logradouro ("Avenida Paulista") ou com São, Santo e Santa deixam de ser lidos como pessoas. As detecções de nome fora das anotações na parte de treino caíram de 2.875 para 1.370 em 5.000 documentos.
 
 ## Limitações conhecidas
 

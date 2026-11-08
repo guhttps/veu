@@ -39,6 +39,14 @@ const STREET_BEFORE = new RegExp(
   "(?<![\\p{L}\\p{N}_])(?:rua|r\\.|av\\.?|avenida|travessa|tv\\.|alameda|al\\.|praca|pca\\.|rodovia|rod\\.|estrada|" +
   "largo|viela|beco|ladeira|vila|bairro|jardim|parque|condominio|edificio|residencial)(?:\\s+d[aeo]s?)?\\s*$", "u",
 );
+// Tipos de logradouro: uma sequência que começa com eles é endereço ("Avenida Paulista", "Quadra Norte").
+const STREET_WORDS: ReadonlySet<string> = new Set([
+  "rua", "avenida", "av", "travessa", "alameda", "praca", "rodovia", "estrada", "largo", "viela", "beco",
+  "ladeira", "quadra", "conjunto", "setor", "loteamento", "condominio", "residencial", "edificio", "chacara",
+  "sitio", "fazenda", "via", "vila", "jardim", "parque", "bairro",
+]);
+// "São Cristóvão", "Santa Maria", "Santo Antônio": lugares e santos, não pessoas.
+const SAINTS: ReadonlySet<string> = new Set(["sao", "santo", "santa"]);
 const GREETINGS = [
   "oi", "ola", "e ai", "eai", "fala", "bom dia", "boa tarde", "boa noite", "obrigado", "obrigada", "valeu",
   "vlw", "tchau", "beijo", "bjs", "abraco", "querido", "querida", "meu nome e", "me chamo", "sou o", "sou a",
@@ -150,6 +158,7 @@ export class PersonRecognizer implements Recognizer {
     const whole = tokens.map((token) => fold(token[2])).join(" ");
     if (this.places.has(whole) || this.organizations.has(whole)) return null;
     if (tokens.some((token) => ORGANIZATION_WORDS.has(fold(token[2])))) return null;
+    if (tokens.length && (STREET_WORDS.has(fold(tokens[0][2])) || SAINTS.has(fold(tokens[0][2])))) return null;
     const firstIndex = tokens.findIndex((token) => this.firstNames.has(fold(token[2])));
     if (firstIndex !== -1) {
       tokens = tokens.slice(firstIndex);
@@ -189,7 +198,7 @@ export class PersonRecognizer implements Recognizer {
         } else {
           score = context ? 0.8 : 0.6;
         }
-      } else if (context && (this.surnames.has(word) || this.strongContext(text, start))) {
+      } else if (context && ((this.surnames.has(word) && !this.ambiguous.has(word)) || this.strongContext(text, start))) {
         score = 0.6;
       } else {
         return null;

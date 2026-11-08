@@ -88,6 +88,35 @@ export class AnonymizationResult {
   }
 }
 
+// Palavras de nome (letras, com apóstrofo): a mesma definição do detector de nomes.
+const NAME_WORD = /[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)*/gu;
+const WORD_CHAR = /[\p{L}\p{N}_]/u;
+
+/** Sequências de palavras cuja forma normalizada está em parts (a mais longa primeiro), com custo linear. */
+function findNames(text: string, parts: Map<string, string>): [number, number][] {
+  const longest = Math.max(...[...parts.keys()].map((key) => key.split(" ").length));
+  const words = [...text.matchAll(NAME_WORD)].map((m) => [m.index, m.index + m[0].length, fold(m[0])] as const);
+  const found: [number, number][] = [];
+  let index = 0;
+  while (index < words.length) {
+    let matched = 0;
+    for (let size = Math.min(longest, words.length - index); size > 0; size -= 1) {
+      const chunk = words.slice(index, index + size);
+      if (chunk.slice(1).some((word, i) => !/^\s+$/u.test(text.slice(chunk[i][1], word[0])))) continue;
+      const start = chunk[0][0];
+      const end = chunk[chunk.length - 1][1];
+      if ((start > 0 && WORD_CHAR.test(text[start - 1])) || (end < text.length && WORD_CHAR.test(text[end]))) continue;
+      if (parts.has(chunk.map((word) => word[2]).join(" "))) {
+        found.push([start, end]);
+        matched = size;
+        break;
+      }
+    }
+    index += matched || 1;
+  }
+  return found;
+}
+
 export interface AnonymizerOptions {
   operator?: string;
   operators?: Record<string, string>;
@@ -162,41 +191,45 @@ export class Anonymizer {
     return `[${entity.label}]`;
   }
 
-  /** Menções soltas ao primeiro nome ou ao sobrenome de uma pessoa já detectada usam o mesmo marcador. */
+  /**
+   * Propaga nomes já detectados no mesmo texto: menções soltas ao primeiro nome, ao sobrenome ou ao nome inteiro,
+   * em qualquer caixa e com ou sem acento, recebem o mesmo marcador do nome completo. Nomes ambíguos não se propagam.
+   */
   private linkPartialNames(text: string, entities: Entity[]): [Entity[], Map<number, string>] {
     const ambiguous = ambiguousNames();
     const parts = new Map<string, string>();
-    for (const entity of entities) {
-      if (entity.label !== "PESSOA") continue;
+    // Nomes completos primeiro: "Ana" sozinho, antes de "Ana Beatriz Moura", usa o marcador do nome completo.
+    const byLength = [...entities].sort((a, b) => b.text.split(/\s+/).length - a.text.split(/\s+/).length);
+    for (const entity of byLength) {
+      if (entity.label !== "PESSOA" || entity.score < 0.6) continue;
       const words = entity.text.split(/\s+/).filter((word) => word && !CONNECTORS.has(fold(word)));
-      if (words.length < 2) continue;
-      for (const word of [words[0], words[words.length - 1]]) {
-        if (word.length >= 3 && !ambiguous.has(fold(word)) && word[0] !== word[0].toLowerCase() && !parts.has(word)) {
-          parts.set(word, entity.text);
-        }
+      if (!words.length) continue;
+      let linked: string[];
+      if (words.length >= 2) {
+        if (!parts.has(fold(entity.text))) parts.set(fold(entity.text), entity.text);
+        linked = [words[0], words[words.length - 1]].filter((word) => word[0] !== word[0].toLowerCase());
+      } else {
+        linked = words;
+      }
+      for (const word of linked) {
+        if ([...word].length >= 3 && !ambiguous.has(fold(word)) && !parts.has(fold(word))) parts.set(fold(word), entity.text);
       }
     }
     const canonical = new Map<number, string>();
     if (!parts.size) return [entities, canonical];
-    const alternatives = [...parts.keys()].sort((a, b) => b.length - a.length).map(escapeRegex).join("|");
-    const pattern = new RegExp(`(?<![\\p{L}\\p{N}_])(?:${alternatives})(?![\\p{L}\\p{N}_])`, "gu");
     const added: Entity[] = [];
     const starts = entities.map((e) => e.start);
     const ends = entities.map((e) => e.end);
-    for (const match of text.matchAll(pattern)) {
-      const start = match.index;
-      const end = start + match[0].length;
+    for (const [start, end] of findNames(text, parts)) {
       const position = bisectRight(starts, start);
       if (position > 0 && ends[position - 1] > start) continue;
       if (position < starts.length && starts[position] < end) continue;
-      added.push({ label: "PESSOA", start, end, score: 0.7, recognizer: "vinculo", text: match[0] });
-      canonical.set(start, parts.get(match[0])!);
+      added.push({ label: "PESSOA", start, end, score: 0.7, recognizer: "vinculo", text: text.slice(start, end) });
+      canonical.set(start, parts.get(fold(text.slice(start, end)))!);
     }
-    const byFolded = new Map([...parts.entries()].map(([word, full]) => [fold(word), full]));
     for (const entity of entities) {
-      if (entity.label === "PESSOA" && entity.text.split(/\s+/).filter(Boolean).length === 1 && byFolded.has(fold(entity.text))) {
-        canonical.set(entity.start, byFolded.get(fold(entity.text))!);
-      }
+      const full = entity.label === "PESSOA" ? parts.get(fold(entity.text)) : undefined;
+      if (full !== undefined && full !== entity.text) canonical.set(entity.start, full);
     }
     return [[...entities, ...added].sort((a, b) => a.start - b.start), canonical];
   }
