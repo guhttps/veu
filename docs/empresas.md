@@ -23,6 +23,7 @@ kubectl -n ia create secret generic veu \
   --from-literal=VEU_TOKEN="$(openssl rand -hex 32)" \
   --from-literal=VEU_TOKEN_JURIDICO="$(openssl rand -hex 32)" \
   --from-literal=VEU_SEGREDO_AUDITORIA="$(openssl rand -hex 32)" \
+  --from-literal=VEU_CHAVE_COFRE="$(openssl rand -hex 32)" \
   --from-literal=OPENAI_API_KEY="..." \
   --from-literal=VEU_SESSOES="rediss://:senha@redis-veu:6379/0"
 helm install veu deploy/helm/veu -n ia -f meus-valores.yaml
@@ -81,13 +82,23 @@ veu auditoria verificar auditoria.jsonl --segredo-env VEU_SEGREDO_AUDITORIA
 # Log íntegro: 18234 registros, cadeia completa.
 ```
 
+A cadeia impede alterar ou apagar linhas do meio, mas quem controla o servidor ainda poderia apagar as últimas linhas. Para detectar isso, guarde de tempos em tempos uma **âncora** fora do servidor (um bilhete, um e-mail, um armazenamento imutável):
+
+```bash
+veu auditoria ancorar auditoria.jsonl --segredo-env VEU_SEGREDO_AUDITORIA
+# {"arquivo": "auditoria.jsonl", "registros": 18234, "hash": "9f2c...", "quando": "2026-11-07T21:00:00+00:00"}
+veu auditoria verificar auditoria.jsonl --segredo-env VEU_SEGREDO_AUDITORIA --ancora 9f2c...
+```
+
+Se a linha da âncora sumir, a verificação falha. Cada linha também registra quantos valores reais voltaram na resposta (`restaurados`, por tipo, sem os valores), e `[restauracao] max_por_resposta` limita esse número: uma IA manipulada que tenta despejar todos os dados de uma sessão para no limite.
+
 Com várias réplicas, cada uma escreve a própria cadeia. Guarde os logs separados por pod ou use a saída padrão, que o coletor já separa.
 
 ### Várias réplicas (Redis)
 
 Com `VEU_SESSOES=rediss://...`, as conversas com `X-Veu-Sessao` funcionam em qualquer réplica: o `[CPF_1]` criado numa delas é restaurado na outra. Uma trava por sessão impede que duas réplicas deem o mesmo marcador a valores diferentes.
 
-O cofre tem os dados reais. Por isso:
+O cofre tem os dados reais. Por isso, no Redis ele é **cifrado** (AES-256-GCM) com a chave de `VEU_CHAVE_COFRE`, que fica fora do Redis: quem copiar o banco não lê os dados, e um cofre não pode ser trocado de sessão. Sem a chave, o Véu não inicia com sessões no Redis (num Redis isolado e descartável, `permitir_cofre_sem_cifra = true` libera). Além disso:
 
 - use um Redis interno, com senha e TLS;
 - desligue a persistência em disco (`--save ""`);

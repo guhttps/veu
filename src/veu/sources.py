@@ -12,9 +12,12 @@ Também é usado pela ferramenta MCP ler_protegido e pelo proxy (expandir_links)
 from __future__ import annotations
 
 import contextlib
+import contextvars
+import ipaddress
 import json
 import os
 import re
+import socket
 import threading
 import time
 import urllib.error
@@ -83,6 +86,37 @@ def protect_document(document: Document, anonymizer, vault) -> tuple[str, str, C
 
 # HTTP ---------------------------------------------------------------------------------------------------------------
 
+# Na leitura de links pelo proxy, só endereços públicos e https, também em cada redirecionamento: um link (ou um
+# redirecionamento) não pode levar o servidor a buscar 169.254.169.254, localhost ou a rede interna.
+_PUBLIC_ONLY: contextvars.ContextVar[bool] = contextvars.ContextVar("veu_public_only", default=False)
+
+
+def check_public_url(url: str) -> None:
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme != "https" or not parts.hostname:
+        raise SourceError("Só links https para endereços públicos podem ser lidos.")
+    try:
+        infos = socket.getaddrinfo(parts.hostname, parts.port or 443, proto=socket.IPPROTO_TCP)
+    except OSError as exc:
+        raise SourceError(f"Não foi possível encontrar {parts.hostname}.") from exc
+    for info in infos:
+        address = ipaddress.ip_address(str(info[4][0]).split("%", 1)[0])
+        if not address.is_global:
+            raise SourceError(f"O link aponta para um endereço interno ({parts.hostname}) e não foi lido.")
+
+
+class _SafeRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if _PUBLIC_ONLY.get():
+            check_public_url(newurl)
+        elif urllib.parse.urlsplit(newurl).scheme not in ("http", "https"):
+            raise SourceError("Redirecionamento para um endereço que não é http nem https.")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_OPENER = urllib.request.build_opener(_SafeRedirect)
+
+
 def http(url: str, *, method: str = "GET", headers: dict | None = None, body: dict | None = None,
          timeout: float = TIMEOUT, max_bytes: int = MAX_BYTES) -> tuple[bytes, str]:
     """GET ou POST com limite de tamanho. Devolve (corpo, content-type). Levanta SourceError com mensagem clara."""
@@ -91,7 +125,9 @@ def http(url: str, *, method: str = "GET", headers: dict | None = None, body: di
         "User-Agent": USER_AGENT, **({"Content-Type": "application/json"} if data else {}), **(headers or {}),
     })
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 (só http e https, abaixo)
+        if _PUBLIC_ONLY.get():
+            check_public_url(url)
+        with _OPENER.open(request, timeout=timeout) as response:  # noqa: S310 (só http e https, abaixo)
             content = response.read(max_bytes + 1)
             if len(content) > max_bytes:
                 raise SourceError(f"Conteúdo maior que {max_bytes // (1024 * 1024)} MB.")
@@ -501,6 +537,7 @@ class LinkExpander:
             if cached and now - cached[0] < self.ttl:
                 return cached[1], cached[2]
         known: dict[str, str] = {}
+        token = _PUBLIC_ONLY.set(True)
         try:
             document = self.reader(url)
             text = document.text[: self.max_chars]
@@ -508,6 +545,8 @@ class LinkExpander:
             content = f"\n\n[Conteúdo de {url}]\n{text}\n[Fim do conteúdo]"
         except (SourceError, ImportError, ValueError) as exc:
             content = f"\n\n[O Véu não conseguiu ler {_safe_url(url)}: {exc}]"
+        finally:
+            _PUBLIC_ONLY.reset(token)
         with self._lock:
             self._cache[url] = (now, content, known)
         return content, known

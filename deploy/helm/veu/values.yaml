@@ -10,7 +10,7 @@ image:
 imagePullSecrets: []
 
 # Secret com os tokens e chaves (crie antes do install). Chaves esperadas, todas opcionais:
-#   VEU_TOKEN, VEU_SEGREDO_AUDITORIA, VEU_SESSOES (redis://...), tokens das equipes,
+#   VEU_TOKEN, VEU_SEGREDO_AUDITORIA, VEU_SESSOES (redis://...) com VEU_CHAVE_COFRE, tokens das equipes,
 #   OPENAI_API_KEY / ANTHROPIC_API_KEY etc. (com injetar_chaves = true) e NOTION_TOKEN.
 existingSecret: veu
 

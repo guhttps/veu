@@ -53,10 +53,12 @@ def test_teams_from_toml(tmp_path, monkeypatch):
     path.write_text(
         '[equipes.juridico]\ntoken_env = "TOKEN_JURIDICO"\nbloquear = ["cpf"]\noperador = "mascara"\n'
         '[politica]\ndesviar_para = "ollama"\nmodelo_desvio = "llama3.1"\ndesviar_tipos = ["cpf"]\n'
-        '[servidor]\nsessoes = "redis://cache:6379/0"\nsegredo_auditoria_env = "SEGREDO_AUD"\n',
+        '[servidor]\nsessoes = "redis://cache:6379/0"\nsegredo_auditoria_env = "SEGREDO_AUD"\n'
+        'chave_cofre_env = "CHAVE_COFRE"\n',
         encoding="utf-8",
     )
     monkeypatch.setenv("SEGREDO_AUD", "s3" * 16)
+    monkeypatch.setenv("CHAVE_COFRE", "c" * 32)
     config = load_config(str(path))
     assert config.teams["juridico"] == TeamConfig("juridico", "abc", ("CPF",), "mascara")
     assert (config.route_to, config.route_model, config.route_labels) == ("ollama", "llama3.1", ("CPF",))
@@ -109,8 +111,8 @@ def test_redis_sessions_shared_between_replicas(monkeypatch):
     server = fakeredis.FakeServer()
     monkeypatch.setattr(redis.Redis, "from_url", staticmethod(lambda *a, **k: fakeredis.FakeRedis(server=server)))
     first, second = Upstream(), Upstream()
-    replica_a = app_with(first, session_backend="redis://cache:6379/0")
-    replica_b = app_with(second, session_backend="redis://cache:6379/0")
+    replica_a = app_with(first, session_backend="redis://cache:6379/0", vault_key="k" * 32)
+    replica_b = app_with(second, session_backend="redis://cache:6379/0", vault_key="k" * 32)
     headers = {"x-veu-sessao": "conversa-1", "authorization": "Bearer chave"}
 
     call(replica_a, "POST", "/v1/chat/completions", json=chat(f"CPF {CPF}"), headers=headers)
@@ -121,6 +123,9 @@ def test_redis_sessions_shared_between_replicas(monkeypatch):
     assert call(replica_b, "GET", "/veu/pronto").status_code == 200
     stored = [key for key in fakeredis.FakeRedis(server=server).scan_iter() if b"trava" not in key]
     assert stored and all(fakeredis.FakeRedis(server=server).ttl(key) > 0 for key in stored)
+    # O cofre no Redis é cifrado: nem o CPF nem o JSON do cofre aparecem.
+    blobs = [fakeredis.FakeRedis(server=server).get(key) for key in stored]
+    assert all(blob.startswith(b"veu1:") and CPF.encode() not in blob and b"itens" not in blob for blob in blobs)
 
 
 def test_ready_fails_when_store_is_down(monkeypatch):

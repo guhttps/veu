@@ -129,7 +129,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
   - a mesma detecção nas três versões;
   - um teste de conformidade com 284 casos exige resultados idênticos.
 - 🏢 **Empresas:**
-  - gateway com tokens por equipe, auditoria à prova de adulteração e sessões no Redis;
+  - gateway com tokens por equipe, auditoria à prova de adulteração (com âncora externa) e sessões no Redis com o cofre cifrado;
   - desvio de dados sensíveis para um modelo interno;
   - chart Helm, guardrail do LiteLLM e extensão com política gerenciada.
 - 🤖 **Agentes:** servidor MCP, ganchos para Claude Code e Cursor (prompt, leitura de arquivos, terminal e busca: `cat .env` e `printenv` também são bloqueados) e plugin com skill. Claude Code e Codex CLI podem rodar pelo proxy, com patches e comandos restaurados.
@@ -170,7 +170,7 @@ Extras opcionais do pacote Python:
 | `documentos` | Excel, Word, PowerPoint e PDF |
 | `langchain`, `pandas` | Integrações com essas bibliotecas |
 | `litellm` | Guardrail do LiteLLM |
-| `redis` | Sessões compartilhadas entre réplicas |
+| `redis` | Sessões compartilhadas entre réplicas, com o cofre cifrado |
 | `spacy` | Detector de nomes do spaCy |
 | `todos` | Tudo acima, menos `litellm` e `spacy` |
 
@@ -351,10 +351,11 @@ O painel guarda o arquivo em `%APPDATA%\veu\veu.toml` no Windows, `~/Library/App
   - no MCP, a ferramenta que devolve os dados reais para a conversa vem desligada.
 - **Dados:**
   - se a detecção falhar, a requisição não sai;
-  - o cofre fica na memória (ou no seu Redis) e expira sem uso;
+  - o cofre fica na memória (ou no seu Redis, cifrado com AES-256-GCM) e expira sem uso;
+  - a leitura de links do proxy só acessa endereços públicos, também nos redirecionamentos;
   - a página web e a extensão não enviam nada pela internet;
   - o painel só funciona no próprio computador.
-- **Auditoria:** o log tem só contagens, em cadeia de hashes (HMAC com segredo). `veu auditoria verificar` aponta linhas alteradas ou removidas.
+- **Auditoria:** o log tem só contagens (do que foi escondido e do que voltou), em cadeia de hashes (HMAC com segredo). `veu auditoria verificar` aponta linhas alteradas ou removidas, e a âncora (`veu auditoria ancorar`) acusa linhas apagadas no fim.
 - **Limites:** o Véu protege os dados da IA, mas não decide quem pode ver o quê dentro do seu sistema. Veja as [limitações](SECURITY.md#o-que-o-véu-não-faz).
 
 Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECURITY.md) antes de usar em produção.
@@ -365,7 +366,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 480 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 500 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 cd js && npm ci && npm test                       # biblioteca JavaScript (inclui a conformidade com o Python)

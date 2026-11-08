@@ -23,7 +23,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Codex CLI pelo proxy:** a Responses API passa a esconder `custom_tool_call` (como o `apply_patch`), `local_shell_call` e saídas de ferramentas em lista, e a restaurar em streaming a entrada de ferramentas de texto livre, com a mesma política (chaves não voltam, links não recebem dados reais).
 - **Normalização para a detecção:** caracteres invisíveis (largura zero, hífen invisível), hífens tipográficos (`529.982.247‑25` copiado do Word) e dígitos e letras de largura total não escondem mais dados do detector. O texto enviado e o restaurado continuam como estavam. Em JavaScript, a máscara de CPF passa a aceitar dígitos de largura total, como em Python.
 
+- **Cofre cifrado no Redis** (AES-256-GCM, chave em `VEU_CHAVE_COFRE`, fora do Redis). O nome da sessão entra como dado autenticado: um cofre não pode ser copiado para outra sessão, e um cofre alterado ou em texto puro é ignorado.
+- **Restaurações contadas:** a auditoria registra quantos valores reais voltaram em cada resposta (`restaurados`, por tipo, sem os valores), e `/veu/estatisticas` e `/veu/metricas` também. `[restauracao] max_por_resposta` limita esse número por resposta.
+- **Âncora da auditoria:** `veu auditoria ancorar` mostra o último hash da cadeia para guardar fora do servidor, e `veu auditoria verificar --ancora` falha se ele sumir (linhas apagadas no fim ou log trocado).
+- **Leitura de links sem SSRF:** na expansão de links do proxy, o link e cada redirecionamento precisam ser https e apontar para endereços públicos (nada de 169.254.169.254, localhost ou rede interna).
+
 ### Alterado
+- **Incompatível:** sessões no Redis exigem `VEU_CHAVE_COFRE` (ou `permitir_cofre_sem_cifra = true`). O extra `veu[redis]` passa a instalar o `cryptography`.
 - `veu avaliar --max-vazamento` vale para a validação (e para o conjunto escolhido), não para o desafio, que existe para mostrar onde o Véu ainda erra.
 
 ## [0.6.0] - 2026-11-07

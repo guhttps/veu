@@ -108,6 +108,7 @@ class Config:
     restore_link_hosts: tuple[str, ...] = ()
     restore_tools: bool = True
     restore_secrets_in_tools: bool = False
+    restore_max_per_response: int = 0
     # Política
     block: tuple[str, ...] = ()
     unknown_endpoints: str = "bloquear"
@@ -133,6 +134,9 @@ class Config:
     expand_domains: tuple[str, ...] = ("notion.so", "notion.com", "notion.site", "docs.google.com")
     # "memoria" (padrão) ou uma URL redis://, para várias réplicas do servidor compartilharem as sessões.
     session_backend: str = "memoria"
+    # Chave do cofre cifrado no Redis (VEU_CHAVE_COFRE). Sem ela, o Redis só é aceito com permitir_cofre_sem_cifra.
+    vault_key: str | None = None
+    allow_plain_vault: bool = False
     # Com segredo, cada linha da auditoria leva um HMAC encadeado: alterar ou apagar linhas fica detectável.
     audit_secret: str | None = None
     # Desvio: requisições com estes tipos (vazio = qualquer dado) vão inteiras para um provedor interno.
@@ -144,7 +148,8 @@ class Config:
 
     def __post_init__(self):
         for name, value in (("VEU_SEGREDO (segredo_env)", self.secret),
-                            ("VEU_SEGREDO_AUDITORIA (segredo_auditoria_env)", self.audit_secret)):
+                            ("VEU_SEGREDO_AUDITORIA (segredo_auditoria_env)", self.audit_secret),
+                            ("VEU_CHAVE_COFRE (chave_cofre_env)", self.vault_key)):
             if value is not None and len(value) < MIN_SECRET_LENGTH:
                 raise ConfigError(
                     f"{name} precisa ter pelo menos {MIN_SECRET_LENGTH} caracteres: um segredo curto pode ser "
@@ -178,6 +183,11 @@ class Config:
             raise ConfigError(f"desviar_tipos: entidades desconhecidas: {', '.join(bad_route)}.")
         if not (self.session_backend == "memoria" or self.session_backend.startswith(("redis://", "rediss://"))):
             raise ConfigError('sessoes deve ser "memoria" ou uma URL redis:// (ou rediss://).')
+        if self.session_backend != "memoria" and not self.vault_key and not self.allow_plain_vault:
+            raise ConfigError(
+                "Sessões no Redis guardam os dados reais: defina VEU_CHAVE_COFRE (pelo menos 32 caracteres) para o "
+                "cofre ser cifrado, ou permitir_cofre_sem_cifra = true num Redis isolado."
+            )
         for team in self.teams.values():
             if not team.token:
                 raise ConfigError(f"[equipes.{team.name}] está sem token: defina a variável de token_env.")
@@ -204,7 +214,8 @@ class Config:
 
         hosts = tuple(host.strip().lower().lstrip(".") for host in self.restore_link_hosts if host.strip())
         return RestorePolicy(links=self.restore_links, link_hosts=hosts, tools=self.restore_tools,
-                             secrets_in_tools=self.restore_secrets_in_tools)
+                             secrets_in_tools=self.restore_secrets_in_tools,
+                             max_per_response=self.restore_max_per_response)
 
     def with_overrides(self, **changes) -> Config:
         allowed = {f.name for f in fields(self)}
@@ -228,7 +239,7 @@ _SECTIONS = {
     },
     "restauracao": {
         "links": "restore_links", "dominios_links": "restore_link_hosts", "ferramentas": "restore_tools",
-        "segredos_em_ferramentas": "restore_secrets_in_tools",
+        "segredos_em_ferramentas": "restore_secrets_in_tools", "max_por_resposta": "restore_max_per_response",
     },
     "politica": {
         "bloquear": "block", "endpoints_desconhecidos": "unknown_endpoints", "desviar_para": "route_to",
@@ -240,7 +251,7 @@ _SECTIONS = {
         "timeout": "timeout", "token_env": None, "permitir_sem_token": "allow_no_token",
         "limite_corpo_mb": "max_body_mb", "operador_por_requisicao": "request_operator", "metricas": "metrics",
         "expandir_links": "expand_links", "dominios_expandidos": "expand_domains", "sessoes": "session_backend",
-        "segredo_auditoria_env": None,
+        "segredo_auditoria_env": None, "chave_cofre_env": None, "permitir_cofre_sem_cifra": "allow_plain_vault",
     },
 }
 
@@ -310,6 +321,8 @@ def _from_toml(data: dict, base: Config) -> dict:
                 changes["token"] = os.environ.get(value)
             elif key == "segredo_auditoria_env":
                 changes["audit_secret"] = os.environ.get(value)
+            elif key == "chave_cofre_env":
+                changes["vault_key"] = os.environ.get(value)
             elif key == "operadores":
                 changes["operators"] = {label.upper(): op for label, op in value.items()}
             elif key in ("entidades", "bloquear", "desviar_tipos"):
@@ -355,6 +368,8 @@ def _from_env(environ: dict[str, str], base: Config) -> dict:
         changes["session_backend"] = environ["VEU_SESSOES"] or "memoria"
     if "VEU_SEGREDO_AUDITORIA" in environ:
         changes["audit_secret"] = environ["VEU_SEGREDO_AUDITORIA"] or None
+    if "VEU_CHAVE_COFRE" in environ:
+        changes["vault_key"] = environ["VEU_CHAVE_COFRE"] or None
     if "VEU_LIMITE_CORPO_MB" in environ:
         changes["max_body_mb"] = float(environ["VEU_LIMITE_CORPO_MB"])
     providers = dict(changes.get("providers", base.providers))
