@@ -90,6 +90,21 @@ const CTX_ACCOUNT = ["conta", "conta corrente", "conta-corrente", "c/c", "cc", "
 const CTX_PROCESS = ["processo", "autos", "proc", "proc.", "acao", "numero do processo"];
 const CTX_EMAIL = ["email", "e-mail"];
 const CTX_IBAN = ["iban", "swift", "bic", "transferencia internacional", "conta internacional"];
+// Outros países (pt-PT e espanhol, sem acento: o contexto é comparado depois do fold).
+const CTX_NIF_PT = ["nif", "nipc", "contribuinte", "n.o de contribuinte", "numero de identificacao fiscal",
+  "pessoa coletiva", "pessoa colectiva"];
+const CTX_CC_PT = ["cartao de cidadao", "cc", "n.o do documento", "nic", "bilhete de identidade", "bi"];
+const CTX_NISS_PT = ["niss", "seguranca social", "n.o de beneficiario"];
+const CTX_CUIT = ["cuit", "cuil", "afip", "arca", "clave fiscal"];
+const CTX_DNI = ["dni", "d.n.i", "documento nacional de identidad", "reniec"];
+const CTX_MX = ["curp", "rfc", "homoclave", "sat", "registro federal de contribuyentes"];
+const CTX_RUT = ["rut", "run", "rol unico", "rol unico tributario", "sii", "dgi"];
+const CTX_CEDULA = ["cedula", "c.i", "ci", "c.c", "cedula de ciudadania", "cedula de identidad", "documento de identidad",
+  "carnet de identidad"];
+const CTX_NIT = ["nit", "dian"];
+const CTX_RUC = ["ruc", "sunat", "sri", "set", "registro unico de contribuyentes"];
+const CTX_RIF = ["rif", "seniat"];
+const CUIT_PREFIX = "(?:20|23|24|27|30|33|34|50|51|55)";
 
 const phoneAdjust = (value: string, score: number): number => (/[()\s.+-]/u.test(value) ? score : score - 0.3);
 const isYear = (value: string): boolean => /^(?:19|20)\d{2}$/.test(value);
@@ -184,6 +199,30 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   // Processos judiciais
   spec("PROCESSO", `${B}\\d{7}-\\d{2}\\.\\d{4}\\.\\d\\.\\d{2}\\.\\d{4}${E}`, S(0.9, 0.6, 1.0, 0.75),
     { validator: v.isValidProcessoCnj, context: CTX_PROCESS }),
+  // Outros países. Três níveis de confiança:
+  // - formatos estruturados ou com a pontuação típica: sem contexto (CURP, RFC, CC, CUIT com hífens, RIF);
+  // - numéricos de 11 dígitos ou mais, que podem ser CPF: só com contexto, e aí vencem o CPF;
+  // - numéricos curtos, que qualquer número de 7 a 9 dígitos pode imitar: só com contexto.
+  // A versão do cartão são duas letras ("ZZ", "ZX"): só dígitos seria qualquer protocolo de 12 dígitos.
+  spec("CC_PT", `${B}\\d{8}[ -]?\\d[ -]?[A-Z]{2}[ -]?\\d${E}`, S(0.9, null, 0.97, 0.7), { validator: v.isValidCcPt, context: CTX_CC_PT }),
+  spec("NIF_PT", `${B}\\d{3}[ .]?\\d{3}[ .]?\\d{3}${E}`, S(null, null, 0.95), { validator: v.isValidNifPt, context: CTX_NIF_PT, before: 30 }),
+  spec("NISS_PT", `${B}[12]\\d{10}${E}`, S(null, null, 0.97), { validator: v.isValidNissPt, context: CTX_NISS_PT, before: 30 }),
+  spec("CUIT", `${B}${CUIT_PREFIX}-\\d{8}-\\d${E}`, S(0.9, null, 0.97, 0.75), { validator: v.isValidCuit, context: CTX_CUIT }),
+  spec("CUIT", `${B}${CUIT_PREFIX}\\d{9}${E}`, S(null, null, 0.96), { validator: v.isValidCuit, context: CTX_CUIT, before: 30 }),
+  spec("DNI", `${B}\\d{1,2}\\.?\\d{3}\\.?\\d{3}(?:-[0-9A-K])?${E}`, S(null, null, 0.85), { context: CTX_DNI, before: 20 }),
+  spec("CURP", `${B}[A-Z]{4}\\d{6}[HMX][A-Z]{5}[0-9A-Z]\\d${E}`, S(0.95, 0.6, 1.0, 0.8), { validator: v.isValidCurp, context: CTX_MX }),
+  spec("RFC", `(?<![\\p{L}\\p{N}_&])[A-ZÑ&]{3,4}\\d{6}[A-Z0-9]{3}${E}`, S(0.85, null, 0.97), { validator: v.isValidRfc, context: CTX_MX }),
+  // O RUT chileno e a cédula uruguaia formatados têm o desenho do RG: sem contexto, perdem para ele (0,55 < 0,6).
+  spec("RUT", `${B}\\d{1,2}\\.\\d{3}\\.\\d{3}-[\\dkK]${E}`, S(0.55, null, 0.97, 0.75), { validator: v.isValidRutCl, context: CTX_RUT }),
+  spec("RUT", `${B}\\d{7,8}-[\\dkK]${E}`, S(null, null, 0.95, 0.75), { validator: v.isValidRutCl, context: CTX_RUT, before: 25 }),
+  spec("RUT", `${B}\\d{12}${E}`, S(null, null, 0.95), { validator: v.isValidRutUy, context: CTX_RUT, before: 25 }),
+  spec("CEDULA", `${B}\\d\\.\\d{3}\\.\\d{3}-\\d${E}`, S(0.55, null, 0.97, 0.75), { validator: v.isValidCiUy, context: CTX_CEDULA }),
+  spec("CEDULA", `${B}\\d{10}${E}`, S(null, null, 0.95), { validator: v.isValidCiEc, context: CTX_CEDULA, before: 25 }),
+  spec("CEDULA", `${B}(?:\\d{1,3}(?:\\.\\d{3}){1,3}|\\d{6,10})${E}`, S(null, null, 0.85), { context: CTX_CEDULA, before: 20 }),
+  spec("NIT", `${B}\\d{3}\\.\\d{3}\\.\\d{3}-\\d${E}`, S(0.8, null, 0.97, 0.75), { validator: v.isValidNitCo, context: CTX_NIT }),
+  spec("NIT", `${B}\\d{8,15}-?\\d${E}`, S(null, null, 0.95, 0.75), { validator: v.isValidNitCo, context: CTX_NIT, before: 25 }),
+  spec("RUC", `${B}(?:\\d{11}|\\d{13}|\\d{5,8}-\\d)${E}`, S(null, null, 0.96, 0.75), { validator: v.isValidRuc, context: CTX_RUC, before: 25 }),
+  spec("RIF", `${B}[VEJPG]-?\\d{8}-?\\d${E}`, S(0.9, null, 0.97, 0.75), { validator: v.isValidRif, context: CTX_RIF }),
 ];
 
 const round3 = (value: number): number => Math.round(value * 1000) / 1000;
@@ -199,7 +238,13 @@ export class PatternRecognizer implements Recognizer {
   }
 
   *find(text: string): Iterable<Candidate> {
+    let folded: string | null = null;
     for (const item of this.specs) {
+      // Padrões que só valem com contexto: sem nenhuma palavra de contexto no texto, nem procura os números.
+      if ((item.scores.valid ?? null) === null && (item.scores.invalid ?? null) === null && item.context) {
+        folded ??= fold(text);
+        if (!item.context.test(folded)) continue;
+      }
       for (const match of text.matchAll(item.regex)) {
         const value = match[0];
         const start = match.index;

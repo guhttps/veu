@@ -291,3 +291,209 @@ def parse_date(value: str) -> date | None:
 def is_plausible_birthdate(value: str) -> bool:
     parsed = parse_date(value)
     return parsed is not None and 1900 <= parsed.year <= date.today().year
+
+
+# Outros países ---------------------------------------------------------------------------------------------------
+# Algoritmos conferidos com o python-stdnum 2.2 (usado só como referência; não é dependência do Véu).
+
+_NIF_PT_PREFIXES = frozenset({"45", "70", "71", "72", "74", "75", "77", "78", "79", "90", "91", "98", "99"})
+
+
+def is_valid_nif_pt(value: str) -> bool:
+    """NIF/NIPC de Portugal: 9 dígitos, mod 11, com os prefixos que existem."""
+    d = only_digits(value)
+    if len(d) != 9 or not (d[0] in "12356" or d[:2] in _NIF_PT_PREFIXES):
+        return False
+    total = sum((9 - i) * int(n) for i, n in enumerate(d[:8]))
+    return str((11 - total) % 11 % 10) == d[8]
+
+
+_ALNUM36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def is_valid_cc_pt(value: str) -> bool:
+    """Número do Cartão de Cidadão (Portugal): 8 dígitos, 1 dígito, 2 caracteres de versão e o controlo final."""
+    compact = re.sub(r"[\s-]", "", value).upper()
+    if not re.fullmatch(r"\d{9}[A-Z0-9]{2}\d", compact):
+        return False
+    total = 0
+    for index, char in enumerate(compact[:-1][::-1]):
+        number = _ALNUM36.index(char)
+        if index % 2 == 0:
+            number *= 2
+            number = number - 9 if number > 9 else number
+        total += number
+    return str((10 - total) % 10) == compact[-1]
+
+
+def is_valid_niss_pt(value: str) -> bool:
+    """NISS de Portugal: 11 dígitos, começa com 1 ou 2, pesos primos."""
+    d = only_digits(value)
+    if len(d) != 11 or d[0] not in "12":
+        return False
+    weights = (29, 23, 19, 17, 13, 11, 7, 5, 3, 2)
+    return str(9 - sum(w * int(n) for w, n in zip(weights, d[:10], strict=True)) % 10) == d[10]
+
+
+_CUIT_PREFIXES = frozenset({"20", "23", "24", "27", "30", "33", "34", "50", "51", "55"})
+
+
+def is_valid_cuit(value: str) -> bool:
+    """CUIT/CUIL da Argentina: 11 dígitos, prefixo conhecido, mod 11."""
+    d = only_digits(value)
+    if len(d) != 11 or d[:2] not in _CUIT_PREFIXES:
+        return False
+    weights = (5, 4, 3, 2, 7, 6, 5, 4, 3, 2)
+    total = sum(w * int(n) for w, n in zip(weights, d[:10], strict=True))
+    return "012345678990"[11 - total % 11] == d[10]
+
+
+_CURP_ALPHABET = "0123456789ABCDEFGHIJKLMN&OPQRSTUVWXYZ"
+_MX_STATES = frozenset({
+    "AS", "BC", "BS", "CC", "CL", "CM", "CS", "CH", "DF", "DG", "GT", "GR", "HG", "JC", "MC", "MN", "MS", "NT", "NL",
+    "OC", "PL", "QT", "QR", "SP", "SL", "SR", "TC", "TS", "TL", "VZ", "YN", "ZS", "NE",
+})
+
+
+def _valid_yymmdd(text: str) -> bool:
+    month, day = int(text[2:4]), int(text[4:6])
+    if not 1 <= month <= 12:
+        return False
+    try:
+        date(2000, month, day)  # ano bissexto: aceita 29/02
+    except ValueError:
+        return False
+    return True
+
+
+def is_valid_curp(value: str) -> bool:
+    """CURP do México: data, sexo, estado e dígito verificador."""
+    v = value.upper()
+    if not re.fullmatch(r"[A-Z]{4}\d{6}[HMX][A-Z]{5}[0-9A-Z]\d", v):
+        return False
+    if not _valid_yymmdd(v[4:10]) or v[11:13] not in _MX_STATES:
+        return False
+    total = sum(_CURP_ALPHABET.index(char) * (18 - i) for i, char in enumerate(v[:17]))
+    return str((10 - total % 10) % 10) == v[17]
+
+
+_RFC_GENERIC = frozenset({"XAXX010101000", "XEXX010101000"})
+
+
+def is_valid_rfc(value: str) -> bool:
+    """RFC do México (pessoa física ou moral): data válida; os RFCs genéricos de "público em geral" não contam."""
+    v = value.upper()
+    if v in _RFC_GENERIC or not re.fullmatch(r"[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}", v):
+        return False
+    return _valid_yymmdd(v[-9:-3])
+
+
+def is_valid_rut_cl(value: str) -> bool:
+    """RUT/RUN do Chile: até 8 dígitos e o verificador (0 a 9 ou K), mod 11."""
+    compact = re.sub(r"[.\s-]", "", value).upper()
+    if not re.fullmatch(r"\d{6,8}[0-9K]", compact):
+        return False
+    body, check = compact[:-1], compact[-1]
+    total = sum(int(n) * (2 + i % 6) for i, n in enumerate(reversed(body)))
+    rest = 11 - total % 11
+    return {11: "0", 10: "K"}.get(rest, str(rest)) == check
+
+
+def is_valid_ci_uy(value: str) -> bool:
+    """Cédula de identidade do Uruguai: 7 dígitos e o verificador."""
+    d = only_digits(value)
+    if len(d) != 8:
+        return False
+    total = sum(w * int(n) for w, n in zip((2, 9, 8, 7, 6, 3, 4), d[:7], strict=True))
+    return str((10 - total % 10) % 10) == d[7]
+
+
+def is_valid_rut_uy(value: str) -> bool:
+    """RUT do Uruguai: 12 dígitos (registro 01 a 22, sequência, 001 e o verificador)."""
+    d = only_digits(value)
+    if len(d) != 12 or not 1 <= int(d[:2]) <= 22 or d[2:8] == "000000" or d[8:11] != "001":
+        return False
+    weights = (4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2)
+    check = -sum(w * int(n) for w, n in zip(weights, d[:11], strict=True)) % 11
+    return check != 10 and str(check) == d[11]
+
+
+_NIT_WEIGHTS = (3, 7, 13, 17, 19, 23, 29, 37, 41, 43, 47, 53, 59, 67, 71)
+
+
+def is_valid_nit_co(value: str) -> bool:
+    """NIT da Colômbia: 8 a 16 dígitos, pesos primos a partir da direita."""
+    d = only_digits(value)
+    if not 8 <= len(d) <= 16:
+        return False
+    total = sum(w * int(n) for w, n in zip(_NIT_WEIGHTS, reversed(d[:-1]), strict=False))
+    return "01987654321"[total % 11] == d[-1]
+
+
+def is_valid_ruc_pe(value: str) -> bool:
+    """RUC do Peru: 11 dígitos, prefixo 10, 15, 17 ou 20."""
+    d = only_digits(value)
+    if len(d) != 11 or d[:2] not in ("10", "15", "17", "20"):
+        return False
+    weights = (5, 4, 3, 2, 7, 6, 5, 4, 3, 2)
+    return str((11 - sum(w * int(n) for w, n in zip(weights, d[:10], strict=True)) % 11) % 10) == d[10]
+
+
+def is_valid_ci_ec(value: str) -> bool:
+    """Cédula do Equador: 10 dígitos, província válida e verificador."""
+    d = only_digits(value)
+    if len(d) != 10 or not (1 <= int(d[:2]) <= 24 or d[:2] in ("30", "50")) or int(d[2]) >= 6:
+        return False
+    total = 0
+    for i, n in enumerate(d[:9]):
+        product = int(n) * (2 if i % 2 == 0 else 1)
+        total += product - 9 if product > 9 else product
+    return str((10 - total % 10) % 10) == d[9]
+
+
+def is_valid_ruc_ec(value: str) -> bool:
+    """RUC do Equador: 13 dígitos (pessoa natural, setor público ou pessoa jurídica)."""
+    d = only_digits(value)
+    if len(d) != 13 or not (1 <= int(d[:2]) <= 24 or d[:2] in ("30", "50")):
+        return False
+    if int(d[2]) < 6:
+        return is_valid_ci_ec(d[:10]) and d[10:] != "000"
+    if d[2] == "6":
+        weights = (3, 2, 7, 6, 5, 4, 3, 2, 1)
+        return sum(w * int(n) for w, n in zip(weights, d[:9], strict=True)) % 11 == 0 and d[9:] != "0000"
+    if d[2] == "9":
+        weights = (4, 3, 2, 7, 6, 5, 4, 3, 2, 1)
+        return sum(w * int(n) for w, n in zip(weights, d[:10], strict=True)) % 11 == 0 and d[10:] != "000"
+    return False
+
+
+def is_valid_ruc_py(value: str) -> bool:
+    """RUC do Paraguai: até 8 dígitos e o verificador."""
+    d = only_digits(value)
+    if not 6 <= len(d) <= 9:
+        return False
+    total = sum(int(n) * (2 + i) for i, n in enumerate(reversed(d[:-1])))
+    return str((-total % 11) % 10) == d[-1]
+
+
+def is_valid_ruc(value: str) -> bool:
+    """RUC do Peru, do Equador ou do Paraguai (o formato decide qual conferir)."""
+    return is_valid_ruc_pe(value) or is_valid_ruc_ec(value) or is_valid_ruc_py(value)
+
+
+def is_valid_cedula(value: str) -> bool:
+    """Cédula do Uruguai ou do Equador."""
+    return is_valid_ci_uy(value) or is_valid_ci_ec(value)
+
+
+_RIF_LETTERS = {"V": 4, "E": 8, "J": 12, "P": 16, "G": 20}
+
+
+def is_valid_rif(value: str) -> bool:
+    """RIF da Venezuela: letra (V, E, J, P ou G), 8 dígitos e o verificador."""
+    compact = re.sub(r"[\s-]", "", value).upper()
+    if not re.fullmatch(r"[VEJPG]\d{9}", compact):
+        return False
+    weights = (3, 2, 7, 6, 5, 4, 3, 2)
+    total = _RIF_LETTERS[compact[0]] + sum(w * int(n) for w, n in zip(weights, compact[1:9], strict=True))
+    return "00987654321"[total % 11] == compact[9]

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import re
 import unicodedata
 
@@ -14,9 +15,19 @@ def strip_accents(text: str) -> str:
     return "".join(char for char in decomposed if not unicodedata.combining(char))
 
 
+def _fold(text: str) -> str:
+    if text.isascii():  # sem acentos a tirar; em ASCII, casefold() é o mesmo que lower()
+        return _SPACES.sub(" ", text.lower()).strip()
+    return _SPACES.sub(" ", strip_accents(text).casefold()).strip()
+
+
+_fold_cached = functools.lru_cache(maxsize=1 << 16)(_fold)
+
+
 def fold(text: str) -> str:
     """Forma de comparação: minúsculas, sem acentos e com espaços simples."""
-    return _SPACES.sub(" ", strip_accents(text).casefold()).strip()
+    # Palavras e trechos curtos se repetem muito (os detectores comparam palavra por palavra): ficam em cache.
+    return _fold_cached(text) if len(text) <= 64 else _fold(text)
 
 
 def only_digits(text: str) -> str:

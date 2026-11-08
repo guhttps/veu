@@ -262,3 +262,160 @@ export function isPlausibleBirthdate(value: string): boolean {
   const parsed = parseDate(value);
   return parsed !== null && parsed.getUTCFullYear() >= 1900 && parsed.getUTCFullYear() <= new Date().getFullYear();
 }
+
+
+// Outros países (algoritmos conferidos com o python-stdnum 2.2; equivalentes a veu/validators.py).
+
+const NIF_PT_PREFIXES = new Set(["45", "70", "71", "72", "74", "75", "77", "78", "79", "90", "91", "98", "99"]);
+const sumWeights = (weights: readonly number[], digits: string): number =>
+  weights.reduce((total, weight, index) => total + weight * Number(digits[index]), 0);
+const mod = (value: number, base: number): number => ((value % base) + base) % base;
+
+export function isValidNifPt(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 9 || !("12356".includes(d[0]) || NIF_PT_PREFIXES.has(d.slice(0, 2)))) return false;
+  return String(mod(11 - sumWeights([9, 8, 7, 6, 5, 4, 3, 2], d), 11) % 10) === d[8];
+}
+
+const ALNUM36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+export function isValidCcPt(value: string): boolean {
+  const compact = value.replace(/[\s-]/g, "").toUpperCase();
+  if (!/^\d{9}[A-Z0-9]{2}\d$/.test(compact)) return false;
+  let total = 0;
+  [...compact.slice(0, -1)].reverse().forEach((char, index) => {
+    let number = ALNUM36.indexOf(char);
+    if (index % 2 === 0) {
+      number *= 2;
+      if (number > 9) number -= 9;
+    }
+    total += number;
+  });
+  return String(mod(10 - total, 10)) === compact[11];
+}
+
+export function isValidNissPt(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 11 || !"12".includes(d[0])) return false;
+  return String(9 - (sumWeights([29, 23, 19, 17, 13, 11, 7, 5, 3, 2], d) % 10)) === d[10];
+}
+
+const CUIT_PREFIXES = new Set(["20", "23", "24", "27", "30", "33", "34", "50", "51", "55"]);
+
+export function isValidCuit(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 11 || !CUIT_PREFIXES.has(d.slice(0, 2))) return false;
+  return "012345678990"[11 - (sumWeights([5, 4, 3, 2, 7, 6, 5, 4, 3, 2], d) % 11)] === d[10];
+}
+
+const CURP_ALPHABET = "0123456789ABCDEFGHIJKLMN&OPQRSTUVWXYZ";
+const MX_STATES = new Set([
+  "AS", "BC", "BS", "CC", "CL", "CM", "CS", "CH", "DF", "DG", "GT", "GR", "HG", "JC", "MC", "MN", "MS", "NT", "NL",
+  "OC", "PL", "QT", "QR", "SP", "SL", "SR", "TC", "TS", "TL", "VZ", "YN", "ZS", "NE",
+]);
+
+function validYymmdd(text: string): boolean {
+  const month = Number(text.slice(2, 4));
+  const day = Number(text.slice(4, 6));
+  if (month < 1 || month > 12 || day < 1) return false;
+  return day <= new Date(Date.UTC(2000, month, 0)).getUTCDate(); // 2000 é bissexto: aceita 29/02
+}
+
+export function isValidCurp(value: string): boolean {
+  const v = value.toUpperCase();
+  if (!/^[A-Z]{4}\d{6}[HMX][A-Z]{5}[0-9A-Z]\d$/.test(v)) return false;
+  if (!validYymmdd(v.slice(4, 10)) || !MX_STATES.has(v.slice(11, 13))) return false;
+  const total = [...v.slice(0, 17)].reduce((sum, char, i) => sum + CURP_ALPHABET.indexOf(char) * (18 - i), 0);
+  return String(mod(10 - (total % 10), 10)) === v[17];
+}
+
+const RFC_GENERIC = new Set(["XAXX010101000", "XEXX010101000"]);
+
+export function isValidRfc(value: string): boolean {
+  const v = value.toUpperCase();
+  if (RFC_GENERIC.has(v) || !/^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/u.test(v)) return false;
+  return validYymmdd(v.slice(-9, -3));
+}
+
+export function isValidRutCl(value: string): boolean {
+  const compact = value.replace(/[.\s-]/g, "").toUpperCase();
+  if (!/^\d{6,8}[0-9K]$/.test(compact)) return false;
+  const body = compact.slice(0, -1);
+  const total = [...body].reverse().reduce((sum, n, i) => sum + Number(n) * (2 + (i % 6)), 0);
+  const rest = 11 - (total % 11);
+  return (rest === 11 ? "0" : rest === 10 ? "K" : String(rest)) === compact.slice(-1);
+}
+
+export function isValidCiUy(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 8) return false;
+  return String(mod(10 - (sumWeights([2, 9, 8, 7, 6, 3, 4], d) % 10), 10)) === d[7];
+}
+
+export function isValidRutUy(value: string): boolean {
+  const d = onlyDigits(value);
+  const register = Number(d.slice(0, 2));
+  if (d.length !== 12 || register < 1 || register > 22 || d.slice(2, 8) === "000000" || d.slice(8, 11) !== "001") return false;
+  const check = mod(-sumWeights([4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2], d), 11);
+  return check !== 10 && String(check) === d[11];
+}
+
+const NIT_WEIGHTS = [3, 7, 13, 17, 19, 23, 29, 37, 41, 43, 47, 53, 59, 67, 71];
+
+export function isValidNitCo(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length < 8 || d.length > 16) return false;
+  const body = [...d.slice(0, -1)].reverse();
+  const total = body.reduce((sum, n, i) => sum + (i < NIT_WEIGHTS.length ? NIT_WEIGHTS[i] * Number(n) : 0), 0);
+  return "01987654321"[total % 11] === d.slice(-1);
+}
+
+export function isValidRucPe(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 11 || !["10", "15", "17", "20"].includes(d.slice(0, 2))) return false;
+  return String((11 - (sumWeights([5, 4, 3, 2, 7, 6, 5, 4, 3, 2], d) % 11)) % 10) === d[10];
+}
+
+const ecProvince = (d: string): boolean => {
+  const province = Number(d.slice(0, 2));
+  return (province >= 1 && province <= 24) || d.slice(0, 2) === "30" || d.slice(0, 2) === "50";
+};
+
+export function isValidCiEc(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 10 || !ecProvince(d) || Number(d[2]) >= 6) return false;
+  let total = 0;
+  for (let i = 0; i < 9; i += 1) {
+    const product = Number(d[i]) * (i % 2 === 0 ? 2 : 1);
+    total += product > 9 ? product - 9 : product;
+  }
+  return String(mod(10 - (total % 10), 10)) === d[9];
+}
+
+export function isValidRucEc(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 13 || !ecProvince(d)) return false;
+  if (Number(d[2]) < 6) return isValidCiEc(d.slice(0, 10)) && d.slice(10) !== "000";
+  if (d[2] === "6") return sumWeights([3, 2, 7, 6, 5, 4, 3, 2, 1], d) % 11 === 0 && d.slice(9) !== "0000";
+  if (d[2] === "9") return sumWeights([4, 3, 2, 7, 6, 5, 4, 3, 2, 1], d) % 11 === 0 && d.slice(10) !== "000";
+  return false;
+}
+
+export function isValidRucPy(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length < 6 || d.length > 9) return false;
+  const total = [...d.slice(0, -1)].reverse().reduce((sum, n, i) => sum + Number(n) * (2 + i), 0);
+  return String(mod(-total, 11) % 10) === d.slice(-1);
+}
+
+export const isValidRuc = (value: string): boolean => isValidRucPe(value) || isValidRucEc(value) || isValidRucPy(value);
+export const isValidCedula = (value: string): boolean => isValidCiUy(value) || isValidCiEc(value);
+
+const RIF_LETTERS: Record<string, number> = { V: 4, E: 8, J: 12, P: 16, G: 20 };
+
+export function isValidRif(value: string): boolean {
+  const compact = value.replace(/[\s-]/g, "").toUpperCase();
+  if (!/^[VEJPG]\d{9}$/.test(compact)) return false;
+  const total = RIF_LETTERS[compact[0]] + sumWeights([3, 2, 7, 6, 5, 4, 3, 2], compact.slice(1));
+  return "00987654321"[total % 11] === compact[9];
+}

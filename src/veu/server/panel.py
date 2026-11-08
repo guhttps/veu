@@ -29,6 +29,11 @@ CATEGORIES: dict[str, dict[str, Any]] = {
         "exemplo": "CPF, CNPJ, RG, CNH, título de eleitor, PIS, cartão do SUS, passaporte, processos",
         "tipos": ["CPF", "CNPJ", "RG", "CNH", "TITULO_ELEITOR", "PIS", "CNS", "PASSAPORTE", "PROCESSO"],
     },
+    "estrangeiros": {
+        "titulo": "Documentos de outros países",
+        "exemplo": "Portugal (NIF, Cartão de Cidadão), Argentina (CUIT, DNI), México (CURP, RFC), Chile (RUT) e mais",
+        "tipos": ["NIF_PT", "CC_PT", "NISS_PT", "CUIT", "DNI", "CURP", "RFC", "RUT", "CEDULA", "NIT", "RUC", "RIF"],
+    },
     "financeiro": {
         "titulo": "Dados financeiros",
         "exemplo": "cartões, contas bancárias, chave Pix, IBAN",

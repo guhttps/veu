@@ -41,6 +41,11 @@ EXTRA = [
     "O José Carlos ligou; depois o jose voltou. Rosa Pereira ligou e a rosa murchou. Razão Social: Exemplo Ltda",
     "CPF 529.982.247‑25, CPF ５２９.９８２.２４７-２５ e e-mail maria­.souza@example.com",
     "tel (11) 98765‑4321; chave sk-​proj-Ab3dE5fG7hJ9kL1mN3pQ5rS7tU9vW1xY3zA5bC7d; período 2020–2021",
+    "NIF: 123 456 789. Cartão de Cidadão 12345678 9 ZZ1. NISS 11234567892. CUIT 20-12345678-6 e cuit 30123456781.",
+    "DNI 12.345.678, CURP XAXX900101HDFXXX03, RFC PEPJ900101AB8 e o genérico XAXX010101000.",
+    "RUT 12.345.678-5, RUT: 211234560019, cédula 1.234.567-2, cédula 1712345675, NIT 900.123.456-8.",
+    "RUC 20123456786, RUC 1234567-9, RIF V-12345678-1, RG 12.345.678-5 e protocolo 202569473616.",
+    "Ana Costa ligou; a Costa disse que mora na costa. Data de nascimento de Enrico Nascimento: 01/02/1990.",
 ]
 
 

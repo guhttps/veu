@@ -154,7 +154,10 @@ class Anonymizer:
         self.link_names = link_names
         self.secret = secret
         self.policy = policy or RestorePolicy()
-        self._ambiguous = folded_set("ambiguous.txt") | folded_set("ibge_ambiguos.txt")
+        # Nomes ambíguos revistos à mão ("Rosa", "Luz") não se propagam; os que o dicionário marca como palavras
+        # ("Costa", "Nascimento") só se propagam com inicial maiúscula.
+        self._ambiguous = folded_set("ambiguous.txt")
+        self._capitalized_only = folded_set("ibge_ambiguos.txt") - self._ambiguous
 
     def new_vault(self) -> Vault:
         return Vault(secret=self.secret, policy=self.policy)
@@ -243,8 +246,11 @@ class Anonymizer:
                 continue
             if position < len(starts) and starts[position] < end:
                 continue
+            key = fold(text[start:end])
+            if key in self._capitalized_only and not text[start].isupper():
+                continue  # "Costa" é a pessoa; "costa" (o litoral) e "data de nascimento", não
             added.append(Entity("PESSOA", start, end, 0.7, text[start:end], "vinculo"))
-            canonical[start] = parts[fold(text[start:end])]
+            canonical[start] = parts[key]
         for entity in entities:
             full = parts.get(fold(entity.text)) if entity.label == "PESSOA" else None
             if full is not None and full != entity.text:

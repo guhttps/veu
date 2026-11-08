@@ -1,7 +1,7 @@
 // Troca os dados encontrados por marcadores ou máscaras (equivalente a veu/anonymizer.py).
 import type { Analyzer } from "./analyzer.ts";
 import { SECRET_LABELS, type Entity } from "./entities.ts";
-import { CONNECTORS, ambiguousNames } from "./persons.ts";
+import { CONNECTORS, ambiguousNames, capitalizedOnlyNames } from "./persons.ts";
 import { secretPrefix } from "./secrets.ts";
 import { bisectRight, counter, escapeRegex, fold } from "./text.ts";
 import { Vault, neutralizePlaceholders, type RestorePolicy } from "./vault.ts";
@@ -198,6 +198,7 @@ export class Anonymizer {
    */
   private linkPartialNames(text: string, entities: Entity[]): [Entity[], Map<number, string>] {
     const ambiguous = ambiguousNames();
+    const capitalizedOnly = capitalizedOnlyNames();
     const parts = new Map<string, string>();
     // Nomes completos primeiro: "Ana" sozinho, antes de "Ana Beatriz Moura", usa o marcador do nome completo.
     const byLength = [...entities].sort((a, b) => b.text.split(/\s+/).length - a.text.split(/\s+/).length);
@@ -225,8 +226,11 @@ export class Anonymizer {
       const position = bisectRight(starts, start);
       if (position > 0 && ends[position - 1] > start) continue;
       if (position < starts.length && starts[position] < end) continue;
+      const key = fold(text.slice(start, end));
+      // "Costa" é a pessoa; "costa" (o litoral) e "data de nascimento", não.
+      if (capitalizedOnly.has(key) && text[start] === text[start].toLowerCase()) continue;
       added.push({ label: "PESSOA", start, end, score: 0.7, recognizer: "vinculo", text: text.slice(start, end) });
-      canonical.set(start, parts.get(fold(text.slice(start, end)))!);
+      canonical.set(start, parts.get(key)!);
     }
     for (const entity of entities) {
       const full = entity.label === "PESSOA" ? parts.get(fold(entity.text)) : undefined;

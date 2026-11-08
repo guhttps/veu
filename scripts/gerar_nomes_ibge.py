@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
+import re
 import sys
 import time
 import urllib.request
@@ -70,6 +71,41 @@ def get_json(url: str, target: Path):
     return data
 
 
+def derived_words(words: set[str], stems: dict[str, set[str]], affix_file: Path) -> set[str]:
+    """Palavras que o dicionário gera por sufixos ("nascimento" vem de "nascer"; "dores", de "dor").
+
+    Busca ao contrário: para cada nome, as regras cuja terminação bate com o fim dele dão o verbete de origem.
+    """
+    from veu._text import fold
+
+    if not affix_file.is_file():
+        print(f"Sem {affix_file.name}: só os verbetes do dicionário contam como palavras.", file=sys.stderr)
+        return set()
+    rules: dict[str, list[tuple[str, str, re.Pattern]]] = {}
+    for line in affix_file.read_text(encoding="utf-8-sig").splitlines():
+        parts = line.split()
+        if len(parts) < 5 or parts[0] != "SFX":
+            continue
+        flag, strip, add, condition = parts[1], parts[2], parts[3].split("/", 1)[0], parts[4]
+        strip, add = ("" if strip == "0" else fold(strip)), ("" if add == "0" else fold(add))
+        try:
+            pattern = re.compile(fold(condition) + "$")
+        except re.error:
+            continue
+        rules.setdefault(add, []).append((flag, strip, pattern))
+    found = set()
+    for word in words:
+        for cut in range(len(word) + 1):
+            for flag, strip, pattern in rules.get(word[cut:], ()):
+                base = word[:cut] + strip
+                if flag in stems.get(base, ()) and pattern.search(base):
+                    found.add(word)
+                    break
+            if word in found:
+                break
+    return found
+
+
 def wordlist(name: str) -> set[str]:
     sys.path.insert(0, str(ROOT / "src"))
     from veu._text import fold
@@ -97,13 +133,14 @@ def main() -> int:
 
     from veu._text import fold
 
-    common = set()
+    stems: dict[str, set[str]] = {}  # verbete (sem acento) -> flags das regras de afixo
     for line in args.dicionario.read_text(encoding="utf-8-sig").splitlines()[1:]:
-        word = line.split("/", 1)[0].strip()
+        word, _, flags = line.strip().partition("/")
         if word and word[0].islower() and word.isalpha():
-            common.add(fold(word))
+            stems.setdefault(fold(word), set()).update(flags)
     first_names = {name for name, _ in first}
     surnames = {name for name, _ in last}
+    common = set(stems) | derived_words(first_names | surnames, stems, args.dicionario.with_suffix(".aff"))
     curated = wordlist("first_names.txt")
     known_words = wordlist("stopwords.txt") | wordlist("places.txt") | wordlist("organizations.txt")
     short = {name for name in first_names if len(name) <= 3}  # "tel", "cel": abreviações também

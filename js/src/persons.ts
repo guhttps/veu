@@ -61,6 +61,7 @@ const foldedSet = (values: readonly string[]): Set<string> => new Set(values.map
 
 let shared: {
   firstNames: Set<string>; surnames: Set<string>; ambiguous: Set<string>; stopwords: Set<string>;
+  curatedAmbiguous: Set<string>; ibgeAmbiguous: Set<string>;
   stopExact: Set<string>; places: Set<string>; organizations: Set<string>;
 } | null = null;
 
@@ -68,7 +69,9 @@ function lists() {
   shared ??= {
     firstNames: foldedSet(data.firstNames),
     surnames: foldedSet(data.surnames),
-    ambiguous: foldedSet(data.ambiguous),
+    ambiguous: new Set([...foldedSet(data.ambiguous), ...foldedSet(data.ibgeAmbiguous)]),
+    curatedAmbiguous: foldedSet(data.ambiguous),
+    ibgeAmbiguous: foldedSet(data.ibgeAmbiguous),
     stopwords: foldedSet(data.stopwords),
     stopExact: new Set(data.stopwords.map(casefold)),
     places: foldedSet(data.places),
@@ -77,8 +80,15 @@ function lists() {
   return shared;
 }
 
+/** Ambíguos revistos à mão ("Rosa", "Luz"): não se propagam no anonimizador. */
 export function ambiguousNames(): ReadonlySet<string> {
-  return lists().ambiguous;
+  return lists().curatedAmbiguous;
+}
+
+/** Ambíguos que o dicionário marca como palavras ("Costa", "Nascimento"): só se propagam com inicial maiúscula. */
+export function capitalizedOnlyNames(): ReadonlySet<string> {
+  const { curatedAmbiguous, ibgeAmbiguous } = lists();
+  return new Set([...ibgeAmbiguous].filter((word) => !curatedAmbiguous.has(word)));
 }
 
 export class PersonRecognizer implements Recognizer {
