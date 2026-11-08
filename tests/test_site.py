@@ -35,7 +35,8 @@ def test_every_menu_page_is_generated(pages):
 def test_no_repository_paths_or_github_alerts_left(pages):
     for name, text in pages.items():
         body = outside_code(text)
-        assert "](docs/" not in body and "README.md" not in body, name
+        # Links relativos para o repositório não existem no site (links absolutos para o GitHub podem).
+        assert not re.search(r"\]\((?:\.\./|\./)?(?:docs/|README\.md)", body), name
         assert not re.search(r"^>\s*\[!\w+\]", body, flags=re.M), name
 
 
