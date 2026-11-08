@@ -1,10 +1,14 @@
 {
-  "description": "Véu: bloqueia segredos nos prompts e a leitura de arquivos com segredos (sugere ler_protegido).",
+  "description": "Véu: bloqueia segredos nos prompts, a leitura de arquivos com segredos e comandos que os mostrariam (cat .env, printenv, buscas); sugere ler_protegido.",
   "hooks": {
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "veu gancho prompt", "timeout": 30 }
+          {
+            "type": "command",
+            "command": "veu gancho prompt",
+            "timeout": 30
+          }
         ]
       }
     ],
@@ -12,7 +16,21 @@
       {
         "matcher": "Read",
         "hooks": [
-          { "type": "command", "command": "veu gancho arquivo", "timeout": 30 }
+          {
+            "type": "command",
+            "command": "veu gancho arquivo",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "veu gancho comando",
+            "timeout": 30
+          }
         ]
       }
     ]

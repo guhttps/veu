@@ -347,7 +347,9 @@ O plugin junta três peças:
 - **Ganchos:**
   - um prompt com chave de API, senha ou chave privada não é enviado;
   - um prompt com dados pessoais gera um aviso;
-  - um arquivo com segredos não é lido. O agente recebe o motivo e a sugestão de usar `ler_protegido`.
+  - um arquivo com segredos não é lido. O agente recebe o motivo e a sugestão de usar `ler_protegido`;
+  - o terminal e a busca não servem de atalho: `cat .env`, `printenv`, `echo $OPENAI_API_KEY` e um Grep com
+    conteúdo que passaria por `.env`, chaves ou `credentials.json` também são bloqueados.
 - **Servidor MCP:** as ferramentas da tabela acima.
 - **Skill `protecao-de-dados`:** ensina o agente a ler planilhas, documentos e páginas do Notion protegidos, a manter os marcadores e a nunca escrever segredos no código.
 
@@ -363,7 +365,10 @@ Sem o plugin, os ganchos também funcionam sozinhos, no `.claude/settings.json`:
 {
   "hooks": {
     "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "veu gancho prompt" }] }],
-    "PreToolUse": [{ "matcher": "Read", "hooks": [{ "type": "command", "command": "veu gancho arquivo" }] }]
+    "PreToolUse": [
+      { "matcher": "Read", "hooks": [{ "type": "command", "command": "veu gancho arquivo" }] },
+      { "matcher": "Bash|Grep", "hooks": [{ "type": "command", "command": "veu gancho comando" }] }
+    ]
   }
 }
 ```
@@ -375,10 +380,42 @@ Opções do gancho:
 | `--modo bloquear` | Também bloqueia prompts com dados pessoais (o padrão só avisa) |
 | `--dados-pessoais permitir`, `perguntar` (padrão) ou `negar` | O que fazer com arquivos que têm dados pessoais, mas não segredos |
 | `--bloquear CPF,CARTAO_CREDITO` | Troca a lista de tipos que sempre bloqueiam (padrão: os segredos) |
+| `--exigir-proxy` (prompt) | Bloqueia o prompt se o agente não estiver apontado para o proxy do Véu (`ANTHROPIC_BASE_URL` ou `OPENAI_BASE_URL` em localhost). Bom para distribuir pelas configurações gerenciadas da empresa |
+
+Os ganchos impedem que o agente leia segredos, mas o que ele já leu vai ao provedor junto com a conversa. Para esconder também os dados pessoais de tudo o que o agente lê, rode o agente pelo proxy (abaixo).
 
 No **Cursor**, use o [`examples/cursor-hooks.json`](../examples/cursor-hooks.json) em `.cursor/hooks.json` (formato `--formato cursor`). O servidor MCP entra no `.cursor/mcp.json`, como acima.
 
 A skill também pode ser usada sozinha. No Claude.ai, compacte a pasta `plugin/skills/protecao-de-dados` e envie em Configurações > Skills.
+
+### Claude Code e Codex pelo proxy
+
+*Coberto pelos testes: Anthropic Messages e Responses API com `apply_patch`, `local_shell_call` e streaming.*
+
+Pelo proxy, tudo o que o agente envia (prompts, arquivos lidos, saídas de comandos) chega ao provedor com os dados trocados por marcadores, e as respostas voltam com os dados reais, inclusive os patches que ele aplica. Chaves e senhas não voltam nos argumentos de ferramentas, e nada volta dentro de links (veja o [modelo de ameaças](modelo-de-ameacas.md)).
+
+```bash
+veu servir                                         # em outro terminal
+
+# Claude Code
+ANTHROPIC_BASE_URL=http://localhost:8787 claude
+```
+
+No **Codex CLI**, com chave de API, crie um provedor no `~/.codex/config.toml`:
+
+```toml
+model_provider = "veu"
+
+[model_providers.veu]
+name = "Véu"
+base_url = "http://localhost:8787/v1"
+env_key = "OPENAI_API_KEY"
+wire_api = "responses"
+```
+
+O login com a conta do ChatGPT usa outro servidor, que não passa pelo proxy: use uma chave de API.
+
+Agentes reenviam a conversa inteira a cada turno. O [cache de detecção](../README.md#recursos) evita analisar de novo as mensagens antigas.
 
 ### JavaScript e TypeScript
 

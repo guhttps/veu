@@ -21,6 +21,33 @@ from veu.validators import normalize_cnpj
 
 DEFAULT_THRESHOLD = 0.5
 
+# Caracteres que escondem um dado da detecção sem mudar o que a pessoa lê: invisíveis (largura zero, hífen
+# invisível), hífens tipográficos ("529.982.247‑25" copiado do Word) e letras e dígitos de largura total.
+_INVISIBLE = "\u00ad\u200b\u200c\u200d\u2060\ufeff"
+_HYPHENS = "\u2010\u2011\u2012\u2013\u2212\ufe63\uff0d"
+_SPECIAL = re.compile(f"[{_INVISIBLE}{_HYPHENS}\uff01-\uff5e]")
+
+
+_SAME_LENGTH = str.maketrans({**{char: "-" for char in _HYPHENS},
+                               **{chr(code): chr(code - 0xFEE0) for code in range(0xFF01, 0xFF5F)}})
+_HAS_INVISIBLE = re.compile(f"[{_INVISIBLE}]")
+
+
+def normalize_for_detection(text: str) -> tuple[str, list[int] | None]:
+    """Texto para a detecção e, se algum caractere saiu, a posição original de cada um (mais uma no fim).
+
+    Hífens e largura total são trocados um por um (as posições não mudam); só os invisíveis saem.
+    """
+    if not _SPECIAL.search(text):
+        return text, None
+    text = text.translate(_SAME_LENGTH)
+    if not _HAS_INVISIBLE.search(text):
+        return text, None
+    positions = [index for index, char in enumerate(text) if char not in _INVISIBLE]
+    normalized = "".join(text[index] for index in positions)
+    positions.append(len(text))
+    return normalized, positions
+
 
 def default_recognizers() -> list[Recognizer]:
     return [PatternRecognizer(), PersonRecognizer(), AddressRecognizer(), SecretRecognizer()]
@@ -89,7 +116,12 @@ class Analyzer:
             if spans is not None:
                 return [Entity(label, start, end, score, text[start:end], recognizer)
                         for label, start, end, score, recognizer in spans]
-        chosen = resolve_overlaps(self.candidates(text, threshold))
+        normalized, positions = normalize_for_detection(text)
+        chosen = resolve_overlaps(self.candidates(normalized, threshold))
+        # Sem caracteres removidos, as posições do texto normalizado são as do original.
+        if positions is not None:
+            chosen = [Candidate(c.label, positions[c.start], positions[c.end - 1] + 1, c.score, c.recognizer)
+                      for c in chosen]
         if cache is not None:
             cache.put(text, tuple((c.label, c.start, c.end, c.score, c.recognizer) for c in chosen), extra)
         return [

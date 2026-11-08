@@ -39,6 +39,8 @@ EXTRA = [
     "Oi, sou a Rayane Souza. kkkk a rayane esqueceu o carregador. RAYANE SOUZA assinou. A rayanesouza não.",
     "Responsável: Anthony Raul Viana. Endereço: Avenida Paulista. Evento em São Cristóvão, com Kawanny Rodrigues.",
     "O José Carlos ligou; depois o jose voltou. Rosa Pereira ligou e a rosa murchou. Razão Social: Exemplo Ltda",
+    "CPF 529.982.247‑25, CPF ５２９.９８２.２４７-２５ e e-mail maria­.souza@example.com",
+    "tel (11) 98765‑4321; chave sk-​proj-Ab3dE5fG7hJ9kL1mN3pQ5rS7tU9vW1xY3zA5bC7d; período 2020–2021",
 ]
 
 

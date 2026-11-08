@@ -85,3 +85,27 @@ test("a opção restore do Veu chega ao cofre", () => {
   const veu = new Veu({ restore: { secretsInTools: true } });
   assert.equal(veu.newVault().policy.secretsInTools, true);
 });
+
+test("Codex (Responses): apply_patch, local_shell_call e saídas em lista são protegidos", async () => {
+  const { OpenAIResponsesAdapter, Masker, StreamState } = await import("../src/gateway.ts");
+  const veu = new Veu();
+  const vault = veu.newVault();
+  const masker = new Masker(veu.anonymizer, vault);
+  const payload = { input: [
+    { type: "custom_tool_call", name: "apply_patch", input: `+cliente = 'Marina Albuquerque' # ${CPF}` },
+    { type: "local_shell_call", action: { command: ["deploy"], env: { OPENAI_API_KEY: CHAVE } } },
+    { type: "function_call_output", output: [{ type: "input_text", text: `chave ${CHAVE}` }] },
+  ] };
+  const adapter = new OpenAIResponsesAdapter();
+  adapter.mask(payload, masker);
+  const sent = JSON.stringify(payload);
+  assert.ok(!sent.includes(CPF) && !sent.includes(CHAVE) && !sent.includes("Marina"));
+  const state = new StreamState(vault);
+  const patch = "+nome = '[PESSOA_1]' chave [CHAVE_API_1]";
+  const out = [patch.slice(0, 9), patch.slice(9)].map((delta) =>
+    adapter.streamEvent(null, { type: "response.custom_tool_call_input.delta", output_index: 0, delta }, state)
+      .map(([, data]) => data.delta).join("")).join("");
+  const done = adapter.streamEvent(null, { type: "response.custom_tool_call_input.done", output_index: 0, input: patch }, state);
+  const all = out + JSON.stringify(done);
+  assert.ok(all.includes("Marina Albuquerque") && all.includes("[CHAVE_API_1]") && !all.includes(CHAVE));
+});
