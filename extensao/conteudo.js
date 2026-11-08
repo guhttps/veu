@@ -5,10 +5,11 @@
   window.__veuConteudo = true;
 
   const { Veu, Vault, LABELS } = window.veu;
-  const PLACEHOLDER = /\[[A-Z][A-Z_]*[_\s-][0-9a-fA-F]{1,8}\]?/;
+  const PLACEHOLDER = /\[[A-Z][A-Z_]*[_\s-][0-9a-fA-F]{1,16}\]?/;
   const EDITAVEL = 'textarea, [contenteditable="true"], [contenteditable=""], [contenteditable="plaintext-only"]';
 
-  let config = { ativo: true, modo: "avisar", restaurarRespostas: true, bloquearTipos: [] };
+  // Os dados reais só aparecem na página se a pessoa ligar a opção: na página, o código do site também os lê.
+  let config = { ativo: true, modo: "avisar", restaurarRespostas: false, bloquearTipos: [] };
   let veu = new Veu();
   let cofre = new Vault();
   let liberado = ""; // texto que a pessoa decidiu enviar mesmo assim
@@ -295,8 +296,13 @@
     return false;
   });
 
+  // O script roda antes de a página montar (document_start), para tratar o colar antes do código do site.
   carregar().then(() => {
-    pendentes.add(document.body);
-    restaurarNos();
+    const comecar = () => {
+      pendentes.add(document.body);
+      restaurarNos();
+    };
+    if (document.body) comecar();
+    else document.addEventListener("DOMContentLoaded", comecar, { once: true });
   });
 })();

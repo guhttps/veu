@@ -8,7 +8,7 @@ const PADRAO = {
   bloquearTipos: [],
   ignorar: [],
   ignorarPadroes: [],
-  restaurarRespostas: true,
+  restaurarRespostas: false, // na página, o código do site também leria os dados reais
   travarConfiguracao: false,
 };
 
