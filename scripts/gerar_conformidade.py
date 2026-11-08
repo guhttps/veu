@@ -46,6 +46,7 @@ EXTRA = [
     "RUT 12.345.678-5, RUT: 211234560019, cédula 1.234.567-2, cédula 1712345675, NIT 900.123.456-8.",
     "RUC 20123456786, RUC 1234567-9, RIF V-12345678-1, RG 12.345.678-5 e protocolo 202569473616.",
     "Ana Costa ligou; a Costa disse que mora na costa. Data de nascimento de Enrico Nascimento: 01/02/1990.",
+    "Nascida em 7 de setembro de 1985, CEP 01310-100, tel (11) 98765-4321, +44 20 7946 0958, IP 192.0.2.44 e 2001:db8:85a3::8a2e:370:7334.",
 ]
 
 
@@ -63,6 +64,7 @@ def main() -> None:
             "entidades": [[e.label, e.start, e.end, e.score] for e in entities],
             "anonimizado": veu.anonymize(text).text,
             "mascarado": veu.with_operator("mascara").anonymize(text).text,
+            "generalizado": veu.with_operator("generalizar").anonymize(text).text,
         })
     target = ROOT / "js" / "test" / "conformidade.json"
     target.write_text(json.dumps({"casos": cases}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")

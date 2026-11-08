@@ -10,11 +10,13 @@ interface Case {
   entidades: [string, number, number, number][];
   anonimizado: string;
   mascarado: string;
+  generalizado?: string;
 }
 
 const { casos } = JSON.parse(readFileSync(new URL("./conformidade.json", import.meta.url), "utf8")) as { casos: Case[] };
 const veu = new Veu();
 const masker = veu.withOperator("mascara");
+const generalizer = veu.withOperator("generalizar");
 
 test(`conformidade com o Python: ${casos.length} casos`, () => {
   const failures: string[] = [];
@@ -30,6 +32,9 @@ test(`conformidade com o Python: ${casos.length} casos`, () => {
     }
     if (veu.anonymize(item.texto).text !== item.anonimizado) failures.push(`anonimizado difere: ${item.texto}`);
     if (masker.anonymize(item.texto).text !== item.mascarado) failures.push(`mascarado difere: ${item.texto}`);
+    if (item.generalizado !== undefined && generalizer.anonymize(item.texto).text !== item.generalizado) {
+      failures.push(`generalizado difere: ${item.texto}`);
+    }
   }
   assert.deepEqual(failures.slice(0, 10), [], `${failures.length} casos diferentes`);
 });

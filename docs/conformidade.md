@@ -59,6 +59,13 @@ veu auditoria relatorio auditoria.jsonl --formato json      # para planilhas e s
 
 O relatório confere a integridade da cadeia e mostra o período, as requisições (bloqueadas, desviadas, com erro), os destinos, as equipes e os tipos de dados, por quantidade. Para provar que linhas não foram apagadas, guarde âncoras fora do servidor (`veu auditoria ancorar`, veja o [guia para empresas](empresas.md)).
 
+## Identificação pelo contexto
+
+Esconder nomes e documentos não basta quando o texto diz "a gerente de 45 anos da filial de Itu, demitida em 12/03/2026". Duas ferramentas ajudam:
+
+- **`veu risco arquivo.txt`** conta os dados diretos que sobraram e as pistas indiretas (datas, idades, cidades, cargos) e dá um nível de risco (baixo, médio ou alto). É uma heurística para orientar a revisão, não uma prova de anonimização.
+- **Operador `generalizar`** (`--operador generalizar` ou `[anonimizacao] operador`): guarda só o que serve para análise e identifica menos, como o ano de nascimento, a região do CEP, o DDD e a rede do IP. O resto vira o tipo (`[PESSOA]`). Não é reversível.
+
 ## O que o Véu não garante
 
 - **Detecção completa.** Ela é automática e pode deixar passar dados. O [benchmark](benchmark.md) mede quanto, com dados de terceiros.

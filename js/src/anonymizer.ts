@@ -3,6 +3,7 @@ import type { Analyzer } from "./analyzer.ts";
 import { SECRET_LABELS, type Entity } from "./entities.ts";
 import { CONNECTORS, ambiguousNames, capitalizedOnlyNames } from "./persons.ts";
 import { secretPrefix } from "./secrets.ts";
+import { parseDate } from "./validators.ts";
 import { bisectRight, counter, escapeRegex, fold } from "./text.ts";
 import { Vault, neutralizePlaceholders, type RestorePolicy } from "./vault.ts";
 
@@ -11,10 +12,49 @@ export const OPERATORS: Record<string, string> = {
   mascara: "mascara parte do valor, como ***.982.247-**; não é reversível",
   remover: "troca pelo tipo, como [CPF]; não é reversível",
   hash: "marcador estável entre requisições, como [CPF_3fa2c1d9]; reversível com o mesmo cofre",
+  generalizar: "guarda só o que serve para análise (ano de nascimento, região do CEP, DDD, rede do IP) e troca o resto pelo tipo; não é reversível",
 };
-const ALIASES: Record<string, string> = { marcador: "token", "máscara": "mascara", mask: "mascara", redact: "remover" };
+const ALIASES: Record<string, string> = {
+  marcador: "token", "máscara": "mascara", mask: "mascara", redact: "remover", generalize: "generalizar",
+};
 
-export type Operator = "token" | "mascara" | "remover" | "hash";
+/** Versão menos precisa do valor, que ainda serve para análises (idade, região) e identifica menos. */
+export function generalizeValue(label: string, value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (label === "DATA_NASCIMENTO") {
+    const parsed = parseDate(value);
+    if (parsed) return String(parsed.getUTCFullYear());
+  } else if (label === "CEP" && digits.length === 8) {
+    return `${digits.slice(0, 5)}-***`;
+  } else if (label === "TELEFONE") {
+    const country = /^\s*\+(\d{1,3})/.exec(value);
+    if (country && country[1] !== "55") return `+${country[1]} ****`;
+    const local = (digits.length === 12 || digits.length === 13) && digits.startsWith("55") ? digits.slice(2) : digits;
+    if (local.length === 10 || local.length === 11) return `(${local.slice(0, 2)}) ****-****`;
+  } else if (label === "IP") {
+    if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(value)) return `${value.split(".").slice(0, 3).join(".")}.0/24`;
+    if (value.includes(":")) {
+      const network = ipv6Network48(value);
+      if (network) return network;
+    }
+  }
+  return `[${label}]`;
+}
+
+/** Rede /48 de um IPv6, no formato do ipaddress do Python ("2001:db8:85a3::/48"). */
+function ipv6Network48(value: string): string | null {
+  const [head, tail = ""] = value.split("::");
+  const left = head ? head.split(":") : [];
+  const right = value.includes("::") ? (tail ? tail.split(":") : []) : [];
+  if (!value.includes("::") && left.length !== 8) return null;
+  const groups = [...left, ...Array(8 - left.length - right.length).fill("0"), ...right];
+  if (groups.length !== 8 || groups.some((group) => !/^[0-9a-fA-F]{1,4}$/.test(group))) return null;
+  const first = groups.slice(0, 3).map((group) => parseInt(group, 16).toString(16));
+  while (first.length && first[first.length - 1] === "0") first.pop();
+  return `${first.join(":")}::/48`;
+}
+
+export type Operator = "token" | "mascara" | "remover" | "hash" | "generalizar";
 
 export function normalizeOperator(name: string): Operator {
   const key = name.trim().toLowerCase();
@@ -189,6 +229,7 @@ export class Anonymizer {
     if (operator === "token") return vault.placeholder(entity.label, entity.text);
     if (operator === "hash") return vault.placeholder(entity.label, entity.text, true);
     if (operator === "mascara") return maskValue(entity.label, entity.text);
+    if (operator === "generalizar") return generalizeValue(entity.label, entity.text);
     return `[${entity.label}]`;
   }
 

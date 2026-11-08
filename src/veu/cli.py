@@ -242,6 +242,20 @@ def cmd_audit(args) -> int:
     return 1
 
 
+def cmd_risk(args) -> int:
+    from veu.risk import assess
+
+    report = assess(_read(args.arquivo), _veu(args))
+    if args.json:
+        print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(f"Risco de identificação: {report.level}. {report.explanation}")
+        for title, counts in (("Dados diretos", report.direct), ("Pistas indiretas", report.quasi)):
+            if counts:
+                print(f"  {title}: " + ", ".join(f"{count} {label.lower()}" for label, count in counts.most_common()))
+    return 0
+
+
 def cmd_profiles(args) -> int:
     from veu.config import PROFILES
 
@@ -461,6 +475,12 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--formato", choices=("claude", "cursor"), default="claude", help="formato do agente")
     common(sub)
     sub.set_defaults(func=cmd_hook)
+
+    sub = commands.add_parser("risco", help="aponta pistas que ainda podem identificar alguém (datas, idades, cidades)")
+    sub.add_argument("arquivo", nargs="?", help="arquivo de texto (padrão: entrada padrão)")
+    sub.add_argument("--json", action="store_true")
+    common(sub)
+    sub.set_defaults(func=cmd_risk)
 
     sub = commands.add_parser("perfis", help="lista os perfis prontos (anonimização, judiciário, saúde...)")
     sub.set_defaults(func=cmd_profiles)
