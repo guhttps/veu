@@ -205,6 +205,7 @@ copyright = "Véu, código aberto (MIT)"
 
 [project.theme]
 language = "pt-BR"
+font = false  # sem Google Fonts: quem visita não manda o IP para terceiros
 features = ["content.code.copy", "content.tabs.link", "navigation.footer", "navigation.indexes", "navigation.instant",
             "navigation.path", "navigation.sections", "navigation.top", "navigation.tracking", "search.highlight"]
 

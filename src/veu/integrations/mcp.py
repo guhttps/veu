@@ -109,8 +109,15 @@ def _expected_errors(function):
     return wrapper
 
 
+def _not_hidden(path: Path) -> Path:
+    if any(part.startswith(".") and part not in (".", "..") for part in path.parts):
+        raise ValueError(f"O Véu não lê nem grava em pastas ou arquivos ocultos ({path}).")
+    return path
+
+
 def _file(path: str) -> Path:
-    file = Path(path).expanduser()
+    """Arquivo que o modelo pediu para ler: existe, cabe no limite e não está numa pasta oculta (.ssh, .aws)."""
+    file = _not_hidden(Path(path).expanduser())
     if not file.is_file():
         raise ValueError(f"Arquivo não encontrado: {file}")
     if file.stat().st_size > MAX_FILE_BYTES:
@@ -126,9 +133,7 @@ SAFE_OUTPUTS = frozenset({".txt", ".md", ".csv", ".tsv", ".json", ".jsonl", ".nd
 
 
 def _output(path: str, extensions: frozenset[str] = SAFE_OUTPUTS) -> Path:
-    target = Path(path).expanduser()
-    if any(part.startswith(".") and part not in (".", "..") for part in target.parts):
-        raise ValueError(f"O Véu não grava em pastas ou arquivos ocultos ({target}). Escolha outro lugar.")
+    target = _not_hidden(Path(path).expanduser())
     if target.suffix.lower() not in extensions:
         raise ValueError(f"O Véu só grava documentos ({', '.join(sorted(extensions))}). Escolha outro nome.")
     if target.exists():
@@ -224,10 +229,15 @@ def build_server(veu: Veu | None = None, *, restore_text: bool = False) -> MCPSe
                              "os dados reais, use a sessão devolvida com restaurar_para_arquivo.")
     @_expected_errors
     def ler_protegido(fonte: str, sessao: str | None = None) -> FonteLida:
-        from veu.sources import SourceError, read_source
+        import re
+
+        from veu.sources import SourceError, only_public_links, read_source
 
         try:
-            document = read_source(fonte)
+            if not re.match(r"https?://", fonte.strip(), re.IGNORECASE):
+                _file(fonte)  # arquivo local: as mesmas regras das outras ferramentas
+            with only_public_links():  # o modelo escolhe o link: nada de rede interna nem 169.254.169.254
+                document = read_source(fonte)
         except (SourceError, ImportError) as exc:
             raise ToolError(str(exc)) from exc
         if sessao:
@@ -292,7 +302,7 @@ def build_server(veu: Veu | None = None, *, restore_text: bool = False) -> MCPSe
     def restaurar_arquivo(origem: str, destino: str, cofre: str, formato: str | None = None) -> ArquivoRestaurado:
         from veu.files import restore_file
 
-        vault = Vault.from_dict(json.loads(Path(cofre).read_text(encoding="utf-8")))
+        vault = Vault.from_dict(json.loads(_file(cofre).read_text(encoding="utf-8")))
         target = _output(destino)
         _create(target, lambda: restore_file(_file(origem), target, vault, file_format=formato))
         return {"destino": str(target)}

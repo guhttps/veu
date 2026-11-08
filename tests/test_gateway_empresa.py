@@ -132,6 +132,28 @@ def test_link_reading_refuses_internal_addresses(monkeypatch, address):
         _PUBLIC_ONLY.reset(token)
 
 
+def test_link_reading_checks_the_address_it_actually_connects_to(monkeypatch):
+    """DNS rebinding: o nome responde com um IP público na checagem e com 127.0.0.1 na hora de conectar."""
+    from veu.sources import SourceError, http, only_public_links
+
+    server = socket.create_server(("127.0.0.1", 0))
+    port = server.getsockname()[1]
+    real_getaddrinfo = socket.getaddrinfo
+    answers = iter([[(socket.AF_INET, 1, 6, "", ("93.184.216.34", port))]])
+
+    def rebinding(host, *args, **kwargs):
+        if host == "rebind.example":
+            return next(answers, [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", port))])
+        return real_getaddrinfo(host, *args, **kwargs)
+
+    monkeypatch.setattr(socket, "getaddrinfo", rebinding)
+    try:
+        with only_public_links(), pytest.raises(SourceError, match="interno"):
+            http(f"https://rebind.example:{port}/segredo")
+    finally:
+        server.close()
+
+
 def test_link_reading_needs_https_and_public_address(monkeypatch):
     from veu.sources import SourceError, check_public_url
 
