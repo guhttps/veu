@@ -33,13 +33,15 @@ Todos os valores são fictícios: os conjuntos próprios usam dados gerados pelo
 
 ## Resultados com dados de terceiros
 
-| Conjunto | Véu | Véu + spaCy | Presidio |
-|---|---:|---:|---:|
-| Desafio (50 menções) | **22,0%** (10,7% a 35,4%) | 14,0% (5,3% a 25,0%) | 50,0% (34,6% a 65,3%) |
-| BR-Agentic (622 menções) | **22,2%** (18,9% a 26,0%) | 16,9% (13,5% a 20,5%) | 53,1% (49,5% a 57,0%) |
-| privacy-filter-br, 3.000 documentos (17.335 menções) | **0,4%** (0,3% a 0,5%) | 0,3% (0,2% a 0,4%) | 52,0% (51,4% a 52,7%) |
-| privacy-filter-br, holdout inteiro (107.594 menções) | **3,3%** (3,2% a 3,5%) | — | — |
-| Velocidade | ~300 mil caracteres/s | ~19 mil | 7 a 28 mil |
+| Conjunto | Véu | Véu + `ml` | Véu + spaCy | Presidio |
+|---|---:|---:|---:|---:|
+| Desafio (50 menções) | **22,0%** (10,7% a 35,4%) | 8,0% (1,8% a 17,6%) | 14,0% (5,3% a 25,0%) | 50,0% (34,6% a 65,3%) |
+| BR-Agentic (622 menções) | **22,2%** (18,9% a 26,0%) | 21,4% (17,9% a 25,2%)¹ | 16,9% (13,5% a 20,5%) | 53,1% (49,5% a 57,0%) |
+| privacy-filter-br, 3.000 documentos (17.335 menções) | **0,4%** (0,3% a 0,5%) | 0,2% (0,2% a 0,3%) | 0,3% (0,2% a 0,4%) | 52,0% (51,4% a 52,7%) |
+| privacy-filter-br, holdout inteiro (107.594 menções) | **3,3%** (3,2% a 3,5%) | — | — | — |
+| Velocidade | ~300 mil caracteres/s | 2 a 7 mil | ~19 mil | 7 a 28 mil |
+
+¹ O modelo do detector `ml` foi treinado com o BR-Agentic: esse número não mede generalização.
 
 Vazamento (menor é melhor), com o IC 95% entre parênteses.
 
@@ -50,6 +52,19 @@ O que os números mostram:
 - **Documentos brasileiros são a maior diferença.** No privacy-filter-br, o Presidio vaza 90% dos CPFs, 99% dos CNPJs e 99% dos endereços; o Véu, menos de 1% dos CPFs e CNPJs.
 - **Nomes em documentos formais eram o ponto forte do Presidio**, graças ao modelo do spaCy: 7,7% de vazamento de nomes, contra 11,9% do Véu. Com as listas do Censo 2022 e a propagação de nomes confirmados, o Véu caiu para 0,9%, sem modelo e sem perder velocidade.
 - **No BR-Agentic, sobram endereços completos e contas.** As anotações contam como endereço também o bairro, a cidade e a UF ("Conjunto Exemplo, 100, Bairro, Cidade - UF"), e o Véu esconde a rua e o CEP, mas não a cidade. Contas e agências sem a palavra "conta" por perto também passam.
+
+### Detector `ml` (opcional)
+
+`pip install "veu[ml]"` e `detectores = ["padroes", "nomes", "enderecos", "segredos", "ml"]` somam às regras um modelo BERT de reconhecimento de entidades treinado em português do Brasil ([linc42/pii-ner-pt-br-bertimbau](https://huggingface.co/linc42/pii-ner-pt-br-bertimbau), licença MIT), rodando na máquina. Só os nomes do modelo são usados, porque os documentos com dígito verificador as regras acham melhor. Para não esconder palavras comuns, um nome do modelo só conta com confiança de 0,9 ou mais, ou de 0,5 ou mais quando uma palavra dele está nas listas do IBGE (sem as ambíguas) ou quando há contexto como "cliente" ou "Sr." logo antes.
+
+| Conjunto | Só regras | Regras + `ml` | Vazamento de nomes | Precisão em nomes |
+|---|---:|---:|---:|---:|
+| Desafio | 22,0% | 8,0% | de 35,0% para 0,0% | de 88,2% para 87,0% |
+| privacy-filter-br, 3.000 documentos | 0,4% | 0,2% | de 0,9% para 0,0% | de 77,9% para 78,4% |
+| BR-Agentic (o modelo treinou nele) | 22,2% | 21,4% | de 18,7% para 16,1% | de 80,0% para 80,4% |
+| Validação própria | 2,5% | 0,0% | de 6,4% para 0,0% | 100% nos dois |
+
+Leia com cuidado: o desafio tem só 20 nomes, e a precisão nos conjuntos externos é baixa nas duas colunas porque eles não anotam tudo o que é dado pessoal. No BR-Agentic, o que sobra são endereços completos e contas, que o modelo não cobre. O custo é a velocidade: de 2 a 7 mil caracteres por segundo numa CPU comum, contra cerca de 300 mil só com as regras. Vale para lotes, arquivos e o proxy de uma equipe pequena; para a extensão e a página, que analisam a cada tecla, as regras continuam sendo o caminho. Textos maiores que o limite do modelo (512 tokens) são lidos em janelas sobrepostas.
 
 ### O que mudou com a avaliação externa
 

@@ -31,7 +31,7 @@ Empresas e pessoas estão colocando IA no atendimento, nos contratos, no RH e no
 E funciona do jeito que você usa IA: no navegador, no computador, no seu código ou no servidor da empresa.
 
 > [!NOTE]
-> O Véu nasceu no Brasil: os documentos brasileiros têm o suporte mais completo e a interface está em português. E-mails, telefones internacionais, cartões, IBAN, IPs e segredos funcionam em textos de qualquer lugar. Documentos de mais 21 países (Portugal, América Latina, Angola, Moçambique, Estados Unidos, Canadá, Índia e seis países da Europa) também são reconhecidos, quase todos com dígito verificador, assim como passaportes (MRZ), chassis (VIN) e carteiras de Bitcoin e Ethereum. Os nomes são reconhecidos pelas listas do Censo 2022; para nomes de outras línguas, ligue o detector spaCy ou um modelo local.
+> O Véu nasceu no Brasil: os documentos brasileiros têm o suporte mais completo e a interface está em português. E-mails, telefones internacionais, cartões, IBAN, IPs e segredos funcionam em textos de qualquer lugar. Documentos de mais 21 países (Portugal, América Latina, Angola, Moçambique, Estados Unidos, Canadá, Índia e seis países da Europa) também são reconhecidos, quase todos com dígito verificador, assim como passaportes (MRZ), chassis (VIN) e carteiras de Bitcoin e Ethereum. Os nomes são reconhecidos pelas listas do Censo 2022; para pegar ainda mais nomes, ligue o detector `ml` (um modelo treinado em português que roda na sua máquina).
 
 > [!IMPORTANT]
 > Nenhuma detecção automática é perfeita. O Véu **reduz** muito o risco de enviar dados pessoais, mas não o elimina. Veja os [números do benchmark](#benchmark) e as [limitações](SECURITY.md#o-que-o-véu-não-faz). Não é aconselhamento jurídico sobre a LGPD.
@@ -114,7 +114,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
   - nomes que também são palavras ("Rosa", "Natal") só contam com contexto;
   - não confunde "Banco do Brasil" nem "Rua Augusta";
   - pessoas que o Notion identifica são sempre escondidas;
-  - para nomes de outras línguas, ligue o spaCy ou um modelo local.
+  - para pegar ainda mais nomes (sem contexto, de outras origens), ligue o detector `ml`: um modelo BERT treinado em português, rodando na sua máquina, que só conta um nome quando tem confiança alta ou quando as listas ou o contexto confirmam.
 - 🔁 **Reversível e consistente:**
   - o mesmo dado recebe sempre o mesmo marcador;
   - "João" sozinho é ligado a "João da Silva";
@@ -176,7 +176,8 @@ Extras opcionais do pacote Python:
 | `litellm` | Guardrail do LiteLLM |
 | `redis` | Sessões compartilhadas entre réplicas, com o cofre cifrado |
 | `spacy` | Detector de nomes do spaCy |
-| `todos` | Tudo acima, menos `litellm` e `spacy` |
+| `ml` | Detector de nomes por um modelo BERT em português (transformers e torch; cerca de 400 MB) |
+| `todos` | Tudo acima, menos `litellm`, `spacy` e `ml` |
 
 ### Como proxy (qualquer linguagem, muda uma linha)
 
@@ -314,18 +315,21 @@ veu avaliar                    # conjuntos próprios
 veu avaliar --externo todos    # BR-Agentic e privacy-filter-br (baixados uma vez, versão fixa)
 ```
 
-| Conjunto | Véu | Véu + spaCy | Presidio |
-|---|---:|---:|---:|
-| Desafio: 41 textos escritos à mão e congelados | **22,0%** | 14,0% | 50,0% |
-| [BR-Agentic](https://huggingface.co/datasets/guardion/BR-Agentic-PII-Benchmark): conversas bancárias com ferramentas | **22,2%** | 16,9% | 53,1% |
-| [privacy-filter-br](https://huggingface.co/datasets/lucianfialho/privacy-filter-br-dataset): 3.000 documentos | **0,4%** | 0,3% | 52,0% |
-| Validação própria: 1.000 textos de modelos não usados no ajuste | **2,5%** | 1,2% | — |
+| Conjunto | Véu | Véu + `ml` | Véu + spaCy | Presidio |
+|---|---:|---:|---:|---:|
+| Desafio: 41 textos escritos à mão e congelados | **22,0%** | 8,0% | 14,0% | 50,0% |
+| [BR-Agentic](https://huggingface.co/datasets/guardion/BR-Agentic-PII-Benchmark): conversas bancárias com ferramentas | **22,2%** | 21,4%¹ | 16,9% | 53,1% |
+| [privacy-filter-br](https://huggingface.co/datasets/lucianfialho/privacy-filter-br-dataset): 3.000 documentos | **0,4%** | 0,2% | 0,3% | 52,0% |
+| Validação própria: 1.000 textos de modelos não usados no ajuste | **2,5%** | 0,0% | 1,2% | — |
+| Velocidade (caracteres por segundo) | ~300 mil | 2 a 7 mil | ~19 mil | 7 a 28 mil |
+
+¹ O modelo do detector `ml` foi treinado com o BR-Agentic; esse número não mede generalização.
 
 Como ler esses números com honestidade:
 
 - **Os conjuntos externos são o número que importa.** O ajuste dos detectores nunca olha para eles nem para o desafio. Os números próprios são melhores porque o gerador e o detector foram escritos pela mesma pessoa.
 - **Documentos brasileiros são a maior vantagem:** o Presidio não tem reconhecedores de CPF, CNPJ, RG ou endereços brasileiros e vaza 90% dos CPFs; o Véu, menos de 1%.
-- **Nomes são a parte difícil.** Com as listas do Censo 2022, o vazamento de nomes no privacy-filter-br caiu de 15,4% para 1,4%. Nomes sem contexto e de outras origens ainda passam; o detector spaCy ajuda, mas deixa o Véu mais de dez vezes mais lento.
+- **Nomes são a parte difícil.** Com as listas do Censo 2022, o vazamento de nomes no privacy-filter-br caiu de 15,4% para 1,4%. Nomes sem contexto e de outras origens ainda passam. O detector `ml` zera o vazamento de nomes no desafio (de 35% para 0%) com a mesma precisão, mas deixa o Véu cerca de cem vezes mais lento: vale para lotes e documentos, não para cada tecla.
 - **Endereços completos e contas sem a palavra "conta"** ainda vazam no BR-Agentic.
 - **Todos os textos são sintéticos.** Em dados reais, espere resultados piores. Teste com uma amostra dos seus textos (`veu avaliar --dataset`).
 
@@ -384,7 +388,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 697 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 703 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa

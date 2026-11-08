@@ -1,4 +1,4 @@
-"""Detectores opcionais: spaCy (NER) e um modelo de linguagem local (Ollama, LM Studio...)."""
+"""Detectores opcionais: spaCy (NER), um modelo BERT (transformers) e um modelo de linguagem local (Ollama...)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,8 @@ import re
 from collections.abc import Iterable
 from urllib.parse import urlparse
 
-from veu.recognizers.base import Candidate
+from veu._text import fold, words_regex
+from veu.recognizers.base import Candidate, text_before
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,64 @@ class SpacyRecognizer:
         for entity in self.nlp(text).ents:
             if entity.label_ in ("PER", "PERSON") and len(entity.text.strip()) > 2:
                 yield Candidate("PESSOA", entity.start_char, entity.end_char, 0.7, self.name)
+
+
+class MLRecognizer:
+    """Nomes por um modelo BERT de reconhecimento de entidades, rodando na sua máquina (pip install "veu[ml]").
+
+    Padrão: linc42/pii-ner-pt-br-bertimbau (MIT), treinado em português do Brasil. Só os nomes do modelo são usados:
+    documentos com dígito verificador, as regras do Véu acham melhor. Para não esconder palavras comuns, um nome do
+    modelo só conta com confiança alta ou quando é corroborado (uma palavra dele está nas listas de nomes do IBGE, ou
+    há contexto como "cliente" ou "Sr." por perto).
+    """
+
+    name = "ml"
+    labels = frozenset({"PESSOA"})
+    NAME_GROUPS = frozenset({"NOME", "PER", "PERSON", "PESSOA", "NAME"})
+
+    def __init__(self, model: str = "linc42/pii-ner-pt-br-bertimbau", pipeline=None, min_score: float = 0.9):
+        if pipeline is None:
+            try:
+                from transformers import pipeline as hf_pipeline
+            except ImportError as exc:
+                raise RuntimeError('O detector "ml" precisa do transformers e do torch: pip install "veu[ml]"') from exc
+            # stride: textos maiores que o limite do modelo (512 tokens) são lidos em janelas sobrepostas.
+            pipeline = hf_pipeline("token-classification", model=model, aggregation_strategy="simple", stride=128)
+            # Alguns modelos não informam o limite no tokenizador; sem ele, a pipeline não divide o texto e falha.
+            limit = getattr(pipeline.model.config, "max_position_embeddings", 512)
+            if not 0 < (pipeline.tokenizer.model_max_length or 0) <= limit:
+                pipeline.tokenizer.model_max_length = limit
+        self.pipeline = pipeline
+        self.min_score = min_score
+        from veu.recognizers.base import folded_set
+        from veu.recognizers.persons import PERSON_CONTEXT
+
+        ambiguous = folded_set("ambiguous.txt") | folded_set("ibge_ambiguos.txt")
+        self._names = (folded_set("first_names.txt") | folded_set("ibge_prenomes.txt") | folded_set("surnames.txt")
+                       | folded_set("ibge_sobrenomes.txt")) - ambiguous
+        self._context = words_regex(PERSON_CONTEXT)
+
+    def find(self, text: str) -> Iterable[Candidate]:
+        if not text.strip():
+            return
+        for item in self.pipeline(text):
+            group = str(item.get("entity_group") or item.get("entity") or "").upper()
+            group = group[2:] if group[:2] in ("B-", "I-") else group
+            if group not in self.NAME_GROUPS:
+                continue
+            start, end = int(item["start"]), int(item["end"])
+            while start < end and not text[start].isalnum():
+                start += 1
+            while end > start and not text[end - 1].isalnum():
+                end -= 1
+            if end - start < 3:
+                continue
+            score = float(item.get("score", 0))
+            words = [fold(word) for word in text[start:end].split()]
+            window = fold(text_before(text, start, 30))
+            corroborated = any(word in self._names for word in words) or self._context.search(window) is not None
+            if score >= self.min_score or (corroborated and score >= 0.5):
+                yield Candidate("PESSOA", start, end, 0.72 if corroborated else 0.66, self.name)
 
 
 LLM_PROMPT = (
