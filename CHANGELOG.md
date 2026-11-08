@@ -47,6 +47,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 - **Nó do n8n** (`n8n/`, pacote `@guhttps/n8n-nodes-veu`): operações "Esconder dados" e "Restaurar dados", sem dependências em tempo de execução (a biblioteca do Véu vai embutida), e um modelo pronto de atendimento por WhatsApp com a Evolution API.
 
+- **Operador `generalizar`** (Python e JavaScript): guarda só o que serve para análise e identifica menos (ano de nascimento, região do CEP, DDD, rede /24 do IP) e troca o resto pelo tipo. Não é reversível.
+- **`veu risco`**: conta os dados diretos que sobraram num texto e as pistas indiretas (datas, idades, cidades, cargos) e dá um nível de risco de identificação pelo contexto.
+
 ### Corrigido
 - Nomes ambíguos que o dicionário marca como palavras (sobrenomes como Costa e Nascimento) só se propagam com inicial maiúscula: "data de nascimento" não vira mais nome de pessoa. O gerador de listas passou a ler também as regras de sufixo do dicionário.
 - Restauração em streaming: um marcador solto colado a uma palavra (`_CPF_1`, `xCPF_1`) era restaurado quando chegava num pedaço separado, embora no texto inteiro não fosse. Achado pelos testes de propriedade.

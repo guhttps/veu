@@ -22,9 +22,11 @@ OPERATORS = {
     "mascara": "mascara parte do valor, como ***.982.247-**; não é reversível",
     "remover": "troca pelo tipo, como [CPF]; não é reversível",
     "hash": "marcador estável entre requisições, como [CPF_3fa2c1d9]; reversível com o mesmo cofre",
+    "generalizar": "guarda só o que serve para análise (ano de nascimento, região do CEP, DDD, rede do IP) e troca o "
+                   "resto pelo tipo; não é reversível",
 }
 OPERATOR_ALIASES = {"marcador": "token", "sintético": "sintetico", "máscara": "mascara", "synthetic": "sintetico",
-                    "mask": "mascara", "redact": "remover"}
+                    "mask": "mascara", "redact": "remover", "generalize": "generalizar"}
 
 
 def normalize_operator(name: str) -> str:
@@ -128,6 +130,39 @@ def _find_names(text: str, parts: dict[str, str]):
             index += 1
 
 
+def generalize_value(label: str, value: str) -> str:
+    """Versão menos precisa do valor, que ainda serve para análises (idade, região) e identifica menos."""
+    from veu.validators import parse_date
+
+    digits = re.sub(r"\D", "", value)
+    if label == "DATA_NASCIMENTO":
+        parsed = parse_date(value)
+        if parsed is not None:
+            return str(parsed.year)
+    elif label == "CEP" and len(digits) == 8:
+        return f"{digits[:5]}-***"
+    elif label == "TELEFONE":
+        country = re.match(r"\s*\+(\d{1,3})", value)
+        if country and country.group(1) != "55":
+            return f"+{country.group(1)} ****"
+        local = digits[2:] if len(digits) in (12, 13) and digits.startswith("55") else digits
+        if len(local) in (10, 11):
+            return f"({local[:2]}) ****-****"
+    elif label == "IP":
+        if re.fullmatch(r"\d{1,3}(?:\.\d{1,3}){3}", value):
+            return ".".join(value.split(".")[:3]) + ".0/24"
+        if ":" in value:
+            import ipaddress
+
+            try:
+                network = ipaddress.ip_network(f"{value}/48", strict=False)
+            except ValueError:
+                pass
+            else:
+                return str(network)
+    return f"[{label}]"
+
+
 class Anonymizer:
     """Anonimiza textos usando um Analyzer e um operador por tipo de dado.
 
@@ -208,6 +243,8 @@ class Anonymizer:
             return vault.surrogate(entity.label, value, lambda rng: make_surrogate(entity.label, value, rng))
         if operator == "mascara":
             return mask_value(entity.label, value)
+        if operator == "generalizar":
+            return generalize_value(entity.label, value)
         return f"[{entity.label}]"
 
     def _link_partial_names(self, text: str, entities: list[Entity], vault: Vault):

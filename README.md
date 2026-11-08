@@ -232,6 +232,7 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 |---|---|
 | `veu painel` | Liga o Véu e abre o painel no navegador |
 | `veu perfis` | Perfis prontos por setor; use com `--perfil` |
+| `veu risco` | Aponta pistas que ainda podem identificar alguém (datas, idades, cidades, cargos) |
 | `veu demonstrar` | Mostra o que chegaria à IA com e sem o Véu e testa ataques à restauração, sem chave de API |
 | `veu ler <link ou arquivo>` | Lê Notion, Google, links e documentos já protegidos |
 | `veu anonimizar` / `veu restaurar` | Protege e restaura textos, CSV, JSON, Excel, Word, PowerPoint e PDF |
@@ -293,6 +294,7 @@ Também dá para adicionar padrões próprios (matrícula, número de cliente...
 | `sintetico` | `686.192.633-74` (outro CPF válido), outro nome, chave falsa no mesmo formato | sim |
 | `mascara` | `***.982.247-**`, `sk-proj-****` | não |
 | `remover` | `[CPF]` | não |
+| `generalizar` | `nascida em 1985`, `CEP 01310-***`, `(11) ****-****`, `192.0.2.0/24`; o resto vira `[TIPO]` | não |
 | `hash` | `[CPF_3fa2c1d9e07b4a12]`, estável entre requisições com o mesmo `VEU_SEGREDO` (mínimo de 32 caracteres) | sim, com o cofre |
 
 O operador `sintetico` ainda só existe em Python. Em JavaScript, use `token`, `mascara`, `remover` ou `hash`.
