@@ -106,7 +106,9 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 
   Um número qualquer de 11 dígitos não vira CPF, e `max_tokens: 2048` não vira segredo.
 - 🧠 **Nomes sem modelo de IA:**
-  - listas de nomes brasileiros, capitalização e contexto ("Sr.", "cliente", "oi joão");
+  - 5 mil prenomes e 2 mil sobrenomes do Censo 2022 do IBGE, mais capitalização e contexto ("Sr.", "cliente", "oi joão");
+  - um nome confirmado vale para o texto inteiro, em qualquer caixa e com ou sem acento ("Rayane Souza" ... "a rayane esqueceu");
+  - nomes que também são palavras ("Rosa", "Natal") só contam com contexto;
   - não confunde "Banco do Brasil" nem "Rua Augusta";
   - pessoas que o Notion identifica são sempre escondidas;
   - para nomes de outras línguas, ligue o spaCy ou um modelo local.
@@ -125,7 +127,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
   - anonimiza Excel, Word e PowerPoint **no próprio formato**, mantendo a formatação e as fórmulas.
 - 🌐 **Python, JavaScript e navegador:**
   - a mesma detecção nas três versões;
-  - um teste de conformidade com 279 casos exige resultados idênticos.
+  - um teste de conformidade com 282 casos exige resultados idênticos.
 - 🏢 **Empresas:**
   - gateway com tokens por equipe, auditoria à prova de adulteração e sessões no Redis;
   - desvio de dados sensíveis para um modelo interno;
@@ -296,16 +298,16 @@ veu avaliar --externo todos    # BR-Agentic e privacy-filter-br (baixados uma ve
 
 | Conjunto | Véu | Véu + spaCy | Presidio |
 |---|---:|---:|---:|
-| Desafio: 41 textos escritos à mão e congelados | **28,0%** | — | 50,0% |
-| [BR-Agentic](https://huggingface.co/datasets/guardion/BR-Agentic-PII-Benchmark): conversas bancárias com ferramentas | **23,3%** | 17,7% | 53,1% |
-| [privacy-filter-br](https://huggingface.co/datasets/lucianfialho/privacy-filter-br-dataset): 3.000 documentos | **2,6%** | 0,6% | 52,0% |
+| Desafio: 41 textos escritos à mão e congelados | **22,0%** | 14,0% | 50,0% |
+| [BR-Agentic](https://huggingface.co/datasets/guardion/BR-Agentic-PII-Benchmark): conversas bancárias com ferramentas | **22,2%** | 16,9% | 53,1% |
+| [privacy-filter-br](https://huggingface.co/datasets/lucianfialho/privacy-filter-br-dataset): 3.000 documentos | **0,4%** | 0,3% | 52,0% |
 | Validação própria: 1.000 textos de modelos não usados no ajuste | **2,5%** | 1,2% | — |
 
 Como ler esses números com honestidade:
 
 - **Os conjuntos externos são o número que importa.** O ajuste dos detectores nunca olha para eles nem para o desafio. Os números próprios são melhores porque o gerador e o detector foram escritos pela mesma pessoa.
 - **Documentos brasileiros são a maior vantagem:** o Presidio não tem reconhecedores de CPF, CNPJ, RG ou endereços brasileiros e vaza 90% dos CPFs; o Véu, menos de 1%.
-- **Nomes são a parte difícil.** Sem contexto ("kkkk a kamilly esqueceu") ou de outras origens, passam. O detector spaCy reduz muito esse vazamento, mas deixa o Véu dez vezes mais lento.
+- **Nomes são a parte difícil.** Com as listas do Censo 2022, o vazamento de nomes no privacy-filter-br caiu de 15,4% para 1,4%. Nomes sem contexto e de outras origens ainda passam; o detector spaCy ajuda, mas deixa o Véu mais de dez vezes mais lento.
 - **Endereços completos e contas sem a palavra "conta"** ainda vazam no BR-Agentic.
 - **Todos os textos são sintéticos.** Em dados reais, espere resultados piores. Teste com uma amostra dos seus textos (`veu avaliar --dataset`).
 
@@ -363,7 +365,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 430 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 450 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 cd js && npm ci && npm test                       # biblioteca JavaScript (inclui a conformidade com o Python)
@@ -390,4 +392,4 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 
 ## Licença
 
-[MIT](LICENSE). Os dados usados nos exemplos e no benchmark são fictícios.
+[MIT](LICENSE). Os dados usados nos exemplos e no benchmark são fictícios. As listas de nomes e municípios vêm do IBGE (Censo Demográfico 2022, Nomes do Brasil, e Localidades), dados públicos.

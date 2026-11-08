@@ -99,6 +99,35 @@ def mask_value(label: str, value: str) -> str:
     return "".join(char if (not char.isalnum() or index in keep) else "*" for index, char in enumerate(value))
 
 
+# Palavras de nome (letras, com apóstrofo): a mesma definição do detector de nomes.
+_NAME_WORD = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)*")
+
+
+def _find_names(text: str, parts: dict[str, str]):
+    """(início, fim) das sequências de palavras cuja forma normalizada está em parts (a mais longa primeiro).
+
+    Equivale a casar cada nome em qualquer caixa e com ou sem acento, separado por espaços, com custo linear.
+    """
+    longest = max(len(key.split()) for key in parts)
+    words = [(m.start(), m.end(), fold(m.group())) for m in _NAME_WORD.finditer(text)]
+    index = 0
+    while index < len(words):
+        for size in range(min(longest, len(words) - index), 0, -1):
+            chunk = words[index:index + size]
+            if any(not text[a[1]:b[0]].isspace() for a, b in zip(chunk, chunk[1:], strict=False)):
+                continue
+            start, end = chunk[0][0], chunk[-1][1]
+            if (start > 0 and (text[start - 1].isalnum() or text[start - 1] == "_")) or (
+                    end < len(text) and (text[end].isalnum() or text[end] == "_")):
+                continue
+            if " ".join(word for _, _, word in chunk) in parts:
+                yield start, end
+                index += size
+                break
+        else:
+            index += 1
+
+
 class Anonymizer:
     """Anonimiza textos usando um Analyzer e um operador por tipo de dado.
 
@@ -125,7 +154,7 @@ class Anonymizer:
         self.link_names = link_names
         self.secret = secret
         self.policy = policy or RestorePolicy()
-        self._ambiguous = folded_set("ambiguous.txt")
+        self._ambiguous = folded_set("ambiguous.txt") | folded_set("ibge_ambiguos.txt")
 
     def new_vault(self) -> Vault:
         return Vault(secret=self.secret, policy=self.policy)
@@ -179,38 +208,46 @@ class Anonymizer:
         return f"[{entity.label}]"
 
     def _link_partial_names(self, text: str, entities: list[Entity], vault: Vault):
-        """Acha menções soltas ao primeiro nome ou ao sobrenome de uma pessoa já detectada."""
-        parts: dict[str, str] = {}
-        for entity in entities:
-            if entity.label != "PESSOA":
+        """Propaga nomes já detectados no mesmo texto.
+
+        Menções soltas ao primeiro nome, ao sobrenome ou ao nome inteiro, em qualquer caixa e com ou sem acento
+        ("Rayane Souza" ... "kkkk a rayane esqueceu", "RAYANE SOUZA"), recebem o mesmo marcador do nome completo.
+        Nomes ambíguos ("Rosa", "Luz") não se propagam.
+        """
+        parts: dict[str, str] = {}  # forma normalizada (fold) -> nome completo
+        # Nomes completos primeiro: "Ana" sozinho, antes de "Ana Beatriz Moura", usa o marcador do nome completo.
+        for entity in sorted(entities, key=lambda e: -len(e.text.split())):
+            if entity.label != "PESSOA" or entity.score < 0.6:
                 continue
             words = [word for word in entity.text.split() if fold(word) not in CONNECTORS]
-            if len(words) < 2:
+            if not words:
                 continue
-            for word in (words[0], words[-1]):
-                if len(word) >= 3 and fold(word) not in self._ambiguous and word[0].isupper():
-                    parts.setdefault(word, entity.text)
+            if len(words) >= 2:
+                parts.setdefault(fold(entity.text), entity.text)
+                linked = [word for word in (words[0], words[-1]) if word[0].isupper()]
+            else:
+                linked = words
+            for word in linked:
+                if len(word) >= 3 and fold(word) not in self._ambiguous:
+                    parts.setdefault(fold(word), entity.text)
         if not parts:
             return entities, {}
-        alternatives = "|".join(re.escape(word) for word in sorted(parts, key=len, reverse=True))
-        pattern = re.compile(r"(?<![\w])(?:" + alternatives + r")(?![\w])")
         added: list[Entity] = []
         canonical: dict[int, str] = {}
         # As entidades vêm ordenadas e sem sobreposição: busca binária mantém o custo linear em textos grandes.
         starts = [e.start for e in entities]
         ends = [e.end for e in entities]
-        for match in pattern.finditer(text):
-            position = bisect.bisect_right(starts, match.start())
-            if position > 0 and ends[position - 1] > match.start():
+        for start, end in _find_names(text, parts):
+            position = bisect.bisect_right(starts, start)
+            if position > 0 and ends[position - 1] > start:
                 continue
-            if position < len(starts) and starts[position] < match.end():
+            if position < len(starts) and starts[position] < end:
                 continue
-            entity = Entity("PESSOA", match.start(), match.end(), 0.7, match.group(0), "vinculo")
-            added.append(entity)
-            canonical[match.start()] = parts[match.group(0)]
-        by_folded = {fold(word): full for word, full in parts.items()}
+            added.append(Entity("PESSOA", start, end, 0.7, text[start:end], "vinculo"))
+            canonical[start] = parts[fold(text[start:end])]
         for entity in entities:
-            if entity.label == "PESSOA" and len(entity.text.split()) == 1 and fold(entity.text) in by_folded:
-                canonical[entity.start] = by_folded[fold(entity.text)]
+            full = parts.get(fold(entity.text)) if entity.label == "PESSOA" else None
+            if full is not None and full != entity.text:
+                canonical[entity.start] = full
         merged = sorted(entities + added, key=lambda e: e.start)
         return merged, canonical

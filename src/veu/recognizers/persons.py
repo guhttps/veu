@@ -48,6 +48,14 @@ _STREET_BEFORE = re.compile(
     r"(?<![\w])(?:rua|r\.|av\.?|avenida|travessa|tv\.|alameda|al\.|praca|pca\.|rodovia|rod\.|estrada|largo|viela|"
     r"beco|ladeira|vila|bairro|jardim|parque|condominio|edificio|residencial)(?:\s+d[aeo]s?)?\s*$"
 )
+# Tipos de logradouro: uma sequência que começa com eles é endereço ("Avenida Paulista", "Quadra Norte").
+STREET_WORDS = frozenset({
+    "rua", "avenida", "av", "travessa", "alameda", "praca", "rodovia", "estrada", "largo", "viela", "beco",
+    "ladeira", "quadra", "conjunto", "setor", "loteamento", "condominio", "residencial", "edificio", "chacara",
+    "sitio", "fazenda", "via", "vila", "jardim", "parque", "bairro",
+})
+# "São Cristóvão", "Santa Maria", "Santo Antônio": lugares e santos, não pessoas.
+SAINTS = frozenset({"sao", "santo", "santa"})
 GREETINGS = (
     "oi", "ola", "e ai", "eai", "fala", "bom dia", "boa tarde", "boa noite", "obrigado", "obrigada", "valeu",
     "vlw", "tchau", "beijo", "bjs", "abraco", "querido", "querida", "meu nome e", "me chamo", "sou o", "sou a",
@@ -60,15 +68,20 @@ class PersonRecognizer:
     labels = frozenset({"PESSOA"})
 
     def __init__(self, extra_first_names: Iterable[str] = (), extra_surnames: Iterable[str] = ()):
-        self.first_names = folded_set("first_names.txt") | {fold(name) for name in extra_first_names}
-        self.surnames = folded_set("surnames.txt") | {fold(name) for name in extra_surnames}
-        self.ambiguous = folded_set("ambiguous.txt")
+        # Listas curadas mais as do Censo 2022 do IBGE (scripts/gerar_nomes_ibge.py). Prenomes que também são
+        # palavras comuns ("rosa", "natal") ficam em ambíguos e só contam com contexto.
+        self.first_names = (folded_set("first_names.txt") | folded_set("ibge_prenomes.txt")
+                            | {fold(name) for name in extra_first_names})
+        self.surnames = (folded_set("surnames.txt") | folded_set("ibge_sobrenomes.txt")
+                         | {fold(name) for name in extra_surnames})
+        self.ambiguous = folded_set("ambiguous.txt") | folded_set("ibge_ambiguos.txt")
         self.stopwords = folded_set("stopwords.txt")
         # Palavras comuns que, sem acento, viram nomes ("Março" x "Marco") só contam com o acento exato.
         self._stop_exact = {word.casefold() for word in load_wordlist("stopwords.txt")}
         self._stop_folded = self.stopwords - self.first_names - self.surnames
-        self.places = folded_set("places.txt")
+        self.places = folded_set("places.txt") | folded_set("ibge_municipios.txt")
         self.organizations = folded_set("organizations.txt")
+        self._surname_or_connector = self.surnames | CONNECTORS
         self._context = words_regex(PERSON_CONTEXT)
         self._greeting = re.compile(
             r"(?:^|[^\w])(?:" + "|".join(re.escape(fold(g)) for g in GREETINGS) + r")[\s,!]*$"
@@ -128,9 +141,9 @@ class PersonRecognizer:
 
     def _score_sequence(self, text: str, tokens: list[tuple[int, int, str]]) -> Candidate | None:
         whole = [fold(token[2]) for token in tokens]
-        if " ".join(whole) in self.places | self.organizations:
+        if " ".join(whole) in self.places or " ".join(whole) in self.organizations:
             return None
-        if any(word in ORGANIZATION_WORDS for word in whole):
+        if any(word in ORGANIZATION_WORDS for word in whole) or whole[0] in STREET_WORDS | SAINTS:
             return None
         # Começa no primeiro nome conhecido; sem nenhum, só descarta palavras comuns do início.
         first_index = next((i for i, token in enumerate(tokens) if fold(token[2]) in self.first_names), None)
@@ -181,7 +194,8 @@ class PersonRecognizer:
                     score = 0.7
                 else:
                     score = 0.8 if context else 0.6
-            elif context and (word in self.surnames or self._strong_context(text, start)):
+            elif context and ((word in self.surnames and word not in self.ambiguous)
+                              or self._strong_context(text, start)):
                 score = 0.6
             else:
                 return None
@@ -210,7 +224,7 @@ class PersonRecognizer:
             while (
                 last + 1 < len(words)
                 and words[last + 1][2].islower()
-                and fold(words[last + 1][2]) in self.surnames | CONNECTORS
+                and fold(words[last + 1][2]) in self._surname_or_connector
                 and _SPACE_GAP.fullmatch(text[words[last][1]:words[last + 1][0]])
             ):
                 last += 1

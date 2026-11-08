@@ -245,8 +245,8 @@
      0.6
     ]
    ],
-   "anonimizado": "Março foi bom para o [PESSOA_1] e para a Rosa.",
-   "mascarado": "Março foi bom para o M*** e para a Rosa."
+   "anonimizado": "[PESSOA_1] foi bom para o [PESSOA_1] e para a Rosa.",
+   "mascarado": "M*** foi bom para o M*** e para a Rosa."
   },
   {
    "texto": "CPF: 529.982.***-** e ***.982.247-**; CNPJ 11.222.333/****-** e 11 222 333 0001 81",
@@ -328,6 +328,69 @@
    ],
    "anonimizado": "RG [RG_1] e CNH [CNH_1]; o campo ***.***.***-** veio vazio",
    "mascarado": "RG ** *** **8 9 e CNH *********6-1; o campo ***.***.***-** veio vazio"
+  },
+  {
+   "texto": "Oi, sou a Rayane Souza. kkkk a rayane esqueceu o carregador. RAYANE SOUZA assinou. A rayanesouza não.",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     22,
+     0.9
+    ],
+    [
+     "PESSOA",
+     61,
+     73,
+     0.9
+    ]
+   ],
+   "anonimizado": "Oi, sou a [PESSOA_1]. kkkk a [PESSOA_1] esqueceu o carregador. [PESSOA_1] assinou. A rayanesouza não.",
+   "mascarado": "Oi, sou a R*** S***. kkkk a r*** esqueceu o carregador. R*** S*** assinou. A rayanesouza não."
+  },
+  {
+   "texto": "Responsável: Anthony Raul Viana. Endereço: Avenida Paulista. Evento em São Cristóvão, com Kawanny Rodrigues.",
+   "entidades": [
+    [
+     "PESSOA",
+     13,
+     31,
+     0.9
+    ],
+    [
+     "ENDERECO",
+     43,
+     59,
+     0.75
+    ],
+    [
+     "PESSOA",
+     90,
+     107,
+     0.62
+    ]
+   ],
+   "anonimizado": "Responsável: [PESSOA_1]. Endereço: [ENDERECO_1]. Evento em São Cristóvão, com [PESSOA_2].",
+   "mascarado": "Responsável: A*** R*** V***. Endereço: ******* ******ta. Evento em São Cristóvão, com K*** R***."
+  },
+  {
+   "texto": "O José Carlos ligou; depois o jose voltou. Rosa Pereira ligou e a rosa murchou. Razão Social: Exemplo Ltda",
+   "entidades": [
+    [
+     "PESSOA",
+     2,
+     13,
+     0.9
+    ],
+    [
+     "PESSOA",
+     43,
+     55,
+     0.9
+    ]
+   ],
+   "anonimizado": "O [PESSOA_1] ligou; depois o [PESSOA_1] voltou. [PESSOA_2] ligou e a rosa murchou. Razão Social: Exemplo Ltda",
+   "mascarado": "O J*** C*** ligou; depois o j*** voltou. R*** P*** ligou e a rosa murchou. Razão Social: Exemplo Ltda"
   },
   {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
@@ -594,7 +657,7 @@
      "PESSOA",
      5,
      21,
-     0.7
+     0.9
     ],
     [
      "PESSOA",
@@ -687,7 +750,7 @@
      "PESSOA",
      62,
      81,
-     0.7
+     0.9
     ],
     [
      "PLACA",
@@ -1074,7 +1137,7 @@
      "PESSOA",
      5,
      21,
-     0.7
+     0.9
     ]
    ],
    "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 02/04/2026 às 16h30.",
@@ -1087,7 +1150,7 @@
      "PESSOA",
      15,
      36,
-     0.7
+     0.9
     ]
    ],
    "anonimizado": "A colaboradora [PESSOA_1] pediu férias a partir de 19/03/2024.",
@@ -1372,7 +1435,7 @@
      "PESSOA",
      15,
      34,
-     0.7
+     0.9
     ]
    ],
    "anonimizado": "A colaboradora [PESSOA_1] pediu férias a partir de 25/08/2027.",
@@ -1679,7 +1742,7 @@
      "PESSOA",
      5,
      18,
-     0.7
+     0.9
     ],
     [
      "PESSOA",
@@ -1735,7 +1798,7 @@
      "PESSOA",
      5,
      20,
-     0.7
+     0.9
     ],
     [
      "PESSOA",
@@ -1886,7 +1949,7 @@
      "PESSOA",
      5,
      20,
-     0.7
+     0.9
     ]
    ],
    "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 07/05/2024 às 13h30.",
@@ -2277,7 +2340,7 @@
      "PESSOA",
      5,
      17,
-     0.7
+     0.9
     ]
    ],
    "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 23/09/2026 às 7h45.",
@@ -2371,7 +2434,7 @@
      "PESSOA",
      15,
      36,
-     0.7
+     0.9
     ]
    ],
    "anonimizado": "A colaboradora [PESSOA_1] pediu férias a partir de 05/10/2025.",
@@ -2452,7 +2515,7 @@
      "PESSOA",
      5,
      19,
-     0.7
+     0.9
     ]
    ],
    "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 20/07/2027 às 8h30.",
@@ -2602,7 +2665,7 @@
      "PESSOA",
      62,
      76,
-     0.7
+     0.9
     ],
     [
      "PLACA",
@@ -2828,7 +2891,7 @@
      "PESSOA",
      5,
      22,
-     0.7
+     0.9
     ],
     [
      "PESSOA",
@@ -2872,7 +2935,7 @@
      "PESSOA",
      5,
      20,
-     0.7
+     0.9
     ],
     [
      "PESSOA",
@@ -2941,7 +3004,7 @@
      "PESSOA",
      5,
      22,
-     0.7
+     0.9
     ]
    ],
    "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 20/01/2025 às 7h45.",
@@ -3016,7 +3079,7 @@
      "PESSOA",
      62,
      75,
-     0.7
+     0.9
     ],
     [
      "PLACA",
@@ -3726,7 +3789,7 @@
      "PESSOA",
      15,
      36,
-     0.7
+     0.9
     ]
    ],
    "anonimizado": "A colaboradora [PESSOA_1] pediu férias a partir de 21/03/2024.",
@@ -3793,13 +3856,13 @@
    "entidades": [
     [
      "PESSOA",
-     12,
+     5,
      18,
-     0.8
+     0.9
     ]
    ],
-   "anonimizado": "Sra. Maiara [PESSOA_1], sua consulta foi remarcada para 08/01/2024 às 17h45.",
-   "mascarado": "Sra. Maiara W***, sua consulta foi remarcada para 08/01/2024 às 17h45."
+   "anonimizado": "Sra. [PESSOA_1], sua consulta foi remarcada para 08/01/2024 às 17h45.",
+   "mascarado": "Sra. M*** W***, sua consulta foi remarcada para 08/01/2024 às 17h45."
   },
   {
    "texto": "Reserva confirmada para Augusta Coelho de Bueno, passaporte MJ429492, voo para São Paulo em 14/07/2027.",
@@ -4400,7 +4463,7 @@
      "PESSOA",
      23,
      41,
-     0.65
+     0.9
     ]
    ],
    "anonimizado": "Quem atendeu foi o Dr. [PESSOA_1].",
@@ -4530,12 +4593,12 @@
     [
      "PESSOA",
      18,
-     22,
-     0.6
+     30,
+     0.65
     ]
    ],
-   "anonimizado": "bom dia! aqui é o [PESSOA_1] gabriel, filho da dona cleide",
-   "mascarado": "bom dia! aqui é o e*** gabriel, filho da dona cleide"
+   "anonimizado": "bom dia! aqui é o [PESSOA_1], filho da dona cleide",
+   "mascarado": "bom dia! aqui é o e*** g***, filho da dona cleide"
   },
   {
    "texto": "manda o pix pro thiaguinho q ele paga o churras",
@@ -4545,9 +4608,22 @@
   },
   {
    "texto": "Oii, sou a Ayla, mãe do Anthony do 3º ano B",
-   "entidades": [],
-   "anonimizado": "Oii, sou a Ayla, mãe do Anthony do 3º ano B",
-   "mascarado": "Oii, sou a Ayla, mãe do Anthony do 3º ano B"
+   "entidades": [
+    [
+     "PESSOA",
+     11,
+     15,
+     0.6
+    ],
+    [
+     "PESSOA",
+     24,
+     31,
+     0.8
+    ]
+   ],
+   "anonimizado": "Oii, sou a [PESSOA_1], mãe do [PESSOA_2] do 3º ano B",
+   "mascarado": "Oii, sou a A***, mãe do A*** do 3º ano B"
   },
   {
    "texto": "meu cpf é 967 029 433 93, pode conferir?",
@@ -4645,7 +4721,7 @@
      "PESSOA",
      39,
      60,
-     0.65
+     0.9
     ]
    ],
    "anonimizado": "Atendente: [PESSOA_1]. Cliente: [PESSOA_2].",
@@ -4997,9 +5073,16 @@
   },
   {
    "texto": "O Grêmio venceu o Inter por 2 a 1 no Beira-Rio.",
-   "entidades": [],
-   "anonimizado": "O Grêmio venceu o Inter por 2 a 1 no Beira-Rio.",
-   "mascarado": "O Grêmio venceu o Inter por 2 a 1 no Beira-Rio."
+   "entidades": [
+    [
+     "PESSOA",
+     43,
+     46,
+     0.6
+    ]
+   ],
+   "anonimizado": "O Grêmio venceu o Inter por 2 a 1 no Beira-[PESSOA_1].",
+   "mascarado": "O Grêmio venceu o Inter por 2 a 1 no Beira-R***."
   },
   {
    "texto": "Agência de turismo em Natal oferece passeio às dunas de Genipabu.",
@@ -5015,9 +5098,22 @@
   },
   {
    "texto": "Leia o capítulo 3 de Dom Casmurro até sexta.",
-   "entidades": [],
-   "anonimizado": "Leia o capítulo 3 de Dom Casmurro até sexta.",
-   "mascarado": "Leia o capítulo 3 de Dom Casmurro até sexta."
+   "entidades": [
+    [
+     "PESSOA",
+     0,
+     4,
+     0.6
+    ],
+    [
+     "PESSOA",
+     21,
+     33,
+     0.8
+    ]
+   ],
+   "anonimizado": "[PESSOA_1] o capítulo 3 de [PESSOA_2] até sexta.",
+   "mascarado": "L*** o capítulo 3 de D*** C*** até sexta."
   },
   {
    "texto": "A temperatura máxima prevista para amanhã é de 31 graus em Cuiabá.",

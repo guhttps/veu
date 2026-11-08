@@ -14,6 +14,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 - **Cache de detecção** para agentes que reenviam a conversa inteira a cada turno (Python e JavaScript): textos longos já analisados não são analisados de novo. Guarda só posições e tipos, nunca o texto, com chave BLAKE2 e sal aleatório; no proxy, cada credencial tem o seu espaço. `[deteccao] cache = 0` desliga. Acertos e falhas aparecem em `/veu/estatisticas` e `/veu/metricas`.
 
+- **Nomes do Censo 2022 do IBGE:** cerca de 5 mil prenomes e 2 mil sobrenomes (`scripts/gerar_nomes_ibge.py`). Prenomes que também são palavras comuns no dicionário pt_BR ("Rosa", "Natal") só contam com contexto, e quem é muito mais comum como sobrenome ("Silva") não conta como prenome. No privacy-filter-br, o vazamento de nomes caiu de 15,4% para 1,4%.
+- **Propagação de nomes confirmados:** depois de "Rayane Souza", as menções a "rayane", "RAYANE SOUZA" ou "Jose" (sem acento) no mesmo texto recebem o mesmo marcador.
+- Municípios do IBGE que não começam com um prenome ("Belo Jardim", mas não "Paulo Afonso"), sequências que começam com tipo de logradouro ("Avenida Paulista") ou com São, Santo e Santa e rótulos de formulário ("Razão Social", "Certidão de Nascimento") não são mais lidos como nomes de pessoas.
+
 ### Alterado
 - `veu avaliar --max-vazamento` vale para a validação (e para o conjunto escolhido), não para o desafio, que existe para mostrar onde o Véu ainda erra.
 

@@ -36,6 +36,9 @@ EXTRA = [
     "CPF: 529.982.***-** e ***.982.247-**; CNPJ 11.222.333/****-** e 11 222 333 0001 81",
     "RG nº 12.34***-*, CNH nº 02650******, Título de Eleitor nº 1023****0191, CEP 01310 100",
     "RG 12 345 678 9 e CNH 0265030646-1; o campo ***.***.***-** veio vazio",
+    "Oi, sou a Rayane Souza. kkkk a rayane esqueceu o carregador. RAYANE SOUZA assinou. A rayanesouza não.",
+    "Responsável: Anthony Raul Viana. Endereço: Avenida Paulista. Evento em São Cristóvão, com Kawanny Rodrigues.",
+    "O José Carlos ligou; depois o jose voltou. Rosa Pereira ligou e a rosa murchou. Razão Social: Exemplo Ltda",
 ]
 
 

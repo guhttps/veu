@@ -87,3 +87,31 @@ Toyota
 Honda
 Hyundai
 Renault
+# Rótulos de formulários e documentos, que aparecem com iniciais maiúsculas.
+Razão Social
+Nome Social
+Nome Fantasia
+Nome Completo
+Recursos Humanos
+Título de Eleitor
+Título Eleitoral
+Certidão de Nascimento
+Certidão de Casamento
+Certidão de Óbito
+Carteira de Trabalho
+Carteira de Identidade
+Carteira Nacional de Habilitação
+Data de Nascimento
+Inscrição Estadual
+Inscrição Municipal
+Nota Fiscal
+Situação Atual
+Situação Cadastral
+Dados Pessoais
+Dados Bancários
+Acordo de Confidencialidade
+Termo de Consentimento
+Ordem de Serviço
+Ficha Cadastral
+Declaração de Residência
+Comprovante de Residência

@@ -10,7 +10,7 @@ Você recebe:    "Olá Maria Souza, ..."
 ```
 
 - **Sem dependências e sem servidor:** roda no Node, no Deno, no Bun, no navegador e em edge functions.
-- **Mesma detecção da versão em Python:** um teste de conformidade com 279 casos garante resultados idênticos.
+- **Mesma detecção da versão em Python:** um teste de conformidade com 282 casos garante resultados idênticos.
 - **Funciona com o que você já usa:** SDKs da OpenAI e da Anthropic, AI SDK da Vercel e qualquer código que aceite um `fetch`.
 
 ```bash

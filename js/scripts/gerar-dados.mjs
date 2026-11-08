@@ -16,11 +16,12 @@ function wordlist(name) {
 }
 
 const lists = {
-  firstNames: wordlist("first_names.txt"),
-  surnames: wordlist("surnames.txt"),
-  ambiguous: wordlist("ambiguous.txt"),
+  // Listas curadas mais as do Censo 2022 do IBGE (scripts/gerar_nomes_ibge.py).
+  firstNames: [...new Set([...wordlist("first_names.txt"), ...wordlist("ibge_prenomes.txt")])],
+  surnames: [...new Set([...wordlist("surnames.txt"), ...wordlist("ibge_sobrenomes.txt")])],
+  ambiguous: [...new Set([...wordlist("ambiguous.txt"), ...wordlist("ibge_ambiguos.txt")])],
   stopwords: wordlist("stopwords.txt"),
-  places: wordlist("places.txt"),
+  places: [...new Set([...wordlist("places.txt"), ...wordlist("ibge_municipios.txt")])],
   organizations: wordlist("organizations.txt"),
 };
 const secrets = JSON.parse(readFileSync(join(data, "segredos.json"), "utf8")).regras;
