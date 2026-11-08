@@ -253,6 +253,7 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 | **Python** | `openai_client()`, `anthropic_client()`, transportes `httpx`, LangChain, `@protect`, `veu.session()` | [Python](docs/integracoes.md#python) |
 | **JavaScript** | `createFetch()` para os SDKs da OpenAI e da Anthropic, middleware do AI SDK da Vercel, uso no navegador | [@guhttps/veu](js/README.md) |
 | **Agentes** | Servidor MCP (`ler_protegido`, `anonimizar_arquivo`...), plugin e ganchos para Claude Code, ganchos para Cursor | [Agentes](docs/integracoes.md#claude-code-e-cursor) |
+| **n8n** | Nó "Véu" (esconder e restaurar) e modelo de atendimento por WhatsApp com a Evolution API | [n8n](n8n/README.md) |
 | **Open WebUI** | Filtro que esconde os dados das mensagens e devolve os dados reais nas respostas (beta) | [Open WebUI](docs/integracoes.md#open-webui) |
 | **Fontes** | Notion (páginas e bases), Google Docs, Sheets e Slides, links, Excel, Word, PowerPoint e PDF | [Fontes](docs/integracoes.md#notion-google-e-documentos) |
 | **Empresas** | Gateway com equipes, auditoria encadeada, Redis e desvio para modelo interno; guardrail do LiteLLM; Helm e docker-compose | [Empresas](docs/empresas.md) |
@@ -392,7 +393,7 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 - [x] Restauração segura contra injeção de prompt (links, ferramentas, marcadores forjados)
 - [x] Benchmark com dados em português de terceiros, comparado ao Presidio
 - [x] Cache de detecção para agentes que reenviam a conversa inteira a cada turno
-- [ ] Nó para o n8n (WhatsApp com IA sem expor o CPF do cliente)
+- [x] Nó para o n8n (WhatsApp com IA sem expor o CPF do cliente)
 - [x] Documentos de Portugal e da América Latina (CUIT, CURP, RFC, RUT, NIT, RUC, RIF e cédulas)
 - [ ] Documentos de Angola, Moçambique, Estados Unidos e Europa; MRZ de passaporte, VIN e carteiras de criptomoeda
 - [ ] Nomes de outras línguas sem precisar de modelo

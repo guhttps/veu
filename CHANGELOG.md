@@ -45,6 +45,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 - **Filtro do Open WebUI** (beta): `examples/open-webui/veu.py` instala o Véu como função do Open WebUI, que esconde os dados das mensagens e devolve os dados reais nas respostas, com um cofre por conversa (pedaços de streaming sem a conversa identificada nunca são restaurados).
 
+- **Nó do n8n** (`n8n/`, pacote `@guhttps/n8n-nodes-veu`): operações "Esconder dados" e "Restaurar dados", sem dependências em tempo de execução (a biblioteca do Véu vai embutida), e um modelo pronto de atendimento por WhatsApp com a Evolution API.
+
 ### Corrigido
 - Nomes ambíguos que o dicionário marca como palavras (sobrenomes como Costa e Nascimento) só se propagam com inicial maiúscula: "data de nascimento" não vira mais nome de pessoa. O gerador de listas passou a ler também as regras de sufixo do dicionário.
 - Restauração em streaming: um marcador solto colado a uma palavra (`_CPF_1`, `xCPF_1`) era restaurado quando chegava num pedaço separado, embora no texto inteiro não fosse. Achado pelos testes de propriedade.

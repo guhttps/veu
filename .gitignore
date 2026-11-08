@@ -29,3 +29,4 @@ js/build-test/
 extensao/veu.global.js
 web/veu.global.js
 .hypothesis/
+n8n/node_modules/
