@@ -42,6 +42,6 @@
   },
   "devDependencies": {
     "esbuild": "0.28.2",
-    "n8n-workflow": "2.16.0"
+    "n8n-workflow": "2.47.0"
   }
 }
