@@ -84,10 +84,11 @@ No painel, tudo é feito com cliques:
   - conecte o **Claude Desktop** ou o **Cursor** com um botão;
   - copie o endereço para n8n, Make, Zapier e outros apps.
 - **O que proteger:**
-  - caixinhas para nomes, documentos, dados financeiros, senhas e outros;
+  - caixinhas para nomes, documentos (do Brasil e de outros países), dados financeiros, senhas e outros;
+  - usar um modelo no seu computador (Ollama) quando o texto tiver dados pessoais, para eles nem saírem da máquina;
   - uma lista de dados da empresa que nunca devem ser escondidos;
   - a opção de ligar o Véu junto com o computador.
-- **Atividade:** quantos dados foram protegidos (só contagens, nunca os valores).
+- **Atividade:** quantos dados foram protegidos e os pedidos recentes, com o destino e quantos dados foram escondidos e voltaram (só contagens, nunca os valores).
 
 Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 
@@ -373,7 +374,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 550 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 560 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa

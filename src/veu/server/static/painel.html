@@ -69,6 +69,11 @@ legend { font-weight: 700; margin-bottom: 4px; }
 .numeros span { color: var(--suave); font-size: 14px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chips span { border: 1px solid var(--borda); border-radius: 999px; padding: 2px 10px; font-size: 14px; }
+.recentes { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+.recentes th, .recentes td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+.recentes th { font-weight: 600; }
+#modelo-local { box-sizing: border-box; width: calc(100% - 28px); margin: 8px 0 0 28px; padding: 6px 8px; border: 1px solid var(--borda); border-radius: 6px; background: transparent; color: inherit; font: inherit; }
+@media (max-width: 640px) { .recentes th:nth-child(4), .recentes td:nth-child(4) { display: none; } }
 details { margin-top: 10px; }
 summary { cursor: pointer; font-weight: 600; }
 pre.codigo { background: var(--campo); border: 1px solid var(--borda); border-radius: 10px; padding: 10px; overflow-x: auto; font-size: 13px; }
@@ -167,6 +172,15 @@ footer code { word-break: break-all; }
       <fieldset id="bloquear"><legend>Nem enviar (o pedido é recusado)</legend></fieldset>
       <fieldset id="operadores"><legend>Como esconder</legend></fieldset>
       <fieldset>
+        <legend>Modelo local</legend>
+        <label class="opcao">
+          <input id="desvio" type="checkbox">
+          <div><b>Quando o texto tiver dados pessoais, usar um modelo no seu computador (Ollama)</b>
+            <span>O pedido inteiro vai para o Ollama em vez da IA externa: os dados nem saem da máquina.</span></div>
+        </label>
+        <input id="modelo-local" type="text" placeholder="llama3.1" aria-label="Modelo do Ollama">
+      </fieldset>
+      <fieldset>
         <legend>Nunca esconder</legend>
         <p class="sub">Um por linha: dados da sua empresa, como o e-mail de contato ou o CNPJ.</p>
         <textarea id="ignorar" rows="3" placeholder="contato@minhaempresa.com.br"></textarea>
@@ -188,6 +202,10 @@ footer code { word-break: break-all; }
       <div><b id="n-bloqueados">0</b><span>pedidos recusados</span></div>
     </div>
     <div class="chips" id="por-tipo"></div>
+    <h3>Pedidos recentes</h3>
+    <p class="sub">Para onde foi cada pedido e quantos dados foram escondidos e voltaram. Nunca os valores.</p>
+    <table class="recentes"><thead><tr><th>Quando</th><th>Destino</th><th>Escondidos</th><th>Voltaram</th><th>Resultado</th></tr></thead>
+      <tbody id="recentes"><tr><td colspan="5">Nenhum pedido ainda.</td></tr></tbody></table>
   </section>
 
   <footer>Véu {{VERSAO}} · configuração em <code id="arquivo-config"></code> · <a href="https://github.com/guhttps/veu" target="_blank" rel="noreferrer">ajuda</a></footer>
@@ -294,6 +312,8 @@ footer code { word-break: break-all; }
       lugares.operadores.append(opcao("radio", "operador", chave, titulo, "", configuracoes.operador === chave));
     }
     $("ignorar").value = configuracoes.ignorar.join("\n");
+    $("desvio").checked = configuracoes.desvio;
+    $("modelo-local").value = configuracoes.modelo_local;
   }
 
   function montarAplicativos() {
@@ -321,6 +341,23 @@ footer code { word-break: break-all; }
       chip.textContent = `${quantidade} ${nomeDoTipo(rotulo)}`;
       chips.append(chip);
     }
+    const linhas = $("recentes");
+    const recentes = numeros.recentes || [];
+    if (!recentes.length) return;
+    const resumo = (contagens) => Object.entries(contagens || {}).map(([rotulo, n]) => `${n} ${nomeDoTipo(rotulo)}`).join(", ") || "—";
+    linhas.replaceChildren(...recentes.map((pedido) => {
+      const linha = document.createElement("tr");
+      const resultado = pedido.bloqueado ? "Recusado" : pedido.desviado_para ? `Modelo local (${pedido.desviado_para})`
+        : pedido.sem_anonimizar ? "Sem proteção (configurado)" : (pedido.status || 0) >= 400 ? `Erro ${pedido.status}` : "Protegido";
+      const celulas = [new Date(pedido.quando).toLocaleTimeString(), pedido.provedor || "", resumo(pedido.entidades),
+        resumo(pedido.restaurados), resultado];
+      for (const texto of celulas) {
+        const celula = document.createElement("td");
+        celula.textContent = texto; // textContent: nada vira HTML
+        linha.append(celula);
+      }
+      return linha;
+    }));
   }
 
   // Arquivos -----------------------------------------------------------------------------------------------------
@@ -488,6 +525,8 @@ footer code { word-break: break-all; }
       bloquear: formulario.getAll("bloquear"),
       operador: formulario.get("operador") || "token",
       ignorar: $("ignorar").value.split("\n"),
+      desvio: $("desvio").checked,
+      modelo_local: $("modelo-local").value,
     };
     try {
       await enviarJson("/veu/painel/configuracoes", escolhas);

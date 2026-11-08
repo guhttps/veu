@@ -145,6 +145,10 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
     api_sessions = session_store(config.session_backend, veu.new_vault, config.session_ttl, "veu:api:", cipher)
     stats = Stats()
     audit = AuditLog(config.audit_log, config.audit_secret)
+
+    def log_request(**fields) -> None:
+        audit.write(**fields)
+        stats.remember(**fields)
     operator_instances: dict[str, Veu] = {config.operator: veu}
     max_body = int(config.max_body_mb * 1024 * 1024)
     client = httpx.AsyncClient(
@@ -347,7 +351,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         if adapter is not None and not provider.anonymize:
             # Provedor configurado com anonimizar = false (por exemplo, um modelo local): repassa sem alterar.
             stats.record(provider.name, Counter(), team=team_name(request))
-            audit.write(provedor=provider.name, endpoint=adapter.name, sem_anonimizar=True, equipe=team_name(request))
+            log_request(provedor=provider.name, endpoint=adapter.name, sem_anonimizar=True, equipe=team_name(request))
             return await passthrough(request, url, headers, body)
         if adapter is None:
             if request.method in ("GET", "HEAD") or config.unknown_endpoints == "repassar":
@@ -381,7 +385,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             prepared = await run_in_threadpool(prepare)
         except BlockedError as error:
             stats.record(provider.name, error.counts, blocked=True, team=team_name(request))
-            audit.write(provedor=provider.name, endpoint=adapter.name, bloqueado=sorted(error.labels),
+            log_request(provedor=provider.name, endpoint=adapter.name, bloqueado=sorted(error.labels),
                         entidades=dict(error.counts), status=400, equipe=team_name(request))
             return JSONResponse(adapter.error_body(str(error)), status_code=400,
                                 headers={"x-veu-bloqueado": ",".join(error.labels)})
@@ -407,7 +411,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
                 else:
                     routed_headers["authorization"] = f"Bearer {key_value}"
             stats.record(target.name, prepared.counts, routed=True, team=team_name(request))
-            audit.write(provedor=provider.name, endpoint=adapter.name, desviado_para=target.name,
+            log_request(provedor=provider.name, endpoint=adapter.name, desviado_para=target.name,
                         entidades=dict(prepared.counts), equipe=team_name(request))
             return await passthrough(request, target.url + url[len(provider.url):], routed_headers, original)
 
@@ -427,7 +431,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         def finish(status: int) -> None:
             stats.record(provider.name, prepared.counts, error=status >= 500, team=team_name(request),
                          restored=restored)
-            audit.write(provedor=provider.name, endpoint=adapter.name, status=status, stream=prepared.stream,
+            log_request(provedor=provider.name, endpoint=adapter.name, status=status, stream=prepared.stream,
                         entidades=dict(prepared.counts), restaurados=dict(restored),
                         duracao_ms=round((time.monotonic() - started) * 1000), equipe=team_name(request))
 
