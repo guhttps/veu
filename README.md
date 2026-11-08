@@ -1,3 +1,4 @@
+<!-- mcp-name: io.github.guhttps/veu -->
 <p align="center">
   <img src="docs/banner.png" alt="Véu: esconde dados pessoais e segredos antes de o texto chegar à IA e devolve os dados reais na resposta" width="100%">
 </p>
@@ -11,6 +12,8 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/guhttps/veu" alt="Licença MIT"></a>
 </p>
 
+**Português** · [English](README.en.md)
+
 # Véu
 
 **O Véu esconde dados pessoais e segredos antes de um texto chegar a uma IA e devolve os dados reais na resposta.** A IA trabalha com `[PESSOA_1]`, `[EMAIL_1]` e `[CHAVE_API_1]`. Você vê os dados de verdade.
@@ -21,6 +24,8 @@ A IA recebe    Sou a [PESSOA_1] ([EMAIL_1]), CPF [CPF_1]. Use a chave [CHAVE_API
 A IA responde  Pronto, [PESSOA_1]! Configurei [CHAVE_API_1] no seu .env.
 Você recebe    Pronto, Maria Souza! Configurei sk-proj-4f9a... no seu .env.
 ```
+
+<p align="center"><img src="docs/demo.gif" alt="A página do Véu: um pedido de atendimento com nome, e-mail, CPF e telefone vira marcadores, e a resposta da IA volta com os dados reais" width="640"></p>
 
 Empresas e pessoas estão colocando IA no atendimento, nos contratos, no RH e no código. Junto com cada pergunta vão nomes, documentos e contatos de clientes, e também chaves de API e senhas. O Véu fica no meio do caminho e protege:
 
@@ -392,7 +397,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 741 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 742 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa

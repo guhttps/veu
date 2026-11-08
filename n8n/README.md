@@ -37,6 +37,25 @@ Importe [`modelos/whatsapp-evolution.json`](modelos/whatsapp-evolution.json) em 
 
 ## O que é detectado
 
-Os mesmos dados da [biblioteca do Véu](https://github.com/guhttps/veu#o-que-é-detectado): nomes, CPF, CNPJ, RG, CNH, telefones, e-mails, endereços, cartões, contas, chave Pix, chaves de API, senhas e documentos de Portugal e da América Latina. Nenhuma detecção automática é perfeita: veja o [benchmark](https://github.com/guhttps/veu#benchmark).
+Os mesmos dados da [biblioteca do Véu](https://github.com/guhttps/veu#o-que-é-detectado): nomes, CPF, CNPJ, RG, CNH, telefones, e-mails, endereços, cartões, contas, chave Pix, chaves de API, senhas e documentos de mais 21 países. Nenhuma detecção automática é perfeita: veja o [benchmark](https://github.com/guhttps/veu#benchmark).
 
-Licença MIT. Repositório: https://github.com/guhttps/veu
+## In English
+
+**Véu for n8n** hides personal data and secrets (names, ID numbers, phone numbers, e-mails, cards, API keys) before text goes to an AI model, and puts the real data back in the answer. It is built for AI customer support over WhatsApp without exposing customer data. The node has no runtime dependencies: detection runs inside n8n and calls no external service.
+
+**Install:** in n8n, open **Settings > Community nodes > Install** and enter `@guhttps/n8n-nodes-veu`.
+
+**Operations** (the node's interface is in Portuguese):
+
+- **Esconder dados** (hide data): takes a text and returns `textoProtegido` (with markers such as `[CPF_1]`), `encontrados` (counts per type) and `cofre` (the vault). Send only `textoProtegido` to the AI.
+- **Restaurar dados** (restore data): takes the AI's answer and the `cofre` from the previous step (for example `{{ $('Véu: esconder').item.json.cofre }}`) and returns `textoRestaurado`.
+
+Options of "Esconder dados": *Como esconder* (reversible markers, a mask such as `***.982.247-**`, or removal), *Recusar se tiver* (types that make the item fail instead of continuing; default `CHAVE_PRIVADA`), *Nunca esconder* (your company's own values that are never hidden) and *Campo de saída* (the output field name).
+
+**The vault holds the real data:** pass it only to "Restaurar dados", never to the AI. It stays in n8n's execution data, as the original text would.
+
+**Template:** import [`modelos/whatsapp-evolution.json`](modelos/whatsapp-evolution.json) (WhatsApp through the Evolution API, with OpenAI). Set the OpenAI credential and the `EVOLUTION_URL`, `EVOLUTION_INSTANCIA` and `EVOLUTION_APIKEY` variables.
+
+**Detection:** the same as the [Véu library](https://github.com/guhttps/veu/blob/main/README.en.md): names, Brazilian documents validated by check digits, phones, e-mails, addresses, cards, bank accounts, API keys, passwords and documents from 21 other countries. No automatic detection is perfect.
+
+MIT license. Repositório / repository: https://github.com/guhttps/veu

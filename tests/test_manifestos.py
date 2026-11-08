@@ -45,3 +45,13 @@ def test_committed_manifests_match_the_generator():
     version = scoop["version"]
     assert f"veu-{version}.tar.gz" in formula and f"veu-{version}-py3-none-any.whl" in formula
     assert "pip_install_and_link" in formula and scoop["bin"] == "venv\\Scripts\\veu.exe"
+
+
+def test_mcp_registry_server_json_matches_the_package():
+    import veu
+
+    server = json.loads((ROOT / "server.json").read_text(encoding="utf-8"))
+    assert server["version"] == veu.__version__ and server["packages"][0]["version"] == veu.__version__
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert f"<!-- mcp-name: {server['name']} -->" in readme  # o registro confere a posse do pacote no PyPI por aqui
+    assert server["name"].startswith("io.github.guhttps/") and len(server["description"]) <= 100

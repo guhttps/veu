@@ -137,7 +137,7 @@ class Linker:
             if not anchor:
                 return page
             return f"{page}#{self.page_anchors.get(page, {}).get(anchor, site_slug(anchor))}"
-        if resolved.startswith("docs/") and resolved.endswith((".png", ".svg", ".jpg")):
+        if resolved.startswith("docs/") and resolved.endswith((".png", ".svg", ".jpg", ".gif")):
             return resolved.removeprefix("docs/")
         return REPO + resolved + (f"#{anchor}" if anchor else "")
 
@@ -284,7 +284,7 @@ def build_sources(target: Path) -> list[str]:
         text = convert_alerts(linker.rewrite((ROOT / source).read_text(encoding="utf-8"), source))
         (target / page).write_text(text, encoding="utf-8", newline="\n")
         written.append(page)
-    for image in (ROOT / "docs").glob("*.png"):
+    for image in [*(ROOT / "docs").glob("*.png"), *(ROOT / "docs").glob("*.gif")]:
         shutil.copyfile(image, target / image.name)
     return written
 

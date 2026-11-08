@@ -2,7 +2,7 @@
 
 O Véu esconde dados pessoais e segredos antes de textos irem para modelos de IA e restaura as respostas, com suporte completo a documentos brasileiros. Leia o README para a visão geral.
 
-Mantenha o README em dia: toda mudança visível (recurso, integração, comando, número de testes, versão) atualiza o README no mesmo commit, e também o banner (`docs/banner.html` + `node docs/gerar-banner.mjs`) e a descrição do repositório quando mudarem.
+Mantenha o README em dia: toda mudança visível (recurso, integração, comando, número de testes, versão) atualiza o README no mesmo commit (e o `README.en.md`, quando a mudança aparece nele), e também o banner (`docs/banner.html` + `node docs/gerar-banner.mjs`) e a descrição do repositório quando mudarem.
 
 ## Comandos
 
@@ -33,7 +33,7 @@ No Windows, o ambiente virtual fica em `.venv/Scripts/`.
 - `src/veu/reporting.py`: relatórios (texto, GitHub, SARIF, JSON). `src/veu/hooks.py`: ganchos para Claude Code e Cursor. `src/veu/demo.py`: `veu demonstrar`.
 - `src/veu/integrations/litellm.py`: guardrail do LiteLLM. `src/veu/server/state.py`: sessões (memória e Redis), auditoria encadeada e métricas.
 - `js/`: biblioteca `@guhttps/veu` (TypeScript), com `createFetch` e o middleware do AI SDK. Porte fiel do Python; `scripts/gerar-dados.mjs` copia as listas de `src/veu/data`.
-- `web/`: página do GitHub Pages. `extensao/`: extensão para Chrome e Edge. `plugin/` e `.claude-plugin/`: plugin do Claude Code com skill.
+- `web/`: página do GitHub Pages (os textos ficam em `web/textos.js`, em português e inglês; `scripts/gravar_demo.mjs` grava a demonstração animada). `extensao/`: extensão para Chrome e Edge. `plugin/` e `.claude-plugin/`: plugin do Claude Code com skill.
 - `deploy/`: chart Helm e docker-compose. `packaging/`: fórmula do Homebrew e manifesto do Scoop (`scripts/atualizar_manifestos.py` depois de cada versão no PyPI).
 - `action.yml`: GitHub Action composta (verifica dados pessoais no repositório).
 - `src/veu/bench/`: gerador de dados anotados e avaliação.

@@ -45,7 +45,7 @@ def test_internal_links_point_to_existing_pages_and_anchors(pages):
     broken = []
     for name, text in pages.items():
         for link in re.findall(r"\]\(([^)\s]+)\)", outside_code(text)):
-            if re.match(r"[a-z]+:", link) or link.endswith(".png"):
+            if re.match(r"[a-z]+:", link) or link.endswith((".png", ".gif")):
                 continue
             page, _, anchor = link.partition("#")
             page = page or name
