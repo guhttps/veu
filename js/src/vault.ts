@@ -6,9 +6,10 @@ import { fold, onlyDigits } from "./text.ts";
 /** Rótulos comparados só pelos dígitos ("529.982.247-25" e "52998224725" são o mesmo CPF). */
 export const DIGIT_LABELS: ReadonlySet<string> = new Set([
   "CPF", "TELEFONE", "CEP", "CARTAO_CREDITO", "PIS", "CNS", "CNH", "TITULO_ELEITOR", "RENAVAM",
-  "CONTA_BANCARIA", "PROCESSO",
+  "CONTA_BANCARIA", "PROCESSO", "NIF_PT", "NISS_PT", "CUIT", "DNI", "NIT", "RUC", "CEDULA",
 ]);
-export const CODE_LABELS: ReadonlySet<string> = new Set(["CNPJ", "RG", "PLACA", "PASSAPORTE", "CHAVE_PIX"]);
+export const CODE_LABELS: ReadonlySet<string> = new Set(["CNPJ", "RG", "PLACA", "PASSAPORTE", "CHAVE_PIX", "CC_PT", "CURP",
+  "RFC", "RUT", "RIF"]);
 
 // O colchete final é opcional: modelos às vezes escrevem "[CPF_1" ou "[CPF 1]".
 const PLACEHOLDER = "\\[\\s*(?<ph_label>[A-Za-z]+(?:_[A-Za-z]+)*)[_\\s-]+(?<ph_id>[0-9A-Fa-f]{1,16})(?:\\s*\\]|(?![\\p{L}\\p{N}_]))";

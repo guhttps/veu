@@ -437,6 +437,161 @@
    "mascarado": "tel (**) *****‑**21; chave sk-****; período 2020–2021"
   },
   {
+   "texto": "NIF: 123 456 789. Cartão de Cidadão 12345678 9 ZZ1. NISS 11234567892. CUIT 20-12345678-6 e cuit 30123456781.",
+   "entidades": [
+    [
+     "NIF_PT",
+     5,
+     16,
+     0.95
+    ],
+    [
+     "CC_PT",
+     36,
+     50,
+     0.97
+    ],
+    [
+     "NISS_PT",
+     57,
+     68,
+     0.97
+    ],
+    [
+     "CUIT",
+     75,
+     88,
+     0.97
+    ],
+    [
+     "CUIT",
+     96,
+     107,
+     0.96
+    ]
+   ],
+   "anonimizado": "NIF: [NIF_PT_1]. Cartão de Cidadão [CC_PT_1]. NISS [NISS_PT_1]. CUIT [CUIT_1] e cuit [CUIT_2].",
+   "mascarado": "NIF: *** *** *89. Cartão de Cidadão ******** * *Z1. NISS *********92. CUIT **-*******8-6 e cuit *********81."
+  },
+  {
+   "texto": "DNI 12.345.678, CURP XAXX900101HDFXXX03, RFC PEPJ900101AB8 e o genérico XAXX010101000.",
+   "entidades": [
+    [
+     "DNI",
+     4,
+     14,
+     0.85
+    ],
+    [
+     "CURP",
+     21,
+     39,
+     1.0
+    ],
+    [
+     "RFC",
+     45,
+     58,
+     0.97
+    ]
+   ],
+   "anonimizado": "DNI [DNI_1], CURP [CURP_1], RFC [RFC_1] e o genérico XAXX010101000.",
+   "mascarado": "DNI **.***.*78, CURP ****************03, RFC ***********B8 e o genérico XAXX010101000."
+  },
+  {
+   "texto": "RUT 12.345.678-5, RUT: 211234560019, cédula 1.234.567-2, cédula 1712345675, NIT 900.123.456-8.",
+   "entidades": [
+    [
+     "RUT",
+     4,
+     16,
+     0.97
+    ],
+    [
+     "RUT",
+     23,
+     35,
+     0.95
+    ],
+    [
+     "CEDULA",
+     44,
+     55,
+     0.97
+    ],
+    [
+     "CEDULA",
+     64,
+     74,
+     0.95
+    ],
+    [
+     "NIT",
+     80,
+     93,
+     0.97
+    ]
+   ],
+   "anonimizado": "RUT [RUT_1], RUT: [RUT_2], cédula [CEDULA_1], cédula [CEDULA_2], NIT [NIT_1].",
+   "mascarado": "RUT **.***.**8-5, RUT: **********19, cédula *.***.**7-2, cédula ********75, NIT ***.***.**6-8."
+  },
+  {
+   "texto": "RUC 20123456786, RUC 1234567-9, RIF V-12345678-1, RG 12.345.678-5 e protocolo 202569473616.",
+   "entidades": [
+    [
+     "RUC",
+     4,
+     15,
+     0.96
+    ],
+    [
+     "RUC",
+     21,
+     30,
+     0.96
+    ],
+    [
+     "RIF",
+     36,
+     48,
+     0.97
+    ],
+    [
+     "RG",
+     53,
+     65,
+     0.95
+    ]
+   ],
+   "anonimizado": "RUC [RUC_1], RUC [RUC_2], RIF [RIF_1], RG [RG_1] e protocolo 202569473616.",
+   "mascarado": "RUC *********86, RUC ******7-9, RIF *-*******8-1, RG **.***.**8-5 e protocolo 202569473616."
+  },
+  {
+   "texto": "Ana Costa ligou; a Costa disse que mora na costa. Data de nascimento de Enrico Nascimento: 01/02/1990.",
+   "entidades": [
+    [
+     "PESSOA",
+     0,
+     9,
+     0.9
+    ],
+    [
+     "PESSOA",
+     72,
+     89,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     91,
+     101,
+     0.85
+    ]
+   ],
+   "anonimizado": "[PESSOA_1] ligou; a [PESSOA_1] disse que mora na costa. Data de nascimento de [PESSOA_2]: [DATA_NASCIMENTO_1].",
+   "mascarado": "A*** C*** ligou; a C*** disse que mora na costa. Data de nascimento de E*** N***: **/**/**90."
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [
@@ -5014,16 +5169,10 @@
      64,
      70,
      0.8
-    ],
-    [
-     "PESSOA",
-     74,
-     79,
-     0.6
     ]
    ],
-   "anonimizado": "Cartão final 4242, número completo [CARTAO_CREDITO_1], titular [PESSOA_1] V. [PESSOA_2].",
-   "mascarado": "Cartão final 4242, número completo **** **** **** **44, titular M*** V. T***."
+   "anonimizado": "Cartão final 4242, número completo [CARTAO_CREDITO_1], titular [PESSOA_1] V. Teles.",
+   "mascarado": "Cartão final 4242, número completo **** **** **** **44, titular M*** V. Teles."
   },
   {
    "texto": "Ag. 3456-7 C/C 12345-6, favorecida Joana Prado.",
@@ -5117,16 +5266,9 @@
   },
   {
    "texto": "O Grêmio venceu o Inter por 2 a 1 no Beira-Rio.",
-   "entidades": [
-    [
-     "PESSOA",
-     43,
-     46,
-     0.6
-    ]
-   ],
-   "anonimizado": "O Grêmio venceu o Inter por 2 a 1 no Beira-[PESSOA_1].",
-   "mascarado": "O Grêmio venceu o Inter por 2 a 1 no Beira-R***."
+   "entidades": [],
+   "anonimizado": "O Grêmio venceu o Inter por 2 a 1 no Beira-Rio.",
+   "mascarado": "O Grêmio venceu o Inter por 2 a 1 no Beira-Rio."
   },
   {
    "texto": "Agência de turismo em Natal oferece passeio às dunas de Genipabu.",
@@ -5145,19 +5287,13 @@
    "entidades": [
     [
      "PESSOA",
-     0,
-     4,
-     0.6
-    ],
-    [
-     "PESSOA",
      21,
      33,
      0.8
     ]
    ],
-   "anonimizado": "[PESSOA_1] o capítulo 3 de [PESSOA_2] até sexta.",
-   "mascarado": "L*** o capítulo 3 de D*** C*** até sexta."
+   "anonimizado": "Leia o capítulo 3 de [PESSOA_1] até sexta.",
+   "mascarado": "Leia o capítulo 3 de D*** C*** até sexta."
   },
   {
    "texto": "A temperatura máxima prevista para amanhã é de 31 graus em Cuiabá.",

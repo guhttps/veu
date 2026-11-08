@@ -38,7 +38,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Perfis prontos** (`veu perfis`, `--perfil`, `VEU_PERFIL` ou `[politica] perfil`): `anonimizacao` (irreversível, sem cofre), `judiciario` (CNJ 615/2025), `juridico` (OAB), `saude` (CFM 2.454/2026), `financeiro` (cartões e contas removidos) e `setor-publico` (guia do TCU: recusa qualquer dado pessoal). As opções escritas no `veu.toml` valem mais que as do perfil.
 - `veu auditoria relatorio`: o registro das operações (LGPD, art. 37) a partir da auditoria, só com metadados, em Markdown ou JSON, com período e conferência da cadeia.
 
+- **Documentos de Portugal e da América Latina**, com dígito verificador (algoritmos conferidos com o python-stdnum): NIF, Cartão de Cidadão e NISS (Portugal), CUIT/CUIL e DNI (Argentina), CURP e RFC (México), RUT (Chile e Uruguai), cédulas (Uruguai, Equador, Colômbia e Venezuela), NIT (Colômbia), RUC (Peru, Equador e Paraguai) e RIF (Venezuela). Três níveis de confiança: formatos estruturados valem sozinhos; números puros, que um CPF ou um protocolo poderiam imitar, só com contexto; num formato ambíguo sem contexto, vence o rótulo brasileiro. Nova categoria no painel.
+- Padrões que só valem com contexto não são nem procurados quando nenhuma palavra de contexto aparece no texto, e a normalização de texto (fold) ficou em cache: a detecção ficou mais rápida mesmo com os novos documentos (de cerca de 357 mil para 393 mil caracteres por segundo).
+
 ### Corrigido
+- Nomes ambíguos que o dicionário marca como palavras (sobrenomes como Costa e Nascimento) só se propagam com inicial maiúscula: "data de nascimento" não vira mais nome de pessoa. O gerador de listas passou a ler também as regras de sufixo do dicionário.
 - Restauração em streaming: um marcador solto colado a uma palavra (`_CPF_1`, `xCPF_1`) era restaurado quando chegava num pedaço separado, embora no texto inteiro não fosse. Achado pelos testes de propriedade.
 
 ### Alterado

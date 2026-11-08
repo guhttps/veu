@@ -87,6 +87,21 @@ CTX_ACCOUNT = ("conta", "conta corrente", "conta-corrente", "c/c", "cc", "agenci
 CTX_PROCESS = ("processo", "autos", "proc", "proc.", "acao", "numero do processo")
 CTX_EMAIL = ("email", "e-mail")
 CTX_IBAN = ("iban", "swift", "bic", "transferencia internacional", "conta internacional")
+# Outros países (pt-PT e espanhol, sem acento: o contexto é comparado depois do fold).
+CTX_NIF_PT = ("nif", "nipc", "contribuinte", "n.o de contribuinte", "numero de identificacao fiscal",
+              "pessoa coletiva", "pessoa colectiva")
+CTX_CC_PT = ("cartao de cidadao", "cc", "n.o do documento", "nic", "bilhete de identidade", "bi")
+CTX_NISS_PT = ("niss", "seguranca social", "n.o de beneficiario")
+CTX_CUIT = ("cuit", "cuil", "afip", "arca", "clave fiscal")
+CTX_DNI = ("dni", "d.n.i", "documento nacional de identidad", "reniec")
+CTX_MX = ("curp", "rfc", "homoclave", "sat", "registro federal de contribuyentes")
+CTX_RUT = ("rut", "run", "rol unico", "rol unico tributario", "sii", "dgi")
+CTX_CEDULA = ("cedula", "c.i", "ci", "c.c", "cedula de ciudadania", "cedula de identidad", "documento de identidad",
+              "carnet de identidad")
+CTX_NIT = ("nit", "dian")
+CTX_RUC = ("ruc", "sunat", "sri", "set", "registro unico de contribuyentes")
+CTX_RIF = ("rif", "seniat")
+_CUIT_PREFIX = "(?:20|23|24|27|30|33|34|50|51|55)"
 
 
 def _phone_adjust(value: str, score: float) -> float | None:
@@ -223,6 +238,36 @@ DEFAULT_SPECS: list[PatternSpec] = [
         "PROCESSO", B + r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}" + E, Scores(0.9, 0.6, 1.0, 0.75),
         v.is_valid_processo_cnj, CTX_PROCESS,
     ),
+    # Outros países. Três níveis de confiança:
+    # - formatos estruturados ou com a pontuação típica: sem contexto (CURP, RFC, CC, CUIT com hífens, RIF);
+    # - numéricos de 11 dígitos ou mais, que podem ser CPF: só com contexto, e aí vencem o CPF;
+    # - numéricos curtos, que qualquer número de 7 a 9 dígitos pode imitar: só com contexto.
+    # A versão do cartão são duas letras ("ZZ", "ZX"): só dígitos seria qualquer protocolo de 12 dígitos.
+    PatternSpec("CC_PT", B + r"\d{8}[ -]?\d[ -]?[A-Z]{2}[ -]?\d" + E, Scores(0.9, None, 0.97, 0.7),
+                v.is_valid_cc_pt, CTX_CC_PT),
+    PatternSpec("NIF_PT", B + r"\d{3}[ .]?\d{3}[ .]?\d{3}" + E, Scores(None, None, 0.95), v.is_valid_nif_pt, CTX_NIF_PT,
+                before=30),
+    PatternSpec("NISS_PT", B + r"[12]\d{10}" + E, Scores(None, None, 0.97), v.is_valid_niss_pt, CTX_NISS_PT, before=30),
+    PatternSpec("CUIT", B + _CUIT_PREFIX + r"-\d{8}-\d" + E, Scores(0.9, None, 0.97, 0.75), v.is_valid_cuit, CTX_CUIT),
+    PatternSpec("CUIT", B + _CUIT_PREFIX + r"\d{9}" + E, Scores(None, None, 0.96), v.is_valid_cuit, CTX_CUIT, before=30),
+    PatternSpec("DNI", B + r"\d{1,2}\.?\d{3}\.?\d{3}(?:-[0-9A-K])?" + E, Scores(None, None, 0.85), None, CTX_DNI,
+                before=20),
+    PatternSpec("CURP", B + r"[A-Z]{4}\d{6}[HMX][A-Z]{5}[0-9A-Z]\d" + E, Scores(0.95, 0.6, 1.0, 0.8), v.is_valid_curp,
+                CTX_MX),
+    PatternSpec("RFC", r"(?<![\w&])[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}" + E, Scores(0.85, None, 0.97), v.is_valid_rfc, CTX_MX),
+    # O RUT chileno e a cédula uruguaia formatados têm o desenho do RG: sem contexto, perdem para ele (0,55 < 0,6).
+    PatternSpec("RUT", B + r"\d{1,2}\.\d{3}\.\d{3}-[\dkK]" + E, Scores(0.55, None, 0.97, 0.75), v.is_valid_rut_cl, CTX_RUT),
+    PatternSpec("RUT", B + r"\d{7,8}-[\dkK]" + E, Scores(None, None, 0.95, 0.75), v.is_valid_rut_cl, CTX_RUT, before=25),
+    PatternSpec("RUT", B + r"\d{12}" + E, Scores(None, None, 0.95), v.is_valid_rut_uy, CTX_RUT, before=25),
+    PatternSpec("CEDULA", B + r"\d\.\d{3}\.\d{3}-\d" + E, Scores(0.55, None, 0.97, 0.75), v.is_valid_ci_uy, CTX_CEDULA),
+    PatternSpec("CEDULA", B + r"\d{10}" + E, Scores(None, None, 0.95), v.is_valid_ci_ec, CTX_CEDULA, before=25),
+    PatternSpec("CEDULA", B + r"(?:\d{1,3}(?:\.\d{3}){1,3}|\d{6,10})" + E, Scores(None, None, 0.85), None, CTX_CEDULA,
+                before=20),
+    PatternSpec("NIT", B + r"\d{3}\.\d{3}\.\d{3}-\d" + E, Scores(0.8, None, 0.97, 0.75), v.is_valid_nit_co, CTX_NIT),
+    PatternSpec("NIT", B + r"\d{8,15}-?\d" + E, Scores(None, None, 0.95, 0.75), v.is_valid_nit_co, CTX_NIT, before=25),
+    PatternSpec("RUC", B + r"(?:\d{11}|\d{13}|\d{5,8}-\d)" + E, Scores(None, None, 0.96, 0.75), v.is_valid_ruc, CTX_RUC,
+                before=25),
+    PatternSpec("RIF", B + r"[VEJPG]-?\d{8}-?\d" + E, Scores(0.9, None, 0.97, 0.75), v.is_valid_rif, CTX_RIF),
 ]
 
 
@@ -236,7 +281,13 @@ class PatternRecognizer:
         self.labels = frozenset(spec.label for spec in self.specs)
 
     def find(self, text: str) -> Iterable[Candidate]:
+        folded: str | None = None
         for spec in self.specs:
+            # Padrões que só valem com contexto: sem nenhuma palavra de contexto no texto, nem procura os números.
+            if spec.scores.valid is None and spec.scores.invalid is None and spec.context_regex is not None:
+                folded = fold(text) if folded is None else folded
+                if spec.context_regex.search(folded) is None:
+                    continue
             for match in spec.compiled.finditer(text):
                 value = match.group(0)
                 if spec.exclude and spec.exclude(value):

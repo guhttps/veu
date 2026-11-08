@@ -19,7 +19,9 @@ const lists = {
   // Listas curadas mais as do Censo 2022 do IBGE (scripts/gerar_nomes_ibge.py).
   firstNames: [...new Set([...wordlist("first_names.txt"), ...wordlist("ibge_prenomes.txt")])],
   surnames: [...new Set([...wordlist("surnames.txt"), ...wordlist("ibge_sobrenomes.txt")])],
-  ambiguous: [...new Set([...wordlist("ambiguous.txt"), ...wordlist("ibge_ambiguos.txt")])],
+  // Ambíguos revistos à mão e os que o dicionário marca como palavras (o anonimizador trata cada um de um jeito).
+  ambiguous: wordlist("ambiguous.txt"),
+  ibgeAmbiguous: wordlist("ibge_ambiguos.txt"),
   stopwords: wordlist("stopwords.txt"),
   places: [...new Set([...wordlist("places.txt"), ...wordlist("ibge_municipios.txt")])],
   organizations: wordlist("organizations.txt"),

@@ -31,7 +31,7 @@ Empresas e pessoas estão colocando IA no atendimento, nos contratos, no RH e no
 E funciona do jeito que você usa IA: no navegador, no computador, no seu código ou no servidor da empresa.
 
 > [!NOTE]
-> O Véu nasceu no Brasil: os documentos brasileiros têm o suporte mais completo e a interface está em português. E-mails, telefones internacionais, cartões, IBAN, IPs e segredos funcionam em textos de qualquer lugar. Os nomes são reconhecidos por listas de nomes brasileiros; para nomes de outras línguas, ligue o detector spaCy ou um modelo local. Documentos de outros países estão nos [próximos passos](#próximos-passos).
+> O Véu nasceu no Brasil: os documentos brasileiros têm o suporte mais completo e a interface está em português. E-mails, telefones internacionais, cartões, IBAN, IPs e segredos funcionam em textos de qualquer lugar. Documentos de Portugal e de nove países da América Latina também são reconhecidos, com dígito verificador. Os nomes são reconhecidos pelas listas do Censo 2022; para nomes de outras línguas, ligue o detector spaCy ou um modelo local.
 
 > [!IMPORTANT]
 > Nenhuma detecção automática é perfeita. O Véu **reduz** muito o risco de enviar dados pessoais, mas não o elimina. Veja os [números do benchmark](#benchmark) e as [limitações](SECURITY.md#o-que-o-véu-não-faz). Não é aconselhamento jurídico sobre a LGPD.
@@ -95,6 +95,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 
 - 🌍 **Dados pessoais de qualquer lugar:** nomes, e-mails, telefones (brasileiros e de qualquer país, com +código), endereços, cartões de crédito, IBAN, endereços IP (v4 e v6) e datas de nascimento.
 - 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CEP, placa, RENAVAM, conta bancária, chave Pix e processo do CNJ.
+- 🌎 **Portugal e América Latina:** NIF, Cartão de Cidadão e NISS; CUIT/CUIL, CURP, RFC, RUT, NIT, RUC, RIF, DNI e cédulas, também pelos dígitos verificadores.
 - 🔑 **Segredos:**
   - chaves da OpenAI, Anthropic, AWS, Google, GitHub, Stripe, Slack, Hugging Face, Notion, Mercado Pago, Asaas e mais 20 serviços;
   - JWT e tokens Bearer;
@@ -127,7 +128,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
   - anonimiza Excel, Word e PowerPoint **no próprio formato**, mantendo a formatação e as fórmulas.
 - 🌐 **Python, JavaScript e navegador:**
   - a mesma detecção nas três versões;
-  - um teste de conformidade com 284 casos exige resultados idênticos.
+  - um teste de conformidade com 289 casos exige resultados idênticos.
 - 🏢 **Empresas:**
   - gateway com tokens por equipe, auditoria à prova de adulteração (com âncora externa) e sessões no Redis com o cofre cifrado;
   - desvio de dados sensíveis para um modelo interno;
@@ -274,6 +275,10 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 | `TOKEN` | `eyJhbGci...`, `Bearer ...` | JWT, Bearer e Basic |
 | `SENHA`, `SEGREDO` | `DB_PASSWORD=...`, `clientSecret: ...` | nome do campo + cara de valor aleatório |
 | `CHAVE_PRIVADA`, `URL_CONEXAO` | `-----BEGIN PRIVATE KEY-----`, `postgres://u:senha@host` | formato |
+| `NIF_PT`, `CC_PT`, `NISS_PT` | NIF 123 456 789, Cartão de Cidadão 12345678 9 ZZ1 | Portugal: dígitos verificadores e contexto |
+| `CUIT`, `DNI`, `CURP`, `RFC`, `RUT`, `CEDULA`, `NIT`, `RUC`, `RIF` | 20-12345678-6, XAXX900101HDFXXX03, 12.345.678-5 | Argentina, México, Chile, Uruguai, Colômbia, Peru, Equador, Paraguai e Venezuela: dígitos verificadores e contexto |
+
+Formatos estruturados (CURP, RFC, Cartão de Cidadão, CUIT e RIF com a pontuação típica) são reconhecidos sozinhos. Números puros, que um CPF ou um protocolo poderiam imitar, só com a palavra de contexto por perto ("NIF", "CUIT", "RUC", "cédula"). Num formato que existe nos dois lados, como `12.345.678-5`, sem contexto, vence o rótulo brasileiro.
 
 Também dá para adicionar padrões próprios (matrícula, número de cliente...) no [`veu.toml`](examples/veu.toml).
 
@@ -368,7 +373,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 520 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 550 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa
@@ -386,7 +391,8 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 - [x] Benchmark com dados em português de terceiros, comparado ao Presidio
 - [x] Cache de detecção para agentes que reenviam a conversa inteira a cada turno
 - [ ] Nó para o n8n (WhatsApp com IA sem expor o CPF do cliente)
-- [ ] Documentos de outros países (Portugal, Argentina, México, Chile, Estados Unidos...)
+- [x] Documentos de Portugal e da América Latina (CUIT, CURP, RFC, RUT, NIT, RUC, RIF e cédulas)
+- [ ] Documentos de Angola, Moçambique, Estados Unidos e Europa; MRZ de passaporte, VIN e carteiras de criptomoeda
 - [ ] Nomes de outras línguas sem precisar de modelo
 - [ ] Abrir Excel e Word direto na página web, sem instalar nada
 - [ ] Operador sintético na versão JavaScript

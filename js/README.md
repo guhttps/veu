@@ -10,7 +10,7 @@ Você recebe:    "Olá Maria Souza, ..."
 ```
 
 - **Sem dependências e sem servidor:** roda no Node, no Deno, no Bun, no navegador e em edge functions.
-- **Mesma detecção da versão em Python:** um teste de conformidade com 284 casos garante resultados idênticos.
+- **Mesma detecção da versão em Python:** um teste de conformidade com 289 casos garante resultados idênticos.
 - **Funciona com o que você já usa:** SDKs da OpenAI e da Anthropic, AI SDK da Vercel e qualquer código que aceite um `fetch`.
 
 ```bash
@@ -121,6 +121,7 @@ O operador `sintetico` (outro CPF válido no lugar do original) ainda só existe
 - **Documentos:** CPF, CNPJ (inclusive o alfanumérico de 2026), RG, CNH, título de eleitor, PIS, CNS e passaporte.
 - **Contatos:** nomes, telefones (brasileiros e internacionais), e-mails e endereços.
 - **Dados financeiros e outros:** CEP, placa, RENAVAM, cartões, contas, IBAN, chave Pix, IP, data de nascimento e processo judicial.
+- **Outros países:** Portugal (NIF, Cartão de Cidadão, NISS), Argentina (CUIT/CUIL, DNI), México (CURP, RFC), Chile e Uruguai (RUT, cédula), Colômbia (NIT), Peru, Equador e Paraguai (RUC) e Venezuela (RIF).
 - **Segredos:**
   - chaves de API da OpenAI, Anthropic, AWS, Google, GitHub, Stripe, Mercado Pago, Asaas, Notion e mais 20 serviços;
   - JWT e tokens Bearer;

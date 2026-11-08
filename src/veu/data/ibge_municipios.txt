@@ -171,6 +171,7 @@ Andradina
 Andrelândia
 Angatuba
 Angelim
+Angelina
 Angelândia
 Angical
 Angical do Piauí
@@ -186,6 +187,8 @@ Anitápolis
 Anori
 Anta Gorda
 Antas
+Antonina
+Antonina do Norte
 Anápolis
 Aperibé
 Apiacá
@@ -463,6 +466,15 @@ Baía Formosa
 Baía da Traição
 Bebedouro
 Beberibe
+Bela Cruz
+Bela Vista
+Bela Vista da Caroba
+Bela Vista de Goiás
+Bela Vista de Minas
+Bela Vista do Maranhão
+Bela Vista do Paraíso
+Bela Vista do Piauí
+Bela Vista do Toldo
 Belford Roxo
 Belmonte
 Belo Campo
@@ -1091,6 +1103,7 @@ Cipó
 Ciríaco
 Claraval
 Claro dos Poções
+Clementina
 Clevelândia
 Coaraci
 Coari
@@ -1343,6 +1356,7 @@ Dilermando de Aguiar
 Dionísio
 Dionísio Cerqueira
 Diorama
+Divina Pastora
 Divino
 Divino das Laranjeiras
 Divino de São Lourenço
@@ -1439,6 +1453,7 @@ Entre Rios do Oeste
 Entre Rios do Sul
 Entre-Ijuís
 Envira
+Enéas Marques
 Epitaciolândia
 Equador
 Erebango
@@ -1450,6 +1465,7 @@ Erval Seco
 Erval Velho
 Ervália
 Escada
+Esmeralda
 Esmeraldas
 Espera Feliz
 Esperantina
@@ -1890,6 +1906,7 @@ Ilhota
 Ilhéus
 Ilicínea
 Ilópolis
+Imaculada
 Imaruí
 Imbaú
 Imbituba
@@ -2278,6 +2295,7 @@ Joaíma
 Joca Claudino
 Joca Marques
 Joinville
+Jordânia
 Jordão
 Joselândia
 Josenópolis
@@ -2412,6 +2430,7 @@ Leme do Prado
 Lençóis
 Lençóis Paulista
 Leoberto Leal
+Leopoldina
 Leópolis
 Liberato Salzano
 Liberdade
@@ -2444,6 +2463,7 @@ Loreto
 Louveira
 Lucena
 Lucianópolis
+Lucrécia
 Luisburgo
 Luislândia
 Luiziana
@@ -2609,6 +2629,9 @@ Mataraca
 Mateiros
 Matelândia
 Materlândia
+Matias Barbosa
+Matias Cardoso
+Matias Olímpio
 Matina
 Matinha
 Matinhas
@@ -2833,6 +2856,8 @@ Naque
 Narandiba
 Natal
 Natalândia
+Natividade
+Natividade da Serra
 Natuba
 Natércia
 Navegantes
@@ -3023,6 +3048,7 @@ Oliveira Fortes
 Oliveira de Fátima
 Oliveira dos Brejinhos
 Olivença
+Olímpia
 Olímpio Noronha
 Onda Verde
 Onça de Pitangui
@@ -3771,6 +3797,7 @@ Rondolândia
 Rondon
 Rondon do Pará
 Rondonópolis
+Roque Gonzales
 Rorainópolis
 Roseira
 Rosário
@@ -3835,6 +3862,133 @@ Sandovalina
 Sangão
 Sanharó
 Sant'Ana do Livramento
+Santa Adélia
+Santa Albertina
+Santa Amélia
+Santa Branca
+Santa Brígida
+Santa Bárbara
+Santa Bárbara d'Oeste
+Santa Bárbara de Goiás
+Santa Bárbara do Leste
+Santa Bárbara do Monte Verde
+Santa Bárbara do Pará
+Santa Bárbara do Sul
+Santa Bárbara do Tugúrio
+Santa Carmem
+Santa Cecília
+Santa Cecília do Pavão
+Santa Cecília do Sul
+Santa Clara d'Oeste
+Santa Clara do Sul
+Santa Cruz
+Santa Cruz Cabrália
+Santa Cruz da Baixa Verde
+Santa Cruz da Conceição
+Santa Cruz da Esperança
+Santa Cruz da Vitória
+Santa Cruz das Palmeiras
+Santa Cruz de Goiás
+Santa Cruz de Minas
+Santa Cruz de Monte Castelo
+Santa Cruz de Salinas
+Santa Cruz do Arari
+Santa Cruz do Capibaribe
+Santa Cruz do Escalvado
+Santa Cruz do Piauí
+Santa Cruz do Rio Pardo
+Santa Cruz do Sul
+Santa Cruz do Xingu
+Santa Cruz dos Milagres
+Santa Efigênia de Minas
+Santa Ernestina
+Santa Filomena
+Santa Filomena do Maranhão
+Santa Fé
+Santa Fé de Goiás
+Santa Fé de Minas
+Santa Fé do Araguaia
+Santa Fé do Sul
+Santa Gertrudes
+Santa Helena
+Santa Helena de Goiás
+Santa Helena de Minas
+Santa Inês
+Santa Isabel
+Santa Isabel do Ivaí
+Santa Isabel do Rio Negro
+Santa Izabel do Oeste
+Santa Izabel do Pará
+Santa Juliana
+Santa Leopoldina
+Santa Luz
+Santa Luzia
+Santa Luzia D'Oeste
+Santa Luzia do Itanhy
+Santa Luzia do Norte
+Santa Luzia do Paruá
+Santa Luzia do Pará
+Santa Lúcia
+Santa Margarida
+Santa Margarida do Sul
+Santa Maria
+Santa Maria Madalena
+Santa Maria da Boa Vista
+Santa Maria da Serra
+Santa Maria da Vitória
+Santa Maria das Barreiras
+Santa Maria de Itabira
+Santa Maria de Jetibá
+Santa Maria do Cambucá
+Santa Maria do Herval
+Santa Maria do Oeste
+Santa Maria do Pará
+Santa Maria do Salto
+Santa Maria do Suaçuí
+Santa Maria do Tocantins
+Santa Mariana
+Santa Mercedes
+Santa Mônica
+Santa Quitéria
+Santa Quitéria do Maranhão
+Santa Rita
+Santa Rita d'Oeste
+Santa Rita de Caldas
+Santa Rita de Cássia
+Santa Rita de Ibitipoca
+Santa Rita de Jacutinga
+Santa Rita de Minas
+Santa Rita do Araguaia
+Santa Rita do Itueto
+Santa Rita do Novo Destino
+Santa Rita do Pardo
+Santa Rita do Passa Quatro
+Santa Rita do Sapucaí
+Santa Rita do Tocantins
+Santa Rita do Trivelato
+Santa Rosa
+Santa Rosa da Serra
+Santa Rosa de Goiás
+Santa Rosa de Lima
+Santa Rosa de Viterbo
+Santa Rosa do Piauí
+Santa Rosa do Purus
+Santa Rosa do Sul
+Santa Rosa do Tocantins
+Santa Salete
+Santa Teresa
+Santa Teresinha
+Santa Tereza
+Santa Tereza de Goiás
+Santa Tereza do Oeste
+Santa Tereza do Tocantins
+Santa Terezinha
+Santa Terezinha de Goiás
+Santa Terezinha de Itaipu
+Santa Terezinha do Progresso
+Santa Terezinha do Tocantins
+Santa Vitória
+Santa Vitória do Palmar
 Santaluz
 Santana
 Santana da Boa Vista
@@ -4753,6 +4907,7 @@ Viadutos
 Viamão
 Viana
 Vianópolis
+Vicentina
 Vicentinópolis
 Vidal Ramos
 Videira
@@ -4779,6 +4934,7 @@ Viradouro
 Virgem da Lapa
 Virginópolis
 Virgolândia
+Virgínia
 Virmond
 Visconde do Rio Branco
 Viseu
@@ -4859,6 +5015,7 @@ Zé Doca
 Águia Branca
 Álvares Florence
 Álvares Machado
+Áurea
 Ângulo
 Óbidos
 Óleo
