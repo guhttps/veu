@@ -67,7 +67,7 @@ def test_save_settings_writes_toml_and_restarts(panel_app):
     assert config.allowlist == ("contato@empresa.example", "11.222.333/0001-81")
     assert settings_from_config(config) == {
         "categorias": ["documentos", "financeiro"], "ignorar": ["contato@empresa.example", "11.222.333/0001-81"],
-        "bloquear": ["chaves_privadas", "cartoes"], "operador": "sintetico",
+        "bloquear": ["chaves_privadas", "cartoes"], "operador": "sintetico", "desvio": False, "modelo_local": "",
     }
     bad = call(app, "POST", "/veu/painel/configuracoes", json={"categorias": []})
     assert bad.status_code == 400 and "pelo menos um" in bad.json()["error"]["message"]
@@ -237,3 +237,47 @@ def test_installers_install_the_right_extras():
         assert "veu[servidor,mcp,documentos]" in script and "astral.sh/uv" in script
         assert "atalhos" in script and "painel" in script
     assert windows.isascii()  # o PowerShell 5.1 pode ler o script baixado com a codificação errada
+
+
+def test_route_to_local_model_setting(tmp_path):
+    import tomllib
+
+    from veu.config import load_config
+    from veu.server.panel import apply_settings, settings_from_config
+
+    path = tmp_path / "veu.toml"
+    base = {"categorias": ["pessoas", "documentos"], "operador": "token"}
+    apply_settings(path, {**base, "desvio": True, "modelo_local": "llama3.1"})
+    data = tomllib.loads(path.read_text(encoding="utf-8"))
+    assert data["politica"]["desviar_para"] == "ollama" and data["politica"]["modelo_desvio"] == "llama3.1"
+    config = load_config(str(path), environ={})
+    assert settings_from_config(config)["desvio"] is True and config.route_model == "llama3.1"
+    apply_settings(path, {**base, "desvio": False})
+    assert "desviar_para" not in tomllib.loads(path.read_text(encoding="utf-8"))["politica"]
+    with pytest.raises(ValueError, match="modelo local"):
+        apply_settings(path, {**base, "desvio": True, "modelo_local": ""})
+
+
+def test_recent_requests_have_only_metadata():
+    import asyncio
+    import json
+
+    import httpx
+
+    from veu.config import Config
+    from veu.server import create_app
+
+    app = create_app(Config(), upstream_transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, json={"choices": [{"index": 0, "message": {"content": "Olá [PESSOA_1]"}}]})))
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://localhost:8787") as c:
+            await c.post("/v1/chat/completions", json={"model": "m", "messages": [
+                {"role": "user", "content": "Sou Maria Souza, CPF 529.982.247-25"}]})
+            return (await c.get("/veu/estatisticas")).json()
+
+    stats = asyncio.run(run())
+    recent = stats["recentes"][0]
+    assert recent["provedor"] == "openai" and recent["entidades"] == {"PESSOA": 1, "CPF": 1}
+    assert recent["restaurados"] == {"PESSOA": 1} and recent["status"] == 200
+    assert "Maria" not in json.dumps(stats) and "529" not in json.dumps(recent)

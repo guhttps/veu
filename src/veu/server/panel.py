@@ -84,6 +84,8 @@ def settings_from_config(config: Config) -> dict:
         "ignorar": list(config.allowlist),
         "bloquear": [key for key, option in BLOCK_OPTIONS.items() if blocked & set(option["tipos"])],
         "operador": config.operator if config.operator in OPERATORS else "token",
+        "desvio": config.route_to == "ollama",
+        "modelo_local": config.route_model or "",
     }
 
 
@@ -96,7 +98,12 @@ def validate_settings(settings: dict) -> dict:
     if operator not in OPERATORS:
         raise ValueError("Forma de esconder desconhecida.")
     ignore = [line.strip() for line in settings.get("ignorar", []) if isinstance(line, str) and line.strip()][:500]
-    return {"categorias": categories, "bloquear": block, "operador": operator, "ignorar": ignore}
+    route = bool(settings.get("desvio"))
+    model = str(settings.get("modelo_local") or "").strip()[:100]
+    if route and not model:
+        raise ValueError("Informe o modelo local do Ollama, por exemplo llama3.1.")
+    return {"categorias": categories, "bloquear": block, "operador": operator, "ignorar": ignore, "desvio": route,
+            "modelo_local": model}
 
 
 def apply_settings(path: Path, settings: dict) -> None:
@@ -115,6 +122,12 @@ def apply_settings(path: Path, settings: dict) -> None:
     data.setdefault("anonimizacao", {})["operador"] = settings["operador"]
     policy = data.setdefault("politica", {})
     policy["bloquear"] = [label for key in settings["bloquear"] for label in BLOCK_OPTIONS[key]["tipos"]]
+    if settings["desvio"]:  # textos com dados pessoais vão inteiros para o modelo local, sem sair do computador
+        policy["desviar_para"] = "ollama"
+        policy["modelo_desvio"] = settings["modelo_local"]
+    elif policy.get("desviar_para") == "ollama":
+        policy.pop("desviar_para", None)
+        policy.pop("modelo_desvio", None)
     path.parent.mkdir(parents=True, exist_ok=True)
     header = "# Configuração do Véu. O painel (veu painel) mantém este arquivo; também pode ser editado à mão.\n\n"
     path.write_text(header + dump_toml(data), encoding="utf-8")

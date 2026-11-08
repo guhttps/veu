@@ -11,7 +11,7 @@ import secrets
 import sys
 import threading
 import time
-from collections import Counter, OrderedDict
+from collections import Counter, OrderedDict, deque
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -209,6 +209,8 @@ class Stats:
         self.errors = 0
         self.entities: Counter[str] = Counter()
         self.restored: Counter[str] = Counter()
+        # Últimas requisições, só com metadados (destino, tipos e quantidades), para a tela do painel.
+        self.recent: deque[dict] = deque(maxlen=100)
         self.providers: Counter[str] = Counter()
         self.teams: Counter[str] = Counter()
         self.routed = 0
@@ -228,6 +230,15 @@ class Stats:
             if team:
                 self.teams[team] += 1
 
+    def remember(self, **fields) -> None:
+        """Guarda os metadados de uma requisição (nunca valores) para a lista de recentes."""
+        allowed = ("provedor", "endpoint", "status", "entidades", "restaurados", "bloqueado", "desviado_para",
+                   "sem_anonimizar", "duracao_ms", "stream", "equipe")
+        record = {"quando": datetime.now(UTC).isoformat(timespec="seconds")}
+        record.update({key: value for key, value in fields.items() if key in allowed and value not in (None, {}, [])})
+        with self._lock:
+            self.recent.append(record)
+
     def snapshot(self, sessions: int, cache=None) -> dict:
         with self._lock:
             data = {
@@ -242,6 +253,7 @@ class Stats:
                 "desviadas": self.routed,
                 "sessoes_ativas": sessions,
                 "ativo_desde": datetime.fromtimestamp(self.started, UTC).isoformat(timespec="seconds"),
+                "recentes": list(reversed(self.recent))[:50],
             }
         if cache is not None:
             data["cache_deteccao"] = {"acertos": cache.hits, "falhas": cache.misses, "itens": len(cache)}
