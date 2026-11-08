@@ -43,6 +43,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 - **Painel:** a tela de atividade mostra os pedidos recentes (destino, tipos e quantidades escondidos e devolvidos, resultado), também em `/veu/estatisticas`; e uma caixinha manda os textos com dados pessoais para um modelo local do Ollama, sem sair do computador.
 
+- **Filtro do Open WebUI** (beta): `examples/open-webui/veu.py` instala o Véu como função do Open WebUI, que esconde os dados das mensagens e devolve os dados reais nas respostas, com um cofre por conversa (pedaços de streaming sem a conversa identificada nunca são restaurados).
+
 ### Corrigido
 - Nomes ambíguos que o dicionário marca como palavras (sobrenomes como Costa e Nascimento) só se propagam com inicial maiúscula: "data de nascimento" não vira mais nome de pessoa. O gerador de listas passou a ler também as regras de sufixo do dicionário.
 - Restauração em streaming: um marcador solto colado a uma palavra (`_CPF_1`, `xCPF_1`) era restaurado quando chegava num pedaço separado, embora no texto inteiro não fosse. Achado pelos testes de propriedade.
