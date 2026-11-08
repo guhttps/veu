@@ -3,16 +3,16 @@ class Veu < Formula
 
   desc "Esconde dados pessoais e segredos antes de o texto chegar à IA"
   homepage "https://github.com/guhttps/veu"
-  url "https://files.pythonhosted.org/packages/df/eb/0c8b921ad4036d71ab08a37aec6eafc052b0ba83cd0bd03f622f7900ecca/veu-0.5.2.tar.gz"
-  sha256 "9323a79044c47cb68b07db57fcd57ce912fb56490d25785f6ee4b167beadb50c"
+  url "https://files.pythonhosted.org/packages/3e/a4/78bbf7c7c8385fc6ef4635868ab1dc6ba3c3b8bade7835261eea5dc98570/veu-0.6.0.tar.gz"
+  sha256 "a06ed7d6ecdc9928d2c5fbb3b402ba29ef63c5d4513ff0dbcf6511d81e1a0875"
   license "MIT"
 
   depends_on "python@3.13"
 
   # O núcleo não tem dependências; a roda pronta dispensa compilar o pacote (e o hatchling).
   resource "veu-wheel" do
-    url "https://files.pythonhosted.org/packages/84/59/fed3120ca5e607e87b8e32a6c5de97c54e29b5d97629fbdccd2d21f934fe/veu-0.5.2-py3-none-any.whl"
-    sha256 "5c19def69f100af89ba9da204f9b17d5d74d43973ff4a30528563d5bada88166"
+    url "https://files.pythonhosted.org/packages/db/44/c7c8d1a4a77fb1b8f9e2065c2f66ab51321b2c7761c542de8f5d7fb044f3/veu-0.6.0-py3-none-any.whl"
+    sha256 "1c550331e1471cad4fae0d524e67cba799c3ef2f2fae14377d3c45da3d7f2049"
   end
 
   def install
