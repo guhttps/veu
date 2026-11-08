@@ -1,4 +1,5 @@
 // Validação de documentos brasileiros pelos dígitos verificadores (equivalente a veu/validators.py).
+import { sha256 } from "./sha256.ts";
 import { onlyDigits } from "./text.ts";
 
 export const VALID_DDDS: ReadonlySet<number> = new Set([
@@ -418,4 +419,199 @@ export function isValidRif(value: string): boolean {
   if (!/^[VEJPG]\d{9}$/.test(compact)) return false;
   const total = RIF_LETTERS[compact[0]] + sumWeights([3, 2, 7, 6, 5, 4, 3, 2], compact.slice(1));
   return "00987654321"[total % 11] === compact[9];
+}
+
+// África lusófona, EUA, Europa e identificadores transversais (python-stdnum 2.2 como referência) ---------------
+
+export function isValidNuit(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 9) return false;
+  return "01234567891"[sumWeights([8, 9, 4, 5, 6, 7, 8, 9], d) % 11] === d[8];
+}
+
+const SSN_BLACKLIST = new Set(["078051120", "457555462", "219099999"]);
+
+export function isValidSsn(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 9 || SSN_BLACKLIST.has(d)) return false;
+  const [area, group, serial] = [d.slice(0, 3), d.slice(3, 5), d.slice(5)];
+  if (area[0] === "9") return Number(group) >= 70 && Number(group) <= 99 && group !== "89" && group !== "93";
+  return area !== "000" && area !== "666" && group !== "00" && serial !== "0000";
+}
+
+const DNI_ES_LETTERS = "TRWAGMYFPDXBNJZSQVHLCKE";
+
+export function isValidDniEs(value: string): boolean {
+  const match = /^([XYZ]?)(\d{7,8})([A-Z])$/.exec(value.replace(/[\s-]/g, "").toUpperCase());
+  if (!match) return false;
+  const prefix = match[1];
+  let number = match[2];
+  if (prefix) {
+    if (number.length !== 7) return false;
+    number = String("XYZ".indexOf(prefix)) + number;
+  } else if (number.length !== 8) {
+    return false;
+  }
+  return DNI_ES_LETTERS[Number(number) % 23] === match[3];
+}
+
+const CF_ODD = [1, 0, 5, 7, 9, 13, 15, 17, 19, 21, 1, 0, 5, 7, 9, 13, 15, 17, 19, 21, 2, 4, 18, 20, 11, 3, 6, 8, 12, 14, 16,
+  10, 22, 25, 24, 23];
+
+export function isValidCodiceFiscale(value: string): boolean {
+  const v = value.toUpperCase();
+  if (!/^[A-Z]{6}[\dLMNP-V]{2}[ABCDEHLMPRST][\dLMNP-V]{2}[A-Z][\dLMNP-V]{3}[A-Z]$/.test(v)) return false;
+  let total = 0;
+  for (let i = 0; i < 15; i += 1) {
+    const index = ALNUM36.indexOf(v[i]);
+    total += i % 2 === 0 ? CF_ODD[index] : index < 10 ? index : index - 10;
+  }
+  return String.fromCharCode(65 + (total % 26)) === v[15];
+}
+
+export function isValidNir(value: string): boolean {
+  const compact = value.replace(/\s/g, "").toUpperCase();
+  if (!/^[12]\d{4}(?:\d{2}|2A|2B)\d{6}\d{2}$/.test(compact)) return false;
+  const number = compact.slice(0, 13).replace("2A", "19").replace("2B", "18");
+  return 97 - (Number(number) % 97) === Number(compact.slice(13));
+}
+
+export function isValidSteuerId(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 11 || d[0] === "0") return false;
+  const first = [...d.slice(0, 10)];
+  const counts = [...new Set(first)].map((n) => first.filter((c) => c === n).length);
+  if (counts.filter((c) => c === 2 || c === 3).length !== 1 || Math.max(...counts) > 3) return false;
+  let check = 10;
+  for (const n of first) {
+    check = (Number(n) + check) % 10 || 10;
+    check = (check * 2) % 11;
+  }
+  return (11 - check) % 10 === Number(d[10]);
+}
+
+const NINO_PREFIX_BAD = new Set(["BG", "GB", "KN", "NK", "NT", "TN", "ZZ"]);
+
+export function isValidNino(value: string): boolean {
+  const match = /^([A-CEGHJ-PR-TW-Z])([A-CEGHJ-NPR-TW-Z])(\d{6})([A-D]?)$/.exec(value.replace(/\s/g, "").toUpperCase());
+  return match !== null && !NINO_PREFIX_BAD.has(match[1] + match[2]);
+}
+
+export function isValidNhs(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 10) return false;
+  const check = 11 - (sumWeights([10, 9, 8, 7, 6, 5, 4, 3, 2], d) % 11);
+  return check !== 10 && String(check === 11 ? 0 : check) === d[9];
+}
+
+export function isValidBsn(value: string): boolean {
+  const d = onlyDigits(value).padStart(9, "0");
+  if (d.length !== 9 || d === "000000000") return false;
+  return (sumWeights([9, 8, 7, 6, 5, 4, 3, 2], d) - Number(d[8])) % 11 === 0;
+}
+
+export function isValidSin(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 9 || "08".includes(d[0])) return false;
+  const total = [...d].reduce((sum, n, i) => {
+    const doubled = Number(n) * 2;
+    return sum + (i % 2 === 0 ? Number(n) : doubled > 9 ? doubled - 9 : doubled);
+  }, 0);
+  return total % 10 === 0;
+}
+
+const VERHOEFF_D = [
+  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 0, 6, 7, 8, 9, 5], [2, 3, 4, 0, 1, 7, 8, 9, 5, 6],
+  [3, 4, 0, 1, 2, 8, 9, 5, 6, 7], [4, 0, 1, 2, 3, 9, 5, 6, 7, 8], [5, 9, 8, 7, 6, 0, 4, 3, 2, 1],
+  [6, 5, 9, 8, 7, 1, 0, 4, 3, 2], [7, 6, 5, 9, 8, 2, 1, 0, 4, 3], [8, 7, 6, 5, 9, 3, 2, 1, 0, 4],
+  [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+];
+const VERHOEFF_P = [
+  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 5, 7, 6, 2, 8, 3, 0, 9, 4], [5, 8, 0, 3, 7, 9, 6, 1, 4, 2],
+  [8, 9, 1, 6, 0, 4, 3, 5, 2, 7], [9, 4, 5, 3, 1, 2, 6, 8, 7, 0], [4, 2, 8, 6, 5, 7, 3, 9, 0, 1],
+  [2, 7, 9, 3, 8, 0, 6, 4, 1, 5], [7, 0, 4, 6, 9, 1, 3, 2, 5, 8],
+];
+
+export function isValidAadhaar(value: string): boolean {
+  const d = onlyDigits(value);
+  if (d.length !== 12 || "01".includes(d[0]) || d === [...d].reverse().join("")) return false;
+  let check = 0;
+  [...d].reverse().forEach((n, i) => {
+    check = VERHOEFF_D[check][VERHOEFF_P[i % 8][Number(n)]];
+  });
+  return check === 0;
+}
+
+const mrzValue = (char: string): number => (/\d/.test(char) ? Number(char) : char === "<" ? 0 : char.charCodeAt(0) - 55);
+
+export function mrzCheckDigit(field: string): string {
+  return String([...field].reduce((sum, char, i) => sum + mrzValue(char) * [7, 3, 1][i % 3], 0) % 10);
+}
+
+export function isValidMrzLine(value: string): boolean {
+  const line = value.replace(/\s/g, "").toUpperCase();
+  if (!/^[A-Z0-9<]{9}\d[A-Z<]{3}\d{6}\d[MFX<]\d{6}\d[A-Z0-9<]{14}[\d<]\d$/.test(line)) return false;
+  return mrzCheckDigit(line.slice(0, 9)) === line[9] && mrzCheckDigit(line.slice(13, 19)) === line[19]
+    && mrzCheckDigit(line.slice(21, 27)) === line[27]
+    && mrzCheckDigit(line.slice(0, 10) + line.slice(13, 20) + line.slice(21, 43)) === line[43];
+}
+
+const VIN_VALUES: Record<string, number> = Object.fromEntries([
+  ...[..."0123456789"].map((c, i) => [c, i]), ...[..."ABCDEFGH"].map((c, i) => [c, i + 1]),
+  ...[..."JKLMN"].map((c, i) => [c, i + 1]), ["P", 7], ["R", 9], ...[..."STUVWXYZ"].map((c, i) => [c, i + 2]),
+]);
+const VIN_WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+
+export function isValidVin(value: string): boolean {
+  const v = value.toUpperCase();
+  if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(v) || !/\d/.test(v) || !/[A-Z]/.test(v)) return false;
+  const check = [...v].reduce((sum, c, i) => sum + VIN_VALUES[c] * VIN_WEIGHTS[i], 0) % 11;
+  return (check === 10 ? "X" : String(check)) === v[8];
+}
+
+const BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+function base58checkOk(value: string): boolean {
+  let number = 0n;
+  for (const char of value) number = number * 58n + BigInt(BASE58.indexOf(char));
+  const bytes: number[] = [];
+  while (number > 0n) {
+    bytes.unshift(Number(number & 0xffn));
+    number >>= 8n;
+  }
+  const zeros = value.length - value.replace(/^1+/, "").length;
+  const raw = new Uint8Array([...new Array<number>(zeros).fill(0), ...bytes]);
+  if (raw.length !== 25) return false;
+  const digest = sha256(sha256(raw.slice(0, 21)));
+  return digest.slice(0, 4).every((byte, i) => byte === raw[21 + i]);
+}
+
+const BECH32 = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+const BECH32_GENERATORS = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+
+function bech32Ok(value: string): boolean {
+  const lower = value.toLowerCase();
+  const separator = lower.lastIndexOf("1");
+  const hrp = lower.slice(0, Math.max(separator, 0));
+  const data = lower.slice(separator + 1);
+  if ((hrp !== "bc" && hrp !== "tb") || data.length < 6 || [...data].some((c) => !BECH32.includes(c))) return false;
+  const values = [...[...hrp].map((c) => c.charCodeAt(0) >> 5), 0, ...[...hrp].map((c) => c.charCodeAt(0) & 31),
+    ...[...data].map((c) => BECH32.indexOf(c))];
+  let check = 1;
+  for (const v of values) {
+    const top = check >>> 25;
+    check = (((check & 0x1ffffff) << 5) ^ v) >>> 0;
+    BECH32_GENERATORS.forEach((generator, i) => {
+      if ((top >>> i) & 1) check = (check ^ generator) >>> 0;
+    });
+  }
+  return check === 1 || check === 0x2bc830a3; // bech32 (v0) e bech32m (Taproot)
+}
+
+export function isValidCryptoAddress(value: string): boolean {
+  if (/^0x[0-9a-fA-F]{40}$/.test(value)) return true;
+  if (/^[13][1-9A-HJ-NP-Za-km-z]{25,34}$/.test(value)) return base58checkOk(value);
+  if (/^(?:bc|tb)1[02-9ac-hj-np-z]{11,71}$/.test(value.toLowerCase())
+    && (value === value.toLowerCase() || value === value.toUpperCase())) return bech32Ok(value);
+  return false;
 }

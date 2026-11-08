@@ -121,7 +121,8 @@ O operador `sintetico` (outro CPF válido no lugar do original) ainda só existe
 - **Documentos:** CPF, CNPJ (inclusive o alfanumérico de 2026), RG, CNH, título de eleitor, PIS, CNS e passaporte.
 - **Contatos:** nomes, telefones (brasileiros e internacionais), e-mails e endereços.
 - **Dados financeiros e outros:** CEP, placa, RENAVAM, cartões, contas, IBAN, chave Pix, IP, data de nascimento e processo judicial.
-- **Outros países:** Portugal (NIF, Cartão de Cidadão, NISS), Argentina (CUIT/CUIL, DNI), México (CURP, RFC), Chile e Uruguai (RUT, cédula), Colômbia (NIT), Peru, Equador e Paraguai (RUC) e Venezuela (RIF).
+- **Outros países:** Portugal (NIF, Cartão de Cidadão, NISS), Argentina (CUIT/CUIL, DNI), México (CURP, RFC), Chile e Uruguai (RUT, cédula), Colômbia (NIT), Peru, Equador e Paraguai (RUC), Venezuela (RIF), Angola e Moçambique (BI, NUIT), EUA (SSN, ITIN, Medicare), Espanha (DNI, NIE), Itália (codice fiscale), França (NIR), Alemanha (Steuer-ID), Reino Unido (National Insurance, NHS), Países Baixos (BSN), Canadá (SIN) e Índia (Aadhaar, PAN).
+- **Passaportes, veículos e carteiras:** zona de leitura do passaporte (MRZ), chassi (VIN) e endereços de Bitcoin e Ethereum.
 - **Segredos:**
   - chaves de API da OpenAI, Anthropic, AWS, Google, GitHub, Stripe, Mercado Pago, Asaas, Notion e mais 20 serviços;
   - JWT e tokens Bearer;

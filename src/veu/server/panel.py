@@ -31,13 +31,16 @@ CATEGORIES: dict[str, dict[str, Any]] = {
     },
     "estrangeiros": {
         "titulo": "Documentos de outros países",
-        "exemplo": "Portugal (NIF, Cartão de Cidadão), Argentina (CUIT, DNI), México (CURP, RFC), Chile (RUT) e mais",
-        "tipos": ["NIF_PT", "CC_PT", "NISS_PT", "CUIT", "DNI", "CURP", "RFC", "RUT", "CEDULA", "NIT", "RUC", "RIF"],
+        "exemplo": "Portugal, América Latina, Angola e Moçambique, EUA (SSN), Europa (DNI, codice fiscale, NIR, NINO), "
+                   "Canadá, Índia e passaportes (MRZ)",
+        "tipos": ["NIF_PT", "CC_PT", "NISS_PT", "CUIT", "DNI", "CURP", "RFC", "RUT", "CEDULA", "NIT", "RUC", "RIF", "NUIT",
+                  "BI_AO", "BI_MZ", "SSN", "MBI", "DNI_ES", "CODICE_FISCALE", "NIR", "STEUER_ID", "NINO", "NHS", "BSN",
+                  "SIN", "AADHAAR", "PAN", "MRZ"],
     },
     "financeiro": {
         "titulo": "Dados financeiros",
-        "exemplo": "cartões, contas bancárias, chave Pix, IBAN",
-        "tipos": ["CARTAO_CREDITO", "CONTA_BANCARIA", "CHAVE_PIX", "IBAN"],
+        "exemplo": "cartões, contas bancárias, chave Pix, IBAN, carteiras de criptomoeda",
+        "tipos": ["CARTAO_CREDITO", "CONTA_BANCARIA", "CHAVE_PIX", "IBAN", "CRIPTO"],
     },
     "segredos": {
         "titulo": "Senhas e chaves de acesso",
@@ -46,8 +49,8 @@ CATEGORIES: dict[str, dict[str, Any]] = {
     },
     "outros": {
         "titulo": "Veículos e internet",
-        "exemplo": "placas, RENAVAM, endereços IP",
-        "tipos": ["PLACA", "RENAVAM", "IP"],
+        "exemplo": "placas, RENAVAM, chassi (VIN), endereços IP",
+        "tipos": ["PLACA", "RENAVAM", "VIN", "IP"],
     },
 }
 BLOCK_OPTIONS: dict[str, dict[str, Any]] = {

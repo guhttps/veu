@@ -47,6 +47,18 @@ EXTRA = [
     "RUC 20123456786, RUC 1234567-9, RIF V-12345678-1, RG 12.345.678-5 e protocolo 202569473616.",
     "Ana Costa ligou; a Costa disse que mora na costa. Data de nascimento de Enrico Nascimento: 01/02/1990.",
     "Nascida em 7 de setembro de 1985, CEP 01310-100, tel (11) 98765-4321, +44 20 7946 0958, IP 192.0.2.44 e 2001:db8:85a3::8a2e:370:7334.",
+    "NUIT 123 456 785, BI 123456789LA123, BI nº 123456789012A e o NUIT 123 456 784.",
+    "SSN 123-45-6789, ITIN 900-70-1234, ssn: 123456789, inválido 000-12-3456, Medicare MBI 1EG4-TE5-MK73.",
+    "DNI 12345678Z, NIE X1234567L, errado 12345678A e C.F. RSSMRA80A01H501U.",
+    "NIR 1 80 01 75 123 456 60, NIR 180012A12345620 e Steuer-ID 12345678911.",
+    "NINO AB 12 34 56 C, ni number AB123456, NHS number 999 000 0018 e BSN 111222333.",
+    "SIN 123 456 782, Aadhaar 2345 6789 0124, PAN ABCPD1234E e sin 123 456 781.",
+    "Passaporte:\nP<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<\nL898902C36UTO7408122F1204159ZE184226B<<<<<10",
+    "VIN 1M8GDM9AXKP042788, chassi 9BWZZZ377VT004251 e série 11111111111111111.",
+    "carteira 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed, btc 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa, "
+    "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq e o falso 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNb.",
+    "Sem contexto: o pedido 123456782, o código ABCPD1234E, o lote 1M8GDM9AXKP042789, o protocolo 180017512345660, "
+    "o certificado com notAfter 261108123045Z e a nota 20231108A.",
 ]
 
 
