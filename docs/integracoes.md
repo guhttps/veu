@@ -417,6 +417,18 @@ O login com a conta do ChatGPT usa outro servidor, que não passa pelo proxy: us
 
 Agentes reenviam a conversa inteira a cada turno. O [cache de detecção](../README.md#recursos) evita analisar de novo as mensagens antigas.
 
+### Open WebUI
+
+*Beta. Coberto por testes unitários do filtro; ainda não testado num Open WebUI de verdade.*
+
+O Véu também funciona como **filtro** do Open WebUI, sem proxy:
+
+1. No Open WebUI, abra **Painel do administrador > Funções > Criar**.
+2. Cole o conteúdo de [`examples/open-webui/veu.py`](../examples/open-webui/veu.py). Ele pede o pacote `veu` e só importa o filtro.
+3. Salve, ative a função e escolha os modelos em que ela vale (ou marque como global).
+
+O filtro esconde os dados das mensagens antes de irem ao modelo, com o mesmo marcador para o mesmo dado em toda a conversa, e devolve os dados reais na resposta. Nas opções (valves), dá para trocar o operador, os tipos que fazem a mensagem ser recusada (padrão: `CHAVE_PRIVADA`) e desligar a restauração. O cofre de cada conversa fica na memória do Open WebUI por até uma hora sem uso. Se um pedaço da resposta em streaming chegar sem a identificação da conversa, ele não é restaurado (para nunca usar o cofre de outra pessoa); a mensagem final, que é a que fica salva, é restaurada.
+
 ### JavaScript e TypeScript
 
 *Coberto pelos testes, com os SDKs oficiais da OpenAI e da Anthropic e o AI SDK da Vercel.*

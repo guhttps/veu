@@ -253,6 +253,7 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 | **Python** | `openai_client()`, `anthropic_client()`, transportes `httpx`, LangChain, `@protect`, `veu.session()` | [Python](docs/integracoes.md#python) |
 | **JavaScript** | `createFetch()` para os SDKs da OpenAI e da Anthropic, middleware do AI SDK da Vercel, uso no navegador | [@guhttps/veu](js/README.md) |
 | **Agentes** | Servidor MCP (`ler_protegido`, `anonimizar_arquivo`...), plugin e ganchos para Claude Code, ganchos para Cursor | [Agentes](docs/integracoes.md#claude-code-e-cursor) |
+| **Open WebUI** | Filtro que esconde os dados das mensagens e devolve os dados reais nas respostas (beta) | [Open WebUI](docs/integracoes.md#open-webui) |
 | **Fontes** | Notion (páginas e bases), Google Docs, Sheets e Slides, links, Excel, Word, PowerPoint e PDF | [Fontes](docs/integracoes.md#notion-google-e-documentos) |
 | **Empresas** | Gateway com equipes, auditoria encadeada, Redis e desvio para modelo interno; guardrail do LiteLLM; Helm e docker-compose | [Empresas](docs/empresas.md) |
 | **Dados** | CSV, JSON, JSONL, Excel, pandas e RAG, com o mesmo marcador em todas as linhas | [Dados](docs/integracoes.md#dados) |
@@ -374,7 +375,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 560 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 570 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa
