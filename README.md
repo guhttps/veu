@@ -131,7 +131,8 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 - 🏢 **Empresas:**
   - gateway com tokens por equipe, auditoria à prova de adulteração (com âncora externa) e sessões no Redis com o cofre cifrado;
   - desvio de dados sensíveis para um modelo interno;
-  - chart Helm, guardrail do LiteLLM e extensão com política gerenciada.
+  - chart Helm, guardrail do LiteLLM e extensão com política gerenciada;
+  - perfis prontos por setor (Judiciário, jurídico, saúde, financeiro, setor público, anonimização irreversível), registro das operações para o art. 37 da LGPD e modelo de RIPD ([conformidade](docs/conformidade.md)).
 - 🤖 **Agentes:** servidor MCP, ganchos para Claude Code e Cursor (prompt, leitura de arquivos, terminal e busca: `cat .env` e `printenv` também são bloqueados) e plugin com skill. Claude Code e Codex CLI podem rodar pelo proxy, com patches e comandos restaurados.
 - 🪶 **Leve:** o núcleo não tem dependências e processa cerca de 330 mil caracteres por segundo. Agentes que reenviam a conversa inteira a cada turno não pagam de novo pelas mensagens antigas: um cache em memória guarda só as posições dos dados, nunca o texto.
 
@@ -228,6 +229,7 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 | Comando | O que faz |
 |---|---|
 | `veu painel` | Liga o Véu e abre o painel no navegador |
+| `veu perfis` | Perfis prontos por setor; use com `--perfil` |
 | `veu demonstrar` | Mostra o que chegaria à IA com e sem o Véu e testa ataques à restauração, sem chave de API |
 | `veu ler <link ou arquivo>` | Lê Notion, Google, links e documentos já protegidos |
 | `veu anonimizar` / `veu restaurar` | Protege e restaura textos, CSV, JSON, Excel, Word, PowerPoint e PDF |
@@ -366,7 +368,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 510 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 520 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa

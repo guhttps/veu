@@ -49,6 +49,8 @@ def _write_private(path: Path, text: str) -> None:
 
 def _veu(args) -> Veu:
     config = load_config(getattr(args, "config", None))
+    if getattr(args, "perfil", None):
+        config = config.with_profile(args.perfil)
     overrides = {}
     if getattr(args, "limiar", None) is not None:
         overrides["threshold"] = args.limiar
@@ -225,6 +227,8 @@ def cmd_audit(args) -> int:
     secret = os.environ.get(args.segredo_env) if args.segredo_env else None
     if args.segredo_env and not secret:
         raise ValueError(f"A variável {args.segredo_env} não está definida.")
+    if args.acao == "relatorio":
+        return cmd_audit_report(args, secret)
     if args.acao == "ancorar":
         print(json.dumps(audit_anchor(args.arquivo, secret), ensure_ascii=False))
         print("Guarde esta linha fora do servidor. Para conferir depois: "
@@ -236,6 +240,23 @@ def cmd_audit(args) -> int:
         return 0
     print(f"Log comprometido depois de {count} registros válidos: {problem}.", file=sys.stderr)
     return 1
+
+
+def cmd_profiles(args) -> int:
+    from veu.config import PROFILES
+
+    for name, profile in PROFILES.items():
+        print(f"{name}\n  {profile['descricao']}\n")
+    print("Use com --perfil NOME, VEU_PERFIL=NOME ou [politica] perfil = \"NOME\" no veu.toml.")
+    print("Nenhum perfil garante conformidade: veja https://github.com/guhttps/veu/blob/main/docs/conformidade.md")
+    return 0
+
+
+def cmd_audit_report(args, secret: str | None) -> int:
+    from veu.server.state import audit_report
+
+    print(audit_report(args.arquivo, secret, since=args.de, until=args.ate, fmt=args.formato))
+    return 0
 
 
 def cmd_demo(args) -> int:
@@ -261,6 +282,8 @@ def cmd_serve(args) -> int:
         print('O servidor precisa das dependências extras: pip install "veu[servidor]"', file=sys.stderr)
         return 2
     config = load_config(args.config)
+    if args.perfil:
+        config = config.with_profile(args.perfil)
     overrides = {}
     if args.host:
         overrides["host"] = args.host
@@ -366,6 +389,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     def common(sub):
         sub.add_argument("--config", help="caminho do veu.toml")
+        sub.add_argument("--perfil", help="perfil pronto: anonimizacao, judiciario, juridico, saude, financeiro, "
+                                          "setor-publico (veja: veu perfis)")
         sub.add_argument("--limiar", type=float, help="pontuação mínima de 0 a 1 (padrão 0,5)")
         sub.add_argument("--detectores", help="lista separada por vírgula: padroes,nomes,enderecos,segredos,spacy,llm")
         sub.add_argument("--entidades", help="limita a alguns tipos, como CPF,EMAIL")
@@ -437,12 +462,19 @@ def build_parser() -> argparse.ArgumentParser:
     common(sub)
     sub.set_defaults(func=cmd_hook)
 
+    sub = commands.add_parser("perfis", help="lista os perfis prontos (anonimização, judiciário, saúde...)")
+    sub.set_defaults(func=cmd_profiles)
+
     sub = commands.add_parser("demonstrar", help="mostra, sem chave de API, o que chega à IA com e sem o Véu")
     sub.set_defaults(func=cmd_demo)
 
     sub = commands.add_parser("auditoria", help="confere a integridade do log de auditoria do servidor")
-    sub.add_argument("acao", choices=("verificar", "ancorar"),
-                     help="verificar a cadeia, ou ancorar: mostrar o último hash para guardar fora do servidor")
+    sub.add_argument("acao", choices=("verificar", "ancorar", "relatorio"),
+                     help="verificar a cadeia; ancorar: mostrar o último hash para guardar fora do servidor; "
+                          "relatorio: registro das operações (LGPD, art. 37), só com metadados")
+    sub.add_argument("--de", help="relatorio: a partir desta data (AAAA-MM-DD)")
+    sub.add_argument("--ate", help="relatorio: até esta data, inclusive (AAAA-MM-DD)")
+    sub.add_argument("--formato", choices=("markdown", "json"), default="markdown", help="relatorio: formato")
     sub.add_argument("arquivo", help="log de auditoria (JSONL)")
     sub.add_argument("--segredo-env", help="variável de ambiente com o segredo da auditoria (se configurado)")
     sub.add_argument("--ancora", help="hash guardado com 'veu auditoria ancorar': precisa estar na cadeia")
@@ -465,6 +497,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub = commands.add_parser("servir", help="inicia o proxy e o playground")
     sub.add_argument("--config", help="caminho do veu.toml")
+    sub.add_argument("--perfil", help="perfil pronto (veja: veu perfis)")
     sub.add_argument("--host")
     sub.add_argument("--porta", type=int)
     sub.add_argument("--workers", type=int, default=1,
