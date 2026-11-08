@@ -47,6 +47,9 @@ E funciona do jeito que você usa IA: no navegador, no computador, no seu códig
 | **programar em JavaScript ou TypeScript** | [`@guhttps/veu`](js/README.md), com `createFetch()` e middleware do AI SDK | `npm install @guhttps/veu` |
 | **proteger o Claude Code ou o Cursor** | O [**plugin**](docs/integracoes.md#claude-code-e-cursor): bloqueia segredos em prompts e arquivos | `/plugin install veu --marketplace guhttps/veu` |
 | **proteger a empresa toda** sem instalar nada nos computadores | [**Gateway central**](docs/empresas.md), **guardrail do LiteLLM** ou **extensão gerenciada** | [Guia para empresas](docs/empresas.md) |
+| **avaliar o Véu para a LGPD** (encarregado, jurídico) | O [**kit de conformidade**](docs/conformidade.md): perfis por setor, modelo de RIPD e registro do art. 37 | [Conformidade](docs/conformidade.md) |
+
+Toda a documentação também está no [site do Véu](https://guhttps.github.io/veu/docs/), com busca e um menu por perfil.
 
 Quer ver funcionando antes? Depois de instalar, rode `veu demonstrar`. Ele mostra, dado por dado, o que chegaria à IA com e sem o Véu e o que acontece quando a IA é manipulada para mandar os dados para fora, sem precisar de chave de API. Em CI, ele sai com erro se algo vazar.
 
@@ -389,7 +392,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 733 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 741 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa
@@ -397,7 +400,7 @@ cd js && npm ci && npm test                       # biblioteca JavaScript (inclu
 node extensao/teste/e2e.mjs                        # extensão e página num Chrome de verdade
 ```
 
-Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padrões de documentos, formatos de chaves e casos difíceis são muito bem-vindas.
+Para ver o site de documentação no seu computador: `pip install zensical==0.1.0` e `python scripts/gerar_site.py --servir`. Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padrões de documentos, formatos de chaves e casos difíceis são muito bem-vindas.
 
 ## Próximos passos
 
@@ -409,6 +412,8 @@ Veja o [guia de contribuição](CONTRIBUTING.md). Contribuições de nomes, padr
 - [x] Nó para o n8n (WhatsApp com IA sem expor o CPF do cliente)
 - [x] Documentos de Portugal e da América Latina (CUIT, CURP, RFC, RUT, NIT, RUC, RIF e cédulas)
 - [x] Documentos de Angola, Moçambique, Estados Unidos, Canadá, Índia e Europa; MRZ de passaporte, VIN e carteiras de criptomoeda
+- [x] Site de documentação com busca
+- [ ] Homebrew e Scoop (manifestos prontos em [`packaging/`](packaging/README.md); falta criar o tap e o bucket)
 - [ ] Nomes de outras línguas sem precisar de modelo
 - [ ] Abrir Excel e Word direto na página web, sem instalar nada
 - [ ] Operador sintético na versão JavaScript

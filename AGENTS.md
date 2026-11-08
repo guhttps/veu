@@ -14,6 +14,7 @@ veu avaliar                        # benchmark; o vazamento da validação não 
 python scripts/gerar_conformidade.py   # depois de mudar um detector: atualiza js/test/conformidade.json
 cd js && npm ci && npm test        # versão JavaScript (precisa dar o mesmo resultado que a Python)
 node extensao/teste/e2e.mjs        # extensão e página num Chrome de verdade
+python scripts/gerar_site.py --servir  # site de documentação (pip install zensical==0.1.0), montado do README e de docs/
 ```
 
 No Windows, o ambiente virtual fica em `.venv/Scripts/`.
@@ -33,7 +34,7 @@ No Windows, o ambiente virtual fica em `.venv/Scripts/`.
 - `src/veu/integrations/litellm.py`: guardrail do LiteLLM. `src/veu/server/state.py`: sessões (memória e Redis), auditoria encadeada e métricas.
 - `js/`: biblioteca `@guhttps/veu` (TypeScript), com `createFetch` e o middleware do AI SDK. Porte fiel do Python; `scripts/gerar-dados.mjs` copia as listas de `src/veu/data`.
 - `web/`: página do GitHub Pages. `extensao/`: extensão para Chrome e Edge. `plugin/` e `.claude-plugin/`: plugin do Claude Code com skill.
-- `deploy/`: chart Helm e docker-compose.
+- `deploy/`: chart Helm e docker-compose. `packaging/`: fórmula do Homebrew e manifesto do Scoop (`scripts/atualizar_manifestos.py` depois de cada versão no PyPI).
 - `action.yml`: GitHub Action composta (verifica dados pessoais no repositório).
 - `src/veu/bench/`: gerador de dados anotados e avaliação.
 
