@@ -70,6 +70,53 @@ BUILTIN_PROVIDERS: dict[str, ProviderConfig] = {
 }
 PROVIDER_KINDS = ("openai", "anthropic", "gemini", "ollama")
 MIN_SECRET_LENGTH = 32
+_SECRETS = ("CHAVE_API", "TOKEN", "SENHA", "CHAVE_PRIVADA", "URL_CONEXAO", "SEGREDO")
+
+# Perfis: pontos de partida para setores com regras próprias. Cada um só ajusta opções do Véu; nenhum garante
+# conformidade (veja docs/conformidade.md). Opções escritas no veu.toml valem mais que as do perfil.
+PROFILES: dict[str, dict] = {
+    "pseudonimizacao": {
+        "descricao": "Padrão: marcadores reversíveis ([CPF_1]); a resposta volta com os dados reais. É pseudonimização "
+                     "(LGPD, art. 13, § 4º): o dado continua pessoal.",
+    },
+    "anonimizacao": {
+        "descricao": "Irreversível: os dados viram o tipo ([CPF]) e nenhum cofre guarda os valores. Pode sustentar o "
+                     "art. 12 da LGPD, sujeito à avaliação do risco de reidentificação pelo contexto.",
+        "operator": "remover", "block": _SECRETS,
+    },
+    "judiciario": {
+        "descricao": "CNJ, Resolução 615/2025: dados sigilosos só vão a IA externa anonimizados. Irreversível, segredos "
+                     "bloqueados; use com a auditoria ligada (registro de uso).",
+        "operator": "remover", "block": _SECRETS,
+    },
+    "juridico": {
+        "descricao": "Escritórios (OAB, Recomendação 001/2024): sigilo profissional. Reversível, para a peça voltar com "
+                     "os nomes das partes; segredos bloqueados.",
+        "block": _SECRETS,
+    },
+    "saude": {
+        "descricao": "Saúde (CFM, Resolução 2.454/2026: só o estritamente necessário). Reversível; segredos bloqueados; "
+                     "com desviar_para configurado, textos com Cartão do SUS vão para o modelo interno.",
+        "block": _SECRETS, "route_labels": ("CNS",),
+    },
+    "financeiro": {
+        "descricao": "Bancos e fintechs: cartões, contas e IBAN saem removidos (irreversível); o resto, reversível; "
+                     "segredos bloqueados.",
+        "block": _SECRETS, "operators": {"CARTAO_CREDITO": "remover", "CONTA_BANCARIA": "remover", "IBAN": "remover"},
+    },
+    "setor-publico": {
+        "descricao": "Órgãos públicos (guia de IA generativa do TCU: só dados públicos em plataformas externas). "
+                     "Qualquer dado pessoal ou segredo faz a requisição ser recusada.",
+        "block": tuple(LABELS),
+    },
+}
+
+
+def profile_options(name: str) -> dict:
+    """Opções de Config de um perfil (sem a descrição)."""
+    if name not in PROFILES:
+        raise ConfigError(f"Perfil desconhecido: {name}. Use um de {', '.join(PROFILES)}.")
+    return {key: value for key, value in PROFILES[name].items() if key != "descricao"}
 DETECTORS = ("padroes", "nomes", "enderecos", "segredos", "spacy", "llm")
 PLUGIN_GROUP = "veu.detectores"
 
@@ -110,6 +157,7 @@ class Config:
     restore_secrets_in_tools: bool = False
     restore_max_per_response: int = 0
     # Política
+    profile: str = "pseudonimizacao"
     block: tuple[str, ...] = ()
     unknown_endpoints: str = "bloquear"
     # Servidor
@@ -156,6 +204,8 @@ class Config:
                     "adivinhado e revelar os dados por trás dos marcadores. Gere um com: "
                     'python -c "import secrets; print(secrets.token_urlsafe(32))"'
                 )
+        if self.profile not in PROFILES:
+            raise ConfigError(f"Perfil desconhecido: {self.profile}. Use um de {', '.join(PROFILES)}.")
         if not 0 <= self.threshold <= 1:
             raise ConfigError("O limiar precisa estar entre 0 e 1.")
         unknown = [label for label in (*self.labels, *self.block, *self.operators) if label not in LABELS
@@ -217,6 +267,10 @@ class Config:
                              secrets_in_tools=self.restore_secrets_in_tools,
                              max_per_response=self.restore_max_per_response)
 
+    def with_profile(self, name: str) -> Config:
+        """Aplica um perfil por cima desta configuração (usado por --perfil e VEU_PERFIL)."""
+        return self.with_overrides(**profile_options(name), profile=name)
+
     def with_overrides(self, **changes) -> Config:
         allowed = {f.name for f in fields(self)}
         bad = set(changes) - allowed
@@ -242,7 +296,7 @@ _SECTIONS = {
         "segredos_em_ferramentas": "restore_secrets_in_tools", "max_por_resposta": "restore_max_per_response",
     },
     "politica": {
-        "bloquear": "block", "endpoints_desconhecidos": "unknown_endpoints", "desviar_para": "route_to",
+        "perfil": "profile", "bloquear": "block", "endpoints_desconhecidos": "unknown_endpoints", "desviar_para": "route_to",
         "modelo_desvio": "route_model", "desviar_tipos": "route_labels",
     },
     "servidor": {
@@ -296,6 +350,10 @@ def _provider_from_toml(name: str, options: dict, existing: ProviderConfig | Non
 
 def _from_toml(data: dict, base: Config) -> dict:
     changes: dict = {}
+    # O perfil vem primeiro: as opções escritas no arquivo valem mais que as dele.
+    profile = (data.get("politica") or {}).get("perfil")
+    if profile:
+        changes.update(profile_options(profile))
     for section, values in data.items():
         if section == "equipes":
             changes["teams"] = {name: _team_from_toml(name, options) for name, options in values.items()}
@@ -338,6 +396,8 @@ def _from_env(environ: dict[str, str], base: Config) -> dict:
     def as_list(value: str) -> list[str]:
         return [item.strip() for item in value.split(",") if item.strip()]
 
+    if environ.get("VEU_PERFIL"):
+        changes.update(profile_options(environ["VEU_PERFIL"]), profile=environ["VEU_PERFIL"])
     if "VEU_LIMIAR" in environ:
         changes["threshold"] = float(environ["VEU_LIMIAR"])
     if "VEU_OPERADOR" in environ:

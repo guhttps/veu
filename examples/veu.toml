@@ -63,6 +63,9 @@ ferramentas = true
 segredos_em_ferramentas = false
 
 [politica]
+# Perfil pronto: pseudonimizacao (padrão), anonimizacao, judiciario, juridico, saude, financeiro ou
+# setor-publico (veja: veu perfis). As opções escritas aqui valem mais que as do perfil.
+perfil = "pseudonimizacao"
 # Tipos que fazem a requisição ser recusada em vez de só escondida.
 bloquear = ["CHAVE_PRIVADA"]
 # Desvio: requisições com estes tipos vão inteiras para um provedor interno (vazio = qualquer dado pessoal).

@@ -34,6 +34,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Página web:** textos grandes (20 mil caracteres ou mais) são analisados num Web Worker, sem travar a página, e as instâncias do Véu são reaproveitadas entre as teclas.
 - **Testes de propriedade** (hypothesis): anonimizar e restaurar devolve o texto original; o streaming dá o mesmo resultado que o lote, cortado em qualquer ponto; o leitor de SSE remonta os eventos cortados em qualquer byte (inclusive no meio de um caractere UTF-8 e com CRLF); bytes aleatórios não derrubam os leitores de SSE e NDJSON. `VEU_HIPOTESES=5000` faz uma busca longa.
 
+- **Kit de conformidade** ([docs/conformidade.md](docs/conformidade.md)): o que o Véu é em termos da LGPD e do GDPR (pseudonimização no modo reversível; o perfil `anonimizacao` pode sustentar o art. 12), um mapeamento controle a controle e um [modelo de RIPD](docs/modelo-ripd.md) para o uso de IA externa com o Véu.
+- **Perfis prontos** (`veu perfis`, `--perfil`, `VEU_PERFIL` ou `[politica] perfil`): `anonimizacao` (irreversível, sem cofre), `judiciario` (CNJ 615/2025), `juridico` (OAB), `saude` (CFM 2.454/2026), `financeiro` (cartões e contas removidos) e `setor-publico` (guia do TCU: recusa qualquer dado pessoal). As opções escritas no `veu.toml` valem mais que as do perfil.
+- `veu auditoria relatorio`: o registro das operações (LGPD, art. 37) a partir da auditoria, só com metadados, em Markdown ou JSON, com período e conferência da cadeia.
+
 ### Corrigido
 - Restauração em streaming: um marcador solto colado a uma palavra (`_CPF_1`, `xCPF_1`) era restaurado quando chegava num pedaço separado, embora no texto inteiro não fosse. Achado pelos testes de propriedade.
 

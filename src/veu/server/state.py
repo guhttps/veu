@@ -384,6 +384,74 @@ def verify_audit(path: str | Path, secret: str | None = None, anchor: str | None
     return True, count, None
 
 
+def audit_report(path: str | Path, secret: str | None = None, *, since: str | None = None, until: str | None = None,
+                 fmt: str = "markdown") -> str:
+    """Registro das operações (LGPD, art. 37) a partir da auditoria: só metadados, nunca valores."""
+    ok, count, problem = verify_audit(path, secret)
+    totals: Counter[str] = Counter()
+    hidden: Counter[str] = Counter()
+    restored: Counter[str] = Counter()
+    providers: Counter[str] = Counter()
+    teams: Counter[str] = Counter()
+    blocked_types: Counter[str] = Counter()
+    first = last = None
+    with Path(path).open(encoding="utf-8") as handle:
+        for raw in handle:
+            if not raw.strip():
+                continue
+            try:
+                record = json.loads(raw)
+            except ValueError:
+                continue
+            day = str(record.get("quando", ""))[:10]
+            if (since and day < since) or (until and day > until):
+                continue
+            first = first or record.get("quando")
+            last = record.get("quando")
+            totals["requisicoes"] += 1
+            totals["bloqueadas"] += bool(record.get("bloqueado"))
+            totals["desviadas"] += bool(record.get("desviado_para"))
+            totals["sem_anonimizar"] += bool(record.get("sem_anonimizar"))
+            totals["erros"] += int(record.get("status") or 0) >= 500
+            hidden.update(record.get("entidades") or {})
+            restored.update(record.get("restaurados") or {})
+            providers[record.get("provedor") or "?"] += 1
+            if record.get("equipe"):
+                teams[record["equipe"]] += 1
+            blocked_types.update(record.get("bloqueado") or [])
+    data = {
+        "arquivo": str(path), "periodo": {"de": first, "ate": last}, "cadeia_integra": ok, "registros_lidos": count,
+        "problema": problem, "operacoes": dict(totals), "por_provedor": dict(providers.most_common()),
+        "por_equipe": dict(teams.most_common()), "dados_escondidos": dict(hidden.most_common()),
+        "dados_restaurados": dict(restored.most_common()), "tipos_bloqueados": dict(blocked_types.most_common()),
+    }
+    if fmt == "json":
+        return json.dumps(data, ensure_ascii=False, indent=2)
+
+    def table(title: str, counter: dict) -> list[str]:
+        if not counter:
+            return [f"**{title}:** nenhum.", ""]
+        return [f"**{title}**", "", "| Item | Quantidade |", "|---|---:|",
+                *(f"| {key} | {value} |" for key, value in counter.items()), ""]
+
+    lines = [
+        "# Registro das operações de tratamento com IA (LGPD, art. 37)", "",
+        f"Gerado pelo Véu a partir de `{path}`, que só guarda metadados: tipos e quantidades, nunca os valores.", "",
+        f"- **Período:** {first or '-'} a {last or '-'}",
+        f"- **Integridade da cadeia:** {'íntegra' if ok else 'COMPROMETIDA: ' + str(problem)}",
+        f"- **Requisições:** {totals['requisicoes']} (bloqueadas: {totals['bloqueadas']}, desviadas para modelo interno: "
+        f"{totals['desviadas']}, sem anonimizar por configuração: {totals['sem_anonimizar']}, erros do provedor: "
+        f"{totals['erros']})", "",
+        *table("Destino (provedor de IA)", data["por_provedor"]),
+        *table("Equipes", data["por_equipe"]),
+        *table("Dados pessoais escondidos antes do envio, por tipo", data["dados_escondidos"]),
+        *table("Valores reais devolvidos nas respostas, por tipo", data["dados_restaurados"]),
+        *table("Tipos que causaram bloqueio", data["tipos_bloqueados"]),
+        "Este relatório é um apoio ao registro do controlador e não substitui a análise do encarregado (DPO).",
+    ]
+    return "\n".join(lines)
+
+
 def audit_anchor(path: str | Path, secret: str | None = None) -> dict:
     """O último hash da cadeia, para guardar fora do servidor (bilhete, e-mail, armazenamento imutável)."""
     ok, count, problem = verify_audit(path, secret)
