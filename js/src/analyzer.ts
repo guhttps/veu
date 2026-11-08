@@ -10,6 +10,39 @@ import { normalizeCnpj } from "./validators.ts";
 
 export const DEFAULT_THRESHOLD = 0.5;
 
+// Caracteres que escondem um dado da detecção sem mudar o que a pessoa lê: invisíveis (largura zero, hífen
+// invisível), hífens tipográficos ("529.982.247‑25" copiado do Word) e letras e dígitos de largura total.
+const INVISIBLE = "\u00ad\u200b\u200c\u200d\u2060\ufeff";
+const HYPHENS = "\u2010\u2011\u2012\u2013\u2212\ufe63\uff0d";
+const SPECIAL = new RegExp(`[${INVISIBLE}${HYPHENS}\uff01-\uff5e]`, "u");
+
+const SAME_LENGTH = new RegExp(`[${HYPHENS}\uff01-\uff5e]`, "gu");
+const HAS_INVISIBLE = new RegExp(`[${INVISIBLE}]`, "u");
+
+/**
+ * Texto para a detecção e, se algum caractere saiu, a posição original de cada um (mais uma no fim).
+ * Hífens e largura total são trocados um por um (as posições não mudam); só os invisíveis saem.
+ */
+export function normalizeForDetection(text: string): [string, number[] | null] {
+  if (!SPECIAL.test(text)) return [text, null];
+  const swapped = text.replace(SAME_LENGTH, (char) =>
+    (HYPHENS.includes(char) ? "-" : String.fromCharCode(char.charCodeAt(0) - 0xfee0)));
+  if (!HAS_INVISIBLE.test(swapped)) return [swapped, null];
+  const positions: number[] = [];
+  for (let index = 0; index < swapped.length; index += 1) if (!INVISIBLE.includes(swapped[index])) positions.push(index);
+  const normalized = positions.map((index) => swapped[index]).join("");
+  positions.push(swapped.length);
+  return [normalized, positions];
+}
+
+function detect(analyzer: Analyzer, text: string, threshold?: number): Candidate[] {
+  const [normalized, positions] = normalizeForDetection(text);
+  // Sem caracteres removidos, as posições do texto normalizado são as do original.
+  const chosen = resolveOverlaps(analyzer.candidates(normalized, threshold));
+  if (!positions) return chosen;
+  return chosen.map((c) => ({ ...c, start: positions[c.start], end: positions[c.end - 1] + 1 }));
+}
+
 export function defaultRecognizers(): Recognizer[] {
   return [new PatternRecognizer(), new PersonRecognizer(), new AddressRecognizer(), new SecretRecognizer()];
 }
@@ -84,13 +117,10 @@ export class Analyzer {
       const found = cache.get(text, extra);
       if (found) return found.map((c) => ({ ...c, text: text.slice(c.start, c.end) }));
     }
-    if (cache && text) {
-      const chosen = resolveOverlaps(this.candidates(text, threshold));
-      cache.put(text, chosen, extra);
-      return chosen.map((c) => ({ ...c, text: text.slice(c.start, c.end) }));
-    }
     if (!text) return [];
-    return resolveOverlaps(this.candidates(text, threshold)).map((c) => ({ ...c, text: text.slice(c.start, c.end) }));
+    const chosen = detect(this, text, threshold);
+    if (cache) cache.put(text, chosen, extra);
+    return chosen.map((c) => ({ ...c, text: text.slice(c.start, c.end) }));
   }
 }
 

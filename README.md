@@ -127,12 +127,12 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
   - anonimiza Excel, Word e PowerPoint **no próprio formato**, mantendo a formatação e as fórmulas.
 - 🌐 **Python, JavaScript e navegador:**
   - a mesma detecção nas três versões;
-  - um teste de conformidade com 282 casos exige resultados idênticos.
+  - um teste de conformidade com 284 casos exige resultados idênticos.
 - 🏢 **Empresas:**
   - gateway com tokens por equipe, auditoria à prova de adulteração e sessões no Redis;
   - desvio de dados sensíveis para um modelo interno;
   - chart Helm, guardrail do LiteLLM e extensão com política gerenciada.
-- 🤖 **Agentes:** servidor MCP, ganchos para Claude Code e Cursor e plugin com skill. O agente trabalha com arquivos sensíveis sem ver os dados.
+- 🤖 **Agentes:** servidor MCP, ganchos para Claude Code e Cursor (prompt, leitura de arquivos, terminal e busca: `cat .env` e `printenv` também são bloqueados) e plugin com skill. Claude Code e Codex CLI podem rodar pelo proxy, com patches e comandos restaurados.
 - 🪶 **Leve:** o núcleo não tem dependências e processa cerca de 330 mil caracteres por segundo. Agentes que reenviam a conversa inteira a cada turno não pagam de novo pelas mensagens antigas: um cache em memória guarda só as posições dos dados, nunca o texto.
 
 ## Como funciona
@@ -365,7 +365,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 450 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 480 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 cd js && npm ci && npm test                       # biblioteca JavaScript (inclui a conformidade com o Python)

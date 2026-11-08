@@ -56,7 +56,8 @@ export class Masker {
 
 // Onde ficam os argumentos de chamadas de ferramenta nas respostas (OpenAI, Responses, Anthropic, Gemini, Ollama).
 const TOOL_KEYS = new Set(["arguments", "partial_json", "args", "functionCall", "function_call", "tool_calls"]);
-const TOOL_TYPES = new Set(["tool_use", "server_tool_use", "function_call", "custom_tool_call"]);
+const TOOL_TYPES = new Set(["tool_use", "server_tool_use", "function_call", "custom_tool_call", "local_shell_call",
+  "response.custom_tool_call_input.done", "response.function_call_arguments.done"]);
 
 /** Restaura todos os textos de uma resposta JSON. tool: o valor é argumento de uma chamada de ferramenta. */
 export function restoreObj(value: Json, vault: Vault, tool = false): Json {
@@ -98,11 +99,12 @@ export class StreamState {
     this.vault = vault;
   }
 
-  feed(key: Json[], text: string, jsonEscape = false): string {
+  /** tool: o texto é argumento de ferramenta (padrão: igual a jsonEscape). */
+  feed(key: Json[], text: string, jsonEscape = false, tool?: boolean): string {
     const id = JSON.stringify(key);
     let entry = this.restorers.get(id);
     if (!entry) {
-      entry = { key, restorer: this.vault.restorer(jsonEscape) };
+      entry = { key, restorer: this.vault.restorer(jsonEscape, tool) };
       this.restorers.set(id, entry);
     }
     return entry.restorer.feed(text);
@@ -295,7 +297,10 @@ export class OpenAIResponsesAdapter extends Adapter {
       if (!isObject(item) || item.type === "reasoning") continue;
       if ("content" in item) item.content = maskContent(item.content, masker);
       if (item.type === "function_call") item.arguments = masker.jsonString(item.arguments);
-      else if (item.type === "function_call_output" && typeof item.output === "string") item.output = masker.text(item.output);
+      else if (["function_call_output", "custom_tool_call_output", "local_shell_call_output"].includes(item.type)) {
+        item.output = maskContent(item.output, masker);
+      } else if (item.type === "custom_tool_call") item.input = masker.text(item.input); // apply_patch do Codex
+      else if (item.type === "local_shell_call" && isObject(item.action)) item.action = masker.obj(item.action);
     }
   }
   instruct(payload: Json, instruction: string) {
@@ -313,10 +318,17 @@ export class OpenAIResponsesAdapter extends Adapter {
       data.delta = state.feed(["f", data.output_index ?? 0], data.delta ?? "", true);
       return [[name, data]];
     }
-    if (kind === "response.output_text.done" || kind === "response.function_call_arguments.done") {
+    if (kind === "response.custom_tool_call_input.delta") {
+      data.delta = state.feed(["c", data.output_index ?? 0], data.delta ?? "", false, true);
+      return [[name, data]];
+    }
+    if (kind === "response.output_text.done" || kind === "response.function_call_arguments.done"
+      || kind === "response.custom_tool_call_input.done") {
       const text = kind === "response.output_text.done";
-      const key = text ? ["o", data.output_index ?? 0, data.content_index ?? 0] : ["f", data.output_index ?? 0];
-      const deltaKind = text ? "response.output_text.delta" : "response.function_call_arguments.delta";
+      const custom = kind === "response.custom_tool_call_input.done";
+      const key = text ? ["o", data.output_index ?? 0, data.content_index ?? 0] : [custom ? "c" : "f", data.output_index ?? 0];
+      const deltaKind = text ? "response.output_text.delta"
+        : custom ? "response.custom_tool_call_input.delta" : "response.function_call_arguments.delta";
       const events: Event[] = [];
       const tail = state.flush(key);
       if (tail) {
@@ -336,6 +348,8 @@ export class OpenAIResponsesAdapter extends Adapter {
       if (!tail) continue;
       if (key[0] === "o") {
         events.push([null, { type: "response.output_text.delta", output_index: key[1], content_index: key[2], delta: tail }]);
+      } else if (key[0] === "c") {
+        events.push([null, { type: "response.custom_tool_call_input.delta", output_index: key[1], delta: tail }]);
       } else {
         events.push([null, { type: "response.function_call_arguments.delta", output_index: key[1], delta: tail }]);
       }

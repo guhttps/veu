@@ -18,6 +18,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Propagação de nomes confirmados:** depois de "Rayane Souza", as menções a "rayane", "RAYANE SOUZA" ou "Jose" (sem acento) no mesmo texto recebem o mesmo marcador.
 - Municípios do IBGE que não começam com um prenome ("Belo Jardim", mas não "Paulo Afonso"), sequências que começam com tipo de logradouro ("Avenida Paulista") ou com São, Santo e Santa e rótulos de formulário ("Razão Social", "Certidão de Nascimento") não são mais lidos como nomes de pessoas.
 
+- **`veu gancho comando`** (PreToolUse de Bash e Grep, e `beforeShellExecution` do Cursor): o terminal e a busca deixam de ser um atalho para ler segredos. Bloqueia comandos que leem arquivos com segredos (`cat .env`), que mostram variáveis de ambiente (`printenv`, `echo $OPENAI_API_KEY`) e buscas com conteúdo que passariam por `.env`, chaves ou `credentials.json`. O plugin do Claude Code já vem com ele.
+- `veu gancho prompt --exigir-proxy` bloqueia o prompt quando o agente não está apontado para o proxy do Véu.
+- **Codex CLI pelo proxy:** a Responses API passa a esconder `custom_tool_call` (como o `apply_patch`), `local_shell_call` e saídas de ferramentas em lista, e a restaurar em streaming a entrada de ferramentas de texto livre, com a mesma política (chaves não voltam, links não recebem dados reais).
+- **Normalização para a detecção:** caracteres invisíveis (largura zero, hífen invisível), hífens tipográficos (`529.982.247‑25` copiado do Word) e dígitos e letras de largura total não escondem mais dados do detector. O texto enviado e o restaurado continuam como estavam. Em JavaScript, a máscara de CPF passa a aceitar dígitos de largura total, como em Python.
+
 ### Alterado
 - `veu avaliar --max-vazamento` vale para a validação (e para o conjunto escolhido), não para o desafio, que existe para mostrar onde o Véu ainda erra.
 

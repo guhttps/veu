@@ -76,7 +76,8 @@ class Masker:
 
 # Onde ficam os argumentos de chamadas de ferramenta nas respostas (OpenAI, Responses, Anthropic, Gemini, Ollama).
 _TOOL_KEYS = frozenset({"arguments", "partial_json", "args", "functionCall", "function_call", "tool_calls"})
-_TOOL_TYPES = frozenset({"tool_use", "server_tool_use", "function_call", "custom_tool_call"})
+_TOOL_TYPES = frozenset({"tool_use", "server_tool_use", "function_call", "custom_tool_call", "local_shell_call",
+                         "response.custom_tool_call_input.done", "response.function_call_arguments.done"})
 
 
 def restore_obj(value: Any, vault: Vault, *, tool: bool = False) -> Any:
@@ -121,10 +122,11 @@ class StreamState:
         self._restorers: dict[tuple, StreamRestorer] = {}
         self.meta: dict[str, Any] = {}
 
-    def feed(self, key: tuple, text: str, *, json_escape: bool = False) -> str:
+    def feed(self, key: tuple, text: str, *, json_escape: bool = False, tool: bool | None = None) -> str:
+        """tool: o texto é argumento de ferramenta (padrão: o mesmo que json_escape)."""
         restorer = self._restorers.get(key)
         if restorer is None:
-            restorer = self._restorers[key] = self.vault.restorer(json_escape=json_escape)
+            restorer = self._restorers[key] = self.vault.restorer(json_escape=json_escape, tool=tool)
         return restorer.feed(text)
 
     def flush(self, key: tuple) -> str:
@@ -333,10 +335,15 @@ class OpenAIResponsesAdapter(Adapter):
                 continue
             if "content" in item:
                 item["content"] = _mask_content(item.get("content"), masker)
-            if item.get("type") == "function_call":
+            kind = item.get("type")
+            if kind == "function_call":
                 item["arguments"] = masker.json_string(item.get("arguments"))
-            elif item.get("type") == "function_call_output" and isinstance(item.get("output"), str):
-                item["output"] = masker.text(item["output"])
+            elif kind in ("function_call_output", "custom_tool_call_output", "local_shell_call_output"):
+                item["output"] = _mask_content(item.get("output"), masker)
+            elif kind == "custom_tool_call":  # ferramentas de texto livre, como o apply_patch do Codex
+                item["input"] = masker.text(item.get("input"))
+            elif kind == "local_shell_call" and isinstance(item.get("action"), dict):
+                item["action"] = masker.obj(item["action"])
 
     def instruct(self, payload, instruction):
         current = payload.get("instructions")
@@ -354,10 +361,18 @@ class OpenAIResponsesAdapter(Adapter):
             key = ("f", data.get("output_index", 0))
             data["delta"] = state.feed(key, data.get("delta") or "", json_escape=True)
             return [(name, data)]
-        if kind in ("response.output_text.done", "response.function_call_arguments.done"):
+        if kind == "response.custom_tool_call_input.delta":
+            key = ("c", data.get("output_index", 0))
+            data["delta"] = state.feed(key, data.get("delta") or "", tool=True)
+            return [(name, data)]
+        if kind in ("response.output_text.done", "response.function_call_arguments.done",
+                    "response.custom_tool_call_input.done"):
             if kind == "response.output_text.done":
                 key = ("o", data.get("output_index", 0), data.get("content_index", 0))
                 delta_kind = "response.output_text.delta"
+            elif kind == "response.custom_tool_call_input.done":
+                key = ("c", data.get("output_index", 0))
+                delta_kind = "response.custom_tool_call_input.delta"
             else:
                 key = ("f", data.get("output_index", 0))
                 delta_kind = "response.function_call_arguments.delta"
@@ -382,6 +397,9 @@ class OpenAIResponsesAdapter(Adapter):
             if key[0] == "o":
                 events.append((None, {"type": "response.output_text.delta", "output_index": key[1],
                                       "content_index": key[2], "delta": tail}))
+            elif key[0] == "c":
+                events.append((None, {"type": "response.custom_tool_call_input.delta", "output_index": key[1],
+                                      "delta": tail}))
             else:
                 events.append((None, {"type": "response.function_call_arguments.delta", "output_index": key[1],
                                       "delta": tail}))

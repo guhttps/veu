@@ -393,6 +393,50 @@
    "mascarado": "O J*** C*** ligou; depois o j*** voltou. R*** P*** ligou e a rosa murchou. Razão Social: Exemplo Ltda"
   },
   {
+   "texto": "CPF 529.982.247‑25, CPF ５２９.９８２.２４７-２５ e e-mail maria­.souza@example.com",
+   "entidades": [
+    [
+     "CPF",
+     4,
+     18,
+     1.0
+    ],
+    [
+     "CPF",
+     24,
+     38,
+     1.0
+    ],
+    [
+     "EMAIL",
+     48,
+     72,
+     1.0
+    ]
+   ],
+   "anonimizado": "CPF [CPF_1], CPF [CPF_2] e e-mail [EMAIL_1]",
+   "mascarado": "CPF ***.982.247‑**, CPF ***.９８２.２４７-** e e-mail m***@example.com"
+  },
+  {
+   "texto": "tel (11) 98765‑4321; chave sk-​proj-Ab3dE5fG7hJ9kL1mN3pQ5rS7tU9vW1xY3zA5bC7d; período 2020–2021",
+   "entidades": [
+    [
+     "TELEFONE",
+     4,
+     19,
+     0.95
+    ],
+    [
+     "CHAVE_API",
+     27,
+     76,
+     0.95
+    ]
+   ],
+   "anonimizado": "tel [TELEFONE_1]; chave [CHAVE_API_1]; período 2020–2021",
+   "mascarado": "tel (**) *****‑**21; chave sk-****; período 2020–2021"
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [

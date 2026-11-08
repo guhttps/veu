@@ -30,11 +30,12 @@ export function normalizeOperator(name: string): Operator {
 
 export function maskValue(label: string, value: string): string {
   if (label === "CPF") {
-    const digits = [...value].filter((char) => /\d/.test(char));
+    const digit = /\p{Nd}/u; // inclui dígitos de largura total, como o isdigit() do Python
+    const digits = [...value].filter((char) => digit.test(char));
     if (digits.length === 11) {
       let index = 0;
       return [...value].map((char) => {
-        if (!/\d/.test(char)) return char;
+        if (!digit.test(char)) return char;
         const visible = index >= 3 && index < 9;
         index += 1;
         return visible ? char : "*";
