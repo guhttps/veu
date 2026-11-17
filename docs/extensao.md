@@ -17,7 +17,9 @@ Funciona em: ChatGPT, Claude, Gemini, AI Studio, NotebookLM, Copilot (inclusive 
 3. Clique em **Carregar sem compactação** e escolha a pasta descompactada.
 4. Fixe o ícone do Véu na barra.
 
-No **Firefox** (128 ou mais novo), use o `veu-extensao-firefox-<versão>.zip`: abra `about:debugging#/runtime/this-firefox`, clique em **Carregar extensão temporária** e escolha o `manifest.json` de dentro do zip descompactado. Extensões temporárias somem quando o Firefox fecha; para uso permanente, a extensão precisa ser assinada pela Mozilla.
+No **Firefox** (140 ou mais novo), use o `veu-extensao-firefox-<versão>.zip`: abra `about:debugging#/runtime/this-firefox`, clique em **Carregar extensão temporária** e escolha o `manifest.json` de dentro do zip descompactado. Extensões temporárias somem quando o Firefox fecha; para uso permanente, a extensão precisa ser assinada pela Mozilla.
+
+Para publicar nas lojas do Edge e do Firefox, os textos, as capturas de tela, a justificativa de cada permissão e a [política de privacidade](https://guhttps.github.io/veu/privacidade.html) estão em [`extensao/loja/`](https://github.com/guhttps/veu/tree/main/extensao/loja).
 
 Na sua empresa, a TI pode instalar e configurar a extensão para todos: veja o [guia para empresas](empresas.md#extensão-gerenciada-pela-ti).
 

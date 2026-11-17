@@ -30,7 +30,11 @@ def firefox_manifest(manifest: dict) -> dict:
     """Manifesto para o Firefox: página de fundo em vez de service worker e o identificador do complemento."""
     result = {key: value for key, value in manifest.items() if key != "minimum_chrome_version"}
     result["background"] = {"scripts": [manifest["background"]["service_worker"]]}
-    result["browser_specific_settings"] = {"gecko": {"id": FIREFOX_ID, "strict_min_version": "128.0"}}
+    # A Mozilla exige que extensões novas declarem se coletam dados (o Firefox mostra isso ao instalar). O Véu não
+    # coleta nada; a chave existe a partir do Firefox 140.
+    result["browser_specific_settings"] = {"gecko": {
+        "id": FIREFOX_ID, "strict_min_version": "140.0", "data_collection_permissions": {"required": ["none"]},
+    }}
     return result
 
 

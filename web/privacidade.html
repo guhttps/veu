@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Privacidade do Véu</title>
+  <meta name="description" content="Política de privacidade da extensão e da página do Véu: nenhum dado sai do seu navegador.">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23234e52'/%3E%3Cpath d='M8 12h16M8 17h12M8 22h8' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>Privacidade</h1>
+        <p>Extensão e página do Véu. Atualizada em 17 de novembro de 2026.</p>
+      </div>
+    </div>
+    <nav class="links">
+      <a class="discreto" href="#english">English</a>
+      <a class="discreto" href="./">Voltar</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="painel">
+      <h2>Em uma frase</h2>
+      <p>O Véu não coleta, não guarda em servidores e não envia a ninguém nenhum dado seu. A detecção roda dentro do seu navegador.</p>
+    </section>
+
+    <section class="painel">
+      <h2>O que a extensão faz</h2>
+      <p>Nos sites de IA listados abaixo, ela lê o texto que você cola ou digita no campo de mensagem, acha dados pessoais e segredos e os troca por marcadores como [CPF_1] antes do envio. Quando você pede, ela troca os marcadores de volta pelos dados reais. Tudo isso acontece no seu computador.</p>
+    </section>
+
+    <section class="painel">
+      <h2>O que fica guardado, e onde</h2>
+      <ul>
+        <li><b>O cofre</b> (a ligação entre cada marcador e o dado real) fica na memória de sessão do navegador, separado por aba. Ele é apagado quando você fecha a aba ou o navegador, e os sites não têm acesso a ele.</li>
+        <li><b>Suas preferências</b> (modo, caixinhas de "O que esconder", mostrar ou não os dados reais) ficam no armazenamento de configurações do navegador. Se você usa a sincronização do Chrome, do Edge ou do Firefox, o próprio navegador pode sincronizar essas preferências entre os seus aparelhos. Nenhum texto seu e nenhum dado pessoal fazem parte delas.</li>
+        <li><b>A contagem</b> de quantos dados foram protegidos em cada aba, para mostrar no ícone. Também é apagada ao fechar a aba.</li>
+      </ul>
+    </section>
+
+    <section class="painel">
+      <h2>O que a extensão não faz</h2>
+      <ul>
+        <li>Não envia nada para servidores do Véu ou de terceiros. A extensão não faz conexões de rede.</li>
+        <li>Não usa análise de uso, rastreamento, anúncios nem cookies.</li>
+        <li>Não lê páginas fora dos sites de IA listados abaixo, a não ser quando você usa um dos itens do Véu no menu do botão direito: "proteger o texto selecionado" ou "copiar a seleção com os dados reais".</li>
+        <li>Não vende nem compartilha dados, porque não tem nenhum.</li>
+      </ul>
+    </section>
+
+    <section class="painel">
+      <h2>Permissões e por que cada uma</h2>
+      <ul>
+        <li><b>storage</b>: guardar o cofre da aba e as suas preferências, como descrito acima.</li>
+        <li><b>contextMenus</b>: os itens "Véu: proteger o texto selecionado" e "Véu: copiar a seleção com os dados reais" do menu do botão direito.</li>
+        <li><b>activeTab</b> e <b>scripting</b>: agir sobre o texto selecionado na aba em que você usou o menu, só naquele momento.</li>
+        <li><b>Sites de IA</b>: chatgpt.com, chat.openai.com, claude.ai, gemini.google.com, aistudio.google.com, notebooklm.google.com, copilot.microsoft.com, m365.cloud.microsoft, perplexity.ai, chat.deepseek.com, chat.mistral.ai, grok.com, meta.ai, poe.com, huggingface.co/chat, chat.qwen.ai, kimi.com e maritaca.ai. São os sites onde ela protege o que você envia.</li>
+      </ul>
+    </section>
+
+    <section class="painel">
+      <h2>A página do Véu</h2>
+      <p>A página em guhttps.github.io/veu funciona do mesmo jeito: a detecção roda no navegador, e a política de segurança da página bloqueia qualquer conexão. O cofre fica só na aba aberta; a escolha de idioma e as caixinhas ficam salvas no navegador. A hospedagem é do GitHub Pages, que pode registrar acessos ao site como qualquer servidor web, sem nenhum texto seu.</p>
+    </section>
+
+    <section class="painel">
+      <h2>Contato</h2>
+      <p>Dúvidas ou problemas de privacidade: abra uma issue em github.com/guhttps/veu/issues. Falhas de segurança: siga o SECURITY.md do repositório, que explica como avisar em particular.</p>
+      <p>O código é aberto (licença MIT): qualquer pessoa pode conferir que a extensão faz exatamente o que esta página descreve.</p>
+    </section>
+
+    <section class="painel" id="english" lang="en">
+      <h2>Privacy policy (English)</h2>
+      <p>Véu does not collect, store on servers or send anyone any of your data. Detection runs inside your browser.</p>
+      <ul>
+        <li><b>What it does:</b> on the AI sites listed above, it reads the text you paste or type in the message field, finds personal data and secrets and replaces them with markers such as [CPF_1] before sending. When you ask, it puts the real data back. All of this happens on your computer.</li>
+        <li><b>What is stored:</b> the vault linking markers to real values lives in the browser's session storage, per tab, and is erased when you close the tab or browser; websites cannot read it. Your preferences (mode, "what to hide" checkboxes) live in the browser's settings storage, which your browser may sync across your devices; they contain no text and no personal data. A per-tab count of protected items is shown on the icon and erased with the tab.</li>
+        <li><b>What it does not do:</b> no network connections, no analytics, no tracking, no ads, no cookies, no data sales or sharing. It only reads other pages when you use one of its context menu items (protect the selected text, or copy the selection with the real data).</li>
+        <li><b>Permissions:</b> storage (vault and preferences), contextMenus (the two context menu items), activeTab and scripting (act on the selected text in the current tab, only when you use the menu), and the AI sites listed above.</li>
+        <li><b>Contact:</b> github.com/guhttps/veu/issues. The code is open source (MIT).</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

@@ -37,6 +37,8 @@ def test_firefox_manifest():
     assert firefox["background"] == {"scripts": ["fundo.js"]}
     assert firefox["browser_specific_settings"]["gecko"]["id"] == "veu@guhttps.github.io"
     assert "minimum_chrome_version" not in firefox and firefox["version"] == manifest["version"]
+    # A Mozilla recusa extensões novas que não declaram se coletam dados.
+    assert firefox["browser_specific_settings"]["gecko"]["data_collection_permissions"] == {"required": ["none"]}
 
 
 def test_zips_when_built(tmp_path):

@@ -428,6 +428,7 @@ Para ver o site de documentação no seu computador: `pip install zensical==0.1.
 - [x] Documentos de Angola, Moçambique, Estados Unidos, Canadá, Índia e Europa; MRZ de passaporte, VIN e carteiras de criptomoeda
 - [x] Site de documentação com busca
 - [x] Homebrew (`brew install guhttps/veu/veu`) e Scoop (`scoop bucket add veu https://github.com/guhttps/scoop-veu`)
+- [ ] Extensão nas lojas do Edge e do Firefox (textos, capturas e política de privacidade prontos em `extensao/loja/`)
 - [ ] Nomes de outras línguas sem precisar de modelo
 - [ ] Abrir Excel e Word direto na página web, sem instalar nada
 - [ ] Operador sintético na versão JavaScript

@@ -5,6 +5,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+- **Política de privacidade** em https://guhttps.github.io/veu/privacidade.html (português e inglês), com link no topo da página, e o kit das lojas de extensões em `extensao/loja/`: textos prontos, justificativa de cada permissão, instruções de montagem para a Mozilla e capturas de tela geradas por `scripts/capturas_loja.mjs`.
+- **Publicação do nó do n8n** no fluxo de versões, com a origem assinada (provenance) que a verificação do n8n exige.
+
+### Corrigido
+- **Firefox:** o pacote declara que a extensão não coleta dados (`data_collection_permissions`), como a Mozilla exige de extensões novas, e passa a pedir o Firefox 140 ou mais novo.
+
 ## [0.7.0] - 2026-11-17
 
 Você escolhe o que esconder, o Véu passa a esconder portas e servidores internos, e ferramentas de rede deixam de receber dados reais.

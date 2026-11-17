@@ -137,3 +137,27 @@ jobs:
           node-version: "24"
       - working-directory: js
         run: npm ci && npm run build && npm publish --provenance --access public
+
+  # Nó do n8n (@guhttps/n8n-nodes-veu), com a origem assinada (provenance) que a verificação do n8n exige.
+  # Para ativar: crie a variável de repositório N8N_PUBLICAR = true. A primeira publicação precisa do segredo
+  # NPM_TOKEN (um token "Granular" do npm com permissão de escrita); depois dela, configure a publicação confiável
+  # do pacote no npm e apague o segredo. Além das tags, roda em "Run workflow", para publicar a versão atual.
+  n8n:
+    needs: build
+    if: (startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch') && vars.N8N_PUBLICAR == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Publicar o nó do n8n
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"; fi
+          (cd js && npm run dados)
+          cd n8n && npm ci && npm publish --provenance --access public
