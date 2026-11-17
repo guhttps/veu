@@ -47,6 +47,7 @@ You get         Done, Maria Souza! I set sk-proj-4f9a... in your .env.
 | You want to... | Use |
 |---|---|
 | paste text into ChatGPT, Claude or Gemini without exposing data | The [web page](https://guhttps.github.io/veu/) or the browser extension (Chrome, Edge, Firefox) |
+| install the command line on macOS, Linux or Windows | `brew install guhttps/veu/veu`, or `scoop bucket add veu https://github.com/guhttps/scoop-veu` and `scoop install veu` |
 | protect an app that calls an AI API, in any language | The proxy: `pip install "veu[servidor]"`, `veu servir`, then point your SDK's base URL to `http://127.0.0.1:8787/v1` |
 | protect Python code | `pip install veu`, then `openai_client()`, `anthropic_client()`, LangChain or `@protect` |
 | protect JavaScript or TypeScript code | `npm install @guhttps/veu`, then `createFetch()` or the Vercel AI SDK middleware |

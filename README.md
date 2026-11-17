@@ -174,6 +174,8 @@ pip install veu                              # biblioteca, sem dependências
 pip install "veu[servidor,mcp,documentos]"   # com o proxy, o painel, o MCP e Excel/Word/PDF
 npm install @guhttps/veu                     # JavaScript e TypeScript
 docker run -p 8787:8787 -e VEU_TOKEN=um-segredo ghcr.io/guhttps/veu
+brew install guhttps/veu/veu                 # macOS e Linux (Homebrew)
+scoop bucket add veu https://github.com/guhttps/scoop-veu; scoop install veu   # Windows (Scoop)
 ```
 
 Extras opcionais do pacote Python:
@@ -425,7 +427,7 @@ Para ver o site de documentação no seu computador: `pip install zensical==0.1.
 - [x] Documentos de Portugal e da América Latina (CUIT, CURP, RFC, RUT, NIT, RUC, RIF e cédulas)
 - [x] Documentos de Angola, Moçambique, Estados Unidos, Canadá, Índia e Europa; MRZ de passaporte, VIN e carteiras de criptomoeda
 - [x] Site de documentação com busca
-- [ ] Homebrew e Scoop (manifestos prontos em [`packaging/`](packaging/README.md); falta criar o tap e o bucket)
+- [x] Homebrew (`brew install guhttps/veu/veu`) e Scoop (`scoop bucket add veu https://github.com/guhttps/scoop-veu`)
 - [ ] Nomes de outras línguas sem precisar de modelo
 - [ ] Abrir Excel e Word direto na página web, sem instalar nada
 - [ ] Operador sintético na versão JavaScript

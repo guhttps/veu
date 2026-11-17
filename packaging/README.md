@@ -8,8 +8,8 @@ Onde o Véu está publicado e como publicar nos canais que ainda dependem de um 
 | npm | Publicado a cada tag | `npm install @guhttps/veu` |
 | Imagem Docker | Publicada a cada tag | `docker run ghcr.io/guhttps/veu` |
 | Instalador de um comando | Na página do Véu | `irm https://guhttps.github.io/veu/instalar.ps1 \| iex` (Windows) ou `curl -LsSf https://guhttps.github.io/veu/instalar.sh \| sh` |
-| Homebrew (macOS e Linux) | Fórmula pronta em [`homebrew/veu.rb`](homebrew/veu.rb); falta o tap | `brew install guhttps/veu/veu` |
-| Scoop (Windows) | Manifesto pronto em [`scoop/veu.json`](scoop/veu.json); falta o bucket | `scoop bucket add veu https://github.com/guhttps/scoop-veu` e `scoop install veu` |
+| Homebrew (macOS e Linux) | Publicado no tap [guhttps/homebrew-veu](https://github.com/guhttps/homebrew-veu) | `brew install guhttps/veu/veu` |
+| Scoop (Windows) | Publicado no bucket [guhttps/scoop-veu](https://github.com/guhttps/scoop-veu) | `scoop bucket add veu https://github.com/guhttps/scoop-veu` e `scoop install veu` |
 | winget | Ainda não | — |
 
 ## Atualizar os manifestos
@@ -20,7 +20,7 @@ Depois de publicar uma versão no PyPI:
 python scripts/atualizar_manifestos.py          # a última versão do PyPI (ou: ... 0.6.0)
 ```
 
-O script lê os endereços e os hashes do próprio PyPI e reescreve `homebrew/veu.rb` e `scoop/veu.json`.
+O script lê os endereços e os hashes do próprio PyPI e reescreve `homebrew/veu.rb` e `scoop/veu.json`. Depois, copie `homebrew/veu.rb` para `Formula/veu.rb` em guhttps/homebrew-veu e `scoop/veu.json` para `bucket/veu.json` em guhttps/scoop-veu.
 
 ## Homebrew: criar o tap
 
