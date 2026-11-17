@@ -5,6 +5,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-17
+
+Preparação para as lojas de extensões e para o n8n.
+
 ### Adicionado
 - **Política de privacidade** em https://guhttps.github.io/veu/privacidade.html (português e inglês), com link no topo da página, e o kit das lojas de extensões em `extensao/loja/`: textos prontos, justificativa de cada permissão, instruções de montagem para a Mozilla e capturas de tela geradas por `scripts/capturas_loja.mjs`.
 - **Publicação do nó do n8n** no fluxo de versões, com a origem assinada (provenance) que a verificação do n8n exige.
@@ -311,7 +315,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/guhttps/veu/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/guhttps/veu/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/guhttps/veu/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/guhttps/veu/compare/v0.5.1...v0.5.2
