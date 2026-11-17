@@ -5,6 +5,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-17
+
+Você escolhe o que esconder, o Véu passa a esconder portas e servidores internos, e ferramentas de rede deixam de receber dados reais.
+
 ### Segurança
 - **Ferramentas de rede e mensagens não recebem dados reais** (Python e JavaScript, nas APIs Chat Completions, Responses, Anthropic, Gemini e Ollama, com e sem streaming). Uma IA manipulada que chama `send_email(texto="[CPF_1]")`, `WebFetch` ou `http_request` recebe o marcador, não o CPF. O nome da ferramenta é quebrado em palavras (`postgres_query` não vira "post"), e `[restauracao] ferramentas_sem_dados` e `ferramentas_com_dados` ajustam a lista. Comandos de rede num argumento (`curl`, `wget`, `Invoke-WebRequest`, `ssh`) também barram os dados depois deles, inclusive no corpo (`curl -d "cpf=..."`). O `veu demonstrar` ganhou esse ataque.
 - **Modo só eco** (`[restauracao] so_eco = true`): no proxy, cada resposta só recebe de volta os dados que vieram na própria requisição. Numa sessão com dados de vários clientes, "repita o [CPF_2]" não traz mais o CPF de outra pessoa.
@@ -300,7 +304,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/guhttps/veu/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/guhttps/veu/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/guhttps/veu/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/guhttps/veu/compare/v0.5.0...v0.5.1
