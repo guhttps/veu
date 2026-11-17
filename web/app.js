@@ -1,7 +1,7 @@
 // Página do Véu: tudo roda aqui, no navegador. A política de segurança da página bloqueia conexões.
 (() => {
   "use strict";
-  const { Veu, Vault, LABELS } = window.veu;
+  const { Veu, Vault, LABELS, GROUPS, SECRET_LABELS } = window.veu;
   const $ = (id) => document.getElementById(id);
   const entrada = $("entrada");
   const saida = $("saida");
@@ -40,13 +40,22 @@
 
   // Valores que a pessoa desmarcou (falsos positivos): não são escondidos.
   const ignorados = new Set();
-  const base = new Veu();
+  // Tipos que a pessoa desligou nas caixinhas de "O que esconder" (salvos neste navegador). Guardar os desligados,
+  // e não os ligados, faz um tipo novo do Véu já chegar ligado.
+  const CHAVE_TIPOS = "veu-tipos-desligados";
+  const todosOsTipos = GROUPS.flatMap((grupo) => grupo.tipos);
+  const desligados = new Set();
+  try {
+    for (const tipo of JSON.parse(localStorage.getItem(CHAVE_TIPOS) || "[]")) if (todosOsTipos.includes(tipo)) desligados.add(tipo);
+  } catch { /* sem armazenamento: tudo ligado */ }
+  const tiposLigados = () => todosOsTipos.filter((tipo) => !desligados.has(tipo));
   // Uma instância por configuração: montar as listas de nomes a cada tecla seria lento, e a mesma instância
   // reaproveita o cache de detecção de textos longos.
   const instancias = new Map();
   function veuPara(lista, op) {
-    const chave = JSON.stringify([lista, op]);
-    if (!instancias.has(chave)) instancias.set(chave, new Veu({ allowlist: lista, operator: op }));
+    const tipos = desligados.size ? tiposLigados() : undefined;
+    const chave = JSON.stringify([lista, op, tipos]);
+    if (!instancias.has(chave)) instancias.set(chave, new Veu({ allowlist: lista, operator: op, labels: tipos }));
     return instancias.get(chave);
   }
   // Textos grandes vão para um trabalhador (Web Worker): a página continua respondendo.
@@ -152,12 +161,78 @@
     }
   }
 
+  // Caixinhas de "O que esconder": uma por grupo e, dentro de cada grupo, uma por tipo.
+  function montarTipos() {
+    const lugar = $("tipos-grupos");
+    lugar.replaceChildren();
+    for (const grupo of GROUPS) {
+      const bloco = document.createElement("div");
+      bloco.className = "grupo";
+      const rotulo = document.createElement("label");
+      const caixa = document.createElement("input");
+      caixa.type = "checkbox";
+      caixa.id = `grupo-${grupo.id}`;
+      const ligados = grupo.tipos.filter((tipo) => !desligados.has(tipo)).length;
+      caixa.checked = ligados === grupo.tipos.length;
+      caixa.indeterminate = ligados > 0 && ligados < grupo.tipos.length;
+      caixa.addEventListener("change", () => mudarTipos(grupo.tipos, caixa.checked));
+      const titulo = document.createElement("b");
+      titulo.textContent = idioma === "en" ? grupo.titulo_en : grupo.titulo;
+      const exemplo = document.createElement("span");
+      exemplo.className = "exemplo";
+      exemplo.textContent = idioma === "en" ? grupo.exemplo_en : grupo.exemplo;
+      rotulo.append(caixa, titulo, exemplo);
+      const detalhe = document.createElement("details");
+      detalhe.open = caixa.indeterminate;
+      const resumo = document.createElement("summary");
+      resumo.textContent = T.umAUm;
+      const lista = document.createElement("div");
+      lista.className = "um-a-um";
+      for (const tipo of grupo.tipos) {
+        const item = document.createElement("label");
+        const caixaDoTipo = document.createElement("input");
+        caixaDoTipo.type = "checkbox";
+        caixaDoTipo.id = `tipo-${tipo}`;
+        caixaDoTipo.checked = !desligados.has(tipo);
+        caixaDoTipo.addEventListener("change", () => mudarTipos([tipo], caixaDoTipo.checked));
+        item.append(caixaDoTipo, nomeDoTipo(tipo));
+        lista.append(item);
+      }
+      detalhe.append(resumo, lista);
+      bloco.append(rotulo, detalhe);
+      lugar.append(bloco);
+    }
+    const gruposInteiros = GROUPS.filter((grupo) => grupo.tipos.every((tipo) => !desligados.has(tipo))).length;
+    $("tipos-resumo").textContent = desligados.size ? T.tiposAlguns(gruposInteiros, GROUPS.length) : T.tiposTudo;
+  }
+
+  function mudarTipos(tipos, ligar) {
+    for (const tipo of tipos) {
+      if (ligar) desligados.delete(tipo);
+      else desligados.add(tipo);
+    }
+    try {
+      localStorage.setItem(CHAVE_TIPOS, JSON.stringify([...desligados]));
+    } catch { /* sem armazenamento: vale só nesta visita */ }
+    // Desligar senhas e chaves é o erro mais caro: a pessoa precisa saber o que acontece.
+    if (!ligar && tipos.some((tipo) => SECRET_LABELS.has(tipo))) avisar(T.avisoSegredos);
+    montarTipos();
+    atualizar();
+  }
+
   function atualizar() {
     const texto = entrada.value;
     if (!texto) {
       mostrarAchados([]);
       rascunho = null;
       saida.replaceChildren();
+      return;
+    }
+    if (!tiposLigados().length) { // nada marcado: o texto segue como está
+      pedido += 1;
+      mostrarAchados([]);
+      rascunho = { texto, cofre: Vault.fromJSON(cofre.toJSON()) };
+      saida.textContent = texto;
       return;
     }
     if (trabalhador && texto.length >= GRANDE) {
@@ -171,11 +246,12 @@
         rascunho = { texto: data.texto, cofre: Vault.fromJSON(data.cofre) };
         mostrarComMarcadores(saida, data.texto);
       };
-      trabalhador.postMessage({ id, texto, ignorar: [...ignorados], operador: operador.value, cofre: cofre.toJSON() });
+      trabalhador.postMessage({ id, texto, ignorar: [...ignorados], operador: operador.value, cofre: cofre.toJSON(),
+        tipos: desligados.size ? tiposLigados() : undefined });
       return;
     }
     pedido += 1; // descarta respostas atrasadas do trabalhador
-    mostrarAchados(base.analyze(texto));
+    mostrarAchados(veuPara([], "token").analyze(texto));
     const copia = Vault.fromJSON(cofre.toJSON());
     const resultado = veuPara([...ignorados], operador.value).anonymize(texto, copia);
     rascunho = { texto: resultado.text, cofre: copia };
@@ -235,6 +311,7 @@
     evento.target.value = "";
   });
 
+  montarTipos();
   atualizar();
   restaurar();
 })();

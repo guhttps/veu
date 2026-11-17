@@ -5,6 +5,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+- **Portas e servidores internos** (Python e JavaScript): `PORTA` quando o número está colado a um IP ou a um servidor (`10.0.0.5:8080`, `https://api.empresa.example:8443`), depois de "porta", `PORT=` ou `--port`, ou no `-p` de comandos de rede (`ssh -p 2222`, `docker run -p 8080:80`); nunca um número solto. `SERVIDOR` para nomes com terminação interna (`.local`, `.internal`, `.interna`, `.corp`, `.lan`, `.intranet`, `home.arpa`). Nenhuma detecção nova em 20 mil textos brasileiros.
+- **Caixinhas de "O que esconder"** na página web e no ícone da extensão, com os mesmos grupos do painel (agora num arquivo só, `data/grupos.json`) e um grupo novo, "Infraestrutura de TI". Na página, também dá para escolher tipo a tipo. A escolha fica salva no navegador, e desmarcar senhas e chaves mostra um aviso. A política da extensão ganhou `tiposDesligados`, para a empresa travar a escolha.
+- Padrões com um grupo `valor` escondem só esse trecho (a porta em `10.0.0.5:8080`), em Python e em JavaScript.
+
 ## [0.6.0] - 2026-11-08
 
 Restauração segura contra injeção de prompt, avaliação com dados de terceiros e muito mais cobertura. Como o provedor de IA só vê marcadores, o dado real só reaparece na restauração; agora ela segue regras fixas, que não dependem de o modelo obedecer. Também: nomes do Censo 2022, documentos de mais 21 países, detector opcional com um modelo em português, cache para agentes, kit de conformidade (LGPD), gateway com login único e SIEM, nó do n8n, filtro do Open WebUI, site de documentação e página em português e inglês.

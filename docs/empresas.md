@@ -218,6 +218,7 @@ A extensão lê a política gerenciada (`3rdparty`) com o esquema de [`extensao/
 | `modo` | `avisar`, `proteger`, `bloquear` | `proteger` troca os dados antes de enviar; `bloquear` só deixa enviar depois de proteger |
 | `bloquearTipos` | lista, ex.: `["CHAVE_PRIVADA", "CARTAO_CREDITO"]` | Esses tipos sempre impedem o envio |
 | `tipos` | lista (vazio = todos) | Tipos detectados |
+| `tiposDesligados` | lista, ex.: `["IP", "PORTA"]` | Tipos que a extensão deixa passar; definido pela empresa, as caixinhas do ícone ficam travadas |
 | `ignorar`, `ignorarPadroes` | listas | Dados da própria empresa que podem ir para a IA |
 | `restaurarRespostas` | `true` ou `false` | Mostrar os dados reais nas respostas, só na tela do usuário |
 | `orientacao` | texto (até 500 caracteres) | Mensagem da empresa nos avisos, ex.: "Dados de clientes só no assistente interno." |

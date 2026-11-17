@@ -57,6 +57,8 @@ LABELS: dict[str, str] = {
     "MRZ": "Zona de leitura de passaporte (MRZ)",
     "VIN": "Chassi (VIN)",
     "CRIPTO": "Carteira de criptomoeda (Bitcoin, Ethereum)",
+    "PORTA": "Porta de rede",
+    "SERVIDOR": "Nome de servidor interno",
     "CHAVE_API": "Chave de API ou token de serviço (OpenAI, AWS, GitHub...)",
     "TOKEN": "Token de acesso (JWT, Bearer)",
     "SENHA": "Senha",
@@ -92,3 +94,11 @@ class Entity:
             "texto": self.text,
             "detector": self.recognizer,
         }
+
+
+def load_groups() -> list[dict]:
+    """Grupos de tipos para as caixinhas do painel, da página e da extensão (data/grupos.json)."""
+    import json
+    from importlib import resources
+
+    return json.loads(resources.files("veu").joinpath("data", "grupos.json").read_text(encoding="utf-8"))["grupos"]

@@ -27,6 +27,7 @@ const lists = {
   organizations: wordlist("organizations.txt"),
 };
 const secrets = JSON.parse(readFileSync(join(data, "segredos.json"), "utf8")).regras;
+const groups = JSON.parse(readFileSync(join(data, "grupos.json"), "utf8")).grupos;
 
 let output = "// Gerado por scripts/gerar-dados.mjs a partir de src/veu/data. Não edite à mão.\n\n";
 for (const [name, values] of Object.entries(lists)) {
@@ -35,5 +36,8 @@ for (const [name, values] of Object.entries(lists)) {
 output += "export interface SecretRuleData {\n  id: string;\n  entidade: string;\n  padrao: string;\n  pontuacao: number;\n";
 output += "  grupo?: number;\n  filtro?: string;\n  aparar?: string;\n}\n\n";
 output += `export const secretRules: readonly SecretRuleData[] = ${JSON.stringify(secrets, null, 1)};\n`;
+output += "\nexport interface GroupData {\n  id: string;\n  titulo: string;\n  titulo_en: string;\n  exemplo: string;\n";
+output += "  exemplo_en: string;\n  tipos: string[];\n}\n\n";
+output += `export const groups: readonly GroupData[] = ${JSON.stringify(groups, null, 1)};\n`;
 writeFileSync(join(root, "src", "data.ts"), output);
 console.log(`src/data.ts: ${Object.values(lists).reduce((n, l) => n + l.length, 0)} palavras, ${secrets.length} regras`);

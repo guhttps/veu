@@ -240,6 +240,11 @@ def is_valid_intl_phone(value: str) -> bool:
     return 8 <= len(digits) <= 15 and not _repeated(digits[-8:])
 
 
+def is_valid_port(value: str) -> bool:
+    """Porta de rede: de 1 a 65535, sem zeros à esquerda."""
+    return value.isdigit() and value[0] != "0" and 1 <= int(value) <= 65535
+
+
 def is_valid_ipv4(value: str) -> bool:
     try:
         address = ipaddress.IPv4Address(value)

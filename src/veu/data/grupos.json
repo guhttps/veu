@@ -1,0 +1,61 @@
+{
+  "_": "Grupos de tipos para as caixinhas do painel, da página e da extensão. Todo tipo de entities.py fica em um grupo (um teste confere).",
+  "grupos": [
+    {
+      "id": "pessoas",
+      "titulo": "Nomes e contatos",
+      "titulo_en": "Names and contacts",
+      "exemplo": "nomes, telefones, e-mails, endereços, CEP, datas de nascimento",
+      "exemplo_en": "names, phone numbers, e-mails, addresses, postal codes, dates of birth",
+      "tipos": ["PESSOA", "TELEFONE", "EMAIL", "ENDERECO", "CEP", "DATA_NASCIMENTO"]
+    },
+    {
+      "id": "documentos",
+      "titulo": "Documentos",
+      "titulo_en": "Brazilian documents",
+      "exemplo": "CPF, CNPJ, RG, CNH, título de eleitor, PIS, cartão do SUS, passaporte, processos",
+      "exemplo_en": "CPF, CNPJ, RG, driver's license, voter ID, PIS, SUS card, passport, lawsuit numbers",
+      "tipos": ["CPF", "CNPJ", "RG", "CNH", "TITULO_ELEITOR", "PIS", "CNS", "PASSAPORTE", "PROCESSO"]
+    },
+    {
+      "id": "estrangeiros",
+      "titulo": "Documentos de outros países",
+      "titulo_en": "Documents from other countries",
+      "exemplo": "Portugal, América Latina, Angola e Moçambique, EUA (SSN), Europa (DNI, codice fiscale, NIR, NINO), Canadá, Índia e passaportes (MRZ)",
+      "exemplo_en": "Portugal, Latin America, Angola and Mozambique, US (SSN), Europe (DNI, codice fiscale, NIR, NINO), Canada, India and passports (MRZ)",
+      "tipos": ["NIF_PT", "CC_PT", "NISS_PT", "CUIT", "DNI", "CURP", "RFC", "RUT", "CEDULA", "NIT", "RUC", "RIF", "NUIT", "BI_AO", "BI_MZ", "SSN", "MBI", "DNI_ES", "CODICE_FISCALE", "NIR", "STEUER_ID", "NINO", "NHS", "BSN", "SIN", "AADHAAR", "PAN", "MRZ"]
+    },
+    {
+      "id": "financeiro",
+      "titulo": "Dados financeiros",
+      "titulo_en": "Financial data",
+      "exemplo": "cartões, contas bancárias, chave Pix, IBAN, carteiras de criptomoeda",
+      "exemplo_en": "cards, bank accounts, Pix keys, IBAN, crypto wallets",
+      "tipos": ["CARTAO_CREDITO", "CONTA_BANCARIA", "CHAVE_PIX", "IBAN", "CRIPTO"]
+    },
+    {
+      "id": "segredos",
+      "titulo": "Senhas e chaves de acesso",
+      "titulo_en": "Passwords and access keys",
+      "exemplo": "senhas, chaves de API, tokens, chaves privadas",
+      "exemplo_en": "passwords, API keys, tokens, private keys",
+      "tipos": ["CHAVE_API", "TOKEN", "SENHA", "CHAVE_PRIVADA", "URL_CONEXAO", "SEGREDO"]
+    },
+    {
+      "id": "infra",
+      "titulo": "Infraestrutura de TI",
+      "titulo_en": "IT infrastructure",
+      "exemplo": "endereços IP, portas e nomes de servidores internos",
+      "exemplo_en": "IP addresses, ports and internal server names",
+      "tipos": ["IP", "PORTA", "SERVIDOR"]
+    },
+    {
+      "id": "outros",
+      "titulo": "Veículos",
+      "titulo_en": "Vehicles",
+      "exemplo": "placas, RENAVAM, chassi (VIN)",
+      "exemplo_en": "license plates, RENAVAM, VIN",
+      "tipos": ["PLACA", "RENAVAM", "VIN"]
+    }
+  ]
+}

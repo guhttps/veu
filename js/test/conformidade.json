@@ -911,6 +911,184 @@
    "generalizado": "Sem contexto: o pedido 123456782, o código ABCPD1234E, o lote 1M8GDM9AXKP042789, o protocolo [CNS], o certificado com notAfter 261108123045Z e a nota 20231108A."
   },
   {
+   "texto": "O servidor 192.168.0.10 atende na porta 5432; acesse 10.0.0.5:8080 ou [2001:db8::1]:443.",
+   "entidades": [
+    [
+     "IP",
+     11,
+     23,
+     0.7
+    ],
+    [
+     "PORTA",
+     40,
+     44,
+     0.85
+    ],
+    [
+     "IP",
+     53,
+     61,
+     0.7
+    ],
+    [
+     "PORTA",
+     62,
+     66,
+     0.9
+    ],
+    [
+     "IP",
+     71,
+     82,
+     0.75
+    ],
+    [
+     "PORTA",
+     84,
+     87,
+     0.9
+    ]
+   ],
+   "anonimizado": "O servidor [IP_1] atende na porta [PORTA_1]; acesse [IP_2]:[PORTA_2] ou [[IP_3]]:[PORTA_3].",
+   "mascarado": "O servidor ***.***.*.10 atende na porta ****; acesse **.*.0.5:**** ou [****:**8::1]:***.",
+   "generalizado": "O servidor 192.168.0.0/24 atende na porta [PORTA]; acesse 10.0.0.0/24:[PORTA] ou [2001:db8::/48]:[PORTA]."
+  },
+  {
+   "texto": "ssh -p 2222 root@203.0.113.7 e docker run -p 8080:80 nginx; depois abra http://203.0.113.7:3000/admin.",
+   "entidades": [
+    [
+     "PORTA",
+     7,
+     11,
+     0.85
+    ],
+    [
+     "IP",
+     17,
+     28,
+     0.7
+    ],
+    [
+     "PORTA",
+     45,
+     49,
+     0.85
+    ],
+    [
+     "PORTA",
+     50,
+     52,
+     0.85
+    ],
+    [
+     "IP",
+     79,
+     90,
+     0.7
+    ],
+    [
+     "PORTA",
+     91,
+     95,
+     0.9
+    ]
+   ],
+   "anonimizado": "ssh -p [PORTA_1] root@[IP_1] e docker run -p [PORTA_2]:[PORTA_3] nginx; depois abra http://[IP_1]:[PORTA_4]/admin.",
+   "mascarado": "ssh -p **** root@***.*.**3.7 e docker run -p ****:** nginx; depois abra http://***.*.**3.7:****/admin.",
+   "generalizado": "ssh -p [PORTA] root@203.0.113.0/24 e docker run -p [PORTA]:[PORTA] nginx; depois abra http://203.0.113.0/24:[PORTA]/admin."
+  },
+  {
+   "texto": "Banco em db.interna:5432, cache em cache.prod.local, API em https://api.empresa.example:8443/v1 e localhost:3000.",
+   "entidades": [
+    [
+     "SERVIDOR",
+     9,
+     19,
+     0.85
+    ],
+    [
+     "PORTA",
+     20,
+     24,
+     0.9
+    ],
+    [
+     "SERVIDOR",
+     35,
+     51,
+     0.85
+    ],
+    [
+     "PORTA",
+     88,
+     92,
+     0.9
+    ],
+    [
+     "PORTA",
+     108,
+     112,
+     0.9
+    ]
+   ],
+   "anonimizado": "Banco em [SERVIDOR_1]:[PORTA_1], cache em [SERVIDOR_2], API em https://api.empresa.example:[PORTA_2]/v1 e localhost:[PORTA_3].",
+   "mascarado": "Banco em **.*****na:****, cache em *****.****.***al, API em https://api.empresa.example:****/v1 e localhost:****.",
+   "generalizado": "Banco em [SERVIDOR]:[PORTA], cache em [SERVIDOR], API em https://api.empresa.example:[PORTA]/v1 e localhost:[PORTA]."
+  },
+  {
+   "texto": "PORT=8080, DB_PORT=5432 e {\"host\": \"fila.corp\", \"port\": 6379}. O servidor fila.empresa.example:5672 responde.",
+   "entidades": [
+    [
+     "PORTA",
+     5,
+     9,
+     0.85
+    ],
+    [
+     "PORTA",
+     19,
+     23,
+     0.85
+    ],
+    [
+     "SERVIDOR",
+     36,
+     45,
+     0.85
+    ],
+    [
+     "PORTA",
+     56,
+     60,
+     0.85
+    ],
+    [
+     "PORTA",
+     95,
+     99,
+     0.85
+    ]
+   ],
+   "anonimizado": "PORT=[PORTA_1], DB_PORT=[PORTA_2] e {\"host\": \"[SERVIDOR_1]\", \"port\": [PORTA_3]}. O servidor fila.empresa.example:[PORTA_4] responde.",
+   "mascarado": "PORT=****, DB_PORT=**** e {\"host\": \"****.**rp\", \"port\": ****}. O servidor fila.empresa.example:**** responde.",
+   "generalizado": "PORT=[PORTA], DB_PORT=[PORTA] e {\"host\": \"[SERVIDOR]\", \"port\": [PORTA]}. O servidor fila.empresa.example:[PORTA] responde."
+  },
+  {
+   "texto": "Não são portas: reunião às 10:30, app.py:120, apartamento 302, relatório 2024, versão 1.2.3:45, porta 65536, nota 8080, db.interna.example e joao@empresa.local.",
+   "entidades": [
+    [
+     "EMAIL",
+     141,
+     159,
+     0.95
+    ]
+   ],
+   "anonimizado": "Não são portas: reunião às 10:30, app.py:120, apartamento 302, relatório 2024, versão 1.2.3:45, porta 65536, nota 8080, db.interna.example e [EMAIL_1].",
+   "mascarado": "Não são portas: reunião às 10:30, app.py:120, apartamento 302, relatório 2024, versão 1.2.3:45, porta 65536, nota 8080, db.interna.example e j***@empresa.local.",
+   "generalizado": "Não são portas: reunião às 10:30, app.py:120, apartamento 302, relatório 2024, versão 1.2.3:45, porta 65536, nota 8080, db.interna.example e [EMAIL]."
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [

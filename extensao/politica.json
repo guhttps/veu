@@ -18,6 +18,12 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "tiposDesligados": {
+      "title": "Tipos que não são escondidos",
+      "description": "Tipos que a extensão deixa passar (ex.: IP, PORTA). Definido pela empresa, a pessoa não muda as caixinhas do ícone.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
     "bloquearTipos": {
       "title": "Tipos que impedem o envio",
       "description": "Mesmo no modo avisar ou proteger, o envio é impedido se o texto tiver um destes tipos (ex.: CHAVE_PRIVADA, CARTAO_CREDITO).",

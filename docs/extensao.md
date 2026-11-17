@@ -33,6 +33,8 @@ Escolha no ícone da extensão:
 
 Chaves privadas e outros tipos que a sua empresa bloquear nunca são enviados, em nenhum modo.
 
+Em **O que esconder**, também no ícone, você escolhe os grupos: nomes e contatos, documentos, documentos de outros países, dados financeiros, senhas e chaves, infraestrutura de TI (IPs, portas e servidores internos) e veículos. Todos começam marcados. Desmarcar senhas e chaves mostra um aviso, porque a IA passa a ver esses valores. Se a sua empresa definir os tipos, as caixinhas aparecem travadas.
+
 ## Usar
 
 - **Restaurar um texto copiado:** o botão "copiar" dos sites copia a versão com marcadores. Cole no campo **Restaurar um texto** do ícone do Véu e clique em **Copiar com os dados reais**. Selecionar o texto na tela e copiar com Ctrl+C já traz os dados reais.

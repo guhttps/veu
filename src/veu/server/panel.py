@@ -16,42 +16,12 @@ from pathlib import Path
 from typing import Any
 
 from veu.config import Config
+from veu.entities import load_groups
 
-# Grupos de tipos, com nomes que qualquer pessoa entende.
+# Grupos de tipos, com nomes que qualquer pessoa entende: os mesmos da página e da extensão (data/grupos.json).
 CATEGORIES: dict[str, dict[str, Any]] = {
-    "pessoas": {
-        "titulo": "Nomes e contatos",
-        "exemplo": "nomes, telefones, e-mails, endereços, CEP, datas de nascimento",
-        "tipos": ["PESSOA", "TELEFONE", "EMAIL", "ENDERECO", "CEP", "DATA_NASCIMENTO"],
-    },
-    "documentos": {
-        "titulo": "Documentos",
-        "exemplo": "CPF, CNPJ, RG, CNH, título de eleitor, PIS, cartão do SUS, passaporte, processos",
-        "tipos": ["CPF", "CNPJ", "RG", "CNH", "TITULO_ELEITOR", "PIS", "CNS", "PASSAPORTE", "PROCESSO"],
-    },
-    "estrangeiros": {
-        "titulo": "Documentos de outros países",
-        "exemplo": "Portugal, América Latina, Angola e Moçambique, EUA (SSN), Europa (DNI, codice fiscale, NIR, NINO), "
-                   "Canadá, Índia e passaportes (MRZ)",
-        "tipos": ["NIF_PT", "CC_PT", "NISS_PT", "CUIT", "DNI", "CURP", "RFC", "RUT", "CEDULA", "NIT", "RUC", "RIF", "NUIT",
-                  "BI_AO", "BI_MZ", "SSN", "MBI", "DNI_ES", "CODICE_FISCALE", "NIR", "STEUER_ID", "NINO", "NHS", "BSN",
-                  "SIN", "AADHAAR", "PAN", "MRZ"],
-    },
-    "financeiro": {
-        "titulo": "Dados financeiros",
-        "exemplo": "cartões, contas bancárias, chave Pix, IBAN, carteiras de criptomoeda",
-        "tipos": ["CARTAO_CREDITO", "CONTA_BANCARIA", "CHAVE_PIX", "IBAN", "CRIPTO"],
-    },
-    "segredos": {
-        "titulo": "Senhas e chaves de acesso",
-        "exemplo": "senhas, chaves de API, tokens, chaves privadas",
-        "tipos": ["CHAVE_API", "TOKEN", "SENHA", "CHAVE_PRIVADA", "URL_CONEXAO", "SEGREDO"],
-    },
-    "outros": {
-        "titulo": "Veículos e internet",
-        "exemplo": "placas, RENAVAM, chassi (VIN), endereços IP",
-        "tipos": ["PLACA", "RENAVAM", "VIN", "IP"],
-    },
+    group["id"]: {"titulo": group["titulo"], "exemplo": group["exemplo"], "tipos": group["tipos"]}
+    for group in load_groups()
 }
 BLOCK_OPTIONS: dict[str, dict[str, Any]] = {
     "chaves_privadas": {"titulo": "Chaves privadas", "tipos": ["CHAVE_PRIVADA"]},

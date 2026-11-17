@@ -25,7 +25,7 @@ from veu.entities import LABELS, SECRET_LABELS
 DIGIT_LABELS = frozenset({
     "CPF", "TELEFONE", "CEP", "CARTAO_CREDITO", "PIS", "CNS", "CNH", "TITULO_ELEITOR", "RENAVAM",
     "CONTA_BANCARIA", "PROCESSO", "NIF_PT", "NISS_PT", "CUIT", "DNI", "NIT", "RUC", "CEDULA", "NUIT", "SSN",
-    "STEUER_ID", "NHS", "BSN", "SIN", "AADHAAR",
+    "STEUER_ID", "NHS", "BSN", "SIN", "AADHAAR", "PORTA",
 })
 CODE_LABELS = frozenset({"CNPJ", "RG", "PLACA", "PASSAPORTE", "CHAVE_PIX", "CC_PT", "CURP", "RFC", "RUT", "RIF",
                          "BI_AO", "BI_MZ", "MBI", "DNI_ES", "CODICE_FISCALE", "NIR", "NINO", "PAN", "VIN"})

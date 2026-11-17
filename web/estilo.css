@@ -77,6 +77,18 @@ mark { background: var(--destaque); color: inherit; border-radius: 4px; padding:
 .arquivo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .achados { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; font-size: 14px; }
 .achados:empty { display: none; }
+.tipos { margin-top: 12px; border-top: 1px solid var(--borda); padding-top: 10px; font-size: 14px; }
+.tipos > summary { cursor: pointer; font-weight: 600; }
+.tipos-resumo { color: var(--suave); font-weight: 400; }
+.tipos-resumo::before { content: "· "; }
+.tipos-grupos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 10px; }
+.grupo { border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; min-width: 0; }
+.grupo > label { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; cursor: pointer; }
+.grupo > label input { grid-row: span 2; margin-top: 3px; }
+.grupo .exemplo { color: var(--suave); font-size: 13px; }
+.grupo details summary { cursor: pointer; color: var(--suave); font-size: 13px; }
+.um-a-um { display: grid; gap: 2px; margin-top: 6px; }
+.um-a-um label { display: flex; gap: 6px; align-items: baseline; font-size: 13px; cursor: pointer; }
 .achado { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--borda); border-radius: 999px; padding: 3px 10px 3px 6px; background: var(--campo); cursor: pointer; }
 .achado input { margin: 0; }
 .achado .tipo { font-weight: 600; }

@@ -30,6 +30,7 @@ Você recebe    Pronto, Maria Souza! Configurei sk-proj-4f9a... no seu .env.
 Empresas e pessoas estão colocando IA no atendimento, nos contratos, no RH e no código. Junto com cada pergunta vão nomes, documentos e contatos de clientes, e também chaves de API e senhas. O Véu fica no meio do caminho e protege:
 
 - **Dados pessoais de qualquer país:** nomes, e-mails, telefones (com código de qualquer país), cartões, IBAN, endereços IP e datas de nascimento.
+- **A infraestrutura da empresa:** endereços IP, portas e nomes de servidores internos.
 - **Documentos brasileiros, conferidos de verdade:** CPF, CNPJ (inclusive o alfanumérico de 2026), RG, CNH, PIS, cartão do SUS e outros, pelos dígitos verificadores.
 - **Segredos de qualquer serviço:** chaves de API de mais de 30 serviços, tokens, senhas, chaves privadas e URLs de banco com senha.
 
@@ -92,7 +93,7 @@ No painel, tudo é feito com cliques:
   - conecte o **Claude Desktop** ou o **Cursor** com um botão;
   - copie o endereço para n8n, Make, Zapier e outros apps.
 - **O que proteger:**
-  - caixinhas para nomes, documentos (do Brasil e de outros países), dados financeiros, senhas e outros;
+  - caixinhas para nomes, documentos (do Brasil e de outros países), dados financeiros, senhas, infraestrutura de TI e veículos (as mesmas da página e da extensão);
   - usar um modelo no seu computador (Ollama) quando o texto tiver dados pessoais, para eles nem saírem da máquina;
   - uma lista de dados da empresa que nunca devem ser escondidos;
   - a opção de ligar o Véu junto com o computador.
@@ -103,6 +104,8 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 ## Recursos
 
 - 🌍 **Dados pessoais de qualquer lugar:** nomes, e-mails, telefones (brasileiros e de qualquer país, com +código), endereços, cartões de crédito, IBAN, endereços IP (v4 e v6) e datas de nascimento.
+- 🖥️ **Infraestrutura:** IPs, portas (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`) e nomes de servidores internos (`db.interna`, `cache.prod.local`).
+- ☑️ **Você escolhe o que esconder:** caixinhas por grupo na página, na extensão e no painel, com escolha tipo a tipo. Desmarcar senhas e chaves mostra um aviso.
 - 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CEP, placa, RENAVAM, conta bancária, chave Pix e processo do CNJ.
 - 🌎 **Portugal e América Latina:** NIF, Cartão de Cidadão e NISS; CUIT/CUIL, CURP, RFC, RUT, NIT, RUC, RIF, DNI e cédulas, também pelos dígitos verificadores.
 - 🌐 **África lusófona, EUA, Europa, Canadá e Índia:** NUIT e BI (Angola e Moçambique), SSN, ITIN e Medicare (EUA), DNI e NIE (Espanha), codice fiscale (Itália), NIR (França), Steuer-ID (Alemanha), National Insurance e NHS (Reino Unido), BSN (Países Baixos), SIN (Canadá), Aadhaar e PAN (Índia); também passaportes pela zona de leitura (MRZ), chassi (VIN) e carteiras de Bitcoin e Ethereum.
@@ -281,7 +284,8 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 | `CPF` | 529.982.247-25 | formato + dígitos verificadores |
 | `CNPJ` | 11.222.333/0001-81, 12.ABC.345/01DE-35 | numérico e alfanumérico + dígitos |
 | `TELEFONE` | (11) 91234-5678, +44 20 7946 0958 | DDD válido; internacional com + |
-| `EMAIL`, `ENDERECO`, `CEP`, `IP` | Rua das Flores, 123, apto 45 | formato e contexto |
+| `EMAIL`, `ENDERECO`, `CEP` | Rua das Flores, 123, apto 45 | formato e contexto |
+| `IP`, `PORTA`, `SERVIDOR` | 10.0.0.5:8080, db.interna:5432 | IPv4 e IPv6 válidos; porta só colada a um IP ou servidor, depois de "porta" ou `PORT=` ou no `-p` de comandos de rede (nunca um número solto); servidores com terminação interna (`.local`, `.internal`, `.corp`, `.lan`) |
 | `RG`, `CNH`, `TITULO_ELEITOR`, `PIS`, `CNS`, `RENAVAM`, `PASSAPORTE` | — | contexto e dígitos verificadores |
 | `PLACA` | ABC-1234, BRA2E19 | padrão antigo e Mercosul |
 | `CARTAO_CREDITO`, `CONTA_BANCARIA`, `CHAVE_PIX`, `IBAN` | DE89 3704 0044 0532 0130 00 | Luhn, módulo 97 e contexto |
@@ -397,7 +401,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 773 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 804 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa

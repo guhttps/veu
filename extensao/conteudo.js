@@ -4,13 +4,14 @@
   if (window.__veuConteudo) return;
   window.__veuConteudo = true;
 
-  const { Veu, Vault, LABELS } = window.veu;
+  const { Veu, Vault, LABELS, GROUPS } = window.veu;
   const PLACEHOLDER = /\[[A-Z][A-Z_]*[_\s-][0-9a-fA-F]{1,16}\]?/;
   const EDITAVEL = 'textarea, [contenteditable="true"], [contenteditable=""], [contenteditable="plaintext-only"]';
 
   // Os dados reais só aparecem na página se a pessoa ligar a opção: na página, o código do site também os lê.
   let config = { ativo: true, modo: "avisar", restaurarRespostas: false, bloquearTipos: [] };
   let veu = new Veu();
+  let algumTipo = true; // com todas as caixinhas desmarcadas, a extensão não esconde nada
   let cofre = new Vault();
   let liberado = ""; // texto que a pessoa decidiu enviar mesmo assim
 
@@ -26,8 +27,12 @@
   async function carregar() {
     const recebida = await mensagem({ tipo: "configuracao" });
     if (recebida) config = recebida;
+    // Tipos: os da política da empresa (vazio = todos), menos os que a pessoa desmarcou no ícone da extensão.
+    const permitidos = config.tipos?.length ? config.tipos : GROUPS.flatMap((grupo) => grupo.tipos);
+    const ligados = permitidos.filter((tipo) => !(config.tiposDesligados || []).includes(tipo));
+    algumTipo = ligados.length > 0;
     veu = new Veu({
-      labels: config.tipos?.length ? config.tipos : undefined,
+      labels: ligados.length < permitidos.length || config.tipos?.length ? ligados : undefined,
       allowlist: config.ignorar || [],
       allowPatterns: config.ignorarPadroes || [],
     });
@@ -198,7 +203,7 @@
 
   // Colar: o texto com dados entra já protegido (modos proteger e bloquear) ou com um aviso (modo avisar).
   window.addEventListener("paste", (evento) => {
-    if (!config.ativo || !evento.isTrusted) return;
+    if (!config.ativo || !algumTipo || !evento.isTrusted) return;
     const campo = campoDe(evento.target);
     const texto = evento.clipboardData?.getData("text/plain");
     if (!campo || !texto) return;
@@ -217,7 +222,7 @@
 
   // Enviar: Enter ou botão de enviar com dados ainda visíveis.
   function deveSegurar(campo) {
-    if (!config.ativo || !campo) return false;
+    if (!config.ativo || !algumTipo || !campo) return false;
     const texto = textoDo(campo);
     if (!texto.trim() || texto === liberado) return false;
     const entidades = veu.analyze(texto);

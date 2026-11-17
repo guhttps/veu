@@ -203,6 +203,11 @@ export function isValidIban(value: string): boolean {
   return mod97(number) === 1;
 }
 
+/** Porta de rede: de 1 a 65535, sem zeros à esquerda. */
+export function isValidPort(value: string): boolean {
+  return /^[1-9]\d{0,4}$/.test(value) && Number(value) <= 65535;
+}
+
 export function isValidIpv4(value: string): boolean {
   const parts = value.split(".");
   if (parts.length !== 4) return false;

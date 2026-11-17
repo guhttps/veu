@@ -12,7 +12,7 @@ import { StreamRestorer, Vault } from "./vault.ts";
 export { Analyzer, resolveOverlaps, defaultRecognizers } from "./analyzer.ts";
 export { AnonymizationResult, Anonymizer, maskValue, normalizeOperator, OPERATORS } from "./anonymizer.ts";
 export type { Operator, Replacement } from "./anonymizer.ts";
-export { LABELS, SECRET_LABELS } from "./entities.ts";
+export { GROUPS, LABELS, SECRET_LABELS, type GroupData } from "./entities.ts";
 export type { Candidate, Entity, Recognizer } from "./entities.ts";
 export { AddressRecognizer } from "./addresses.ts";
 export { PatternRecognizer, customPattern, DEFAULT_SPECS } from "./patterns.ts";

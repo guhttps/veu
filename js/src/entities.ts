@@ -53,6 +53,8 @@ export const LABELS: Record<string, string> = {
   MRZ: "Zona de leitura de passaporte (MRZ)",
   VIN: "Chassi (VIN)",
   CRIPTO: "Carteira de criptomoeda (Bitcoin, Ethereum)",
+  PORTA: "Porta de rede",
+  SERVIDOR: "Nome de servidor interno",
   CHAVE_API: "Chave de API ou token de serviço (OpenAI, AWS, GitHub...)",
   TOKEN: "Token de acesso (JWT, Bearer)",
   SENHA: "Senha",
@@ -85,3 +87,6 @@ export interface Recognizer {
   labels: ReadonlySet<string>;
   find(text: string): Iterable<Candidate>;
 }
+
+/** Grupos de tipos para caixinhas de escolha (os mesmos do painel): cada tipo fica em exatamente um grupo. */
+export { groups as GROUPS, type GroupData } from "./data.ts";

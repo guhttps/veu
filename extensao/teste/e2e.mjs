@@ -177,6 +177,26 @@ try {
     await pagina.fechar();
   }
 
+  // Caixinhas de "O que esconder": desmarcar um grupo deixa aquele tipo passar, e a escolha fica salva.
+  const caixas = await abrir(`${base}/web/index.html?lang=pt`);
+  const grupos = await caixas.avaliar(`document.querySelectorAll("#tipos-grupos .grupo").length`);
+  confere(grupos === 7, `a página mostra os 7 grupos (${grupos})`);
+  await caixas.avaliar(`document.getElementById("entrada").focus()`);
+  await caixas.digitar("Servidor 10.0.0.5:8080 da Maria Souza");
+  await pausa(400);
+  let comCaixas = await caixas.avaliar(`document.getElementById("saida").textContent`);
+  confere(comCaixas === "Servidor [IP_1]:[PORTA_1] da [PESSOA_1]", `IP e porta escondidos (${comCaixas})`);
+  await caixas.avaliar(`document.getElementById("grupo-infra").click()`);
+  await pausa(300);
+  comCaixas = await caixas.avaliar(`document.getElementById("saida").textContent`);
+  confere(comCaixas === "Servidor 10.0.0.5:8080 da [PESSOA_1]", `sem o grupo, IP e porta passam (${comCaixas})`);
+  await caixas.fechar();
+  const recarregada = await abrir(`${base}/web/index.html?lang=pt`);
+  const lembrou = await recarregada.avaliar(`[document.getElementById("grupo-infra").checked, document.getElementById("grupo-pessoas").checked]`);
+  confere(lembrou[0] === false && lembrou[1] === true, "a escolha fica salva no navegador");
+  await recarregada.avaliar(`document.getElementById("grupo-infra").click()`);
+  await recarregada.fechar();
+
   // Extensão
   const { id } = await cdp("Extensions.loadUnpacked", { path: extensao });
   confere(Boolean(id), "extensão carregada");
@@ -217,6 +237,22 @@ try {
   campo = await chat.avaliar(`document.getElementById("prompt-textarea").innerText`);
   confere(campo.includes("[TELEFONE_1]") && !campo.includes("98765-4321"), `colar entra protegido (${campo.trim()})`);
   await chat.fechar();
+
+  // Caixinhas do ícone da extensão: com "Documentos" desmarcado, o CPF passa e o nome continua escondido.
+  const icone = await abrir(`chrome-extension://${id}/popup.html`);
+  const gruposNoIcone = await icone.avaliar(`document.querySelectorAll("#grupos label").length`);
+  confere(gruposNoIcone === 7, `o ícone mostra os 7 grupos (${gruposNoIcone})`);
+  await icone.avaliar(`document.getElementById("grupo-documentos").click()`);
+  await pausa(400);
+  await icone.fechar();
+  const chat2 = await abrir(`${base}/chat`);
+  await chat2.avaliar(`document.getElementById("prompt-textarea").focus()`);
+  await chat2.digitar(`A cliente Maria Souza, CPF ${CPF}`);
+  await chat2.enter();
+  await pausa(300);
+  const semDocumentos = await chat2.avaliar(`document.getElementById("prompt-textarea").innerText`);
+  confere(semDocumentos.includes("[PESSOA_1]") && semDocumentos.includes(CPF), `sem o grupo, o CPF passa (${semDocumentos.trim()})`);
+  await chat2.fechar();
 } catch (erro) {
   falhas += 1;
   console.error(erro);

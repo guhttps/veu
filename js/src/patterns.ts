@@ -49,7 +49,8 @@ interface SpecOptions {
 export function spec(label: string, pattern: string, scores: Scores, options: SpecOptions = {}): PatternSpec {
   return {
     label,
-    regex: new RegExp(pattern, `g${options.flags ?? ""}u`),
+    // "d" guarda as posições dos grupos: com um grupo "valor", só ele é o dado (a porta em "10.0.0.5:8080").
+    regex: new RegExp(pattern, `g${options.flags ?? ""}u${pattern.includes("(?<valor>") ? "d" : ""}`),
     scores,
     validator: options.validator,
     context: wordsRegex(options.context ?? []),
@@ -121,6 +122,12 @@ const CTX_AADHAAR = ["aadhaar", "uidai", "uid number"];
 const CTX_PAN = ["pan", "permanent account number", "income tax"];
 const CTX_MRZ = ["passaporte", "passport", "mrz"];
 const CTX_VIN = ["chassi", "chassis", "vin", "numero do chassi"];
+const CTX_HOST = ["servidor", "server", "host", "hostname", "banco", "database", "conectar", "conexao", "endpoint", "porta",
+  "port", "ssh", "redis", "postgres", "mysql", "api"];
+const CTX_SHELL = ["ssh", "scp", "sftp", "psql", "mysql", "telnet", "nc", "docker", "redis-cli", "mongosh"];
+// Terminações de nomes que só existem dentro de uma rede (RFC 6762, RFC 8375 e os costumes de redes de empresas).
+const INTERNAL_TLDS = "(?:local|localdomain|internal|interna|interno|lan|corp|intranet|home\\.arpa)";
+const W = "\\p{L}\\p{N}_";
 const CTX_CRYPTO = ["carteira", "wallet", "bitcoin", "btc", "ethereum", "eth", "cripto", "usdt"];
 // 1ª linha da MRZ: "P<" + país + sobrenome<<nomes, completando com "<".
 const mrzNameLine = (value: string): boolean => value.slice(5).includes("<<") && /[A-Z]/.test(value.slice(5));
@@ -278,6 +285,22 @@ export const DEFAULT_SPECS: PatternSpec[] = [
     { validator: v.isValidVin, context: CTX_VIN, exclude: (value) => /^(?:\d+|[A-Z]+)$/.test(value) }),
   spec("CRIPTO", `${B}(?:0x[0-9a-fA-F]{40}|[13][1-9A-HJ-NP-Za-km-z]{25,34}|(?:bc|tb)1[02-9ac-hj-np-z]{11,71})${E}`,
     S(0.9, null, 0.97), { validator: v.isValidCryptoAddress, context: CTX_CRYPTO }),
+  // Infraestrutura. Uma porta é só um número: vale colada a um IP ou a um servidor, depois de "porta"/"port" ou
+  // numa opção de comando (-p), nunca solta. O grupo "valor" é o que vira o marcador; o resto é só o contexto.
+  spec("PORTA", `${B}(?:\\d{1,3}\\.){3}\\d{1,3}:(?<valor>\\d{2,5})${E}`, S(0.9), { validator: v.isValidPort }),
+  spec("PORTA", `\\[[0-9A-Fa-f:.]{3,45}\\]:(?<valor>\\d{2,5})${E}`, S(0.9), { validator: v.isValidPort }),
+  spec("PORTA", `://(?:[^\\s/@]{1,200}@)?[A-Za-z0-9.\\-]{1,253}:(?<valor>\\d{2,5})${E}`, S(0.9), { validator: v.isValidPort }),
+  spec("PORTA", `(?<![${W}.@\\-])(?:localhost|(?:[A-Za-z0-9\\-]+\\.)+${INTERNAL_TLDS}):(?<valor>\\d{2,5})${E}`, S(0.9),
+    { validator: v.isValidPort, flags: "i" }),
+  spec("PORTA", `(?<![${W}.@/\\-])(?=[A-Za-z0-9.\\-]*[A-Za-z])(?:[A-Za-z0-9\\-]+\\.)+[A-Za-z]{2,24}:(?<valor>\\d{2,5})${E}`,
+    S(null, null, 0.85), { validator: v.isValidPort, context: CTX_HOST }),
+  spec("PORTA", `(?<![A-Za-z])(?:portas?|ports?|--port)["']?\\s*(?:[:=]\\s*|n[ºo°]\\.?\\s*)?(?<valor>\\d{2,5})${E}`, S(0.85),
+    { validator: v.isValidPort, flags: "i" }),
+  spec("PORTA", `(?<![${W}\\-])-[pP]\\s+(?<valor>\\d{2,5})${E}`, S(null, null, 0.85),
+    { validator: v.isValidPort, context: CTX_SHELL, before: 60 }),
+  spec("PORTA", `(?<![${W}\\-])-[pP]\\s+\\d{2,5}:(?<valor>\\d{2,5})${E}`, S(null, null, 0.85),
+    { validator: v.isValidPort, context: CTX_SHELL, before: 60 }),
+  spec("SERVIDOR", `(?<![${W}.@\\-])(?:[A-Za-z0-9\\-]+\\.)+${INTERNAL_TLDS}(?![${W}\\-]|\\.[A-Za-z])`, S(0.85), { flags: "i" }),
 ];
 
 const round3 = (value: number): number => Math.round(value * 1000) / 1000;
@@ -301,8 +324,9 @@ export class PatternRecognizer implements Recognizer {
         if (!item.context.test(folded)) continue;
       }
       for (const match of text.matchAll(item.regex)) {
-        const value = match[0];
-        const start = match.index;
+        const span = match.indices?.groups?.valor;
+        const value = span ? text.slice(span[0], span[1]) : match[0];
+        const start = span ? span[0] : match.index;
         if (item.exclude?.(value)) continue;
         const isValid = item.validator ? item.validator(value) : true;
         let hasContext = false;

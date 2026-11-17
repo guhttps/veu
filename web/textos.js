@@ -45,6 +45,11 @@ window.veuTextos = {
     apagado: "Tudo apagado.",
     arquivoGrande: "Arquivo grande demais (máximo de 5 MB).",
     arquivoAberto: (nome) => `"${nome}" aberto. Ele não sai do seu computador.`,
+    oQueEsconder: "O que esconder",
+    tiposTudo: "tudo",
+    tiposAlguns: (inteiros, total) => `${inteiros} de ${total} grupos inteiros`,
+    umAUm: "Escolher um a um",
+    avisoSegredos: "Atenção: com senhas e chaves desmarcadas, a IA vai ver esses valores.",
   },
   en: {
     titulo: "Véu: protect your data before using AI",
@@ -91,6 +96,11 @@ window.veuTextos = {
     apagado: "Everything cleared.",
     arquivoGrande: "File too large (5 MB max).",
     arquivoAberto: (nome) => `"${nome}" opened. It doesn't leave your computer.`,
+    oQueEsconder: "What to hide",
+    tiposTudo: "everything",
+    tiposAlguns: (inteiros, total) => `${inteiros} of ${total} full groups`,
+    umAUm: "Choose one by one",
+    avisoSegredos: "Careful: with passwords and keys unchecked, the AI will see those values.",
   },
   // Nomes dos tipos em inglês (em português, vêm da própria biblioteca).
   rotulosEn: {

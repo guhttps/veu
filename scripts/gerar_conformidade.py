@@ -59,6 +59,12 @@ EXTRA = [
     "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq e o falso 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNb.",
     "Sem contexto: o pedido 123456782, o código ABCPD1234E, o lote 1M8GDM9AXKP042789, o protocolo 180017512345660, "
     "o certificado com notAfter 261108123045Z e a nota 20231108A.",
+    "O servidor 192.168.0.10 atende na porta 5432; acesse 10.0.0.5:8080 ou [2001:db8::1]:443.",
+    "ssh -p 2222 root@203.0.113.7 e docker run -p 8080:80 nginx; depois abra http://203.0.113.7:3000/admin.",
+    "Banco em db.interna:5432, cache em cache.prod.local, API em https://api.empresa.example:8443/v1 e localhost:3000.",
+    'PORT=8080, DB_PORT=5432 e {"host": "fila.corp", "port": 6379}. O servidor fila.empresa.example:5672 responde.',
+    "Não são portas: reunião às 10:30, app.py:120, apartamento 302, relatório 2024, versão 1.2.3:45, porta 65536, "
+    "nota 8080, db.interna.example e joao@empresa.local.",
 ]
 
 

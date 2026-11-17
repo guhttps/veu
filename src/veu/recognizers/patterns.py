@@ -147,6 +147,11 @@ CTX_AADHAAR = ("aadhaar", "uidai", "uid number")
 CTX_PAN = ("pan", "permanent account number", "income tax")
 CTX_MRZ = ("passaporte", "passport", "mrz")
 CTX_VIN = ("chassi", "chassis", "vin", "numero do chassi")
+CTX_HOST = ("servidor", "server", "host", "hostname", "banco", "database", "conectar", "conexao", "endpoint", "porta",
+            "port", "ssh", "redis", "postgres", "mysql", "api")
+CTX_SHELL = ("ssh", "scp", "sftp", "psql", "mysql", "telnet", "nc", "docker", "redis-cli", "mongosh")
+# Terminações de nomes que só existem dentro de uma rede (RFC 6762, RFC 8375 e os costumes de redes de empresas).
+_INTERNAL_TLDS = r"(?:local|localdomain|internal|interna|interno|lan|corp|intranet|home\.arpa)"
 CTX_CRYPTO = ("carteira", "wallet", "bitcoin", "btc", "ethereum", "eth", "cripto", "usdt")
 
 
@@ -357,6 +362,24 @@ DEFAULT_SPECS: list[PatternSpec] = [
                 exclude=lambda value: value.isdigit() or value.isalpha()),
     PatternSpec("CRIPTO", r"(?<![\w])(?:0x[0-9a-fA-F]{40}|[13][1-9A-HJ-NP-Za-km-z]{25,34}|(?:bc|tb)1[02-9ac-hj-np-z]{11,71})"
                 + E, Scores(0.9, None, 0.97), v.is_valid_crypto_address, CTX_CRYPTO),
+    # Infraestrutura. Uma porta é só um número: vale colada a um IP ou a um servidor, depois de "porta"/"port" ou
+    # numa opção de comando (-p), nunca solta. O grupo "valor" é o que vira o marcador; o resto é só o contexto.
+    PatternSpec("PORTA", B + r"(?:\d{1,3}\.){3}\d{1,3}:(?P<valor>\d{2,5})" + E, Scores(0.9), v.is_valid_port),
+    PatternSpec("PORTA", r"\[[0-9A-Fa-f:.]{3,45}\]:(?P<valor>\d{2,5})" + E, Scores(0.9), v.is_valid_port),
+    PatternSpec("PORTA", r"://(?:[^\s/@]{1,200}@)?[A-Za-z0-9.-]{1,253}:(?P<valor>\d{2,5})" + E, Scores(0.9),
+                v.is_valid_port),
+    PatternSpec("PORTA", r"(?<![\w.@-])(?:localhost|(?:[A-Za-z0-9-]+\.)+" + _INTERNAL_TLDS + r"):(?P<valor>\d{2,5})" + E,
+                Scores(0.9), v.is_valid_port, flags=re.IGNORECASE),
+    PatternSpec("PORTA", r"(?<![\w.@/-])(?=[A-Za-z0-9.-]*[A-Za-z])(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,24}:(?P<valor>\d{2,5})" + E,
+                Scores(None, None, 0.85), v.is_valid_port, CTX_HOST),
+    PatternSpec("PORTA", r"(?<![A-Za-z])(?:portas?|ports?|--port)[\"']?\s*(?:[:=]\s*|n[ºo°]\.?\s*)?(?P<valor>\d{2,5})" + E,
+                Scores(0.85), v.is_valid_port, flags=re.IGNORECASE),
+    PatternSpec("PORTA", r"(?<![\w-])-[pP]\s+(?P<valor>\d{2,5})" + E, Scores(None, None, 0.85), v.is_valid_port,
+                CTX_SHELL, before=60),
+    PatternSpec("PORTA", r"(?<![\w-])-[pP]\s+\d{2,5}:(?P<valor>\d{2,5})" + E, Scores(None, None, 0.85), v.is_valid_port,
+                CTX_SHELL, before=60),
+    PatternSpec("SERVIDOR", r"(?<![\w.@-])(?:[A-Za-z0-9-]+\.)+" + _INTERNAL_TLDS + r"(?![\w-]|\.[A-Za-z])", Scores(0.85),
+                flags=re.IGNORECASE),
 ]
 
 
@@ -377,21 +400,24 @@ class PatternRecognizer:
                 folded = fold(text) if folded is None else folded
                 if spec.context_regex.search(folded) is None:
                     continue
+            # Com um grupo "valor", só ele é o dado (a porta em "10.0.0.5:8080"); o resto do padrão é contexto.
+            group = "valor" if "valor" in spec.compiled.groupindex else 0
             for match in spec.compiled.finditer(text):
-                value = match.group(0)
+                value = match.group(group)
+                start, end = match.span(group)
                 if spec.exclude and spec.exclude(value):
                     continue
                 is_valid = spec.validator(value) if spec.validator else True
                 has_context = False
                 if spec.context_regex is not None:
-                    window = context_window(text, match.start(), match.end(), spec.before, spec.after)
+                    window = context_window(text, start, end, spec.before, spec.after)
                     has_context = spec.context_regex.search(window) is not None
                 score = spec.scores.pick(is_valid, has_context)
                 if score is not None and spec.adjust:
                     score = spec.adjust(value, score)
                 if score is None or score <= 0:
                     continue
-                yield Candidate(spec.label, match.start(), match.end(), round(score, 3), spec.name or self.name)
+                yield Candidate(spec.label, start, end, round(score, 3), spec.name or self.name)
 
 
 def custom_spec(label: str, pattern: str, score: float = 0.9, context: Iterable[str] = (),

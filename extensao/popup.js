@@ -1,7 +1,7 @@
 "use strict";
 (async () => {
   const $ = (seletor) => document.querySelector(seletor);
-  const { LABELS } = window.veu;
+  const { LABELS, GROUPS, SECRET_LABELS } = window.veu;
   const [aba] = await chrome.tabs.query({ active: true, currentWindow: true });
   let config = await chrome.runtime.sendMessage({ tipo: "configuracao" });
 
@@ -16,6 +16,44 @@
     }
     $("#restaurar-respostas").checked = config.restaurarRespostas;
     $("#restaurar-respostas").disabled = travado("restaurarRespostas");
+    mostrarGrupos(travado("tiposDesligados") || travado("tipos"));
+  }
+
+  // Caixinhas por grupo (os mesmos grupos da página e do painel). A empresa pode travar a escolha.
+  function mostrarGrupos(travadas) {
+    const desligados = new Set(config.tiposDesligados || []);
+    const permitidos = config.tipos?.length ? new Set(config.tipos) : null;
+    const lugar = $("#grupos");
+    lugar.replaceChildren();
+    for (const grupo of GROUPS) {
+      const tipos = grupo.tipos.filter((tipo) => !permitidos || permitidos.has(tipo));
+      if (!tipos.length) continue;
+      const rotulo = document.createElement("label");
+      const caixa = document.createElement("input");
+      caixa.type = "checkbox";
+      caixa.id = `grupo-${grupo.id}`;
+      const ligados = tipos.filter((tipo) => !desligados.has(tipo)).length;
+      caixa.checked = ligados === tipos.length;
+      caixa.indeterminate = ligados > 0 && ligados < tipos.length;
+      caixa.disabled = travadas;
+      caixa.addEventListener("change", () => {
+        const novos = new Set(config.tiposDesligados || []);
+        for (const tipo of tipos) {
+          if (caixa.checked) novos.delete(tipo);
+          else novos.add(tipo);
+        }
+        $("#aviso-tipos").textContent = !caixa.checked && tipos.some((tipo) => SECRET_LABELS.has(tipo))
+          ? "Atenção: com senhas e chaves desmarcadas, a IA vai ver esses valores." : "";
+        salvar({ tiposDesligados: [...novos] });
+      });
+      const titulo = document.createElement("b");
+      titulo.textContent = grupo.titulo;
+      const exemplo = document.createElement("span");
+      exemplo.className = "exemplo";
+      exemplo.textContent = grupo.exemplo;
+      rotulo.append(caixa, titulo, exemplo);
+      lugar.append(rotulo);
+    }
   }
 
   async function salvar(preferencias) {

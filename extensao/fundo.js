@@ -5,6 +5,7 @@ const PADRAO = {
   ativo: true,
   modo: "avisar",
   tipos: [],
+  tiposDesligados: [], // caixinhas desmarcadas pela pessoa no ícone da extensão
   bloquearTipos: [],
   ignorar: [],
   ignorarPadroes: [],

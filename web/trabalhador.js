@@ -6,22 +6,22 @@ importScripts("veu.global.js");
 
 const instancias = new Map();
 
-function veuPara(ignorar, operador) {
-  const chave = JSON.stringify([ignorar, operador]);
+function veuPara(ignorar, operador, tipos) {
+  const chave = JSON.stringify([ignorar, operador, tipos]);
   let veu = instancias.get(chave);
   if (!veu) {
-    veu = new self.veu.Veu({ allowlist: ignorar, operator: operador });
+    veu = new self.veu.Veu({ allowlist: ignorar, operator: operador, labels: tipos });
     instancias.set(chave, veu);
   }
   return veu;
 }
 
 self.onmessage = ({ data }) => {
-  const { id, texto, ignorar, operador, cofre } = data;
+  const { id, texto, ignorar, operador, cofre, tipos } = data;
   try {
-    const entidades = veuPara([], "token").analyze(texto).map(({ label, start, end, text }) => ({ label, start, end, text }));
+    const entidades = veuPara([], "token", tipos).analyze(texto).map(({ label, start, end, text }) => ({ label, start, end, text }));
     const copia = self.veu.Vault.fromJSON(cofre);
-    const resultado = veuPara(ignorar, operador).anonymize(texto, copia);
+    const resultado = veuPara(ignorar, operador, tipos).anonymize(texto, copia);
     self.postMessage({ id, entidades, texto: resultado.text, cofre: copia.toJSON() });
   } catch (erro) {
     self.postMessage({ id, erro: String(erro) });
