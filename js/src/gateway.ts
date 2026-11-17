@@ -60,18 +60,26 @@ const TOOL_TYPES = new Set(["tool_use", "server_tool_use", "function_call", "cus
   "response.custom_tool_call_input.done", "response.function_call_arguments.done"]);
 
 /** Restaura todos os textos de uma resposta JSON. tool: o valor é argumento de uma chamada de ferramenta. */
-export function restoreObj(value: Json, vault: Vault, tool = false): Json {
-  if (typeof value === "string") return vault.restore(value, false, { tool });
-  if (Array.isArray(value)) return value.map((item) => restoreObj(item, vault, tool));
+/** O nome da ferramenta de uma chamada: {name, arguments|input|args} em todas as APIs. */
+function toolNameOf(value: Record<string, Json>, inherited?: string): string | undefined {
+  if (value.type === "local_shell_call") return "local_shell";
+  if (typeof value.name === "string" && ("arguments" in value || "input" in value || "args" in value)) return value.name;
+  return inherited;
+}
+
+export function restoreObj(value: Json, vault: Vault, tool = false, toolName?: string): Json {
+  if (typeof value === "string") return vault.restore(value, false, { tool, toolName: tool ? toolName : undefined });
+  if (Array.isArray(value)) return value.map((item) => restoreObj(item, vault, tool, toolName));
   if (isObject(value)) {
     if (UNTOUCHED_TYPES.has(value.type)) return value;
     const call = TOOL_TYPES.has(value.type);
+    const name = toolNameOf(value, toolName);
     const restored: Record<string, Json> = {};
     for (const [key, item] of Object.entries(value)) {
       const inTool = tool || TOOL_KEYS.has(key) || (call && (key === "input" || key === "arguments"));
       if (UNTOUCHED_KEYS.has(key)) restored[key] = item;
-      else if ((key === "arguments" || key === "partial_json") && typeof item === "string") restored[key] = restoreJsonString(item, vault);
-      else restored[key] = restoreObj(item, vault, inTool);
+      else if ((key === "arguments" || key === "partial_json") && typeof item === "string") restored[key] = restoreJsonString(item, vault, true, name);
+      else restored[key] = restoreObj(item, vault, inTool, name);
     }
     return restored;
   }
@@ -79,20 +87,22 @@ export function restoreObj(value: Json, vault: Vault, tool = false): Json {
 }
 
 /** Argumentos de ferramenta em texto JSON: restaura os valores sem quebrar o JSON. */
-export function restoreJsonString(value: string, vault: Vault, tool = true): string {
+export function restoreJsonString(value: string, vault: Vault, tool = true, toolName?: string): string {
   let parsed: Json;
   try {
     parsed = JSON.parse(value);
   } catch {
-    return vault.restore(value, true, { tool });
+    return vault.restore(value, true, { tool, toolName });
   }
-  return JSON.stringify(restoreObj(parsed, vault, tool));
+  return JSON.stringify(restoreObj(parsed, vault, tool, toolName));
 }
 
 /** Um restaurador por campo de texto do stream (cada escolha, bloco ou argumento de ferramenta). */
 export class StreamState {
   readonly vault: Vault;
   readonly meta: Record<string, Json> = {};
+  // Nome da ferramenta de cada campo de argumentos do stream (chega antes dos argumentos, num evento à parte).
+  readonly toolNames = new Map<string, string>();
   private restorers = new Map<string, { key: Json[]; restorer: StreamRestorer }>();
 
   constructor(vault: Vault) {
@@ -104,7 +114,7 @@ export class StreamState {
     const id = JSON.stringify(key);
     let entry = this.restorers.get(id);
     if (!entry) {
-      entry = { key, restorer: this.vault.restorer(jsonEscape, tool) };
+      entry = { key, restorer: this.vault.restorer(jsonEscape, tool, this.toolNames.get(id)) };
       this.restorers.set(id, entry);
     }
     return entry.restorer.feed(text);
@@ -121,8 +131,8 @@ export class StreamState {
     return [...this.restorers.values()].filter((entry) => entry.restorer.pending).map((entry) => entry.key);
   }
 
-  restore(value: Json): Json {
-    return restoreObj(value, this.vault);
+  restore(value: Json, toolName?: string): Json {
+    return restoreObj(value, this.vault, false, toolName);
   }
 }
 
@@ -197,8 +207,10 @@ export class OpenAIChatAdapter extends Adapter {
         if (typeof delta[field] === "string") delta[field] = state.feed(["c", index, field], delta[field]);
       }
       for (const call of delta.tool_calls ?? []) {
+        const key = ["t", index, call?.index ?? 0];
+        if (typeof call?.function?.name === "string") state.toolNames.set(JSON.stringify(key), call.function.name);
         if (typeof call?.function?.arguments === "string") {
-          call.function.arguments = state.feed(["t", index, call.index ?? 0], call.function.arguments, true);
+          call.function.arguments = state.feed(key, call.function.arguments, true);
         }
       }
       if (choice.finish_reason) this.flushChoice(index, delta, state);
@@ -310,6 +322,12 @@ export class OpenAIResponsesAdapter extends Adapter {
   streamEvent(name: string | null, data: Json, state: StreamState): Event[] {
     if (!isObject(data)) return [[name, data]];
     const kind = data.type;
+    if (kind === "response.output_item.added" && isObject(data.item)) {
+      const name = data.item.type === "local_shell_call" ? "local_shell" : data.item.name;
+      if (typeof name === "string") {
+        for (const prefix of ["f", "c"]) state.toolNames.set(JSON.stringify([prefix, data.output_index ?? 0]), name);
+      }
+    }
     if (kind === "response.output_text.delta") {
       data.delta = state.feed(["o", data.output_index ?? 0, data.content_index ?? 0], data.delta ?? "");
       return [[name, data]];
@@ -335,7 +353,7 @@ export class OpenAIResponsesAdapter extends Adapter {
         const extra = template(data, ["item_id", "output_index", "content_index"]);
         events.push([name ? deltaKind : null, { type: deltaKind, ...extra, delta: tail }]);
       }
-      events.push([name, state.restore(data)]);
+      events.push([name, state.restore(data, state.toolNames.get(JSON.stringify(key)))]);
       return events;
     }
     if (typeof kind === "string" && kind.includes("reasoning")) return [[name, data]];
@@ -394,7 +412,12 @@ export class AnthropicMessagesAdapter extends Adapter {
   streamEvent(name: string | null, data: Json, state: StreamState): Event[] {
     if (!isObject(data)) return [[name, data]];
     const kind = data.type;
-    if (kind === "content_block_start") return [[name, state.restore(data)]];
+    if (kind === "content_block_start") {
+      if (typeof data.content_block?.name === "string") {
+        state.toolNames.set(JSON.stringify(["b", data.index ?? 0, "input_json_delta"]), data.content_block.name);
+      }
+      return [[name, state.restore(data)]];
+    }
     if (kind === "content_block_delta") {
       const index = data.index ?? 0;
       const delta = data.delta ?? {};

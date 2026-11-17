@@ -75,6 +75,14 @@ dominios_links = []
 ferramentas = true
 # Restaurar chaves de API, tokens e senhas nesses argumentos.
 segredos_em_ferramentas = false
+# Ferramentas que nunca recebem dados reais, por palavras do nome (padrão: rede e mensagens, como send_email,
+# WebFetch e http_request). Comandos de rede (curl, wget) num argumento também não recebem.
+# ferramentas_sem_dados = ["send", "email", "fetch", "http", "web", "upload"]
+# Se preenchida, só estas ferramentas (nome exato) recebem dados reais.
+# ferramentas_com_dados = ["write_file", "edit_file"]
+# Modo só eco: cada resposta só recebe de volta os dados que vieram na própria requisição. Use quando uma sessão
+# junta dados de várias pessoas (um CRM, por exemplo) e cada usuário só pode ver os que ele mesmo mandou.
+so_eco = false
 
 [politica]
 # Perfil pronto: pseudonimizacao (padrão), anonimizacao, judiciario, juridico, saude, financeiro ou

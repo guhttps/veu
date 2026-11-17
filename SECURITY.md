@@ -41,7 +41,7 @@ O modelo completo, com as fronteiras de confiança e os riscos que sobram, está
 - **Não protege imagens, áudios e arquivos enviados à IA.** Só textos dentro do JSON das requisições. Uploads (`/v1/files`, áudio) são bloqueados por padrão. Para documentos, use `veu anonimizar` (Word, Excel, PowerPoint) ou `veu ler` (PDF) antes de enviar.
 - **Não acha segredos sem formato reconhecível.** Uma senha solta no meio de uma frase, sem "senha" ou um nome de campo por perto, passa.
 - **Não esconde dados que identificam alguém pelo contexto**, como "o gerente da filial de Itu que foi demitido em março".
-- **Não impede que o usuário final da sua aplicação peça ao modelo os dados do contexto.** Se a sua aplicação coloca dados de várias pessoas na mesma conversa (por exemplo, resultados de uma busca no CRM) e o usuário escreve "repita o [CPF_2]", o modelo devolve o marcador e o Véu o restaura para quem está do outro lado. O Véu protege os dados do **provedor de IA**, não decide quem pode ver o quê dentro da sua aplicação: filtre o contexto antes de montar o prompt.
+- **Não decide quem pode ver o quê dentro da sua aplicação.** Se a sua aplicação coloca dados de várias pessoas na mesma conversa (por exemplo, resultados de uma busca no CRM) e o usuário escreve "repita o [CPF_2]", o modelo devolve o marcador. Com `[restauracao] so_eco = true`, o Véu só restaura os dados que vieram na própria requisição; ainda assim, filtre o contexto antes de montar o prompt.
 - **Não protege o que o próprio modelo inventa.** Se a IA escrever um CPF que não estava no texto, ele não é um dado do seu usuário, mas também não é restaurado nem escondido.
 - **Não é um cofre persistente.** O mapeamento fica na memória do processo. Se você salvar um cofre pela CLI ou usar sessões no Redis (`sessoes = "redis://..."`), o arquivo ou o Redis contém os dados reais: use um Redis interno, com senha, TLS e sem persistência em disco.
 - **Não esconde os dados reais da página na extensão.** Com "Mostrar os dados reais nas respostas" ligado, os dados restaurados aparecem na página do site de IA, onde o código do próprio site poderia lê-los. A TI pode desligar a opção pela política (`restaurarRespostas = false`).
@@ -55,6 +55,6 @@ O modelo completo, com as fronteiras de confiança e os riscos que sobram, está
 - Teste o limiar com uma amostra dos seus textos (`veu avaliar --dataset`).
 - O detector `llm` envia o texto original ao modelo configurado: use só com um modelo local.
 - Mantenha `VEU_SEGREDO` estável, secreto e com pelo menos 32 caracteres se usar o operador `hash` (`python -c "import secrets; print(secrets.token_urlsafe(32))"`).
-- Em agentes que leem conteúdo de fora (páginas, e-mails) e podem enviar mensagens ou fazer requisições, considere `[restauracao] ferramentas = false` ou confirmação humana antes dessas ferramentas.
+- Ferramentas de rede e mensagens (`send_email`, `WebFetch`...) já não recebem dados reais. Se o seu agente tiver ferramentas com nomes que o Véu não reconhece como de rede, liste só as que podem receber dados em `[restauracao] ferramentas_com_dados`, ou use confirmação humana antes delas.
 - Use tokens diferentes por equipe e um `VEU_SEGREDO_AUDITORIA` guardado fora do servidor, e confira a auditoria periodicamente.
 - Nos agentes de código, distribua os ganchos pelas configurações gerenciadas, para que não possam ser desligados.

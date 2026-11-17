@@ -44,6 +44,27 @@ MAX_HOLDBACK = 48
 HASH_HEX = 16  # 64 bits no operador hash
 
 
+# Ferramentas que levam dados para fora (rede, mensagens, publicação): não recebem dados reais nos argumentos.
+# O nome da ferramenta é quebrado em palavras ("WebFetch" -> web, fetch; "send_email" -> send, email), então
+# "postgres_query" não é confundido com "post".
+NETWORK_TOOL_WORDS = (
+    "fetch", "http", "https", "request", "url", "browse", "browser", "navigate", "web", "email", "mail", "gmail",
+    "outlook", "send", "post", "webhook", "upload", "slack", "discord", "telegram", "whatsapp", "sms", "message",
+    "tweet", "publish", "share", "notify", "curl", "wget",
+)
+_TOOL_WORD = re.compile(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+")
+# Comandos que mandam dados pela rede: num argumento de ferramenta, o dado real não vai depois deles na mesma linha
+# (vale também para o corpo, como em curl -d "cpf=[CPF_1]", e não só para a URL).
+_NETWORK_COMMAND = re.compile(
+    r"(?i)(?<![\w.-])(?:curl|wget|nc|ncat|netcat|telnet|ftp|sftp|scp|ssh|rsync|invoke-webrequest|invoke-restmethod"
+    r"|iwr|irm|start-bitstransfer|sendmail|mutt)(?![\w-])"
+)
+
+
+def tool_words(name: str) -> set[str]:
+    return {word.lower() for word in _TOOL_WORD.findall(name)}
+
+
 @dataclass(frozen=True, slots=True)
 class RestorePolicy:
     """Onde a restauração pode devolver os dados reais.
@@ -53,6 +74,8 @@ class RestorePolicy:
     link_hosts: domínios (e subdomínios) cujos links podem receber os dados reais mesmo assim.
     tools: restaura os argumentos das chamadas de ferramenta (o que o agente vai executar).
     secrets_in_tools: restaura chaves de API, tokens e senhas nesses argumentos. Desligado por padrão.
+    tools_without_data: palavras de nomes de ferramentas que nunca recebem dados reais (rede, mensagens).
+    tools_with_data: se preenchida, só estas ferramentas (pelo nome exato) recebem dados reais.
     """
 
     links: bool = False
@@ -62,11 +85,30 @@ class RestorePolicy:
     # Máximo de valores reais devolvidos numa resposta pelo proxy (0: sem limite). Uma IA manipulada que tenta
     # despejar todos os dados da sessão para ao chegar no limite.
     max_per_response: int = 0
+    tools_without_data: tuple[str, ...] = NETWORK_TOOL_WORDS
+    tools_with_data: tuple[str, ...] = ()
 
-    def allows(self, label: str, before: str, *, tool: bool) -> bool:
-        """Pode restaurar um valor do tipo label, precedido por before (o texto da mesma linha)?"""
-        if tool and (not self.tools or (label in SECRET_LABELS and not self.secrets_in_tools)):
+    def tool_allowed(self, name: str) -> bool:
+        """A ferramenta com este nome pode receber dados reais nos argumentos?"""
+        allowed = {item.lower() for item in self.tools_with_data}
+        if name.lower() in allowed:
+            return True
+        if allowed:
             return False
+        return not tool_words(name) & {word.lower() for word in self.tools_without_data}
+
+    def allows(self, label: str, before: str, *, tool: bool, tool_name: str | None = None) -> bool:
+        """Pode restaurar um valor do tipo label, precedido por before (o texto da mesma linha)?
+
+        tool_name: o nome da ferramenta, quando o texto é argumento de uma chamada (send_email, Bash...).
+        """
+        if tool:
+            if not self.tools or (label in SECRET_LABELS and not self.secrets_in_tools):
+                return False
+            if tool_name and not self.tool_allowed(tool_name):
+                return False
+            if _NETWORK_COMMAND.search(re.split(r"\\n|\n", before)[-1]):
+                return False
         if self.links:
             return True
         url = link_context(before)
@@ -328,11 +370,13 @@ class Vault:
         entry = self._entries.get(key)
         return entry if entry and entry.kind == "marcador" else None
 
-    def restore(self, text: str, *, json_escape: bool = False, tool: bool | None = None, prefix: str = "") -> str:
+    def restore(self, text: str, *, json_escape: bool = False, tool: bool | None = None, prefix: str = "",
+                tool_name: str | None = None) -> str:
         """Troca marcadores e substitutos pelos valores reais, seguindo a política do cofre (self.policy).
 
         json_escape: o texto é um pedaço de JSON. tool: o texto é argumento de uma chamada de ferramenta
         (padrão: o mesmo que json_escape). prefix: o texto da mesma linha que já passou (streaming).
+        tool_name: o nome da ferramenta chamada, para a política decidir se ela recebe dados reais.
         Dentro de links e URLs, e para segredos em argumentos de ferramentas, o marcador fica como está.
         """
         if not text or not self._entries:
@@ -352,7 +396,7 @@ class Vault:
             start = match.start() - len(lead)
             newline = text.rfind("\n", 0, start)
             before = prefix + text[:start] if newline == -1 else text[newline + 1:start]
-            if not policy.allows(entry.label, before, tool=tool):
+            if not policy.allows(entry.label, before, tool=tool, tool_name=tool_name):
                 return match.group(0)
             if counter is not None:
                 if policy.max_per_response and sum(counter.values()) >= policy.max_per_response:
@@ -374,8 +418,20 @@ class Vault:
                 spans.append((match.start(), match.end(), entry.original))
         return spans
 
-    def restorer(self, *, json_escape: bool = False, tool: bool | None = None) -> StreamRestorer:
-        return StreamRestorer(self, json_escape=json_escape, tool=tool)
+    def restorer(self, *, json_escape: bool = False, tool: bool | None = None,
+                 tool_name: str | None = None) -> StreamRestorer:
+        return StreamRestorer(self, json_escape=json_escape, tool=tool, tool_name=tool_name)
+
+    def scoped(self, keys) -> Vault:
+        """Cópia só com os marcadores de keys, para restaurar uma resposta (modo só eco). Nunca é guardada."""
+        view = Vault(secret=self._secret, policy=self.policy)
+        with self._lock:
+            for key in keys:
+                entry = self._entries.get(key)
+                if entry is not None:
+                    view._store((entry.label, normalize_value(entry.label, entry.original)), entry)
+            view._forged_bare = set(self._forged_bare)
+        return view
 
     def _might_continue(self, tail: str) -> bool:
         """O fim do texto pode ser o começo de um marcador ou substituto que chega no próximo pedaço?"""
@@ -435,16 +491,19 @@ class StreamRestorer:
     virar um marcador fica retido até o próximo pedaço, ou até flush().
     """
 
-    def __init__(self, vault: Vault, *, json_escape: bool = False, tool: bool | None = None):
+    def __init__(self, vault: Vault, *, json_escape: bool = False, tool: bool | None = None,
+                 tool_name: str | None = None):
         self.vault = vault
         self.json_escape = json_escape
         self.tool = json_escape if tool is None else tool
+        self.tool_name = tool_name
         self._buffer = ""
         # Texto já emitido na linha atual: um link pode começar num pedaço e o marcador chegar em outro.
         self._line = ""
 
     def _restore(self, ready: str) -> str:
-        output = self.vault.restore(ready, json_escape=self.json_escape, tool=self.tool, prefix=self._line)
+        output = self.vault.restore(ready, json_escape=self.json_escape, tool=self.tool, prefix=self._line,
+                                    tool_name=self.tool_name)
         newline = ready.rfind("\n")
         self._line = ready[newline + 1:] if newline != -1 else self._line + ready
         return output

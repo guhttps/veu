@@ -9,8 +9,12 @@ import { restoreObj } from "../src/gateway.ts";
 interface Caso {
   texto: string;
   esperado: string;
-  politica?: { links?: boolean; dominios_links?: string[]; ferramentas?: boolean; segredos_em_ferramentas?: boolean };
+  politica?: {
+    links?: boolean; dominios_links?: string[]; ferramentas?: boolean; segredos_em_ferramentas?: boolean;
+    ferramentas_sem_dados?: string[]; ferramentas_com_dados?: string[];
+  };
   ferramenta?: boolean;
+  nome_ferramenta?: string;
   json?: boolean;
 }
 const dados = JSON.parse(readFileSync(new URL("./restauracao.json", import.meta.url), "utf-8")) as {
@@ -32,18 +36,19 @@ function cofre(policy: RestorePolicy = {}): Vault {
 
 function politica(caso: Caso): RestorePolicy {
   const p = caso.politica ?? {};
-  return { links: p.links, linkHosts: p.dominios_links, tools: p.ferramentas, secretsInTools: p.segredos_em_ferramentas };
+  return { links: p.links, linkHosts: p.dominios_links, tools: p.ferramentas, secretsInTools: p.segredos_em_ferramentas,
+    toolsWithoutData: p.ferramentas_sem_dados, toolsWithData: p.ferramentas_com_dados };
 }
 
 for (const [index, caso] of dados.casos.entries()) {
   test(`restauração ${index + 1}: ${caso.texto.slice(0, 50)}`, () => {
     const vault = cofre(politica(caso));
     const esperado = caso.esperado.replaceAll("$CHAVE", CHAVE);
-    const contexto = { tool: caso.ferramenta ?? caso.json ?? false };
+    const contexto = { tool: caso.ferramenta ?? caso.json ?? false, toolName: caso.nome_ferramenta };
     assert.equal(vault.restore(caso.texto, caso.json ?? false, contexto), esperado);
     // Em streaming, cortado em qualquer ponto, o resultado é o mesmo.
     for (let cut = 1; cut < caso.texto.length; cut += 1) {
-      const restorer = vault.restorer(caso.json ?? false, contexto.tool);
+      const restorer = vault.restorer(caso.json ?? false, contexto.tool, contexto.toolName);
       const output = restorer.feed(caso.texto.slice(0, cut)) + restorer.feed(caso.texto.slice(cut)) + restorer.flush();
       assert.equal(output, esperado, `corte em ${cut}`);
     }

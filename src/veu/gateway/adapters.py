@@ -27,6 +27,7 @@ class Masker:
         self.anonymizer = anonymizer
         self.vault = vault
         self.counts: Counter[str] = Counter()
+        self.used: set[str] = set()  # marcadores usados nesta requisição (modo só eco)
         # expand(texto) -> (texto, conhecidos): acrescenta o conteúdo de links permitidos (Notion, Google) e informa
         # os dados pessoais que a fonte já marcou, para esconder antes da detecção.
         self.expand = expand
@@ -46,6 +47,7 @@ class Masker:
             value = replace_known(value, known, self.anonymizer, self.vault, self.counts)
         result = self.anonymizer.anonymize(value, self.vault, neutralize=False)
         self.counts.update(result.counts())
+        self.used.update(item.replacement for item in result.replacements)
         return result.text
 
     def json_string(self, value: Any) -> Any:
@@ -80,38 +82,48 @@ _TOOL_TYPES = frozenset({"tool_use", "server_tool_use", "function_call", "custom
                          "response.custom_tool_call_input.done", "response.function_call_arguments.done"})
 
 
-def restore_obj(value: Any, vault: Vault, *, tool: bool = False) -> Any:
+def _tool_name(value: dict, inherited: str | None) -> str | None:
+    """O nome da ferramenta de uma chamada: {"name": ..., "arguments"|"input"|"args": ...} em todas as APIs."""
+    if value.get("type") == "local_shell_call":
+        return "local_shell"
+    if isinstance(value.get("name"), str) and any(key in value for key in ("arguments", "input", "args")):
+        return value["name"]
+    return inherited
+
+
+def restore_obj(value: Any, vault: Vault, *, tool: bool = False, tool_name: str | None = None) -> Any:
     """Restaura todos os textos de uma resposta JSON. tool: o valor é argumento de uma chamada de ferramenta."""
     if isinstance(value, str):
-        return vault.restore(value, tool=tool)
+        return vault.restore(value, tool=tool, tool_name=tool_name if tool else None)
     if isinstance(value, list):
-        return [restore_obj(item, vault, tool=tool) for item in value]
+        return [restore_obj(item, vault, tool=tool, tool_name=tool_name) for item in value]
     if isinstance(value, tuple):
-        return tuple(restore_obj(item, vault, tool=tool) for item in value)
+        return tuple(restore_obj(item, vault, tool=tool, tool_name=tool_name) for item in value)
     if isinstance(value, dict):
         if value.get("type") in _UNTOUCHED_TYPES:
             return value
         call = value.get("type") in _TOOL_TYPES
+        name = _tool_name(value, tool_name)
         restored = {}
         for key, item in value.items():
             in_tool = tool or key in _TOOL_KEYS or (call and key in ("input", "arguments"))
             if key in _UNTOUCHED_KEYS:
                 restored[key] = item
             elif key in ("arguments", "partial_json") and isinstance(item, str):
-                restored[key] = restore_json_string(item, vault)
+                restored[key] = restore_json_string(item, vault, tool_name=name)
             else:
-                restored[key] = restore_obj(item, vault, tool=in_tool)
+                restored[key] = restore_obj(item, vault, tool=in_tool, tool_name=name)
         return restored
     return value
 
 
-def restore_json_string(value: str, vault: Vault, *, tool: bool = True) -> str:
+def restore_json_string(value: str, vault: Vault, *, tool: bool = True, tool_name: str | None = None) -> str:
     """Argumentos de ferramenta em texto JSON: restaura os valores sem quebrar o JSON."""
     try:
         parsed = json.loads(value)
     except ValueError:
-        return vault.restore(value, json_escape=True, tool=tool)
-    return json.dumps(restore_obj(parsed, vault, tool=tool), ensure_ascii=False)
+        return vault.restore(value, json_escape=True, tool=tool, tool_name=tool_name)
+    return json.dumps(restore_obj(parsed, vault, tool=tool, tool_name=tool_name), ensure_ascii=False)
 
 
 class StreamState:
@@ -121,12 +133,15 @@ class StreamState:
         self.vault = vault
         self._restorers: dict[tuple, StreamRestorer] = {}
         self.meta: dict[str, Any] = {}
+        # Nome da ferramenta de cada campo de argumentos do stream (chega antes dos argumentos, num evento à parte).
+        self.tool_names: dict[tuple, str] = {}
 
     def feed(self, key: tuple, text: str, *, json_escape: bool = False, tool: bool | None = None) -> str:
         """tool: o texto é argumento de ferramenta (padrão: o mesmo que json_escape)."""
         restorer = self._restorers.get(key)
         if restorer is None:
-            restorer = self._restorers[key] = self.vault.restorer(json_escape=json_escape, tool=tool)
+            restorer = self._restorers[key] = self.vault.restorer(json_escape=json_escape, tool=tool,
+                                                                  tool_name=self.tool_names.get(key))
         return restorer.feed(text)
 
     def flush(self, key: tuple) -> str:
@@ -137,8 +152,8 @@ class StreamState:
         """Campos com texto retido esperando o próximo pedaço."""
         return [key for key, restorer in self._restorers.items() if restorer.pending]
 
-    def restore(self, value: Any) -> Any:
-        return restore_obj(value, self.vault)
+    def restore(self, value: Any, *, tool_name: str | None = None) -> Any:
+        return restore_obj(value, self.vault, tool_name=tool_name)
 
 
 class Adapter:
@@ -222,9 +237,11 @@ class OpenAIChatAdapter(Adapter):
                     delta[field] = state.feed(("c", index, field), delta[field])
             for call in delta.get("tool_calls") or []:
                 function = call.get("function") or {}
+                key = ("t", index, call.get("index", 0))
+                if isinstance(function.get("name"), str):
+                    state.tool_names[key] = function["name"]
                 if isinstance(function.get("arguments"), str):
-                    function["arguments"] = state.feed(("t", index, call.get("index", 0)), function["arguments"],
-                                                       json_escape=True)
+                    function["arguments"] = state.feed(key, function["arguments"], json_escape=True)
             if choice.get("finish_reason"):
                 self._flush_choice(index, delta, state)
         return [(name, data)]
@@ -353,6 +370,11 @@ class OpenAIResponsesAdapter(Adapter):
         if not isinstance(data, dict):
             return [(name, data)]
         kind = data.get("type")
+        if kind == "response.output_item.added" and isinstance(data.get("item"), dict):
+            item, index = data["item"], data.get("output_index", 0)
+            name = "local_shell" if item.get("type") == "local_shell_call" else item.get("name")
+            if isinstance(name, str):
+                state.tool_names[("f", index)] = state.tool_names[("c", index)] = name
         if kind == "response.output_text.delta":
             key = ("o", data.get("output_index", 0), data.get("content_index", 0))
             data["delta"] = state.feed(key, data.get("delta") or "")
@@ -382,7 +404,7 @@ class OpenAIResponsesAdapter(Adapter):
                 extra = {k: data[k] for k in ("item_id", "output_index", "content_index") if k in data}
                 event_name = delta_kind if name else None
                 events.append((event_name, {"type": delta_kind, **extra, "delta": tail}))
-            events.append((name, state.restore(data)))
+            events.append((name, state.restore(data, tool_name=state.tool_names.get(key))))
             return events
         if kind and "reasoning" in kind:
             return [(name, data)]
@@ -462,6 +484,9 @@ class AnthropicMessagesAdapter(Adapter):
             return [(name, data)]
         kind = data.get("type")
         if kind == "content_block_start":
+            block = data.get("content_block")
+            if isinstance(block, dict) and isinstance(block.get("name"), str):
+                state.tool_names[("b", data.get("index", 0), "input_json_delta")] = block["name"]
             return [(name, state.restore(data))]
         if kind == "content_block_delta":
             index = data.get("index", 0)

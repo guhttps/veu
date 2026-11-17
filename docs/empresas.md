@@ -109,7 +109,7 @@ veu auditoria ancorar auditoria.jsonl --segredo-env VEU_SEGREDO_AUDITORIA
 veu auditoria verificar auditoria.jsonl --segredo-env VEU_SEGREDO_AUDITORIA --ancora 9f2c...
 ```
 
-Se a linha da âncora sumir, a verificação falha. Cada linha também registra quantos valores reais voltaram na resposta (`restaurados`, por tipo, sem os valores), e `[restauracao] max_por_resposta` limita esse número: uma IA manipulada que tenta despejar todos os dados de uma sessão para no limite.
+Se a linha da âncora sumir, a verificação falha. Cada linha também registra quantos valores reais voltaram na resposta (`restaurados`, por tipo, sem os valores), e `[restauracao] max_por_resposta` limita esse número: uma IA manipulada que tenta despejar todos os dados de uma sessão para no limite. Quando uma sessão junta dados de vários clientes (um CRM, por exemplo), `[restauracao] so_eco = true` faz cada resposta receber de volta só os dados que vieram na própria requisição.
 
 Com várias réplicas, cada uma escreve a própria cadeia. Guarde os logs separados por pod ou use a saída padrão, que o coletor já separa.
 

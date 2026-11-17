@@ -5,6 +5,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Segurança
+- **Ferramentas de rede e mensagens não recebem dados reais** (Python e JavaScript, nas APIs Chat Completions, Responses, Anthropic, Gemini e Ollama, com e sem streaming). Uma IA manipulada que chama `send_email(texto="[CPF_1]")`, `WebFetch` ou `http_request` recebe o marcador, não o CPF. O nome da ferramenta é quebrado em palavras (`postgres_query` não vira "post"), e `[restauracao] ferramentas_sem_dados` e `ferramentas_com_dados` ajustam a lista. Comandos de rede num argumento (`curl`, `wget`, `Invoke-WebRequest`, `ssh`) também barram os dados depois deles, inclusive no corpo (`curl -d "cpf=..."`). O `veu demonstrar` ganhou esse ataque.
+- **Modo só eco** (`[restauracao] so_eco = true`): no proxy, cada resposta só recebe de volta os dados que vieram na própria requisição. Numa sessão com dados de vários clientes, "repita o [CPF_2]" não traz mais o CPF de outra pessoa.
+
 ### Adicionado
 - **Portas e servidores internos** (Python e JavaScript): `PORTA` quando o número está colado a um IP ou a um servidor (`10.0.0.5:8080`, `https://api.empresa.example:8443`), depois de "porta", `PORT=` ou `--port`, ou no `-p` de comandos de rede (`ssh -p 2222`, `docker run -p 8080:80`); nunca um número solto. `SERVIDOR` para nomes com terminação interna (`.local`, `.internal`, `.interna`, `.corp`, `.lan`, `.intranet`, `home.arpa`). Nenhuma detecção nova em 20 mil textos brasileiros.
 - **Caixinhas de "O que esconder"** na página web e no ícone da extensão, com os mesmos grupos do painel (agora num arquivo só, `data/grupos.json`) e um grupo novo, "Infraestrutura de TI". Na página, também dá para escolher tipo a tipo. A escolha fica salva no navegador, e desmarcar senhas e chaves mostra um aviso. A política da extensão ganhou `tiposDesligados`, para a empresa travar a escolha.

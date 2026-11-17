@@ -31,18 +31,45 @@ const HASH_CONTEXT = new TextEncoder().encode("veu/hash/v2");
  * - `linkHosts`: domínios (e subdomínios) cujos links podem receber os dados reais mesmo assim.
  * - `tools` (padrão true): restaura os argumentos das chamadas de ferramenta.
  * - `secretsInTools` (padrão false): restaura chaves de API, tokens e senhas nesses argumentos.
+ * - `toolsWithoutData`: palavras de nomes de ferramentas que nunca recebem dados reais (padrão: rede e mensagens).
+ * - `toolsWithData`: se preenchida, só estas ferramentas (pelo nome exato) recebem dados reais.
  */
 export interface RestorePolicy {
   links?: boolean;
   linkHosts?: string[];
   tools?: boolean;
   secretsInTools?: boolean;
+  toolsWithoutData?: string[];
+  toolsWithData?: string[];
 }
 
-/** Contexto de uma restauração: argumento de ferramenta e texto da mesma linha que já passou (streaming). */
+/** Contexto de uma restauração: argumento de ferramenta, nome dela e texto da mesma linha que já passou. */
 export interface RestoreContext {
   tool?: boolean;
+  toolName?: string;
   prefix?: string;
+}
+
+// Ferramentas que levam dados para fora (rede, mensagens, publicação): não recebem dados reais nos argumentos.
+// O nome é quebrado em palavras ("WebFetch" -> web, fetch), então "postgres_query" não é confundido com "post".
+export const NETWORK_TOOL_WORDS: readonly string[] = [
+  "fetch", "http", "https", "request", "url", "browse", "browser", "navigate", "web", "email", "mail", "gmail",
+  "outlook", "send", "post", "webhook", "upload", "slack", "discord", "telegram", "whatsapp", "sms", "message",
+  "tweet", "publish", "share", "notify", "curl", "wget",
+];
+const TOOL_WORD = /[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+/g;
+// Comandos que mandam dados pela rede: o dado real não vai depois deles na mesma linha (nem no corpo do curl).
+const NETWORK_COMMAND = /(?<![\p{L}\p{N}_.-])(?:curl|wget|nc|ncat|netcat|telnet|ftp|sftp|scp|ssh|rsync|invoke-webrequest|invoke-restmethod|iwr|irm|start-bitstransfer|sendmail|mutt)(?![\p{L}\p{N}_-])/iu;
+
+export const toolWords = (name: string): Set<string> => new Set((name.match(TOOL_WORD) ?? []).map((w) => w.toLowerCase()));
+
+/** A ferramenta com este nome pode receber dados reais nos argumentos? */
+export function toolAllowed(policy: RestorePolicy, name: string): boolean {
+  const allowed = new Set((policy.toolsWithData ?? []).map((item) => item.toLowerCase()));
+  if (allowed.has(name.toLowerCase())) return true;
+  if (allowed.size) return false;
+  const denied = new Set((policy.toolsWithoutData ?? NETWORK_TOOL_WORDS).map((word) => word.toLowerCase()));
+  return ![...toolWords(name)].some((word) => denied.has(word));
 }
 
 // O último caso é um domínio solto seguido de "/" (evil.com/?d=...), que muitos sites transformam em link.
@@ -89,8 +116,12 @@ export function urlHost(url: string): string {
 }
 
 /** A política deixa restaurar um valor do tipo `label`, precedido por `before` (o texto da mesma linha)? */
-export function restoreAllowed(policy: RestorePolicy, label: string, before: string, tool: boolean): boolean {
-  if (tool && (policy.tools === false || (SECRET_LABELS.has(label) && !policy.secretsInTools))) return false;
+export function restoreAllowed(policy: RestorePolicy, label: string, before: string, tool: boolean, toolName?: string): boolean {
+  if (tool) {
+    if (policy.tools === false || (SECRET_LABELS.has(label) && !policy.secretsInTools)) return false;
+    if (toolName && !toolAllowed(policy, toolName)) return false;
+    if (NETWORK_COMMAND.test(before.split(/\\n|\n/).pop() ?? "")) return false;
+  }
   if (policy.links) return true;
   const url = linkContext(before);
   if (url === null) return true;
@@ -265,13 +296,13 @@ export class Vault {
       if (!entry) return match;
       const newline = offset > 0 ? text.lastIndexOf("\n", offset - 1) : -1;
       const before = newline === -1 ? prefix + text.slice(0, offset) : text.slice(newline + 1, offset);
-      if (!restoreAllowed(this.policy, entry.label, before, tool)) return match;
+      if (!restoreAllowed(this.policy, entry.label, before, tool, tool ? context.toolName : undefined)) return match;
       return jsonEscape ? JSON.stringify(entry.original).slice(1, -1) : entry.original;
     }).slice(lead.length);
   }
 
-  restorer(jsonEscape = false, tool?: boolean): StreamRestorer {
-    return new StreamRestorer(this, jsonEscape, tool);
+  restorer(jsonEscape = false, tool?: boolean, toolName?: string): StreamRestorer {
+    return new StreamRestorer(this, jsonEscape, tool, toolName);
   }
 
   /** O fim do texto pode ser o começo de um marcador que chega no próximo pedaço? */
@@ -326,15 +357,17 @@ export class StreamRestorer {
   readonly vault: Vault;
   readonly jsonEscape: boolean;
   readonly tool: boolean;
+  readonly toolName?: string;
 
-  constructor(vault: Vault, jsonEscape = false, tool?: boolean) {
+  constructor(vault: Vault, jsonEscape = false, tool?: boolean, toolName?: string) {
     this.vault = vault;
     this.jsonEscape = jsonEscape;
     this.tool = tool ?? jsonEscape;
+    this.toolName = toolName;
   }
 
   private emit(ready: string): string {
-    const output = this.vault.restore(ready, this.jsonEscape, { tool: this.tool, prefix: this.line });
+    const output = this.vault.restore(ready, this.jsonEscape, { tool: this.tool, toolName: this.toolName, prefix: this.line });
     const newline = ready.lastIndexOf("\n");
     this.line = newline === -1 ? this.line + ready : ready.slice(newline + 1);
     return output;

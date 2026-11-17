@@ -38,6 +38,9 @@ class Prepared:
     vault: Vault
     counts: Counter[str]
     stream: bool
+    # Cofre usado para restaurar a resposta: o da sessão ou, no modo só eco, um recorte com os marcadores
+    # desta requisição (cada pessoa só recebe de volta o que ela mesma mandou).
+    restore_vault: Vault | None = None
 
 
 class Gateway:
@@ -72,21 +75,23 @@ class Gateway:
         if self.config.instruct_model and masker.counts and vault.has_placeholders:
             adapter.instruct(payload, INSTRUCTION)
         encoded = json.dumps(payload, ensure_ascii=False).encode()
-        return Prepared(adapter, encoded, vault, masker.counts, adapter.is_stream(payload, path))
+        restore_vault = vault.scoped(masker.used) if self.config.restore_echo_only else vault
+        return Prepared(adapter, encoded, vault, masker.counts, adapter.is_stream(payload, path), restore_vault)
 
     def restore_body(self, prepared: Prepared, body: bytes) -> bytes:
         """Restaura uma resposta JSON completa (sem streaming)."""
-        if not prepared.adapter.restores_output or not len(prepared.vault) or not body:
+        vault = prepared.restore_vault or prepared.vault
+        if not prepared.adapter.restores_output or not len(vault) or not body:
             return body
         try:
             data = json.loads(body)
         except ValueError:
-            return prepared.vault.restore(body.decode("utf-8", errors="replace")).encode()
-        return json.dumps(restore_obj(data, prepared.vault), ensure_ascii=False).encode()
+            return vault.restore(body.decode("utf-8", errors="replace")).encode()
+        return json.dumps(restore_obj(data, vault), ensure_ascii=False).encode()
 
     def stream(self, prepared: Prepared, content_type: str = "text/event-stream") -> SSETransformer | NDJSONTransformer:
         """Transformador incremental para a resposta em streaming (SSE ou JSON por linha)."""
-        state = StreamState(prepared.vault)
+        state = StreamState(prepared.restore_vault or prepared.vault)
         adapter = prepared.adapter
         transformer = NDJSONTransformer if "ndjson" in content_type else SSETransformer
         return transformer(

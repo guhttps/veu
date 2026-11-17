@@ -161,6 +161,11 @@ class Config:
     restore_tools: bool = True
     restore_secrets_in_tools: bool = False
     restore_max_per_response: int = 0
+    # Ferramentas de rede e mensagens não recebem dados reais; com uma lista de permitidas, só elas recebem.
+    restore_tools_without_data: tuple[str, ...] | None = None
+    restore_tools_with_data: tuple[str, ...] = ()
+    # Modo só eco: a resposta só recebe de volta os dados que vieram na própria requisição.
+    restore_echo_only: bool = False
     # Política
     profile: str = "pseudonimizacao"
     block: tuple[str, ...] = ()
@@ -298,9 +303,11 @@ class Config:
         from veu.vault import RestorePolicy
 
         hosts = tuple(host.strip().lower().lstrip(".") for host in self.restore_link_hosts if host.strip())
+        extra = {} if self.restore_tools_without_data is None else {"tools_without_data": self.restore_tools_without_data}
         return RestorePolicy(links=self.restore_links, link_hosts=hosts, tools=self.restore_tools,
                              secrets_in_tools=self.restore_secrets_in_tools,
-                             max_per_response=self.restore_max_per_response)
+                             max_per_response=self.restore_max_per_response,
+                             tools_with_data=tuple(self.restore_tools_with_data), **extra)
 
     def with_profile(self, name: str) -> Config:
         """Aplica um perfil (--perfil). As opções escritas no veu.toml ou em VEU_* continuam valendo."""
@@ -330,6 +337,8 @@ _SECTIONS = {
     "restauracao": {
         "links": "restore_links", "dominios_links": "restore_link_hosts", "ferramentas": "restore_tools",
         "segredos_em_ferramentas": "restore_secrets_in_tools", "max_por_resposta": "restore_max_per_response",
+        "ferramentas_sem_dados": "restore_tools_without_data", "ferramentas_com_dados": "restore_tools_with_data",
+        "so_eco": "restore_echo_only",
     },
     "politica": {
         "perfil": "profile", "bloquear": "block", "endpoints_desconhecidos": "unknown_endpoints", "desviar_para": "route_to",
