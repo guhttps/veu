@@ -10,11 +10,20 @@ Tudo o que as lojas do Edge e do Firefox pedem, pronto para copiar. Os pacotes f
 | Política de privacidade | https://guhttps.github.io/veu/privacidade.html |
 | Suporte | https://github.com/guhttps/veu/issues |
 | Código-fonte | https://github.com/guhttps/veu |
-| Categoria | Produtividade (Productivity) |
+| Categoria no Edge | Productivity |
+| Categoria no Firefox | Privacy & Security |
+| Licença | MIT |
 
-## Capturas de tela
+## Imagens
 
-`capturas/1-aviso.png`, `capturas/2-protegido.png` e `capturas/3-caixinhas.png` (1280×800). Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capturas_loja.mjs`.
+- Capturas de tela (1280×800): `capturas/1-aviso.png`, `capturas/2-protegido.png` e `capturas/3-caixinhas.png`.
+- Logo da loja do Edge (300×300): `logo-300.png`.
+
+Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capturas_loja.mjs`.
+
+## Notas para quem analisa (as duas lojas têm esse campo)
+
+> No account or setup is needed. To test: open chatgpt.com (or claude.ai, gemini.google.com), paste the text "Customer Maria Souza, CPF 529.982.247-25, phone (11) 98765-4321" into the message box and press Enter. In the default "warn" mode, Véu shows a notice with a "Proteger" (Protect) button; the interface is in Portuguese. After clicking it, the text shows [PESSOA_1], [CPF_1] and [TELEFONE_1] instead of the data. The CPF is a fictitious test number. The extension makes no network requests; all detection runs locally in the content script.
 
 ## Textos em português
 

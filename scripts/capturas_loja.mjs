@@ -1,4 +1,5 @@
-// Capturas de tela para as lojas de extensões (Edge e Firefox), em extensao/loja/capturas/, 1280x800.
+// Capturas de tela para as lojas de extensões (Edge e Firefox), em extensao/loja/capturas/, 1280x800, e o logo
+// de 300x300 que a loja do Edge pede, em extensao/loja/logo-300.png.
 //
 //   python scripts/empacotar_navegador.py && node scripts/capturas_loja.mjs
 //
@@ -41,9 +42,15 @@ const VITRINE = (imagem) => `<!doctype html><meta charset="utf-8"><style>
 <p>No modo Proteger, os dados viram marcadores antes de chegar à IA. Tudo roda no seu navegador.</p></div>
 <img src="data:image/png;base64,${imagem}" alt="">`;
 
+// O mesmo desenho dos ícones da extensão, em 300x300, para o logo da loja do Edge.
+const LOGO = `<!doctype html><meta charset="utf-8"><style>html, body { margin: 0; background: transparent; } svg { display: block; }</style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="300" height="300"><rect width="32" height="32" rx="8" fill="#234e52"/>
+<path d="M8 12h16M8 17h12M8 22h8" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/></svg>`;
+
 const servidor = createServer((pedido, resposta) => {
   resposta.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-  resposta.end(pedido.url.startsWith("/vitrine") ? VITRINE(globalThis.imagemDoIcone || "") : CHAT);
+  if (pedido.url.startsWith("/logo")) resposta.end(LOGO);
+  else resposta.end(pedido.url.startsWith("/vitrine") ? VITRINE(globalThis.imagemDoIcone || "") : CHAT);
 });
 await new Promise((pronto) => servidor.listen(0, "127.0.0.1", pronto));
 const base = `http://127.0.0.1:${servidor.address().port}`;
@@ -103,6 +110,7 @@ async function abrir(url, largura = 1280, altura = 800) {
       if (nome) writeFileSync(join(destino, nome), Buffer.from(data, "base64"));
       return data;
     },
+    transparente: () => cdp("Emulation.setDefaultBackgroundColorOverride", { color: { r: 0, g: 0, b: 0, a: 0 } }, sessionId),
     fechar: () => cdp("Target.closeTarget", { targetId }),
   };
 }
@@ -144,7 +152,13 @@ try {
   const vitrine = await abrir(`${base}/vitrine`);
   await vitrine.foto("3-caixinhas.png");
   await vitrine.fechar();
-  console.log(`3 capturas em ${destino}`);
+
+  // 4. O logo da loja do Edge (300x300, fundo transparente), em extensao/loja/.
+  const logo = await abrir(`${base}/logo`, 300, 300);
+  await logo.transparente();
+  await logo.foto(join("..", "logo-300.png"));
+  await logo.fechar();
+  console.log(`3 capturas em ${destino} e o logo em ${join(destino, "..", "logo-300.png")}`);
 } finally {
   processo.kill();
   servidor.close();
