@@ -7,6 +7,6 @@ compatibility_date = "2026-11-01"
 # Preenchida por node nuvem/gerar-chaves.mjs.
 CHAVE_PUBLICA = "62O3t2ByV5o4dWL3VZNTl5mXWQjwOZm9ndF6hDB20U8"
 # Preenchida por node nuvem/criar-planos.mjs: {"id do plano no Mercado Pago": {"plano": "pro", "nome": "..."}}.
-PLANOS = '{}'
+PLANOS = '{"f90b41a492514908bcc6abbb1ff8bd70":{"plano":"pro","nome":"Véu Pro mensal"},"86dc21c3c9844ce689ac693c06498dad":{"plano":"pro","nome":"Véu Pro anual"}}'
 
 # Segredos (nunca neste arquivo): npx wrangler secret put CHAVE_PRIVADA e npx wrangler secret put MP_TOKEN

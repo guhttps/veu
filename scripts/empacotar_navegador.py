@@ -24,6 +24,7 @@ EXTENSION_FILES = ("manifest.json", "politica.json", "licenca.js", "fundo.js", "
 
 
 FIREFOX_ID = "veu@guhttps.github.io"
+FIREFOX_PRO_DATA = ("authenticationInfo", "personallyIdentifyingInfo")
 
 
 def firefox_manifest(manifest: dict) -> dict:
@@ -31,10 +32,12 @@ def firefox_manifest(manifest: dict) -> dict:
     result = {key: value for key, value in manifest.items() if key != "minimum_chrome_version"}
     # No Chrome, o service worker carrega licenca.js com importScripts; no Firefox, a página de fundo lista os dois.
     result["background"] = {"scripts": ["licenca.js", manifest["background"]["service_worker"]]}
-    # A Mozilla exige que extensões novas declarem se coletam dados (o Firefox mostra isso ao instalar). O Véu não
-    # coleta nada; a chave existe a partir do Firefox 140.
+    # A Mozilla exige que extensões novas declarem os dados que enviam (o Firefox mostra isso ao instalar). Sem o
+    # Véu Pro, nada sai; com ele, a renovação manda a própria chave (um token com o e-mail da assinatura), e o
+    # popup pede essa permissão opcional ao ativar a chave. A chave existe a partir do Firefox 140.
     result["browser_specific_settings"] = {"gecko": {
-        "id": FIREFOX_ID, "strict_min_version": "140.0", "data_collection_permissions": {"required": ["none"]},
+        "id": FIREFOX_ID, "strict_min_version": "140.0", "data_collection_permissions": {
+            "required": ["none"], "optional": list(FIREFOX_PRO_DATA)},
     }}
     return result
 

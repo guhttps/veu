@@ -50,7 +50,21 @@
     return true;
   }
 
+  // No Firefox, a renovação manda a chave (com o e-mail da assinatura) ao servidor de licenças: a pessoa autoriza.
+  async function permitirRenovacao() {
+    const permissoes = globalThis.browser?.permissions;
+    if (!permissoes?.request || !/Firefox\//.test(navigator.userAgent)) return true;
+    try {
+      return await permissoes.request({ data_collection: ["authenticationInfo", "personallyIdentifyingInfo"] });
+    } catch {
+      return true;
+    }
+  }
+
   $("#pro-botao").addEventListener("click", async () => {
+    if (!(await permitirRenovacao())) {
+      $("#pro-estado").textContent = "Sem a permissão, a chave não renova sozinha: ela vale até o vencimento.";
+    }
     if (await pedir({ tipo: "ativarLicenca", chave: $("#pro-chave").value })) $("#pro-chave").value = "";
   });
   $("#pro-remover").addEventListener("click", () => pedir({ tipo: "removerLicenca" }));

@@ -136,3 +136,4 @@ a.botao { display: inline-block; text-decoration: none; }
 .perguntas h3 { font-size: 16px; margin: 14px 0 4px; }
 .perguntas p { margin: 0; color: var(--suave); }
 @media (max-width: 760px) { .planos { grid-template-columns: 1fr; } }
+.assinar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }

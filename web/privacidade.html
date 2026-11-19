@@ -29,7 +29,7 @@
   <main>
     <section class="painel">
       <h2>Em uma frase</h2>
-      <p>O Véu não coleta, não guarda em servidores e não envia a ninguém nenhum dado seu. A detecção roda dentro do seu navegador.</p>
+      <p>O Véu não coleta, não guarda em servidores e não envia a ninguém nenhum dado seu. A detecção roda dentro do seu navegador. A única exceção é a renovação da chave do Véu Pro, para quem assina, e ela nunca leva um texto seu (veja abaixo).</p>
     </section>
 
     <section class="painel">
@@ -43,13 +43,21 @@
         <li><b>O cofre</b> (a ligação entre cada marcador e o dado real) fica na memória de sessão do navegador, separado por aba. Ele é apagado quando você fecha a aba ou o navegador, e os sites não têm acesso a ele.</li>
         <li><b>Suas preferências</b> (modo, caixinhas de "O que esconder", mostrar ou não os dados reais) ficam no armazenamento de configurações do navegador. Se você usa a sincronização do Chrome, do Edge ou do Firefox, o próprio navegador pode sincronizar essas preferências entre os seus aparelhos. Nenhum texto seu e nenhum dado pessoal fazem parte delas.</li>
         <li><b>A contagem</b> de quantos dados foram protegidos em cada aba, para mostrar no ícone. Também é apagada ao fechar a aba.</li>
+        <li><b>No Véu Pro</b>, a chave da assinatura e as listas próprias (nomes e termos que sempre somem) ficam no armazenamento local do navegador, sem sincronizar com a sua conta.</li>
       </ul>
+    </section>
+
+    <section class="painel" id="pro">
+      <h2>Véu Pro</h2>
+      <p>Quem assina o Véu Pro paga pelo Mercado Pago. O Mercado Pago trata o pagamento conforme a política de privacidade dele; o Véu não vê o seu cartão.</p>
+      <p>Depois do pagamento, o servidor de licenças do Véu (licencas.veu-pro.workers.dev, na Cloudflare) consulta a assinatura no Mercado Pago e mostra a sua chave. A chave guarda o plano, o e-mail da assinatura, o número da assinatura e a validade. O servidor não tem banco de dados: não guarda nada disso.</p>
+      <p>Perto do vencimento, a extensão manda a própria chave para o servidor, que pergunta ao Mercado Pago se a assinatura continua ativa e devolve uma chave nova. É a única conexão de rede da extensão, e só acontece com uma chave ativada. Nenhum texto seu, dado pessoal escondido ou lista própria vai junto.</p>
     </section>
 
     <section class="painel">
       <h2>O que a extensão não faz</h2>
       <ul>
-        <li>Não envia nada para servidores do Véu ou de terceiros. A extensão não faz conexões de rede.</li>
+        <li>Não envia nada para servidores do Véu ou de terceiros. Sem o Véu Pro, a extensão não faz conexões de rede; com ele, só a renovação da chave, descrita acima.</li>
         <li>Não usa análise de uso, rastreamento, anúncios nem cookies.</li>
         <li>Não lê páginas fora dos sites de IA listados abaixo, a não ser quando você usa um dos itens do Véu no menu do botão direito: "proteger o texto selecionado" ou "copiar a seleção com os dados reais".</li>
         <li>Não vende nem compartilha dados, porque não tem nenhum.</li>
@@ -83,7 +91,8 @@
       <ul>
         <li><b>What it does:</b> on the AI sites listed above, it reads the text you paste or type in the message field, finds personal data and secrets and replaces them with markers such as [CPF_1] before sending. When you ask, it puts the real data back. All of this happens on your computer.</li>
         <li><b>What is stored:</b> the vault linking markers to real values lives in the browser's session storage, per tab, and is erased when you close the tab or browser; websites cannot read it. Your preferences (mode, "what to hide" checkboxes) live in the browser's settings storage, which your browser may sync across your devices; they contain no text and no personal data. A per-tab count of protected items is shown on the icon and erased with the tab.</li>
-        <li><b>What it does not do:</b> no network connections, no analytics, no tracking, no ads, no cookies, no data sales or sharing. It only reads other pages when you use one of its context menu items (protect the selected text, or copy the selection with the real data).</li>
+        <li><b>Véu Pro:</b> subscribers pay through Mercado Pago, which handles the payment under its own privacy policy. Véu's license server (licencas.veu-pro.workers.dev, on Cloudflare) checks the subscription and shows the key, which holds the plan, the subscription e-mail and number, and the expiry date; the server keeps no database. Near expiry, the extension sends its own key to the server to get a new one. That is its only network connection, it happens only with an activated key, and it never carries your text, hidden data or own lists. The key and the own lists stay in the browser's local storage, without syncing.</li>
+        <li><b>What it does not do:</b> no network connections without Véu Pro (with it, only the key renewal above), no analytics, no tracking, no ads, no cookies, no data sales or sharing. It only reads other pages when you use one of its context menu items (protect the selected text, or copy the selection with the real data).</li>
         <li><b>Permissions:</b> storage (vault and preferences), contextMenus (the two context menu items), activeTab and scripting (act on the selected text in the current tab, only when you use the menu), and the AI sites listed above.</li>
         <li><b>Contact:</b> github.com/guhttps/veu/issues. The code is open source (MIT).</li>
       </ul>

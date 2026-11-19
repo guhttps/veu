@@ -63,7 +63,20 @@ async function estadoPro(empresa) {
     exp: licenca?.exp, daEmpresa: Boolean(empresa.licenca) };
 }
 
+// No Firefox, a renovação depende da permissão opcional de dados que o popup pede ao ativar a chave.
+const DADOS_DA_RENOVACAO = ["authenticationInfo", "personallyIdentifyingInfo"];
+async function podeRenovar() {
+  const permissoes = globalThis.browser?.permissions;
+  if (!permissoes?.contains || !/Firefox\//.test(globalThis.navigator?.userAgent || "")) return true;
+  try {
+    return await permissoes.contains({ data_collection: DADOS_DA_RENOVACAO });
+  } catch {
+    return true; // Firefox sem o recurso de permissões de dados
+  }
+}
+
 async function renovarLicenca(chave) {
+  if (!(await podeRenovar())) return { erro: "Sem permissão para renovar a chave." };
   await chrome.storage.local.set({ licencaTentativa: Date.now() });
   const resposta = await globalThis.veuLicenca.renovar(chave);
   if (resposta.chave && (await globalThis.veuLicenca.verificar(resposta.chave)).valida) {
