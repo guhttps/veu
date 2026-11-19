@@ -76,6 +76,19 @@ Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capt
 
 **Coleta de dados:** nenhuma. A extensão não transmite dados a ninguém. No Firefox, o próprio pacote declara isso (`data_collection_permissions: none`).
 
+## Etapa "Privacy" do Edge (em inglês)
+
+- **Single Purpose Description:** Véu protects personal data and secrets in the text you send to AI chat websites: before sending, it replaces names, ID numbers, phone numbers, API keys and passwords with placeholders, and it restores the real values locally when you ask.
+- **storage:** Keeps, only in the browser, the mapping between each placeholder and its real value for the current tab (cleared when the tab closes) and the user's preferences.
+- **contextMenus:** Adds two right-click items: protect the selected text, and copy the selection with the real data.
+- **activeTab:** Acts on the selected text in the current tab, only when the user clicks one of the right-click items.
+- **scripting:** Runs the protection on the selected text of the current tab when the user uses the right-click menu on a site that is not in the AI site list.
+- **Are you using remote code?** No, I am not using remote code.
+- **Data usage:** não marque nenhum tipo de dado (a extensão não envia nada para fora do navegador) e marque as três declarações de que os dados não são vendidos, não são usados para outros fins e não servem para avaliar crédito.
+- **Privacy Policy URL:** https://guhttps.github.io/veu/privacidade.html
+
+Quando os planos pagos chegarem, o login vai coletar o e-mail: aí essa etapa precisa ser atualizada.
+
 ## Código-fonte para a Mozilla
 
 O arquivo `veu.global.js` é gerado (a biblioteca JavaScript do Véu, empacotada com o esbuild), então a Mozilla pede o código-fonte. Envie o zip do código da mesma versão, que o GitHub gera sozinho: `https://github.com/guhttps/veu/archive/refs/tags/v<versão>.zip`. No campo de instruções, cole:
