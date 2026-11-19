@@ -10,6 +10,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Mais chaves de infraestrutura:** chaves do `age`, chaves do PuTTY (`.ppk`) e chaves PEM codificadas em base64 (o `client-key-data` do kubeconfig); certificados em base64 ficam.
 - **Senha e PIN só de números** ("senha do banco 739201", "PIN do cartão: 4821"); anos ("a senha expira em 2027") ficam. **Número de benefício do INSS** ("NB 123.456.789-0") como `CADASTRO`.
 
+### Segurança
+- **Extensão:** o service worker aceitava mudar as preferências (inclusive desligar a proteção) a partir do script que roda dentro dos sites de IA. Agora só páginas da própria extensão (o ícone) mudam as preferências. Nenhum site conseguia mandar essa mensagem, mas é uma barreira a menos se o script de conteúdo for enganado um dia.
+
 ### Corrigido
 - **Horário Unix virava telefone:** em JWT, logs e URLs, `"exp":1735689600` e `ts=1735689600` eram escondidos como `TELEFONE` (17 é um DDD válido), e a IA perdia a hora de expiração. Dez dígitos começando com 1, colados a uma chave ou a "timestamp", sem contexto de telefone, ficam; "telefone=11987654321" continua escondido. "phone" e "mobile" viraram contexto de telefone.
 

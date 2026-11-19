@@ -409,7 +409,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 1035 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 1036 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 python scripts/simular_usuarios.py --rodadas 5    # 72 perfis de trabalho usando o Véu, com dados fictícios

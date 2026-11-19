@@ -80,3 +80,49 @@ def test_zips_when_built(tmp_path):
         manifest = json.loads(archive.read("manifest.json"))
     assert {"manifest.json", "conteudo.js", "fundo.js", "veu.global.js"} <= names
     assert "scripts" in manifest["background"]
+
+
+SERVICE_WORKER_HARNESS = r"""
+const fs = require("fs"), vm = require("vm");
+const store = { sync: {}, session: {} };
+const area = (name) => ({
+  get: async (key) => (key === null ? { ...store[name] } : { [key]: store[name][key] }),
+  set: async (values) => { Object.assign(store[name], values); },
+  remove: async () => {},
+  setAccessLevel: () => {},
+});
+let listener;
+const event = () => ({ addListener: (fn) => { listener ??= fn; } });
+const chrome = {
+  storage: { managed: { get: async () => ({}) }, sync: area("sync"), session: area("session") },
+  runtime: { onMessage: { addListener: (fn) => { listener = fn; } }, onInstalled: event(),
+             getURL: (path) => "chrome-extension://veu/" + path },
+  tabs: { onRemoved: event() }, contextMenus: { onClicked: event() },
+  action: { setBadgeBackgroundColor: async () => {}, setBadgeText: async () => {} },
+};
+vm.runInNewContext(fs.readFileSync(process.argv[1], "utf8"), { chrome, console });
+const send = (sender) => new Promise((resolve) =>
+  listener({ tipo: "salvarPreferencias", preferencias: { ativo: false } }, sender, resolve));
+(async () => {
+  const fromPage = await send({ tab: { id: 7 }, url: "https://chatgpt.com/" });
+  const afterPage = store.sync.ativo ?? null;
+  const fromPopup = await send({ id: "veu", url: "chrome-extension://veu/popup.html", tab: { id: 8 } });
+  console.log(JSON.stringify({ fromPage, afterPage, fromPopup: fromPopup.ativo, afterPopup: store.sync.ativo }));
+})();
+"""
+
+
+def test_only_the_popup_changes_preferences():
+    """O script que roda dentro dos sites de IA não consegue desligar a proteção pelo service worker."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("node"):
+        import pytest
+
+        pytest.skip("precisa do Node")
+    result = subprocess.run(["node", "-e", SERVICE_WORKER_HARNESS, str(EXTENSION / "fundo.js")],
+                            capture_output=True, text=True, encoding="utf-8", check=True)
+    data = json.loads(result.stdout)
+    assert "erro" in data["fromPage"] and data["afterPage"] is None
+    assert data["fromPopup"] is False and data["afterPopup"] is False

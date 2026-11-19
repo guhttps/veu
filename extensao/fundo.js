@@ -66,6 +66,10 @@ chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
       case "contagem":
         return (await chrome.storage.session.get(chaveDaContagem(abaId)))[chaveDaContagem(abaId)] || {};
       case "salvarPreferencias": {
+        // Só o popup muda as preferências: o script que roda dentro dos sites de IA nunca desliga a proteção.
+        if (!(remetente.url || "").startsWith(chrome.runtime.getURL(""))) {
+          return { erro: "As preferências só mudam pelo ícone do Véu." };
+        }
         const atual = await configuracao();
         if (atual.travarConfiguracao) return { erro: "A configuração é definida pela sua empresa." };
         const permitidas = Object.fromEntries(
