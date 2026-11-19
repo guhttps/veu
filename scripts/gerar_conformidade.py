@@ -85,6 +85,9 @@ EXTRA = [
     "Local do sinistro (app): -19.376349, -47.473154. Coordenadas 12.3456, 45.6789. Não é: média 12.3456, 45.6789.",
     "Prontuário: 2412179 e RA 2024631292, carteirinha 91483354148818137, apólice nº 334553733535. Não são: "
     "matrícula feita em 12/03/2024 e apólice com prêmio de R$ 1.234,56.",
+    "Checkout: https://loja.example/checkout?email=olga.costa%40example.org&cpf=52998224725&cupom=BLACK10",
+    "<dest><xNome>Ana Lima</xNome><enderDest><xLgr>Avenida Moisés Martins</xLgr><nro>120</nro></enderDest></dest> Batida traseira na Av. Paulista.",
+    "Data of birth: born 1985-04-03; DOB 03/04/1985; birth date 1985-04-03.",
 ]
 
 

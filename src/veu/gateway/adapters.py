@@ -33,7 +33,8 @@ class Masker:
         self.expand = expand
         self._in_arguments = False
 
-    def text(self, value: Any) -> Any:
+    def text(self, value: Any, context: str | None = None) -> Any:
+        """context: o que vem antes do texto sem fazer parte dele (o nome da coluna de uma planilha)."""
         if not isinstance(value, str) or not value:
             return value
         known = None
@@ -45,7 +46,7 @@ class Masker:
             from veu.sources import replace_known
 
             value = replace_known(value, known, self.anonymizer, self.vault, self.counts)
-        result = self.anonymizer.anonymize(value, self.vault, neutralize=False)
+        result = self.anonymizer.anonymize(value, self.vault, neutralize=False, context=context)
         self.counts.update(result.counts())
         self.used.update(item.replacement for item in result.replacements)
         return result.text

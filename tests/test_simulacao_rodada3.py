@@ -70,3 +70,15 @@ def test_registration_numbers_with_context():
 def test_registration_context_keeps_dates_and_money():
     text = "matrícula feita em 12/03/2024 e apólice com prêmio de R$ 1.234,56"
     assert Veu().anonymize(text).text == text
+
+
+def test_url_encoded_email():
+    text = "https://loja.example/checkout?email=olga.costa%40example.org&cupom=BLACK10"
+    assert ("EMAIL", "olga.costa%40example.org") in labels(text)
+    assert "cupom=BLACK10" in Veu().anonymize(text).text
+
+
+def test_street_without_number_in_invoice_xml():
+    text = "<enderDest><xLgr>Avenida Moisés Martins</xLgr><nro>120</nro></enderDest>"
+    assert ("ENDERECO", "Avenida Moisés Martins") in labels(text)
+    assert Veu().anonymize("Batida traseira na Av. Paulista.").text == "Batida traseira na Av. Paulista."

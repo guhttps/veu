@@ -1426,6 +1426,72 @@
    "generalizado": "Prontuário: [CADASTRO] e RA [CADASTRO], carteirinha [CADASTRO], apólice nº [CADASTRO]. Não são: matrícula feita em 12/03/2024 e apólice com prêmio de R$ 1.234,56."
   },
   {
+   "texto": "Checkout: https://loja.example/checkout?email=olga.costa%40example.org&cpf=52998224725&cupom=BLACK10",
+   "entidades": [
+    [
+     "EMAIL",
+     46,
+     70,
+     1.0
+    ],
+    [
+     "CPF",
+     75,
+     86,
+     0.95
+    ]
+   ],
+   "anonimizado": "Checkout: https://loja.example/checkout?email=[EMAIL_1]&cpf=[CPF_1]&cupom=BLACK10",
+   "mascarado": "Checkout: https://loja.example/checkout?email=****.*****%*********.*rg&cpf=***982247**&cupom=BLACK10",
+   "generalizado": "Checkout: https://loja.example/checkout?email=[EMAIL]&cpf=[CPF]&cupom=BLACK10"
+  },
+  {
+   "texto": "<dest><xNome>Ana Lima</xNome><enderDest><xLgr>Avenida Moisés Martins</xLgr><nro>120</nro></enderDest></dest> Batida traseira na Av. Paulista.",
+   "entidades": [
+    [
+     "PESSOA",
+     13,
+     21,
+     0.9
+    ],
+    [
+     "ENDERECO",
+     46,
+     68,
+     0.75
+    ]
+   ],
+   "anonimizado": "<dest><xNome>[PESSOA_1]</xNome><enderDest><xLgr>[ENDERECO_1]</xLgr><nro>120</nro></enderDest></dest> Batida traseira na Av. Paulista.",
+   "mascarado": "<dest><xNome>A*** L***</xNome><enderDest><xLgr>******* ****** *****ns</xLgr><nro>120</nro></enderDest></dest> Batida traseira na Av. Paulista.",
+   "generalizado": "<dest><xNome>[PESSOA]</xNome><enderDest><xLgr>[ENDERECO]</xLgr><nro>120</nro></enderDest></dest> Batida traseira na Av. Paulista."
+  },
+  {
+   "texto": "Data of birth: born 1985-04-03; DOB 03/04/1985; birth date 1985-04-03.",
+   "entidades": [
+    [
+     "DATA_NASCIMENTO",
+     20,
+     30,
+     0.85
+    ],
+    [
+     "DATA_NASCIMENTO",
+     36,
+     46,
+     0.85
+    ],
+    [
+     "DATA_NASCIMENTO",
+     59,
+     69,
+     0.85
+    ]
+   ],
+   "anonimizado": "Data of birth: born [DATA_NASCIMENTO_1]; DOB [DATA_NASCIMENTO_2]; birth date [DATA_NASCIMENTO_1].",
+   "mascarado": "Data of birth: born ****-**-03; DOB **/**/**85; birth date ****-**-03.",
+   "generalizado": "Data of birth: born 1985; DOB 1985; birth date 1985."
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [

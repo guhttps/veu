@@ -112,7 +112,7 @@ CTX_PIX = ("pix", "chave pix", "chave aleatoria", "chave")
 CTX_IP = ("ip", "endereco ip", "ipv4", "ipv6", "acesso", "login")
 CTX_BIRTH = (
     "nascimento", "nasc", "nasc.", "nascido", "nascida", "nasceu", "data de nascimento", "dn", "d.n",
-    "aniversario", "nascida em", "nascido em",
+    "aniversario", "nascida em", "nascido em", "birth", "birth date", "birthdate", "date of birth", "dob", "born",
 )
 # Nomes de coluna: em tabelas (SQL, CSV, JSON), o cabeçalho "nascimento" fica longe do valor.
 CTX_BIRTH_COLUMN = (
@@ -265,6 +265,11 @@ DEFAULT_SPECS: list[PatternSpec] = [
     PatternSpec(
         "EMAIL", r"(?<![\w.+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![\w])",
         Scores(0.95), None, CTX_EMAIL,
+    ),
+    # Codificado em URL ("checkout?email=ana%40example.com"): o %40 é o @.
+    PatternSpec(
+        "EMAIL", r"(?<![\w.+-])[A-Za-z0-9._+-]+%40[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![\w])",
+        Scores(0.9), None, CTX_EMAIL, name="url",
     ),
     PatternSpec(
         "TELEFONE",

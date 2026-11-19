@@ -30,7 +30,7 @@ const LOWERCASE = new RegExp(
 const ADDRESS_CONTEXT = [
   "moro", "mora", "moramos", "resido", "reside", "residente", "domiciliado", "domiciliada", "endereco",
   "entrega", "entregar", "enviar para", "envio para", "localizado", "localizada", "situado", "situada",
-  "sede", "fica na", "fica no", "cobranca", "imovel",
+  "sede", "fica na", "fica no", "cobranca", "imovel", "logradouro", "xlgr", "enderdest", "enderemit",
 ];
 
 export class AddressRecognizer implements Recognizer {

@@ -18,6 +18,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Datas de nascimento em tabelas:** num `INSERT`, num CSV ou num JSON, a coluna "nascimento" no cabeçalho vale para as datas das linhas de baixo.
 - **Senha logo depois da palavra** ("Login admin, senha bGsE$34", "rede Visitantes, senha Visit@2026"), quando o valor tem cara de senha; "senha inválida" e "senha 123456" ficam.
 - **Cookies de sessão** (`Cookie: session_id=...`, `Set-Cookie: PHPSESSID=...`) viram `SEGREDO`.
+- **O nome da coluna é o contexto da célula** em CSV, Excel e JSON: "11/01/1941" na coluna `data_nascimento`, "Ana" na coluna `nome` e um CPF sem pontuação na coluna `cpfCliente` agora somem (nomes de coluna com `_`, `-` e camelCase viram palavras). No Excel, datas e números guardados como valor (não como texto) também são protegidos; restaurados, voltam como texto.
+- **E-mail codificado em URL** ("checkout?email=ana%40example.com"), **endereço sem número na nota fiscal** (`<xLgr>`, logradouro) e **contexto de nascimento em inglês** ("date of birth", "DOB", "born").
+- **Simulação de ponta a ponta** (`scripts/simular_ponta_a_ponta.py`): CSV, Excel, Word, PowerPoint, JSON, texto e PDF pela linha de comando, e o proxy na frente de um provedor falso (OpenAI e Anthropic, com e sem streaming) que grava tudo o que recebe. Confere que o provedor nunca vê um dado real e que uma ferramenta de e-mail chamada pela IA recebe só marcadores.
 - A simulação ganhou técnicos lidando com acessos (AWS, Kubernetes, Docker, VPN, HTTP, chave SSH, CI, Slack, inventário de rede, firewall, Active Directory, cabeçalhos de e-mail, pentest, SQL) e mais tipos de dados (extrato, exame, matrícula, apólice, IMEI, documentos de EUA, Espanha, Itália, Reino Unido e Índia, IBAN e cripto): 50 perfis.
 
 ### Corrigido

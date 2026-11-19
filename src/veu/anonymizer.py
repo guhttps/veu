@@ -197,13 +197,28 @@ class Anonymizer:
     def new_vault(self) -> Vault:
         return Vault(secret=self.secret, policy=self.policy)
 
-    def anonymize(self, text: str, vault: Vault | None = None, *, neutralize: bool = True) -> AnonymizationResult:
+    def anonymize(self, text: str, vault: Vault | None = None, *, neutralize: bool = True,
+                  context: str | None = None) -> AnonymizationResult:
         """neutralize: desarma marcadores que já vêm no texto ([CPF_1] vira [CPF#1]), para que um marcador
-        escrito por outra pessoa nunca vire um dado real na restauração."""
+        escrito por outra pessoa nunca vire um dado real na restauração.
+
+        context: o que vem antes do texto, sem fazer parte dele, como o nome da coluna de uma planilha. Com
+        "nascimento", uma célula "03/04/1985" é data de nascimento; com "nome", uma célula "Ana" é um nome.
+        """
         vault = self.new_vault() if vault is None else vault
         if neutralize:
             text = vault.neutralize(text)
-        entities = self.analyzer.analyze(text)
+        if context:
+            # Nomes de coluna viram palavras: "data_nascimento" e "dataNascimento" contam como "data nascimento".
+            words = re.sub(r"[_\-.]+", " ", re.sub(r"(?<=[a-z])(?=[A-Z])", " ", context))
+            prefix = f"{words}: "
+            entities = [
+                Entity(entity.label, entity.start - len(prefix), entity.end - len(prefix), entity.score, entity.text,
+                       entity.recognizer)
+                for entity in self.analyzer.analyze(prefix + text) if entity.start >= len(prefix)
+            ]
+        else:
+            entities = self.analyzer.analyze(text)
         canonical: dict[int, str] = {}
         if self.link_names and entities:
             entities, canonical = self._link_partial_names(text, entities, vault)

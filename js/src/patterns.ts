@@ -87,7 +87,7 @@ const CTX_PIX = ["pix", "chave pix", "chave aleatoria", "chave"];
 const CTX_IP = ["ip", "endereco ip", "ipv4", "ipv6", "acesso", "login"];
 const CTX_BIRTH = [
   "nascimento", "nasc", "nasc.", "nascido", "nascida", "nasceu", "data de nascimento", "dn", "d.n",
-  "aniversario", "nascida em", "nascido em",
+  "aniversario", "nascida em", "nascido em", "birth", "birth date", "birthdate", "date of birth", "dob", "born",
 ];
 // Nomes de coluna: em tabelas (SQL, CSV, JSON), o cabeçalho "nascimento" fica longe do valor.
 const CTX_BIRTH_COLUMN = [
@@ -215,6 +215,9 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   // Contatos
   spec("EMAIL", `(?<![\\p{L}\\p{N}_.+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}${E}`,
     S(0.95), { context: CTX_EMAIL }),
+  // Codificado em URL ("checkout?email=ana%40example.com"): o %40 é o @.
+  spec("EMAIL", `(?<![\\p{L}\\p{N}_.+-])[A-Za-z0-9._+-]+%40[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}${E}`,
+    S(0.9), { context: CTX_EMAIL, name: "url" }),
   spec("TELEFONE",
     `(?<![\\p{L}\\p{N}_+])(?:\\+?55[\\s.-]?)?(?:\\(\\d{2}\\)|\\d{2})[\\s.-]?(?:9[\\s.]?\\d{4}|[2-5]\\d{3})[\\s.-]?\\d{4}${E}`,
     S(0.85, null, 0.95), { validator: v.isValidPhone, context: CTX_PHONE, adjust: phoneAdjust }),

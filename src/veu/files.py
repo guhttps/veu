@@ -13,6 +13,7 @@ import io
 import json
 from collections import Counter
 from collections.abc import Iterable, Mapping
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -63,7 +64,14 @@ class DataAnonymizer:
             # Campos de fora da lista podem conter estruturas com campos da lista.
             return self.data(value) if isinstance(value, (dict, list)) else value
         if isinstance(value, str):
-            return self.session.anonymize(value)
+            # O nome da coluna é o contexto: "03/04/1985" na coluna "nascimento", "Ana" na coluna "nome".
+            return self.session.anonymize(value, context=key)
+        # Planilhas guardam datas e números como valores, não como texto: uma data na coluna "nascimento" ou um
+        # número na coluna "cpf" também são dados pessoais. Restaurados, voltam como texto.
+        if key is not None and isinstance(value, (date, int)) and not isinstance(value, bool):
+            text = value.strftime("%d/%m/%Y") if isinstance(value, date) else str(value)
+            masked = self.session.anonymize(text, context=key)
+            return value if masked == text else masked
         if isinstance(value, (dict, list)):
             return self.data(value) if self.fields is not None else self.session.anonymize_data(value)
         return value

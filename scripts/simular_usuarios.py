@@ -33,6 +33,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from veu import Veu  # noqa: E402
 from veu import surrogates as s  # noqa: E402
 from veu import validators as v  # noqa: E402
+from veu.vault import RestorePolicy  # noqa: E402
 
 # --- Geradores de valores que veu.surrogates não tem ------------------------------------------------------------
 
@@ -610,6 +611,94 @@ CENARIOS += [
 ]
 
 
+def _cpf_espacos(rng):
+    return s.fake_cpf(rng, False)[:3] + " " + s.fake_cpf(rng, False)[3:]
+
+
+def _cpf_espacado(rng):
+    puro = s.fake_cpf(rng, False)
+    return f"{puro[:3]} {puro[3:6]} {puro[6:9]} {puro[9:]}"
+
+
+def _tel_nove(rng):
+    numero = s.fake_phone(rng, "puro")
+    return f"+55 ({numero[:2]}) {numero[2]} {numero[3:7]}-{numero[7:]}"
+
+
+# Formatos de texto variados (rodada 4 da simulação).
+CENARIOS += [
+    Cenario(
+        "Formato: tabela em Markdown",
+        "| Nome | CPF | Telefone |\n|---|---|---|\n| <<nome>> | <<cpf>> | <<tel>> |\n| <<nome2>> | <<cpf2>> | <<tel2>> |\n\n"
+        "Resuma a tabela.",
+        {"nome": ("PESSOA", _nome), "cpf": ("CPF", s.fake_cpf), "tel": ("TELEFONE", s.fake_phone),
+         "nome2": ("PESSOA", _nome), "cpf2": ("CPF", s.fake_cpf), "tel2": ("TELEFONE", s.fake_phone)},
+        manter=["| Nome | CPF | Telefone |"],
+    ),
+    Cenario(
+        "Formato: HTML de cadastro",
+        "<div class=\"cliente\"><p>Nome: <b><<nome>></b></p><p>E-mail: <a href=\"mailto:<<email>>\"><<email>></a></p>"
+        "<p>Tel: <<tel>></p></div>\nConverta para Markdown.",
+        {"nome": ("PESSOA", _nome), "email": ("EMAIL", s.fake_email), "tel": ("TELEFONE", s.fake_phone)},
+        manter=["<div class=\"cliente\">"],
+    ),
+    Cenario(
+        "Formato: XML de nota fiscal",
+        "<dest><CPF><<cpf>></CPF><xNome><<nome>></xNome><enderDest><xLgr><<rua>></xLgr><nro>120</nro><CEP><<cep>></CEP>"
+        "<fone><<tel>></fone></enderDest><email><<email>></email></dest>\nPor que a SEFAZ rejeita esse XML?",
+        {"cpf": ("CPF", lambda rng: s.fake_cpf(rng, False)), "nome": ("PESSOA", _nome),
+         "rua": ("ENDERECO", lambda rng: s.fake_address(rng, number=False)),
+         "cep": ("CEP", lambda rng: s.fake_cep(rng, False)), "tel": ("TELEFONE", lambda rng: s.fake_phone(rng, "puro")),
+         "email": ("EMAIL", s.fake_email)},
+        manter=["<nro>120</nro>", "SEFAZ"],
+    ),
+    Cenario(
+        "Formato: declaração em maiúsculas",
+        "DECLARAÇÃO DE RESIDÊNCIA\n\nEU, <<nome>>, PORTADOR DO CPF <<cpf>>, DECLARO PARA OS DEVIDOS FINS QUE RESIDO NA "
+        "<<endereco>>, CEP <<cep>>.\n\nCorrija a gramática.",
+        {"nome": ("PESSOA", _maiusculo), "cpf": ("CPF", s.fake_cpf),
+         "endereco": ("ENDERECO", lambda rng: s.fake_address(rng).upper()), "cep": ("CEP", s.fake_cep)},
+        manter=["DECLARAÇÃO DE RESIDÊNCIA", "DEVIDOS FINS"],
+    ),
+    Cenario(
+        "Formato: WhatsApp com emojis",
+        "Oi!! 😊 sou a <<p1>> 🙋‍♀️ meu cpf ➡️ <<cpf>> e zap 📱 <<tel>> 🙏 preciso remarcar a consulta",
+        {"p1": ("PESSOA", _primeiro), "cpf": ("CPF", s.fake_cpf), "tel": ("TELEFONE", s.fake_phone)},
+        manter=["remarcar a consulta"],
+    ),
+    Cenario(
+        "Formato: digitação descuidada",
+        "cpf:<<cpf>> tel(11)<<tel>> email <<email>> cpf do marido <<cpf2>> fone <<tel2>>",
+        {"cpf": ("CPF", lambda rng: s.fake_cpf(rng, False)),
+         "tel": ("TELEFONE", lambda rng: f"9{rng.randint(6000, 9999)}-{rng.randint(1000, 9999)}"),
+         "email": ("EMAIL", lambda rng: s.fake_email(rng).upper()), "cpf2": ("CPF", _cpf_espacado),
+         "tel2": ("TELEFONE", _tel_nove)},
+    ),
+    Cenario(
+        "Formato: JSON escapado em log",
+        "2026-11-19T10:15:32Z ERROR {\"msg\":\"falha no cadastro\",\"payload\":\"{\\\"nome\\\":\\\"<<nome>>\\\","
+        "\\\"cpf\\\":\\\"<<cpf>>\\\",\\\"email\\\":\\\"<<email>>\\\"}\"}\nO que causou o erro?",
+        {"nome": ("PESSOA", _nome), "cpf": ("CPF", lambda rng: s.fake_cpf(rng, False)), "email": ("EMAIL", s.fake_email)},
+        manter=["falha no cadastro", "2026-11-19T10:15:32Z"],
+    ),
+    Cenario(
+        "Formato: dados na URL",
+        "O checkout quebra nesta URL: https://loja.example/checkout?email=<<email_url>>&cpf=<<cpf>>&nome=<<nome_url>>"
+        "&cupom=BLACK10",
+        {"email_url": ("EMAIL", lambda rng: s.fake_email(rng).replace("@", "%40")),
+         "cpf": ("CPF", lambda rng: s.fake_cpf(rng, False)),
+         "nome_url": ("PESSOA", lambda rng: _nome(rng, 2).replace(" ", "+"))},
+        manter=["cupom=BLACK10"],
+    ),
+    Cenario(
+        "Formato: autenticação Basic",
+        "curl -H \"Authorization: Basic <<basic>>\" https://api.empresa.example/v1/relatorios dá 401.",
+        {"basic": ("TOKEN", lambda rng: _b64(rng, 28) + "==")},
+        manter=["401"],
+    ),
+]
+
+
 @dataclass
 class Caso:
     perfil: str
@@ -698,6 +787,9 @@ def main() -> int:
         resposta = "Resumo: " + ", ".join(marcadores) + "." if marcadores else "Resumo: nada a esconder."
         reais = {r.replacement: r.entity.text for r in resultado.replacements}
         esperado = "Resumo: " + ", ".join(reais.get(m, m) for m in marcadores) + "." if marcadores else resposta
+        # Dentro de links o Véu não devolve dados reais (proteção contra roubo por link); para conferir que os
+        # dados estão íntegros, a volta do texto inteiro libera os links.
+        resultado.vault.policy = RestorePolicy(links=True)
         if resultado.restore(resposta) != esperado or resultado.restore(saida) != caso.texto:
             total["volta"] += 1
             achados.append("VOLTA     a restauração não devolveu o texto original")

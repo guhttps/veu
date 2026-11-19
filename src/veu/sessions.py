@@ -33,8 +33,9 @@ class Session:
         """Quantos dados de cada tipo foram escondidos nesta sessão."""
         return self._masker.counts
 
-    def anonymize(self, text: str) -> str:
-        return self._masker.text(text)
+    def anonymize(self, text: str, context: str | None = None) -> str:
+        """context: o que vem antes do texto sem fazer parte dele, como o nome da coluna ("nascimento", "cpf")."""
+        return self._masker.text(text, context)
 
     def anonymize_data(self, data: Any) -> Any:
         """Esconde os dados de todos os textos de dicts, listas e tuplas (as chaves não são alteradas)."""
