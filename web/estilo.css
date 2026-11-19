@@ -123,7 +123,6 @@ main a:not(.botao) { color: var(--marca); }
 
 /* Página de planos */
 a.botao { display: inline-block; text-decoration: none; }
-.botao.desligado { opacity: .6; cursor: default; }
 .chamada { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .chamada p { margin: 0; flex: 1; min-width: 240px; }
 .planos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
