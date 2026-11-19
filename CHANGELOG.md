@@ -40,6 +40,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
   - `injetar_chaves = true` sem token deixava qualquer programa local usar as chaves de API de quem roda o Véu: agora o servidor não inicia assim sem `VEU_TOKEN` (ou `VEU_PERMITIR_SEM_TOKEN=1`);
   - a checagem de DNS rebinding aceitava qualquer Host começando com "127.", como `127.0.0.1.nip.io`, um domínio que o dono pode apontar para o seu computador. Agora só valem `localhost` e IPs de loopback;
   - uma conexão com o cabeçalho pela metade ficava aberta para sempre (slowloris). Agora cai em 15 segundos;
+  - fora do localhost, o servidor não limita tentativas de token: agora `VEU_TOKEN` e os tokens de equipe precisam de pelo menos 20 caracteres para ele iniciar;
   - o cabeçalho `Server` não diz mais o servidor; respostas repassadas do provedor saem com `Content-Security-Policy: sandbox` e `nosniff`.
   Request smuggling, cabeçalhos de 70 KB, JSON com 100 mil níveis, travessia de caminho e caminhos para trocar o destino do proxy já eram recusados.
 - **Restauração quadrática (ReDoS):** uma resposta com milhares de marcadores numa linha só ("[IP_1].[IP_1]...") levava 13 segundos para restaurar e podia travar o proxy. A checagem de links não varre mais a linha inteira a cada marcador: o mesmo texto leva 0,5 s, com o mesmo resultado.

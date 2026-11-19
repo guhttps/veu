@@ -184,11 +184,11 @@ def test_operator_header_and_ollama_stream_through_proxy():
 
 def test_prometheus_metrics():
     seen = []
-    app = create_app(Config(token="t", host="0.0.0.0"), upstream_transport=httpx.MockTransport(echo(seen)))
+    app = create_app(Config(token="token-de-teste-com-mais-de-20", host="0.0.0.0"), upstream_transport=httpx.MockTransport(echo(seen)))
     call(app, "POST", "/v1/chat/completions", json={"model": "m", "messages": [{"role": "user", "content": PII}]},
-         headers={"X-Veu-Token": "t"})
+         headers={"X-Veu-Token": "token-de-teste-com-mais-de-20"})
     assert call(app, "GET", "/veu/metricas").status_code == 401
-    text = call(app, "GET", "/veu/metricas", headers={"Authorization": "Bearer t"}).text
+    text = call(app, "GET", "/veu/metricas", headers={"Authorization": "Bearer token-de-teste-com-mais-de-20"}).text
     assert 'veu_requisicoes_total{provedor="openai"} 1' in text
     assert 'veu_dados_escondidos_total{entidade="CPF"} 1' in text
     assert "529" not in text

@@ -42,7 +42,7 @@ def test_team_tokens_identify_and_apply_policy(tmp_path):
 
 
 def test_exposed_server_with_only_team_tokens_starts():
-    create_app(Config(host="0.0.0.0", teams={"rh": TeamConfig("rh", "t")}))
+    create_app(Config(host="0.0.0.0", teams={"rh": TeamConfig("rh", "token-de-teste-com-mais-de-20")}))
     with pytest.raises(ConfigError):
         create_app(Config(host="0.0.0.0"))
 

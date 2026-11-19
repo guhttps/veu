@@ -11,7 +11,7 @@ pytest.importorskip("uvicorn")
 
 import uvicorn  # noqa: E402
 
-from veu.config import Config  # noqa: E402
+from veu.config import Config, ConfigError, TeamConfig  # noqa: E402
 from veu.server import (
     create_app,  # noqa: E402
     protocol,  # noqa: E402
@@ -79,3 +79,19 @@ def test_proxied_html_cannot_run_scripts_on_the_veu_origin():
     response = call(app, "GET", "/qualquer/coisa")
     assert response.headers["content-security-policy"].startswith("sandbox")
     assert response.headers["x-content-type-options"] == "nosniff"
+
+
+@pytest.mark.parametrize("options", [
+    {"token": "123456"},
+    {"token": "x" * 19},
+    {"token": "x" * 40, "teams": {"rh": TeamConfig("rh", "rh-2026")}},
+])
+def test_exposed_server_refuses_short_tokens(options):
+    """Fora do localhost, sem limite de tentativas, um token curto pode ser adivinhado."""
+    with pytest.raises(ConfigError, match="20"):
+        create_app(Config(host="0.0.0.0", **options))
+
+
+def test_short_token_is_still_fine_on_localhost():
+    create_app(Config(token="curto"))
+    create_app(Config(host="0.0.0.0", token="x" * 20))

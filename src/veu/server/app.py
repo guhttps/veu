@@ -43,6 +43,7 @@ RESPONSE_DROP = frozenset({
 # As respostas do provedor saem na origem do Véu (a mesma do painel): se vier HTML, ele não roda script aqui.
 PROXIED_SECURITY_HEADERS = {"content-security-policy": "sandbox; default-src 'none'", "x-content-type-options": "nosniff"}
 LOCAL_HOSTNAMES = frozenset({"localhost", "127.0.0.1", "::1"})
+MIN_TOKEN_LENGTH = 20
 CREDENTIAL_HEADERS = ("authorization", "x-api-key", "x-goog-api-key", "api-key")
 _GEMINI_PATH = re.compile(r":(?:streamGenerateContent|generateContent|countTokens|embedContent|batchEmbedContents)$")
 
@@ -157,6 +158,16 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
             f"O Véu vai ouvir em {config.host}, fora do localhost, sem token. Defina VEU_TOKEN (recomendado) ou, "
             "numa rede interna isolada, VEU_PERMITIR_SEM_TOKEN=1."
         )
+    if exposed:
+        # Na rede, o token é a única barreira e o servidor não limita tentativas: um token curto pode ser adivinhado.
+        tokens = [("VEU_TOKEN", config.token), *((f"[equipes.{team.name}]", team.token) for team in config.teams.values())]
+        weak = [name for name, value in tokens if value and len(value) < MIN_TOKEN_LENGTH]
+        if weak:
+            raise ConfigError(
+                f"{', '.join(weak)}: com o Véu fora do localhost, cada token precisa ter pelo menos {MIN_TOKEN_LENGTH} "
+                "caracteres (um curto pode ser adivinhado). Gere um com: "
+                'python -c "import secrets; print(secrets.token_urlsafe(32))"'
+            )
     if config.inject_keys and not protected and not config.allow_no_token:
         raise ConfigError(
             "injetar_chaves = true usa as suas chaves de API para quem chamar o Véu, e máquinas virtuais e contêineres "

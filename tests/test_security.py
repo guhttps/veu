@@ -103,10 +103,10 @@ def test_exposed_server_requires_a_token():
     with pytest.raises(ConfigError, match="VEU_TOKEN"):
         create_app(Config(host="0.0.0.0"))
     create_app(Config(host="0.0.0.0", allow_no_token=True))
-    exposed = create_app(Config(host="0.0.0.0", token="t"), upstream_transport=httpx.MockTransport(echo_upstream([])))
+    exposed = create_app(Config(host="0.0.0.0", token="token-de-teste-com-mais-de-20"), upstream_transport=httpx.MockTransport(echo_upstream([])))
     # Exposto com token: atrás de um proxy reverso, o Host pode ser outro.
     response = call(exposed, "POST", "/veu/v1/detectar", base="http://veu.interno", json={"texto": "x"},
-                    headers={"X-Veu-Token": "t", "Origin": "https://painel.example"})
+                    headers={"X-Veu-Token": "token-de-teste-com-mais-de-20", "Origin": "https://painel.example"})
     assert response.status_code == 200
 
 

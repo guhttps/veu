@@ -22,7 +22,7 @@ O modelo completo, com as fronteiras de confiança e os riscos que sobram, está
 | Agente induzido a gravar arquivos pelo MCP | As ferramentas do MCP só criam documentos novos (.txt, .md, .csv, .json, Word, Excel, PowerPoint, PDF): nada de scripts, de pastas ou arquivos ocultos, nem de sobrescrever |
 | Adivinhar os valores do operador `hash` | HMAC-SHA256 com chave derivada, 64 bits e `VEU_SEGREDO` de no mínimo 32 caracteres |
 | Dados pessoais repetidos no log de auditoria | O log guarda só contagens por tipo; o log de acesso do servidor HTTP fica desligado (a URL pode ter `?key=`) |
-| Uso do proxy por terceiros na rede | Ouve só em `127.0.0.1` por padrão; fora do localhost, **não inicia sem `VEU_TOKEN`** |
+| Uso do proxy por terceiros na rede | Ouve só em `127.0.0.1` por padrão; fora do localhost, **não inicia sem `VEU_TOKEN`**, e cada token precisa de pelo menos 20 caracteres |
 | Sites maliciosos abertos no navegador (CSRF e DNS rebinding) | No localhost, só aceita o Host `localhost` ou um IP de loopback (nomes como `127.0.0.1.site.example` são recusados) e recusa requisições com `Origin` de outro site |
 | Máquinas virtuais, contêineres e outros usuários do computador (alcançam o `127.0.0.1` e forjam o Host) | O painel só aceita chamadas com a chave dele (`painel.chave`, no perfil do usuário), que o atalho e o `veu painel` abrem no navegador; injetar chaves de API exige `VEU_TOKEN` |
 | Roubo de dados de outra sessão | Sessões do proxy são separadas pela credencial do cliente; a API REST só aceita sessões que ela mesma criou |
