@@ -14,9 +14,25 @@ export const DEFAULT_THRESHOLD = 0.5;
 // invisível), hífens tipográficos ("529.982.247‑25" copiado do Word) e letras e dígitos de largura total.
 const INVISIBLE = "\u00ad\u200b\u200c\u200d\u2060\ufeff";
 const HYPHENS = "\u2010\u2011\u2012\u2013\u2212\ufe63\uff0d";
-const SPECIAL = new RegExp(`[${INVISIBLE}${HYPHENS}\uff01-\uff5e]`, "u");
+// Letras cir\u00edlicas e gregas iguais \u00e0s latinas ("m\u0430ria@..." com "\u0430" cir\u00edlico) e d\u00edgitos de outros sistemas (ar\u00e1bico-
+// \u00edndicos, persas, devan\u00e1gari, bengali): trocados um por um, s\u00f3 para a detec\u00e7\u00e3o, para um disfarce n\u00e3o passar.
+const CONFUSABLES_FROM = "\u0430\u0435\u043e\u0440\u0441\u0443\u0445\u0456\u0458\u0455\u0501\u04bb\u04cf\u051b\u051d\u0410\u0412\u0415\u041a\u041c\u041d\u041e\u0420\u0421\u0422\u0425\u0406\u0408\u0405\u04ae\u0391\u0392\u0395\u0396\u0397\u0399\u039a\u039c\u039d\u039f\u03a1\u03a4\u03a5\u03a7\u03bf\u03b1\u03c1\u03bd\u03b9\u03ba";
+const CONFUSABLES_TO = "aeopcyxijsdhlqwABEKMHOPCTXIJSYABEZHIKMNOPTYXoapvik";
+const DIGIT_BLOCKS = [0x0660, 0x06f0, 0x0966, 0x09e6];
+const DIGIT_RANGES = DIGIT_BLOCKS.map((block) => `${String.fromCharCode(block)}-${String.fromCharCode(block + 9)}`).join("");
+const SPECIAL = new RegExp(`[${INVISIBLE}${HYPHENS}\uff01-\uff5e${CONFUSABLES_FROM}${DIGIT_RANGES}]`, "u");
 
-const SAME_LENGTH = new RegExp(`[${HYPHENS}\uff01-\uff5e]`, "gu");
+const SAME_LENGTH = new RegExp(`[${HYPHENS}\uff01-\uff5e${CONFUSABLES_FROM}${DIGIT_RANGES}]`, "gu");
+
+function sameLength(char: string): string {
+  if (HYPHENS.includes(char)) return "-";
+  const confusable = CONFUSABLES_FROM.indexOf(char);
+  if (confusable !== -1) return CONFUSABLES_TO[confusable];
+  const code = char.charCodeAt(0);
+  const block = DIGIT_BLOCKS.find((start) => code >= start && code <= start + 9);
+  if (block !== undefined) return String(code - block);
+  return String.fromCharCode(code - 0xfee0);
+}
 const HAS_INVISIBLE = new RegExp(`[${INVISIBLE}]`, "u");
 
 /**
@@ -25,8 +41,7 @@ const HAS_INVISIBLE = new RegExp(`[${INVISIBLE}]`, "u");
  */
 export function normalizeForDetection(text: string): [string, number[] | null] {
   if (!SPECIAL.test(text)) return [text, null];
-  const swapped = text.replace(SAME_LENGTH, (char) =>
-    (HYPHENS.includes(char) ? "-" : String.fromCharCode(char.charCodeAt(0) - 0xfee0)));
+  const swapped = text.replace(SAME_LENGTH, sameLength);
   if (!HAS_INVISIBLE.test(swapped)) return [swapped, null];
   const positions: number[] = [];
   for (let index = 0; index < swapped.length; index += 1) if (!INVISIBLE.includes(swapped[index])) positions.push(index);

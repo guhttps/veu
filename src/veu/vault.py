@@ -124,11 +124,11 @@ _URL_START = re.compile(
     r"(?i)\b[a-z][a-z0-9+.\-]*://|\bwww\.|\bmailto:|\]\(\s*<?|(?<![:/\w])//"
     r"|\b[a-z0-9\-]+(?:\.[a-z0-9\-]+)*\.[a-z]{2,24}(?::\d{1,5})?/"
 )
-_LINK_ATTRIBUTE = re.compile(
-    r"(?i)(?:\b(?:src|href|action|formaction|srcset|poster|ping|cite|background|lowsrc|data)\s*=\s*|\burl\(\s*)[\"']?$"
+_LINK_ATTRIBUTE_NAME = re.compile(
+    r"(?i)(?<!\w)(?:src|href|action|formaction|srcset|poster|ping|cite|background|lowsrc|data)$"
 )
 _ANGLE_OPEN = re.compile(r"\]\(\s*<")
-_RUN_DELIMITERS = frozenset("\"'<>`")
+_RUN_CHARS = re.compile(r"[^\s\"'<>`]*")
 # Um trecho sem espaços maior que isto logo antes do marcador (base64, código minificado) não é analisado: o marcador
 # fica como está, que é o lado seguro, e o custo não cresce com o quadrado do tamanho da linha.
 MAX_RUN = 2048
@@ -150,31 +150,83 @@ def count_restorations(counter: Counter):
 
 
 def link_context(before: str) -> str | None:
-    """Se o marcador está dentro de um link, imagem ou URL, devolve a URL até ele; senão, None."""
+    """Se o marcador está dentro de um link, imagem ou URL, devolve a URL até ele; senão, None.
+
+    Roda uma vez por marcador: nada aqui varre a linha inteira em Python, para a restauração não ficar quadrática
+    numa linha longa com muitos marcadores.
+    """
     line = before[before.rfind("\n") + 1:]
     if "\\" in line:  # argumentos de ferramenta em JSON: "https:\/\/..." ou "/"
-        line = _JSON_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)) if m.group(1) else "/", line)
+        cut = max(0, len(line) - 4 * MAX_RUN)
+        line = line[:cut] + _JSON_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)) if m.group(1) else "/", line[cut:])
     # Destino entre < > ("[x](<https://site/a b>)"), que aceita espaços: o primeiro "](<" depois do último ">".
-    angle = _ANGLE_OPEN.search(line, line.rfind(">") + 1)
+    opener = line.find("](", line.rfind(">") + 1)
+    angle = _ANGLE_OPEN.search(line, opener) if opener != -1 else None
     if angle:
         return line[angle.end():]
+    # Ainda dentro do destino de um link Markdown ("[x](javascript:fetch('...'+'[CPF_1]')") ou do valor de um atributo
+    # HTML (href="...'+'[CPF_1]"): aspas e "+" no caminho não tiram o marcador do link. Com a linha em branco antes do
+    # marcador, vale a linha de cima ("[x](https://site/?d=" e o marcador embaixo).
+    inside = _open_link(line)
+    if inside is None and not line.strip() and "\n" in before:
+        above = before[:before.rfind("\n")]
+        inside = _open_link(above[above.rfind("\n") + 1:])
+    if inside is not None:
+        return inside
     run = _trailing_run(line)
     if len(run) > MAX_RUN:
         return run  # sem esquema nem domínio reconhecível, url_host() fica vazio e o marcador não é restaurado
     start = _URL_START.search(run)
     if start:
         return run[start.end():] if start.group(0).startswith("]") else run[start.start():]
-    if _LINK_ATTRIBUTE.search(line[:len(line) - len(run)]):
+    if _ends_with_link_attribute(line[:len(line) - len(run)]):
         return run
     return None
 
 
+def _open_link(line: str) -> str | None:
+    """O destino de link Markdown ou o valor de atributo de link ainda aberto no fim da linha, ou None."""
+    opener = line.rfind("](")
+    if opener != -1:
+        rest = line[opener + 2:]
+        if rest.count("(") + 1 > rest.count(")"):
+            return rest
+    for quote in "\"'":
+        if line.count(quote) % 2:
+            position = line.rfind(quote)
+            if _ends_with_link_attribute(line[:position]):
+                return line[position + 1:]
+    return None
+
+
+def _ends_with_link_attribute(text: str) -> bool:
+    """O texto termina num atributo de link (src=, href=, url( ...), com ou sem aspa? Olha só o fim, sem limite de
+    espaços: "src      =   " também conta."""
+    end = len(text)
+    if end and text[end - 1] in "\"'":
+        end -= 1
+    while end and text[end - 1].isspace():
+        end -= 1
+    if end and text[end - 1] == "=":
+        end -= 1
+        while end and text[end - 1].isspace():
+            end -= 1
+        return _LINK_ATTRIBUTE_NAME.search(text, max(0, end - 16), end) is not None
+    if end >= 4 and text[end - 4:end].lower() == "url(":
+        return end == 4 or not (text[end - 5].isalnum() or text[end - 5] == "_")
+    return False
+
+
 def _trailing_run(line: str) -> str:
-    """O trecho final da linha sem espaços, aspas, < > ou crase. Varre do fim: tempo proporcional ao trecho."""
-    index = len(line)
-    while index and not (line[index - 1].isspace() or line[index - 1] in _RUN_DELIMITERS):
-        index -= 1
-    return line[index:]
+    """O trecho final da linha sem espaços, aspas, < > ou crase. Varre do fim e para logo depois de MAX_RUN.
+
+    Passar de MAX_RUN já basta para não restaurar; varrer até o começo deixava a restauração quadrática num texto
+    sem espaços com muitos marcadores ("[IP_1].[IP_1]..." travava o proxy por segundos).
+    """
+    tail = line[max(0, len(line) - MAX_RUN - 1):]
+    # Casa o começo do trecho invertido: a mesma varredura do fim para o começo, feita pela regex (em C).
+    length = _RUN_CHARS.match(tail[::-1]).end()
+    return tail[len(tail) - length:]
 
 
 def url_host(url: str) -> str:
@@ -394,8 +446,11 @@ class Vault:
             if entry is None:
                 return match.group(0)
             start = match.start() - len(lead)
+            # A linha do marcador e a de cima: um link aberto na linha de cima ainda conta ("[x](https://site/?d=" e
+            # o marcador sozinho na linha de baixo).
             newline = text.rfind("\n", 0, start)
-            before = prefix + text[:start] if newline == -1 else text[newline + 1:start]
+            above = text.rfind("\n", 0, newline) if newline != -1 else -1
+            before = prefix + text[:start] if above == -1 else text[above + 1:start]
             if not policy.allows(entry.label, before, tool=tool, tool_name=tool_name):
                 return match.group(0)
             if counter is not None:
@@ -504,8 +559,12 @@ class StreamRestorer:
     def _restore(self, ready: str) -> str:
         output = self.vault.restore(ready, json_escape=self.json_escape, tool=self.tool, prefix=self._line,
                                     tool_name=self.tool_name)
-        newline = ready.rfind("\n")
-        self._line = ready[newline + 1:] if newline != -1 else self._line + ready
+        # Guarda a linha atual e a de cima, como a restauração sem streaming vê.
+        combined = self._line + ready
+        last = combined.rfind("\n")
+        if last != -1:
+            combined = combined[combined.rfind("\n", 0, last) + 1:]
+        self._line = combined
         return output
 
     def feed(self, text: str) -> str:

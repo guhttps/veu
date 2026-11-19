@@ -25,11 +25,23 @@ DEFAULT_THRESHOLD = 0.5
 # invisível), hífens tipográficos ("529.982.247‑25" copiado do Word) e letras e dígitos de largura total.
 _INVISIBLE = "\u00ad\u200b\u200c\u200d\u2060\ufeff"
 _HYPHENS = "\u2010\u2011\u2012\u2013\u2212\ufe63\uff0d"
-_SPECIAL = re.compile(f"[{_INVISIBLE}{_HYPHENS}\uff01-\uff5e]")
+# Letras cir\u00edlicas e gregas iguais \u00e0s latinas ("m\u0430ria@..." com "\u0430" cir\u00edlico) e d\u00edgitos de outros sistemas (ar\u00e1bico-
+# \u00edndicos, persas, devan\u00e1gari, bengali): trocados um por um, s\u00f3 para a detec\u00e7\u00e3o, para um disfarce n\u00e3o passar.
+_CONFUSABLES = dict(zip(
+    "\u0430\u0435\u043e\u0440\u0441\u0443\u0445\u0456\u0458\u0455\u0501\u04bb\u04cf\u051b\u051d\u0410\u0412\u0415\u041a\u041c\u041d\u041e\u0420\u0421\u0422\u0425\u0406\u0408\u0405\u04ae\u0391\u0392\u0395\u0396\u0397\u0399\u039a\u039c\u039d\u039f\u03a1\u03a4\u03a5\u03a7\u03bf\u03b1\u03c1\u03bd\u03b9\u03ba",
+    "aeopcyxijsdhlqwABEKMHOPCTXIJSYABEZHIKMNOPTYXoapvik", strict=True,
+))
+_DIGIT_BLOCKS = (0x0660, 0x06F0, 0x0966, 0x09E6)
+_SPECIAL = re.compile(
+    f"[{_INVISIBLE}{_HYPHENS}\uff01-\uff5e{''.join(_CONFUSABLES)}"
+    + "".join(f"{chr(block)}-{chr(block + 9)}" for block in _DIGIT_BLOCKS) + "]"
+)
 
 
 _SAME_LENGTH = str.maketrans({**{char: "-" for char in _HYPHENS},
-                               **{chr(code): chr(code - 0xFEE0) for code in range(0xFF01, 0xFF5F)}})
+                               **{chr(code): chr(code - 0xFEE0) for code in range(0xFF01, 0xFF5F)},
+                               **_CONFUSABLES,
+                               **{chr(block + digit): str(digit) for block in _DIGIT_BLOCKS for digit in range(10)}})
 _HAS_INVISIBLE = re.compile(f"[{_INVISIBLE}]")
 
 

@@ -1492,6 +1492,66 @@
    "generalizado": "Data of birth: born 1985; DOB 1985; birth date 1985."
   },
   {
+   "texto": "CPF 529-982-247-25, CPF 5 2 9 9 8 2 2 4 7 2 5 e a sequência 5 2 9 9 8 2 2 4 7 2 5 do sorteio.",
+   "entidades": [
+    [
+     "CPF",
+     4,
+     18,
+     0.95
+    ],
+    [
+     "CPF",
+     24,
+     45,
+     0.9
+    ]
+   ],
+   "anonimizado": "CPF [CPF_1], CPF [CPF_1] e a sequência 5 2 9 9 8 2 2 4 7 2 5 do sorteio.",
+   "mascarado": "CPF ***-982-247-**, CPF * * * 9 8 2 2 4 7 * * e a sequência 5 2 9 9 8 2 2 4 7 2 5 do sorteio.",
+   "generalizado": "CPF [CPF], CPF [CPF] e a sequência 5 2 9 9 8 2 2 4 7 2 5 do sorteio."
+  },
+  {
+   "texto": "e-mail mаria.souza@example.com e cliente Маria Souza.",
+   "entidades": [
+    [
+     "EMAIL",
+     7,
+     30,
+     1.0
+    ],
+    [
+     "PESSOA",
+     41,
+     52,
+     0.9
+    ]
+   ],
+   "anonimizado": "e-mail [EMAIL_1] e cliente [PESSOA_1].",
+   "mascarado": "e-mail m***@example.com e cliente М*** S***.",
+   "generalizado": "e-mail [EMAIL] e cliente [PESSOA]."
+  },
+  {
+   "texto": "CPF ٥٢٩.٩٨٢.٢٤٧-٢٥ e CPF ५२९.९८२.२४७-२५.",
+   "entidades": [
+    [
+     "CPF",
+     4,
+     18,
+     1.0
+    ],
+    [
+     "CPF",
+     25,
+     39,
+     1.0
+    ]
+   ],
+   "anonimizado": "CPF [CPF_1] e CPF [CPF_2].",
+   "mascarado": "CPF ***.٩٨٢.٢٤٧-** e CPF ***.९८२.२४७-**.",
+   "generalizado": "CPF [CPF] e CPF [CPF]."
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [

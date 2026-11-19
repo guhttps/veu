@@ -88,6 +88,10 @@ EXTRA = [
     "Checkout: https://loja.example/checkout?email=olga.costa%40example.org&cpf=52998224725&cupom=BLACK10",
     "<dest><xNome>Ana Lima</xNome><enderDest><xLgr>Avenida Moisés Martins</xLgr><nro>120</nro></enderDest></dest> Batida traseira na Av. Paulista.",
     "Data of birth: born 1985-04-03; DOB 03/04/1985; birth date 1985-04-03.",
+    # Achados da simulação de ataques (scripts/simular_ataques.py): disfarces.
+    "CPF 529-982-247-25, CPF 5 2 9 9 8 2 2 4 7 2 5 e a sequência 5 2 9 9 8 2 2 4 7 2 5 do sorteio.",
+    "e-mail mаria.souza@example.com e cliente Маria Souza.",
+    "CPF ٥٢٩.٩٨٢.٢٤٧-٢٥ e CPF ५२९.९८२.२४७-२५.",
 ]
 
 

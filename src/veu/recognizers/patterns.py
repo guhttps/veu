@@ -204,6 +204,11 @@ DEFAULT_SPECS: list[PatternSpec] = [
     PatternSpec("CPF", B + r"\d{9}-\d{2}" + E, Scores(0.9, 0.4, 1.0, 0.65), v.is_valid_cpf, CTX_CPF),
     PatternSpec("CPF", B + r"\d{3}\s\d{3}\s\d{3}\s\d{2}" + E, Scores(0.85, None, 0.95, 0.6), v.is_valid_cpf, CTX_CPF),
     PatternSpec("CPF", B + r"\d{11}" + E, Scores(0.75, None, 0.95, 0.6), v.is_valid_cpf, CTX_CPF),
+    # Disfarces e digitação descuidada: hífens no lugar dos pontos ("529-982-247-25") e um espaço entre cada dígito.
+    PatternSpec("CPF", B + r"\d{3}[.\-]\d{3}[.\-]\d{3}[.\-/]\d{2}" + E, Scores(0.85, None, 0.95), v.is_valid_cpf,
+                CTX_CPF, name="separadores"),
+    PatternSpec("CPF", B + r"\d(?: \d){10}" + E, Scores(None, None, 0.9), v.is_valid_cpf, CTX_CPF, before=20,
+                name="espacado"),
     PatternSpec("CPF", rf"(?<![\w*]){M}{{3}}\.{M}{{3}}\.{M}{{3}}-{M}{{2}}(?![\w*])", Scores(0.85, None, 0.97),
                 _partially_masked, CTX_CPF, name="mascarado"),
     # CNPJ (numérico e alfanumérico)

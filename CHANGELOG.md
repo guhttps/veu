@@ -23,6 +23,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Simulação de ponta a ponta** (`scripts/simular_ponta_a_ponta.py`): CSV, Excel, Word, PowerPoint, JSON, texto e PDF pela linha de comando, e o proxy na frente de um provedor falso (OpenAI e Anthropic, com e sem streaming) que grava tudo o que recebe. Confere que o provedor nunca vê um dado real e que uma ferramenta de e-mail chamada pela IA recebe só marcadores.
 - A simulação ganhou técnicos lidando com acessos (AWS, Kubernetes, Docker, VPN, HTTP, chave SSH, CI, Slack, inventário de rede, firewall, Active Directory, cabeçalhos de e-mail, pentest, SQL) e mais tipos de dados (extrato, exame, matrícula, apólice, IMEI, documentos de EUA, Espanha, Itália, Reino Unido e Índia, IBAN e cripto): 50 perfis.
 
+- **Simulação de ataques** (`scripts/simular_ataques.py`): disfarces para passar pela detecção, roubo de dados pela volta (links, imagens, HTML, CSS, `javascript:`, `data:`, `mailto:`, marcadores disfarçados, streaming), textos feitos para travar as regex e ataques ao servidor (DNS rebinding, CSRF, token, caminhos maliciosos, corpo gigante, JSON quebrado). 63 conferências.
+
+### Segurança
+- **Restauração quadrática (ReDoS):** uma resposta com milhares de marcadores numa linha só ("[IP_1].[IP_1]...") levava 13 segundos para restaurar e podia travar o proxy. A checagem de links não varre mais a linha inteira a cada marcador: o mesmo texto leva 0,5 s, com o mesmo resultado.
+- **Links que ainda não fecharam:** um marcador dentro de `[x](javascript:fetch('...'+'[CPF_1]'))`, de `href="javascript:..."` ou de um link Markdown quebrado em duas linhas não recebe mais o dado real.
+- **Disfarces na entrada:** letras cirílicas e gregas iguais às latinas ("mаria@...") e dígitos arábico-índicos, persas, devanágari e bengali são normalizados para a detecção (Python e JavaScript agora concordam neles). CPF com hífens no lugar dos pontos e com um espaço entre cada dígito também é reconhecido.
+
 ### Corrigido
 - **Senhas em frases de suporte:** "resetei a senha para Tmp#4821", "troquei a senha pra ...", "a senha do wifi fica ..." e "password to ..." agora são escondidas, sem pegar frases comuns ("senha para acessar o sistema"). O ponto que fecha a frase não entra mais na senha.
 - **Rótulos de formulário viravam nomes:** num comprovante Pix, "Para: Fulano" na linha de cima fazia de "Chave Pix:" um nome de pessoa. A palavra de contexto agora vale na mesma linha, ou só quando fecha a linha de cima ("Nome:" com o nome embaixo continua funcionando).

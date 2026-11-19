@@ -74,16 +74,21 @@ export function toolAllowed(policy: RestorePolicy, name: string): boolean {
 
 // O último caso é um domínio solto seguido de "/" (evil.com/?d=...), que muitos sites transformam em link.
 const URL_START = /\b[a-z][a-z0-9+.-]*:\/\/|\bwww\.|\bmailto:|\]\(\s*<?|(?<![:/\p{L}\p{N}_])\/\/|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,24}(?::\d{1,5})?\//iu;
-const LINK_ATTRIBUTE = /(?:\b(?:src|href|action|formaction|srcset|poster|ping|cite|background|lowsrc|data)\s*=\s*|\burl\(\s*)["']?$/i;
+const LINK_ATTRIBUTE_NAME = /(?<![\p{L}\p{N}_])(?:src|href|action|formaction|srcset|poster|ping|cite|background|lowsrc|data)$/iu;
 const ANGLE_OPEN = /\]\(\s*</g;
 const RUN_DELIMITER = /[\s"'<>`]/u;
 // Um trecho sem espaços maior que isto logo antes do marcador não é analisado: o marcador fica como está.
 export const MAX_RUN = 2048;
 
 /** O trecho final da linha sem espaços, aspas, < > ou crase. Varre do fim: tempo proporcional ao trecho. */
+/**
+ * O trecho final da linha sem espaços, aspas, < > ou crase. Varre do fim e para logo depois de MAX_RUN: passar de
+ * MAX_RUN já basta para não restaurar, e varrer até o começo deixava a restauração quadrática.
+ */
 function trailingRun(line: string): string {
   let index = line.length;
-  while (index && !RUN_DELIMITER.test(line[index - 1])) index -= 1;
+  const limit = Math.max(0, line.length - MAX_RUN - 1);
+  while (index > limit && !RUN_DELIMITER.test(line[index - 1])) index -= 1;
   return line.slice(index);
 }
 const HOST = /^(?:[a-z][a-z0-9+.-]*:)?\/\/([^/?#\\\s]*)[/?#\\]/i;
@@ -91,20 +96,72 @@ const JSON_ESCAPE = /\\u([0-9a-fA-F]{4})|\\(\/)/g;
 
 /** Se o marcador está dentro de um link, imagem ou URL, devolve a URL até ele; senão, null. */
 export function linkContext(before: string): string | null {
+  // Roda uma vez por marcador: nada aqui varre a linha inteira em JavaScript, para não ficar quadrático.
   let line = before.slice(before.lastIndexOf("\n") + 1);
   if (line.includes("\\")) {
-    line = line.replace(JSON_ESCAPE, (_, hex: string | undefined) => (hex ? String.fromCharCode(parseInt(hex, 16)) : "/"));
+    const cut = Math.max(0, line.length - 4 * MAX_RUN);
+    line = line.slice(0, cut) + line.slice(cut).replace(JSON_ESCAPE,
+      (_, hex: string | undefined) => (hex ? String.fromCharCode(parseInt(hex, 16)) : "/"));
   }
   // Destino entre < > ("[x](<https://site/a b>)"), que aceita espaços: o primeiro "](<" depois do último ">".
-  ANGLE_OPEN.lastIndex = line.lastIndexOf(">") + 1;
-  const angle = ANGLE_OPEN.exec(line);
+  const opener = line.indexOf("](", line.lastIndexOf(">") + 1);
+  let angle: RegExpExecArray | null = null;
+  if (opener !== -1) {
+    ANGLE_OPEN.lastIndex = opener;
+    angle = ANGLE_OPEN.exec(line);
+  }
   if (angle) return line.slice(angle.index + angle[0].length);
+  // Ainda dentro do destino de um link Markdown ("[x](javascript:fetch('...'+'[CPF_1]')") ou do valor de um atributo
+  // HTML (href="...'+'[CPF_1]"): aspas e "+" no caminho não tiram o marcador do link. Com a linha em branco antes do
+  // marcador, vale a linha de cima ("[x](https://site/?d=" e o marcador embaixo).
+  let inside = openLink(line);
+  if (inside === null && !line.trim() && before.includes("\n")) {
+    const above = before.slice(0, before.lastIndexOf("\n"));
+    inside = openLink(above.slice(above.lastIndexOf("\n") + 1));
+  }
+  if (inside !== null) return inside;
   const run = trailingRun(line);
   if (run.length > MAX_RUN) return run; // sem esquema nem domínio reconhecível: o marcador não é restaurado
   const start = URL_START.exec(run);
   if (start) return start[0].startsWith("]") ? run.slice(start.index + start[0].length) : run.slice(start.index);
-  if (LINK_ATTRIBUTE.test(line.slice(0, line.length - run.length))) return run;
+  if (endsWithLinkAttribute(line.slice(0, line.length - run.length))) return run;
   return null;
+}
+
+function count(text: string, char: string): number {
+  let total = 0;
+  for (let index = text.indexOf(char); index !== -1; index = text.indexOf(char, index + 1)) total += 1;
+  return total;
+}
+
+/** O destino de link Markdown ou o valor de atributo de link ainda aberto no fim da linha, ou null. */
+function openLink(line: string): string | null {
+  const opener = line.lastIndexOf("](");
+  if (opener !== -1) {
+    const rest = line.slice(opener + 2);
+    if (count(rest, "(") + 1 > count(rest, ")")) return rest;
+  }
+  for (const quote of `"'`) {
+    if (count(line, quote) % 2) {
+      const position = line.lastIndexOf(quote);
+      if (endsWithLinkAttribute(line.slice(0, position))) return line.slice(position + 1);
+    }
+  }
+  return null;
+}
+
+/** O texto termina num atributo de link (src=, href=, url( ...), com ou sem aspa? Olha só o fim, sem limite de espaços. */
+function endsWithLinkAttribute(text: string): boolean {
+  let end = text.length;
+  if (end && `"'`.includes(text[end - 1])) end -= 1;
+  while (end && /\s/u.test(text[end - 1])) end -= 1;
+  if (end && text[end - 1] === "=") {
+    end -= 1;
+    while (end && /\s/u.test(text[end - 1])) end -= 1;
+    return LINK_ATTRIBUTE_NAME.test(text.slice(Math.max(0, end - 16), end));
+  }
+  if (end >= 4 && text.slice(end - 4, end).toLowerCase() === "url(") return end === 4 || !/[\p{L}\p{N}_]/u.test(text[end - 5]);
+  return false;
 }
 
 /** Domínio de uma URL absoluta, só se ele já terminou (vazio se o marcador está no próprio domínio). */
@@ -294,8 +351,11 @@ export class Vault {
       const offset = (args[args.length - 3] as number) - lead.length;
       const entry = this.entryFor(groups);
       if (!entry) return match;
+      // A linha do marcador e a de cima: um link aberto na linha de cima ainda conta ("[x](https://site/?d=" e o
+      // marcador sozinho na linha de baixo).
       const newline = offset > 0 ? text.lastIndexOf("\n", offset - 1) : -1;
-      const before = newline === -1 ? prefix + text.slice(0, offset) : text.slice(newline + 1, offset);
+      const above = newline > 0 ? text.lastIndexOf("\n", newline - 1) : -1;
+      const before = above === -1 ? prefix + text.slice(0, offset) : text.slice(above + 1, offset);
       if (!restoreAllowed(this.policy, entry.label, before, tool, tool ? context.toolName : undefined)) return match;
       return jsonEscape ? JSON.stringify(entry.original).slice(1, -1) : entry.original;
     }).slice(lead.length);
@@ -368,8 +428,11 @@ export class StreamRestorer {
 
   private emit(ready: string): string {
     const output = this.vault.restore(ready, this.jsonEscape, { tool: this.tool, toolName: this.toolName, prefix: this.line });
-    const newline = ready.lastIndexOf("\n");
-    this.line = newline === -1 ? this.line + ready : ready.slice(newline + 1);
+    // Guarda a linha atual e a de cima, como a restauração sem streaming vê.
+    let combined = this.line + ready;
+    const last = combined.lastIndexOf("\n");
+    if (last !== -1) combined = combined.slice(last > 0 ? combined.lastIndexOf("\n", last - 1) + 1 : 0);
+    this.line = combined;
     return output;
   }
 

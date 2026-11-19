@@ -168,6 +168,10 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   spec("CPF", `${B}\\d{9}-\\d{2}${E}`, S(0.9, 0.4, 1.0, 0.65), { validator: v.isValidCpf, context: CTX_CPF }),
   spec("CPF", `${B}\\d{3}\\s\\d{3}\\s\\d{3}\\s\\d{2}${E}`, S(0.85, null, 0.95, 0.6), { validator: v.isValidCpf, context: CTX_CPF }),
   spec("CPF", `${B}\\d{11}${E}`, S(0.75, null, 0.95, 0.6), { validator: v.isValidCpf, context: CTX_CPF }),
+  // Disfarces e digitação descuidada: hífens no lugar dos pontos ("529-982-247-25") e um espaço entre cada dígito.
+  spec("CPF", `${B}\\d{3}[.\\-]\\d{3}[.\\-]\\d{3}[.\\-/]\\d{2}${E}`, S(0.85, null, 0.95),
+    { validator: v.isValidCpf, context: CTX_CPF, name: "separadores" }),
+  spec("CPF", `${B}\\d(?: \\d){10}${E}`, S(null, null, 0.9), { validator: v.isValidCpf, context: CTX_CPF, before: 20, name: "espacado" }),
   spec("CPF", `${MB}${M}{3}\\.${M}{3}\\.${M}{3}-${M}{2}${ME}`, S(0.85, null, 0.97),
     { validator: partiallyMasked, context: CTX_CPF, name: "mascarado" }),
   // CNPJ (numérico e alfanumérico)
