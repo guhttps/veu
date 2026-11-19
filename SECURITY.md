@@ -30,6 +30,7 @@ O modelo completo, com as fronteiras de confiança e os riscos que sobram, está
 | Envio de dados por endpoints que ele não entende | `POST` em endpoints desconhecidos é bloqueado por padrão |
 | Vazamento de cookies do navegador para o provedor | Cookies, `Referer` e `Origin` não são repassados; `Set-Cookie` do provedor não volta |
 | Travamento por textos enormes | Limite de tamanho do corpo (`limite_corpo_mb`) e processamento fora do laço principal do servidor |
+| Arquivos maliciosos (Word, Excel, PowerPoint e PDF pelo painel, pela CLI, pelo MCP ou por links) | Entidades externas (XXE) e expansão de entidades não são lidas; zips que crescem mais de 100 vezes ou passam de 200 MB ao abrir (zip bomb) são recusados antes; fluxos de PDF acima do limite do pypdf viram um erro claro |
 | Conexões que mandam o cabeçalho devagar (slowloris) | Quem não termina o cabeçalho em 15 segundos é desconectado; o servidor não diz o nome nem a versão no cabeçalho `Server` |
 | HTML do provedor rodando script na origem do Véu (a mesma do painel) | Respostas repassadas saem com `Content-Security-Policy: sandbox` e `nosniff` |
 | Alteração ou remoção de linhas da auditoria | Cadeia de hashes com HMAC (`segredo_auditoria_env`) e `veu auditoria verificar` |

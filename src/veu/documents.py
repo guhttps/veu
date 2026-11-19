@@ -45,6 +45,30 @@ def _source(data: bytes | str | Path):
     return io.BytesIO(data) if isinstance(data, bytes) else str(data)
 
 
+# Word, Excel e PowerPoint são arquivos zip: um .docx de 300 KB pode guardar 300 MB de XML (zip bomb) e derrubar o
+# processo que o abre. Os tamanhos declarados no zip são conferidos antes (o zipfile não entrega mais que isso).
+MAX_UNZIPPED = 200 * 1024 * 1024
+MAX_RATIO = 100
+
+
+def _office(data: bytes | str | Path):
+    import zipfile
+
+    try:
+        with zipfile.ZipFile(_source(data)) as archive:
+            total = 0
+            for item in archive.infolist():
+                total += item.file_size
+                if item.file_size > 1024 * 1024 and item.file_size > MAX_RATIO * max(item.compress_size, 1):
+                    raise ValueError(f"Arquivo suspeito: {item.filename} cresce mais de {MAX_RATIO} vezes ao abrir "
+                                     "(zip bomb).")
+            if total > MAX_UNZIPPED:
+                raise ValueError(f"Arquivo grande demais: mais de {MAX_UNZIPPED // (1024 * 1024)} MB ao abrir.")
+    except zipfile.BadZipFile:
+        pass  # a biblioteca do formato dá o erro dela
+    return _source(data)
+
+
 # Leitura como texto ------------------------------------------------------------------------------------------------
 
 def _table_markdown(rows: list[list[str]]) -> str:
@@ -83,7 +107,7 @@ def _docx_blocks(document) -> Iterator[str]:
 
 
 def read_docx(data: bytes | str | Path) -> str:
-    document = _module("docx").Document(_source(data))
+    document = _module("docx").Document(_office(data))
     return "\n\n".join(block for block in _docx_blocks(document) if block)
 
 
@@ -96,7 +120,7 @@ def _cell_text(value: Any) -> str:
 
 
 def read_xlsx(data: bytes | str | Path) -> str:
-    workbook = _module("openpyxl").load_workbook(_source(data), read_only=True, data_only=True)
+    workbook = _module("openpyxl").load_workbook(_office(data), read_only=True, data_only=True)
     parts = []
     for sheet in workbook.worksheets:
         rows = []
@@ -113,7 +137,7 @@ def read_xlsx(data: bytes | str | Path) -> str:
 
 
 def read_pptx(data: bytes | str | Path) -> str:
-    presentation = _module("pptx").Presentation(_source(data))
+    presentation = _module("pptx").Presentation(_office(data))
     parts = []
     for number, slide in enumerate(presentation.slides, 1):
         texts = []
@@ -129,12 +153,17 @@ def read_pptx(data: bytes | str | Path) -> str:
 
 
 def read_pdf(data: bytes | str | Path) -> str:
-    reader = _module("pypdf").PdfReader(_source(data))
+    pypdf = _module("pypdf")
     pages = []
-    for number, page in enumerate(reader.pages, 1):
-        text = (page.extract_text() or "").strip()
-        if text:
-            pages.append(f"## Página {number}\n\n{text}")
+    try:
+        reader = pypdf.PdfReader(_source(data))
+        for number, page in enumerate(reader.pages, 1):
+            text = (page.extract_text() or "").strip()
+            if text:
+                pages.append(f"## Página {number}\n\n{text}")
+    except pypdf.errors.PyPdfError as exc:
+        # Inclusive o limite do pypdf para fluxos que crescem demais ao descompactar (PDF bomb).
+        raise ValueError(f"Não consegui ler o PDF: {exc}") from exc
     return "\n\n".join(pages)
 
 
@@ -197,7 +226,7 @@ def _docx_paragraphs(container) -> Iterator:
 
 
 def _transform_docx(source: Path, destination: Path, spans: Spans, text: Callable[[str], str]) -> None:
-    document = _module("docx").Document(str(source))
+    document = _module("docx").Document(_office(source))
     containers = [document]
     for section in document.sections:
         for part in (section.header, section.footer, section.first_page_header, section.first_page_footer):
@@ -229,7 +258,7 @@ def _pptx_shapes(shapes) -> Iterator:
 
 
 def _transform_pptx(source: Path, destination: Path, spans: Spans, text: Callable[[str], str]) -> None:
-    presentation = _module("pptx").Presentation(str(source))
+    presentation = _module("pptx").Presentation(_office(source))
     frames = []
     for slide in presentation.slides:
         for shape in _pptx_shapes(slide.shapes):
@@ -251,7 +280,7 @@ def _transform_pptx(source: Path, destination: Path, spans: Spans, text: Callabl
 
 
 def _transform_xlsx(source: Path, destination: Path, cell: CellFunction) -> None:
-    workbook = _module("openpyxl").load_workbook(str(source))
+    workbook = _module("openpyxl").load_workbook(_office(source))
     for sheet in workbook.worksheets:
         header: list[str | None] = []
         for index, row in enumerate(sheet.iter_rows()):
