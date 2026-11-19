@@ -64,7 +64,11 @@ def test_stream_keeps_the_line_above_for_open_links():
     assert output.endswith(f"o CPF {CPF}.") and output.count(CPF) == 1
 
 
-@pytest.mark.parametrize("text", ["1." * 30000, "1.1.1.1 " * 7500, "-1.12345, " * 6000])
+@pytest.mark.parametrize("text", [
+    "1." * 30000, "1.1.1.1 " * 7500, "-1.12345, " * 6000,
+    # E-mail: a busca começava em cada letra depois de um "%" e varria o resto do texto (21 s com o disfarçado).
+    "%40" * 20000, "a%" * 30000, "x [at] " * 8000, "abandon " * 7500,
+])
 def test_restoring_many_markers_on_one_line_stays_fast(text):
     veu = Veu()
     start = time.perf_counter()

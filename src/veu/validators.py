@@ -750,3 +750,113 @@ def is_likely_coordinates(value: str) -> bool:
         return False
     decimals = min(len(part.split(".")[1]) for part in parts)
     return decimals >= 5 and (latitude < 0 or longitude < 0)
+
+
+def is_valid_imei(value: str) -> bool:
+    """IMEI de celular: 15 dígitos com Luhn, sem o prefixo do Amex (34 e 37) nem os números do cartão do SUS."""
+    digits = only_digits(value)
+    return len(digits) == 15 and is_valid_luhn(digits) and digits[:2] not in ("34", "37") and not is_valid_cns(digits)
+
+
+def _boleto_mod10(digits: str) -> int:
+    total = 0
+    for position, char in enumerate(reversed(digits)):
+        number = int(char) * (2 if position % 2 == 0 else 1)
+        total += number // 10 + number % 10
+    return (10 - total % 10) % 10
+
+
+def _boleto_mod11(digits: str, bank: bool) -> int:
+    rest = sum(int(char) * (2 + position % 8) for position, char in enumerate(reversed(digits))) % 11
+    if bank:  # boleto bancário: 0, 10 e 11 viram 1
+        return 1 if rest in (0, 1) else 11 - rest
+    return 0 if rest in (0, 1) else 11 - rest  # arrecadação (contas de consumo e tributos)
+
+
+def _barcode_ok(code: str) -> bool:
+    if code[0] == "8":  # arrecadação: o terceiro dígito diz o módulo; o verificador geral é o quarto
+        if code[2] not in "6789":
+            return False
+        rest = code[:3] + code[4:]
+        return int(code[3]) == (_boleto_mod10(rest) if code[2] in "67" else _boleto_mod11(rest, bank=False))
+    return code[3] == "9" and int(code[4]) == _boleto_mod11(code[:4] + code[5:], bank=True)
+
+
+def is_valid_boleto(value: str) -> bool:
+    """Boleto: linha digitável bancária (47 dígitos), de arrecadação (48) ou código de barras (44), com os verificadores."""
+    digits = only_digits(value)
+    if len(digits) == 44:
+        return not _repeated(digits) and _barcode_ok(digits)
+    if len(digits) == 47:
+        # Os três campos têm verificador próprio (módulo 10) e o quarto dígito é a moeda (9, real): basta para não
+        # confundir com outros números (1 chance em 10 mil), sem depender do verificador geral do código de barras.
+        fields = ((0, 9), (10, 20), (21, 31))
+        return digits[3] == "9" and all(_boleto_mod10(digits[start:end]) == int(digits[end]) for start, end in fields)
+    if len(digits) == 48 and digits[0] == "8" and digits[2] in "6789":
+        blocks = [digits[i:i + 12] for i in range(0, 48, 12)]
+        check = _boleto_mod10 if digits[2] in "67" else (lambda part: _boleto_mod11(part, bank=False))
+        if any(check(block[:11]) != int(block[11]) for block in blocks):
+            return False
+        return _barcode_ok("".join(block[:11] for block in blocks))
+    return False
+
+
+def crc16_ccitt(data: bytes) -> int:
+    crc = 0xFFFF
+    for byte in data:
+        crc ^= byte << 8
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x1021 if crc & 0x8000 else crc << 1) & 0xFFFF
+    return crc
+
+
+def is_valid_brcode(value: str) -> bool:
+    """Pix copia e cola (BR Code): começa com 000201, tem o domínio do Pix e termina com o CRC16 certo."""
+    if len(value) < 40 or not value.startswith("000201") or "br.gov.bcb.pix" not in value.lower():
+        return False
+    body, crc = value[:-4], value[-4:]
+    return body.endswith("6304") and f"{crc16_ccitt(body.encode('utf-8')):04X}" == crc.upper()
+
+
+def is_likely_certidao(value: str) -> bool:
+    """Matrícula de certidão do registro civil (32 dígitos): serviço 55, acervo, ano e tipo de livro plausíveis.
+
+    O cálculo dos dígitos verificadores não é público (vem do programa dos cartórios), então só a estrutura é conferida.
+    """
+    digits = only_digits(value)
+    if len(digits) != 32:
+        return False
+    return (digits[6] == "0" and digits[7] != "0" and digits[8:10] == "55" and 1850 <= int(digits[10:14]) <= 2100
+            and digits[14] in "1234567")
+
+
+_DMS_PART = re.compile(r"(\d{1,3})\s*°\s*(\d{1,2}(?:[.,]\d+)?)\s*['′’]\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*(?:\"|″|”|''|′′))?\s*([NSLOWE])",
+                       re.IGNORECASE)
+
+
+def is_valid_dms(value: str) -> bool:
+    """Par de coordenadas em graus, minutos e segundos ("23°33'01\"S 46°38'02\"W"), dentro dos limites."""
+    parts = _DMS_PART.findall(value)
+    if len(parts) != 2:
+        return False
+    hemispheres = [part[3].upper() for part in parts]
+    if hemispheres[0] not in "NS" or hemispheres[1] not in "LOWE":
+        return False
+    for (degrees, minutes, seconds, _), limit in zip(parts, (90, 180), strict=True):
+        if int(degrees) > limit or float(minutes.replace(",", ".")) >= 60 or (
+                seconds and float(seconds.replace(",", ".")) >= 60):
+            return False
+    return True
+
+
+def is_valid_bip39(indexes: list[int]) -> bool:
+    """Checksum de uma frase de recuperação BIP-39 (posições das palavras na lista de 2048)."""
+    import hashlib
+
+    if len(indexes) not in (12, 15, 18, 21, 24):
+        return False
+    bits = "".join(f"{index:011b}" for index in indexes)
+    size = len(bits) * 32 // 33
+    entropy = int(bits[:size], 2).to_bytes(size // 8, "big")
+    digest = f"{int.from_bytes(hashlib.sha256(entropy).digest(), 'big'):0256b}"
+    return bits[size:] == digest[:len(bits) - size]

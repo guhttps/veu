@@ -124,6 +124,16 @@ CTX_COORD = (
     "coordenadas", "coordenada", "localizacao", "local", "gps", "lat", "latitude", "lng", "lon", "longitude",
     "geolocalizacao", "posicao", "location",
 )
+CTX_IMEI = ("imei", "imei1", "imei 1", "imei2", "imei 2")
+CTX_BOLETO = ("boleto", "linha digitavel", "codigo de barras", "fatura", "pagamento", "pagar", "conta", "vencimento")
+CTX_CERTIDAO = ("certidao", "matricula", "registro civil", "nascimento", "casamento", "obito", "cartorio", "registro")
+# E-mail disfarçado ("joao.silva [at] gmail [dot] com", "maria arroba gmail ponto com").
+_OBF_AT = r"\s*[\[({<]\s*(?:at|arroba)\s*[\])}>]\s*"
+_OBF_DOT = r"(?:\s*[\[({<]\s*(?:dot|ponto)\s*[\])}>]\s*|\s+(?:dot|ponto)\s+)"
+_EMAIL_TLDS = (r"(?:com|net|org|br|gov|edu|io|me|co|info|biz|dev|app|pt|us|uk|es|ar|mx|cl|uy|py|de|fr|it|jus|mil|adv"
+               r"|ind|tech|online|site)")
+# Coordenadas em graus, minutos e (opcional) segundos: 23°33'01"S 46°38'02"W.
+_DMS = r"\d{1,3}\s*°\s*\d{1,2}(?:[.,]\d+)?\s*['′’]\s*(?:\d{1,2}(?:[.,]\d+)?\s*(?:\"|″|”|''|′′)\s*)?"
 # Números de cadastro em instituições: prontuário, matrícula (RA), carteirinha do convênio, apólice.
 CTX_CADASTRO = (
     "prontuario", "carteirinha", "carteira do convenio", "carteira do plano", "cartao do convenio",
@@ -268,10 +278,20 @@ DEFAULT_SPECS: list[PatternSpec] = [
     ),
     # Contatos
     PatternSpec(
-        "EMAIL", r"(?<![\w.+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![\w])",
+        "EMAIL", r"(?<![\w.%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![\w])",
         Scores(0.95), None, CTX_EMAIL,
     ),
     # Codificado em URL ("checkout?email=ana%40example.com"): o %40 é o @.
+    PatternSpec(
+        # O lookbehind cobre todos os caracteres do usuário (inclusive o %): a busca só começa no início de cada
+        # trecho, sem varrer o resto do texto a partir de cada letra ("%40%40..." ficava quadrático).
+        "EMAIL", r"(?<![\w.%+-])[A-Za-z0-9._%+-]+" + _OBF_AT + r"[A-Za-z0-9-]+(?:(?:" + _OBF_DOT + r"|\.)[A-Za-z0-9-]+)*"
+        r"(?:" + _OBF_DOT + r"|\.)" + _EMAIL_TLDS + r"(?![\w])", Scores(0.9), flags=re.IGNORECASE, name="disfarcado",
+    ),
+    PatternSpec(
+        "EMAIL", r"(?<![\w.%+-])[A-Za-z0-9._%+-]+\s+(?:at|arroba)\s+[A-Za-z0-9-]+(?:" + _OBF_DOT + r"[A-Za-z0-9-]+)*"
+        + _OBF_DOT + _EMAIL_TLDS + r"(?![\w])", Scores(0.85), flags=re.IGNORECASE, name="disfarcado",
+    ),
     PatternSpec(
         "EMAIL", r"(?<![\w.+-])[A-Za-z0-9._+-]+%40[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![\w])",
         Scores(0.9), None, CTX_EMAIL, name="url",
@@ -300,6 +320,25 @@ DEFAULT_SPECS: list[PatternSpec] = [
     PatternSpec(
         "CARTAO_CREDITO", B + r"\d(?:[ -]?\d){12,18}" + E, Scores(0.85, None, 0.95, 0.6), v.is_valid_card, CTX_CARD,
     ),
+    # CVV do cartão: só o número depois de "CVV", "CVC" ou "código de segurança".
+    PatternSpec(
+        "CARTAO_CREDITO",
+        r"(?<![\w])(?:CVV2?|CVC2?|CSC|c[óo]d(?:igo|\.)?\s+de\s+seguran[çc]a)(?:\s+do\s+cart[ãa]o)?[\s:=nº°.-]{0,5}"
+        r"(?P<valor>\d{3,4})(?![\w])", Scores(0.9), flags=re.IGNORECASE, name="cvv",
+    ),
+    # Boleto: linha digitável bancária (47 dígitos), de arrecadação (48, começa com 8) e código de barras (44).
+    PatternSpec(
+        "BOLETO", B + r"\d{5}\.?\d{5}[ \t]+\d{5}\.?\d{6}[ \t]+\d{5}\.?\d{6}[ \t]+\d[ \t]+\d{14}" + E, Scores(0.95, 0.8),
+        v.is_valid_boleto,
+    ),
+    PatternSpec("BOLETO", B + r"8\d{10}[ -]?\d(?:[ \t]+\d{11}[ -]?\d){3}" + E, Scores(0.95, 0.8), v.is_valid_boleto),
+    PatternSpec("BOLETO", B + r"(?:\d{44}|\d{47,48})" + E, Scores(0.9, None, 0.97), v.is_valid_boleto, CTX_BOLETO),
+    # Pix copia e cola (BR Code): traz a chave, o nome e a cidade de quem recebe. Duas buscas na linha (até a
+    # primeira e até a última terminação "6304" + CRC); só vale com o CRC certo.
+    PatternSpec("CHAVE_PIX", r"(?<![\w])000201[^\n]{20,600}?6304[0-9A-Fa-f]{4}(?![0-9A-Fa-f])", Scores(0.99),
+                v.is_valid_brcode, name="brcode"),
+    PatternSpec("CHAVE_PIX", r"(?<![\w])000201[^\n]{20,600}6304[0-9A-Fa-f]{4}(?![0-9A-Fa-f])", Scores(0.99),
+                v.is_valid_brcode, name="brcode"),
     PatternSpec(
         "IBAN", B + r"[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,4})?" + E, Scores(0.95, None, 1.0),
         v.is_valid_iban, CTX_IBAN,
@@ -344,6 +383,18 @@ DEFAULT_SPECS: list[PatternSpec] = [
         r"(?<![\w.-])-?(?:[0-8]?\d|90)\.\d{4,8}[ \t]*,[ \t]*-?(?:1[0-7]\d|0?\d?\d|180)\.\d{4,8}(?![\w]|\.\d)",
         Scores(0.8, None, 0.9, 0.85), v.is_likely_coordinates, CTX_COORD, before=40,
     ),
+    PatternSpec("COORDENADAS", r"(?<![\w.])" + _DMS + r"[NSns](?![\w])[\s,;/]{0,4}" + _DMS + r"[LOWElowe](?![\w])",
+                Scores(0.9), v.is_valid_dms, name="gms"),
+    # Celular: IMEI (15 dígitos com Luhn). Com "IMEI" por perto, vence o cartão de crédito.
+    PatternSpec("IMEI", B + r"\d{2}[ -]?\d{6}[ -]?\d{6}[ -]?\d" + E, Scores(0.86, None, 0.97), v.is_valid_imei, CTX_IMEI),
+    # Matrícula de certidão do registro civil (nascimento, casamento, óbito): 32 dígitos.
+    PatternSpec(
+        "CERTIDAO", B + r"\d{6}[ .]?\d{2}[ .]?\d{2}[ .]?\d{4}[ .]?\d[ .]?\d{5}[ .]?\d{3}[ .]?\d{7}[ .-]?\d{2}" + E,
+        Scores(0.9, None, 0.97), v.is_likely_certidao, CTX_CERTIDAO,
+    ),
+    # Registro Nacional Migratório (RNM, antigo RNE) de estrangeiros no Brasil.
+    PatternSpec("RG", r"(?<![\w])(?:RNM|RNE|CRNM)(?![\w])[\s:nº°.-]{0,6}(?P<valor>[A-Za-z]\d{6}-?[0-9A-Za-z])(?![\w])",
+                Scores(0.9), flags=re.IGNORECASE, name="rnm"),
     # Números de cadastro (prontuário, matrícula, carteirinha, apólice), só com o contexto; datas e valores ficam.
     PatternSpec(
         "CADASTRO", r"(?<![\w.,/$-])(?<!R\$ )\d[\d.\-/]{3,22}\d(?![\w]|,\d)", Scores(None, None, 0.8), None, CTX_CADASTRO,

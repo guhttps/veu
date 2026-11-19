@@ -253,6 +253,25 @@ def _match_case(template: str, value: str) -> str:
     return value
 
 
+def fake_imei(rng: random.Random) -> str:
+    """IMEI com Luhn válido e TAC 35 (aparelhos GSMA)."""
+    return fake_card(rng, formatted=False, first="35", length=15)
+
+
+def fake_boleto(rng: random.Random) -> str:
+    """Linha digitável bancária (47 dígitos) com os três verificadores de campo e a moeda 9."""
+    bank, free = rng.choice(("001", "033", "104", "237", "341")) + "9", _digits(rng, 25)
+    fields = [bank + free[:5], free[5:15], free[15:25]]
+    line = "".join(field + str(v._boleto_mod10(field)) for field in fields)
+    return line + _digits(rng, 1) + _digits(rng, 14)
+
+
+def fake_certidao(rng: random.Random) -> str:
+    """Matrícula de certidão (32 dígitos) com a estrutura do registro civil: serventia, acervo 01, serviço 55..."""
+    year = str(rng.randint(1950, 2024))
+    return _digits(rng, 6) + "01" + "55" + year + str(rng.randint(1, 3)) + _digits(rng, 17)
+
+
 def make_surrogate(label: str, original: str, rng: random.Random) -> str | None:
     """Substituto do mesmo tipo e no mesmo formato do original, ou None se não houver gerador."""
     digits = only_digits(original)
@@ -289,6 +308,9 @@ def make_surrogate(label: str, original: str, rng: random.Random) -> str | None:
         "TITULO_ELEITOR": (12, lambda: only_digits(fake_titulo(rng))),
         "RENAVAM": (11, lambda: fake_renavam(rng)),
         "PROCESSO": (20, lambda: only_digits(fake_processo(rng))),
+        "IMEI": (15, lambda: fake_imei(rng)),
+        "BOLETO": (47, lambda: fake_boleto(rng)),
+        "CERTIDAO": (32, lambda: fake_certidao(rng)),
     }
     if label in generators:
         size, generate = generators[label]

@@ -105,12 +105,12 @@ Commands are in Portuguese: `anonimizar` (anonymize), `restaurar` (restore), `le
 
 | Kind | Examples |
 |---|---|
-| People and contacts | names (IBGE 2022 census lists, capitalization and context), e-mails, phones (Brazilian and international), addresses, dates of birth |
-| Brazilian documents | CPF, CNPJ (including the 2026 alphanumeric format), RG, CNH, voter ID, PIS, SUS card, passport, work card (CTPS), professional licenses (OAB, CRM, CREA...), patient, student, health plan and policy numbers, GPS coordinates, CEP, license plates, RENAVAM, lawsuit numbers, bank accounts, Pix keys |
+| People and contacts | names (IBGE 2022 census lists, capitalization and context), e-mails (also disguised: `john [at] gmail [dot] com`), phones (Brazilian and international), addresses, dates of birth |
+| Brazilian documents | CPF, CNPJ (including the 2026 alphanumeric format), RG, CNH, voter ID, PIS, SUS card, passport, work card (CTPS), professional licenses (OAB, CRM, CREA...), patient, student, health plan and policy numbers, GPS coordinates, CEP, license plates, RENAVAM, lawsuit numbers, bank accounts, Pix keys and Pix copy-and-paste codes (CRC checked), boletos (check digits), birth and marriage certificate numbers, RNM (foreign residents) |
 | Other countries | Portugal, Argentina, Mexico, Chile, Uruguay, Colombia, Peru, Ecuador, Paraguay, Venezuela, Angola, Mozambique, US, Spain, Italy, France, Germany, UK, Netherlands, Canada, India; passport MRZ, VIN |
-| Financial | credit cards (Luhn), IBAN, Bitcoin and Ethereum addresses |
-| IT infrastructure | IP addresses, ports (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`; never a bare number) internal server names (`db.internal`, `cache.prod.local`) and MAC addresses |
-| Secrets | API keys from 30+ services, JWT and bearer tokens, passwords, private keys, connection URLs with passwords |
+| Financial | credit cards (Luhn) and CVV, IBAN, Bitcoin and Ethereum addresses |
+| IT infrastructure | IP addresses, ports (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`; never a bare number) internal server names (`db.internal`, `cache.prod.local`), MAC addresses and phone IMEIs |
+| Secrets | API keys from 30+ services, JWT and bearer tokens, tokens in links (`?token=`), passwords (also Wi-Fi QR codes), verification codes, 2FA secrets (`otpauth://`), private keys, crypto wallet recovery phrases (BIP-39 checksum), connection URLs with passwords |
 
 People choose what to hide with checkboxes per group (and per type) on the web page, in the extension and in the local dashboard. Structured formats are recognized on their own. Bare numbers that a Brazilian document or an order number could imitate only count with a context word nearby ("SSN", "BSN", "NUIT"...). Custom patterns go in `veu.toml`.
 

@@ -1,7 +1,8 @@
 // Segredos: chaves de API, tokens, senhas, chaves privadas e URLs de conexão (equivalente a recognizers/secrets.py).
-import { secretRules } from "./data.ts";
+import { bip39, secretRules } from "./data.ts";
 import type { Candidate, Recognizer } from "./entities.ts";
 import { isAlpha, isLower } from "./text.ts";
+import { isValidBip39 } from "./validators.ts";
 
 export const SECRET_RECOGNIZER_LABELS = ["CHAVE_API", "TOKEN", "SENHA", "CHAVE_PRIVADA", "URL_CONEXAO", "SEGREDO"];
 
@@ -48,7 +49,21 @@ const SESSION_COOKIE_WORDS = new Set(["session", "sessionid", "sess", "sessid", 
   "jwt", "remember"]);
 
 const PASSWORD_WORDS = new Set(["password", "passwd", "passphrase", "pwd", "senha", "pass", "passw"]);
-const SECRET_WORDS = new Set(["secret", "token", "apikey", "credential", "credentials", "credencial", "credenciais"]);
+const SECRET_WORDS = new Set(["secret", "token", "apikey", "credential", "credentials", "credencial", "credenciais",
+  "signature", "sig", "auth"]);
+// Código de verificação por SMS ou app ("seu código de verificação é 483920", "OTP: 1234").
+const OTP_CODE = new RegExp(
+  "(?<![A-Za-z0-9])(?:c[óo]digo\\s+(?:de\\s+)?(?:verifica[çc][ãa]o|confirma[çc][ãa]o|acesso|autentica[çc][ãa]o|login"
+  + "|ativa[çc][ãa]o|valida[çc][ãa]o)|verification\\s+code|one[- ]time\\s+(?:password|code)|otp|2fa|token\\s+sms)"
+  + "[^\\d\\n]{0,25}?(?<!\\d)(\\d{4,8})(?!\\d)",
+  "gdi",
+);
+// Frase de recuperação de carteira (BIP-39): 12 a 24 palavras da lista, separadas por espaço, vírgula ou numeração.
+const SEED_WORD = /[A-Za-z]+/g;
+const SEED_GAP = /^[ \t\r\n,;]*(?:\d{1,2}[ \t]*[.):-]?[ \t]*)?$/;
+const SEED_CONTEXT = /seed|semente|mnem[oô]nic|recupera[cç][aã]o|recovery|frase|phrase|palavras|words|carteira|wallet|backup/i;
+const SEED_SIZES = [24, 21, 18, 15, 12];
+let bip39Indexes: Map<string, number> | null = null;
 const SECRET_PAIRS = new Set([
   "api key", "access key", "private key", "secret key", "auth key", "chave api", "signing key", "encryption key",
   "master key", "account key", "app key",
@@ -150,7 +165,10 @@ export class SecretRecognizer implements Recognizer {
         yield { label: rule.label, start, end: start + value.length, score: rule.score, recognizer: this.name };
       }
     }
-    for (const match of text.matchAll(ASSIGNMENT)) {
+    const assignment = new RegExp(ASSIGNMENT.source, ASSIGNMENT.flags); // lastIndex próprio a cada chamada
+    for (let match = assignment.exec(text); match !== null; match = assignment.exec(text)) {
+      // O valor pode trazer outras atribuições: em "https://site/reset?token=8f3a...", a primeira é "https:".
+      assignment.lastIndex = match.indices![2]![1];
       const kind = keyKind(match[1]);
       if (kind === null) continue;
       const [start, end] = match.indices![3]!;
@@ -158,11 +176,20 @@ export class SecretRecognizer implements Recognizer {
       const value = match[3];
       if (kind === "SENHA") {
         const prose = match[2] === ":" && keyWords(match[1]).length === 1;
-        if (plausiblePassword(value, prose)) yield { label: "SENHA", start, end, score: 0.85, recognizer: this.name };
+        if (plausiblePassword(value, prose)) {
+          assignment.lastIndex = end;
+          yield { label: "SENHA", start, end, score: 0.85, recognizer: this.name };
+        }
       } else if (looksRandom(value)) {
+        assignment.lastIndex = end;
         yield { label: "SEGREDO", start, end, score: 0.85, recognizer: this.name };
       }
     }
+    for (const match of text.matchAll(OTP_CODE)) {
+      const [start, end] = match.indices![1]!;
+      yield { label: "SENHA", start, end, score: 0.8, recognizer: this.name };
+    }
+    yield* this.seedPhrases(text);
     for (const match of text.matchAll(PROSE_PASSWORD)) {
       const [start, matchEnd] = match.indices![2]!;
       // O ponto que fecha a frase não faz parte da senha: "resetei a senha para Tmp#4821."
@@ -189,6 +216,46 @@ export class SecretRecognizer implements Recognizer {
           yield { label: "SEGREDO", start: offset + start, end: offset + end, score: 0.85, recognizer: this.name };
         }
       }
+    }
+  }
+  /** Sequências de palavras do BIP-39: com o checksum certo, ou 12+ palavras depois de "seed", "carteira"... */
+  private *seedPhrases(text: string): Iterable<Candidate> {
+    bip39Indexes ??= new Map(bip39.map((word, index) => [word, index]));
+    let run: [number, number, number][] = [];
+    for (const match of text.matchAll(SEED_WORD)) {
+      const index = bip39Indexes.get(match[0].toLowerCase());
+      const start = match.index!;
+      if (index !== undefined && run.length > 0) {
+        const previous = run[run.length - 1][1];
+        if (start - previous > 12 || !SEED_GAP.test(text.slice(previous, start))) {
+          yield* this.seedRun(text, run);
+          run = [];
+        }
+      }
+      if (index === undefined) {
+        yield* this.seedRun(text, run);
+        run = [];
+      } else {
+        run.push([start, start + match[0].length, index]);
+      }
+    }
+    yield* this.seedRun(text, run);
+  }
+
+  private *seedRun(text: string, run: [number, number, number][]): Iterable<Candidate> {
+    if (run.length < 12) return;
+    for (const size of SEED_SIZES) { // a maior janela com o checksum certo
+      for (let offset = 0; offset + size <= run.length; offset++) {
+        const window = run.slice(offset, offset + size);
+        if (isValidBip39(window.map(([, , index]) => index))) {
+          yield { label: "CHAVE_PRIVADA", start: window[0][0], end: window[size - 1][1], score: 0.99, recognizer: this.name };
+          return;
+        }
+      }
+    }
+    const start = run[0][0];
+    if (SEED_CONTEXT.test(text.slice(Math.max(0, start - 80), start))) {
+      yield { label: "CHAVE_PRIVADA", start, end: run[run.length - 1][1], score: 0.9, recognizer: this.name };
     }
   }
 }

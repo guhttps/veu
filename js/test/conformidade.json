@@ -1552,6 +1552,221 @@
    "generalizado": "CPF [CPF] e CPF [CPF]."
   },
   {
+   "texto": "minha seed: abandon ability able about above absent absorb abstract absurd abuse access accident",
+   "entidades": [
+    [
+     "CHAVE_PRIVADA",
+     12,
+     96,
+     0.9
+    ]
+   ],
+   "anonimizado": "minha seed: [CHAVE_PRIVADA_1]",
+   "mascarado": "minha seed: ********",
+   "generalizado": "minha seed: [CHAVE_PRIVADA]"
+  },
+  {
+   "texto": "1. legal 2. winner 3. thank 4. year 5. wave 6. sausage 7. worth 8. useful 9. legal 10. winner 11. thank 12. yellow",
+   "entidades": [
+    [
+     "CHAVE_PRIVADA",
+     3,
+     114,
+     0.99
+    ]
+   ],
+   "anonimizado": "1. [CHAVE_PRIVADA_1]",
+   "mascarado": "1. ********",
+   "generalizado": "1. [CHAVE_PRIVADA]"
+  },
+  {
+   "texto": "Lista: about above across act action actor actual add address adult advance advice after again against age",
+   "entidades": [],
+   "anonimizado": "Lista: about above across act action actor actual add address adult advance advice after again against age",
+   "mascarado": "Lista: about above across act action actor actual add address adult advance advice after again against age",
+   "generalizado": "Lista: about above across act action actor actual add address adult advance advice after again against age"
+  },
+  {
+   "texto": "Redefinir: https://app.example.com/reset?token=8f3a9c2b7d1e4f6a9b0c3d5e7f1a2b4c&u=2 e otpauth://totp/Empresa:joao?secret=JBSWY3DPEHPK3PXP&issuer=Empresa",
+   "entidades": [
+    [
+     "SEGREDO",
+     47,
+     79,
+     0.85
+    ],
+    [
+     "SEGREDO",
+     121,
+     137,
+     0.98
+    ]
+   ],
+   "anonimizado": "Redefinir: https://app.example.com/reset?token=[SEGREDO_1]&u=2 e otpauth://totp/Empresa:joao?secret=[SEGREDO_2]&issuer=Empresa",
+   "mascarado": "Redefinir: https://app.example.com/reset?token=****&u=2 e otpauth://totp/Empresa:joao?secret=****&issuer=Empresa",
+   "generalizado": "Redefinir: https://app.example.com/reset?token=[SEGREDO]&u=2 e otpauth://totp/Empresa:joao?secret=[SEGREDO]&issuer=Empresa"
+  },
+  {
+   "texto": "WIFI:T:WPA;S:CasaSouza;P:minhaSenha2024!;; Seu código de verificação é 483920. OTP: 1234.",
+   "entidades": [
+    [
+     "SENHA",
+     25,
+     40,
+     0.95
+    ],
+    [
+     "SENHA",
+     71,
+     77,
+     0.8
+    ],
+    [
+     "SENHA",
+     84,
+     88,
+     0.8
+    ]
+   ],
+   "anonimizado": "WIFI:T:WPA;S:CasaSouza;P:[SENHA_1];; Seu código de verificação é [SENHA_2]. OTP: [SENHA_3].",
+   "mascarado": "WIFI:T:WPA;S:CasaSouza;P:********;; Seu código de verificação é ********. OTP: ********.",
+   "generalizado": "WIFI:T:WPA;S:CasaSouza;P:[SENHA];; Seu código de verificação é [SENHA]. OTP: [SENHA]."
+  },
+  {
+   "texto": "cartão final 4242, validade 12/27, CVV 123; código de segurança do cartão: 9876",
+   "entidades": [
+    [
+     "CARTAO_CREDITO",
+     39,
+     42,
+     0.9
+    ],
+    [
+     "CARTAO_CREDITO",
+     75,
+     79,
+     0.9
+    ]
+   ],
+   "anonimizado": "cartão final 4242, validade 12/27, CVV [CARTAO_CREDITO_1]; código de segurança do cartão: [CARTAO_CREDITO_2]",
+   "mascarado": "cartão final 4242, validade 12/27, CVV ***; código de segurança do cartão: ****",
+   "generalizado": "cartão final 4242, validade 12/27, CVV [CARTAO_CREDITO]; código de segurança do cartão: [CARTAO_CREDITO]"
+  },
+  {
+   "texto": "Pix: 00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-4266554400005204000053039865802BR5913Fulano de Tal6008BRASILIA62070503***63041D3D",
+   "entidades": [
+    [
+     "CHAVE_PIX",
+     5,
+     142,
+     0.99
+    ]
+   ],
+   "anonimizado": "Pix: [CHAVE_PIX_1]",
+   "mascarado": "Pix: ****************.***.***.***************-****-****-****-******************************************* ** ********************************3D",
+   "generalizado": "Pix: [CHAVE_PIX]"
+  },
+  {
+   "texto": "Linha digitável: 34191.79001 01043.510047 91020.150008 1 96610000017500; inválida: 34191.79001 01043.510048 91020.150008 1 96610000017500",
+   "entidades": [
+    [
+     "BOLETO",
+     17,
+     71,
+     0.95
+    ],
+    [
+     "BOLETO",
+     83,
+     137,
+     0.8
+    ]
+   ],
+   "anonimizado": "Linha digitável: [BOLETO_1]; inválida: [BOLETO_2]",
+   "mascarado": "Linha digitável: *****.***** *****.****** *****.****** * ************00; inválida: *****.***** *****.****** *****.****** * ************00",
+   "generalizado": "Linha digitável: [BOLETO]; inválida: [BOLETO]"
+  },
+  {
+   "texto": "Matrícula da certidão: 104539 01 55 2013 1 00012 021 0000123 55. RNM V123456-7.",
+   "entidades": [
+    [
+     "CERTIDAO",
+     23,
+     63,
+     0.97
+    ],
+    [
+     "RG",
+     69,
+     78,
+     0.9
+    ]
+   ],
+   "anonimizado": "Matrícula da certidão: [CERTIDAO_1]. RNM [RG_1].",
+   "mascarado": "Matrícula da certidão: ****** ** ** **** * ***** *** ******* 55. RNM ******6-7.",
+   "generalizado": "Matrícula da certidão: [CERTIDAO]. RNM [RG]."
+  },
+  {
+   "texto": "IMEI do aparelho: 35-209900-176148-1; cartão 352099001761481; localização 23°33'01\"S 46°38'02\"W",
+   "entidades": [
+    [
+     "IMEI",
+     18,
+     36,
+     0.97
+    ],
+    [
+     "CARTAO_CREDITO",
+     45,
+     60,
+     0.95
+    ],
+    [
+     "COORDENADAS",
+     74,
+     95,
+     0.9
+    ]
+   ],
+   "anonimizado": "IMEI do aparelho: [IMEI_1]; cartão [CARTAO_CREDITO_1]; localização [COORDENADAS_1]",
+   "mascarado": "IMEI do aparelho: **-******-*****8-1; cartão *************81; localização **°**'**\"* **°**'*2\"W",
+   "generalizado": "IMEI do aparelho: [IMEI]; cartão [CARTAO_CREDITO]; localização [COORDENADAS]"
+  },
+  {
+   "texto": "joao.silva [at] gmail [dot] com, maria arroba empresa ponto com ponto br e te vejo at home dot",
+   "entidades": [
+    [
+     "EMAIL",
+     0,
+     31,
+     0.9
+    ],
+    [
+     "EMAIL",
+     33,
+     72,
+     0.85
+    ]
+   ],
+   "anonimizado": "[EMAIL_1], [EMAIL_2] e te vejo at home dot",
+   "mascarado": "****.***** [**] ***** [***] *om, ***** ****** ******* ***** *** ***** br e te vejo at home dot",
+   "generalizado": "[EMAIL], [EMAIL] e te vejo at home dot"
+  },
+  {
+   "texto": "X-Amz-Signature=3f2c1a9e8b7d4e6f9a0b1c2d3e4f5a6b7c8d9e0f&X-Amz-Credential=abc",
+   "entidades": [
+    [
+     "SEGREDO",
+     16,
+     56,
+     0.85
+    ]
+   ],
+   "anonimizado": "X-Amz-Signature=[SEGREDO_1]&X-Amz-Credential=abc",
+   "mascarado": "X-Amz-Signature=****&X-Amz-Credential=abc",
+   "generalizado": "X-Amz-Signature=[SEGREDO]&X-Amz-Credential=abc"
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [

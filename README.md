@@ -30,9 +30,9 @@ Você recebe    Pronto, Maria Souza! Configurei sk-proj-4f9a... no seu .env.
 Empresas e pessoas estão colocando IA no atendimento, nos contratos, no RH e no código. Junto com cada pergunta vão nomes, documentos e contatos de clientes, e também chaves de API e senhas. O Véu fica no meio do caminho e protege:
 
 - **Dados pessoais de qualquer país:** nomes, e-mails, telefones (com código de qualquer país), cartões, IBAN, endereços IP e datas de nascimento.
-- **A infraestrutura da empresa:** endereços IP, portas, nomes de servidores internos e endereços MAC.
+- **A infraestrutura da empresa:** endereços IP, portas, nomes de servidores internos, endereços MAC e IMEI de celulares.
 - **Documentos brasileiros, conferidos de verdade:** CPF, CNPJ (inclusive o alfanumérico de 2026), RG, CNH, PIS, cartão do SUS e outros, pelos dígitos verificadores.
-- **Segredos de qualquer serviço:** chaves de API de mais de 30 serviços, tokens, senhas, chaves privadas e URLs de banco com senha.
+- **Segredos de qualquer serviço:** chaves de API de mais de 30 serviços, tokens (inclusive em links de redefinição de senha), senhas, códigos de verificação, segredos de 2FA, chaves privadas, frases de recuperação de carteiras de criptomoeda e URLs de banco com senha.
 
 E funciona do jeito que você usa IA: no navegador, no computador, no seu código ou no servidor da empresa.
 
@@ -104,18 +104,20 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 ## Recursos
 
 - 🌍 **Dados pessoais de qualquer lugar:** nomes, e-mails, telefones (brasileiros e de qualquer país, com +código), endereços, cartões de crédito, IBAN, endereços IP (v4 e v6) e datas de nascimento.
-- 🖥️ **Infraestrutura:** IPs, portas (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`) nomes de servidores internos (`db.interna`, `cache.prod.local`) e endereços MAC (`95:7F:76:CE:A3:DA`).
+- 🖥️ **Infraestrutura:** IPs, portas (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`) nomes de servidores internos (`db.interna`, `cache.prod.local`) endereços MAC (`95:7F:76:CE:A3:DA`) e IMEI de celulares (`35-209900-176148-1`).
 - ☑️ **Você escolhe o que esconder:** caixinhas por grupo na página, na extensão e no painel, com escolha tipo a tipo. Desmarcar senhas e chaves mostra um aviso.
-- 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CTPS, registro profissional (OAB, CRM, CREA...), números de cadastro (prontuário, matrícula, carteirinha do convênio, apólice), CEP, placa, RENAVAM, conta bancária, chave Pix e processo do CNJ. Logins no formato nome.sobrenome, coordenadas de GPS e datas de nascimento em tabelas (SQL, CSV) também somem.
+- 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CTPS, registro profissional (OAB, CRM, CREA...), números de cadastro (prontuário, matrícula, carteirinha do convênio, apólice), CEP, placa, RENAVAM, conta bancária, chave Pix, Pix copia e cola (conferido pelo CRC), boleto (linha digitável e código de barras, pelos verificadores), matrícula de certidão de nascimento e casamento, RNM de estrangeiros e processo do CNJ. Logins no formato nome.sobrenome, e-mails disfarçados (`joao [at] gmail [dot] com`), coordenadas de GPS (decimais ou em graus, minutos e segundos), CVV e datas de nascimento em tabelas (SQL, CSV) também somem.
 - 🌎 **Portugal e América Latina:** NIF, Cartão de Cidadão e NISS; CUIT/CUIL, CURP, RFC, RUT, NIT, RUC, RIF, DNI e cédulas, também pelos dígitos verificadores.
 - 🌐 **África lusófona, EUA, Europa, Canadá e Índia:** NUIT e BI (Angola e Moçambique), SSN, ITIN e Medicare (EUA), DNI e NIE (Espanha), codice fiscale (Itália), NIR (França), Steuer-ID (Alemanha), National Insurance e NHS (Reino Unido), BSN (Países Baixos), SIN (Canadá), Aadhaar e PAN (Índia); também passaportes pela zona de leitura (MRZ), chassi (VIN) e carteiras de Bitcoin e Ethereum.
 - 🔑 **Segredos:**
   - chaves da OpenAI, Anthropic, AWS, Google, GitHub, Stripe, Slack, Hugging Face, Notion, Mercado Pago, Asaas e mais 20 serviços;
   - JWT e tokens Bearer;
-  - senhas (`DB_PASSWORD=...`, "a senha é ...");
+  - senhas (`DB_PASSWORD=...`, "a senha é ...", QR de Wi-Fi) e códigos de verificação ("seu código é 483920");
+  - tokens em links (`?token=...`, `X-Amz-Signature=...`) e segredos de 2FA (`otpauth://...secret=...`);
+  - frases de recuperação de carteiras (12 a 24 palavras do BIP-39, pelo checksum ou com "seed" e "carteira" por perto);
   - chaves privadas e URLs de banco com senha.
 - ✅ **Validação de verdade:**
-  - dígitos verificadores de CPF, CNPJ, PIS, CNS, CNH, título, RENAVAM, processo CNJ, IBAN e cartões;
+  - dígitos verificadores de CPF, CNPJ, PIS, CNS, CNH, título, RENAVAM, processo CNJ, IBAN, cartões, IMEI e boletos, CRC do Pix copia e cola e checksum das frases de recuperação;
   - DDDs válidos.
 
   Um número qualquer de 11 dígitos não vira CPF, e `max_tokens: 2048` não vira segredo.
@@ -406,7 +408,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 958 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 997 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 python scripts/simular_usuarios.py --rodadas 5    # 59 perfis de trabalho usando o Véu, com dados fictícios

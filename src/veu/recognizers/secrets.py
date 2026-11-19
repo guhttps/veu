@@ -14,7 +14,8 @@ from dataclasses import dataclass
 from functools import cache
 from importlib import resources
 
-from veu.recognizers.base import Candidate
+from veu.recognizers.base import Candidate, load_wordlist
+from veu.validators import is_valid_bip39
 
 LABELS = ("CHAVE_API", "TOKEN", "SENHA", "CHAVE_PRIVADA", "URL_CONEXAO", "SEGREDO")
 
@@ -66,7 +67,23 @@ SESSION_COOKIE_WORDS = frozenset({"session", "sessionid", "sess", "sessid", "sid
                                   "jwt", "remember"})
 
 PASSWORD_WORDS = frozenset({"password", "passwd", "passphrase", "pwd", "senha", "pass", "passw"})
-SECRET_WORDS = frozenset({"secret", "token", "apikey", "credential", "credentials", "credencial", "credenciais"})
+SECRET_WORDS = frozenset({"secret", "token", "apikey", "credential", "credentials", "credencial", "credenciais",
+                          "signature", "sig", "auth"})
+# Código de verificação por SMS ou app ("seu código de verificação é 483920", "OTP: 1234").
+OTP_CODE = re.compile(
+    r"(?<![A-Za-z0-9])(?:c[óo]digo\s+(?:de\s+)?(?:verifica[çc][ãa]o|confirma[çc][ãa]o|acesso|autentica[çc][ãa]o|login"
+    r"|ativa[çc][ãa]o|valida[çc][ãa]o)|verification\s+code|one[- ]time\s+(?:password|code)|otp|2fa|token\s+sms)"
+    r"[^\d\n]{0,25}?(?<!\d)(\d{4,8})(?!\d)",
+    re.IGNORECASE,
+)
+# Frase de recuperação de carteira (BIP-39): 12 a 24 palavras da lista, separadas por espaço, vírgula ou numeração.
+SEED_WORD = re.compile(r"[A-Za-z]+")
+SEED_GAP = re.compile(r"[ \t\r\n,;]*(?:\d{1,2}[ \t]*[.):-]?[ \t]*)?")
+SEED_CONTEXT = re.compile(
+    r"seed|semente|mnem[oô]nic|recupera[cç][aã]o|recovery|frase|phrase|palavras|words|carteira|wallet|backup",
+    re.IGNORECASE,
+)
+SEED_SIZES = (24, 21, 18, 15, 12)
 SECRET_PAIRS = frozenset({
     ("api", "key"), ("access", "key"), ("private", "key"), ("secret", "key"), ("auth", "key"), ("chave", "api"),
     ("signing", "key"), ("encryption", "key"), ("master", "key"), ("account", "key"), ("app", "key"),
@@ -185,7 +202,10 @@ class SecretRecognizer:
                 if not value or (rule.filter == "aleatorio" and not looks_random(value)):
                     continue
                 yield Candidate(rule.label, start, end, rule.score, self.name)
-        for match in ASSIGNMENT.finditer(text):
+        position = 0
+        while (match := ASSIGNMENT.search(text, position)) is not None:
+            # O valor pode trazer outras atribuições: em "https://site/reset?token=8f3a...", a primeira é "https:".
+            position = match.end(2)
             kind = key_kind(match.group(1))
             if kind is None:
                 continue
@@ -197,8 +217,13 @@ class SecretRecognizer:
                 prose = match.group(2) == ":" and len(key_words(match.group(1))) == 1
                 if plausible_password(value, prose=prose):
                     yield Candidate("SENHA", match.start(3), match.end(3), 0.85, self.name)
+                    position = match.end(3)
             elif looks_random(value):
                 yield Candidate("SEGREDO", match.start(3), match.end(3), 0.85, self.name)
+                position = match.end(3)
+        for match in OTP_CODE.finditer(text):
+            yield Candidate("SENHA", match.start(1), match.end(1), 0.8, self.name)
+        yield from self._seed_phrases(text)
         for match in PROSE_PASSWORD.finditer(text):
             start, end = match.span(2)
             # O ponto que fecha a frase não faz parte da senha: "resetei a senha para Tmp#4821."
@@ -220,3 +245,38 @@ class SecretRecognizer:
                 words = set(key_words(name))
                 if (key_kind(name) or words & SESSION_COOKIE_WORDS) and (looks_random(value) or len(value) >= 16):
                     yield Candidate("SEGREDO", offset + pair.start(2), offset + pair.end(2), 0.85, self.name)
+
+    def _seed_phrases(self, text: str) -> Iterable[Candidate]:
+        """Sequências de palavras do BIP-39: com o checksum certo, ou 12+ palavras depois de "seed", "carteira"..."""
+        indexes = bip39_indexes()
+        run: list[tuple[int, int, int]] = []
+        for match in SEED_WORD.finditer(text):
+            index = indexes.get(match.group(0).lower())
+            if index is not None and run and (match.start() - run[-1][1] > 12
+                                              or SEED_GAP.fullmatch(text, run[-1][1], match.start()) is None):
+                yield from self._seed_run(text, run)
+                run = []
+            if index is None:
+                yield from self._seed_run(text, run)
+                run = []
+            else:
+                run.append((match.start(), match.end(), index))
+        yield from self._seed_run(text, run)
+
+    def _seed_run(self, text: str, run: list[tuple[int, int, int]]) -> Iterable[Candidate]:
+        if len(run) < 12:
+            return
+        for size in SEED_SIZES:  # a maior janela com o checksum certo
+            for offset in range(len(run) - size + 1):
+                window = run[offset:offset + size]
+                if is_valid_bip39([index for _, _, index in window]):
+                    yield Candidate("CHAVE_PRIVADA", window[0][0], window[-1][1], 0.99, self.name)
+                    return
+        start = run[0][0]
+        if SEED_CONTEXT.search(text, max(0, start - 80), start):
+            yield Candidate("CHAVE_PRIVADA", start, run[-1][1], 0.9, self.name)
+
+
+@cache
+def bip39_indexes() -> dict[str, int]:
+    return {word: index for index, word in enumerate(load_wordlist("bip39.txt"))}

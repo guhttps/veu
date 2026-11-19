@@ -639,3 +639,109 @@ export function isLikelyCoordinates(value: string): boolean {
   const decimals = Math.min(...parts.map((part) => (part.split(".")[1] ?? "").length));
   return decimals >= 5 && (latitude < 0 || longitude < 0);
 }
+
+/** IMEI de celular: 15 dígitos com Luhn, sem o prefixo do Amex (34 e 37) nem os números do cartão do SUS. */
+export function isValidImei(value: string): boolean {
+  const digits = onlyDigits(value);
+  return digits.length === 15 && isValidLuhn(digits) && !["34", "37"].includes(digits.slice(0, 2)) && !isValidCns(digits);
+}
+
+function boletoMod10(digits: string): number {
+  let total = 0;
+  for (let position = 0; position < digits.length; position++) {
+    const number = Number(digits[digits.length - 1 - position]) * (position % 2 === 0 ? 2 : 1);
+    total += Math.floor(number / 10) + (number % 10);
+  }
+  return (10 - (total % 10)) % 10;
+}
+
+function boletoMod11(digits: string, bank: boolean): number {
+  let total = 0;
+  for (let position = 0; position < digits.length; position++) {
+    total += Number(digits[digits.length - 1 - position]) * (2 + (position % 8));
+  }
+  const rest = total % 11;
+  if (bank) return rest === 0 || rest === 1 ? 1 : 11 - rest; // boleto bancário: 0, 10 e 11 viram 1
+  return rest === 0 || rest === 1 ? 0 : 11 - rest; // arrecadação (contas de consumo e tributos)
+}
+
+function barcodeOk(code: string): boolean {
+  if (code[0] === "8") {
+    if (!"6789".includes(code[2])) return false;
+    const rest = code.slice(0, 3) + code.slice(4);
+    return Number(code[3]) === ("67".includes(code[2]) ? boletoMod10(rest) : boletoMod11(rest, false));
+  }
+  return code[3] === "9" && Number(code[4]) === boletoMod11(code.slice(0, 4) + code.slice(5), true);
+}
+
+/** Boleto: linha digitável bancária (47 dígitos), de arrecadação (48) ou código de barras (44), com os verificadores. */
+export function isValidBoleto(value: string): boolean {
+  const digits = onlyDigits(value);
+  if (digits.length === 44) return !repeated(digits) && barcodeOk(digits);
+  if (digits.length === 47) {
+    // Os três campos têm verificador próprio (módulo 10) e o quarto dígito é a moeda (9, real).
+    const fields: [number, number][] = [[0, 9], [10, 20], [21, 31]];
+    return digits[3] === "9" && fields.every(([start, end]) => boletoMod10(digits.slice(start, end)) === Number(digits[end]));
+  }
+  if (digits.length === 48 && digits[0] === "8" && "6789".includes(digits[2])) {
+    const blocks = [0, 12, 24, 36].map((start) => digits.slice(start, start + 12));
+    const check = "67".includes(digits[2]) ? boletoMod10 : (part: string) => boletoMod11(part, false);
+    if (blocks.some((block) => check(block.slice(0, 11)) !== Number(block[11]))) return false;
+    return barcodeOk(blocks.map((block) => block.slice(0, 11)).join(""));
+  }
+  return false;
+}
+
+export function crc16Ccitt(data: Uint8Array): number {
+  let crc = 0xffff;
+  for (const byte of data) {
+    crc ^= byte << 8;
+    for (let bit = 0; bit < 8; bit++) crc = (crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1) & 0xffff;
+  }
+  return crc;
+}
+
+/** Pix copia e cola (BR Code): começa com 000201, tem o domínio do Pix e termina com o CRC16 certo. */
+export function isValidBrcode(value: string): boolean {
+  if (value.length < 40 || !value.startsWith("000201") || !value.toLowerCase().includes("br.gov.bcb.pix")) return false;
+  const body = value.slice(0, -4);
+  const crc = crc16Ccitt(new TextEncoder().encode(body)).toString(16).toUpperCase().padStart(4, "0");
+  return body.endsWith("6304") && crc === value.slice(-4).toUpperCase();
+}
+
+/**
+ * Matrícula de certidão do registro civil (32 dígitos): serviço 55, acervo, ano e tipo de livro plausíveis.
+ * O cálculo dos dígitos verificadores não é público (vem do programa dos cartórios), então só a estrutura é conferida.
+ */
+export function isLikelyCertidao(value: string): boolean {
+  const digits = onlyDigits(value);
+  if (digits.length !== 32) return false;
+  const year = Number(digits.slice(10, 14));
+  return digits[6] === "0" && digits[7] !== "0" && digits.slice(8, 10) === "55" && year >= 1850 && year <= 2100
+    && "1234567".includes(digits[14]);
+}
+
+const DMS_PART = /(\d{1,3})\s*°\s*(\d{1,2}(?:[.,]\d+)?)\s*['′’]\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*(?:"|″|”|''|′′))?\s*([NSLOWE])/gi;
+
+/** Par de coordenadas em graus, minutos e segundos ("23°33'01\"S 46°38'02\"W"), dentro dos limites. */
+export function isValidDms(value: string): boolean {
+  const parts = [...value.matchAll(DMS_PART)];
+  if (parts.length !== 2) return false;
+  if (!"NS".includes(parts[0][4].toUpperCase()) || !"LOWE".includes(parts[1][4].toUpperCase())) return false;
+  return parts.every((part, index) => {
+    const [, degrees, minutes, seconds] = part;
+    return Number(degrees) <= (index === 0 ? 90 : 180) && Number(minutes.replace(",", ".")) < 60
+      && (!seconds || Number(seconds.replace(",", ".")) < 60);
+  });
+}
+
+/** Checksum de uma frase de recuperação BIP-39 (posições das palavras na lista de 2048). */
+export function isValidBip39(indexes: readonly number[]): boolean {
+  if (![12, 15, 18, 21, 24].includes(indexes.length)) return false;
+  const bits = indexes.map((index) => index.toString(2).padStart(11, "0")).join("");
+  const size = Math.floor((bits.length * 32) / 33);
+  const entropy = new Uint8Array(size / 8);
+  for (let i = 0; i < entropy.length; i++) entropy[i] = parseInt(bits.slice(i * 8, i * 8 + 8), 2);
+  const digest = [...sha256(entropy)].map((byte) => byte.toString(2).padStart(8, "0")).join("");
+  return bits.slice(size) === digest.slice(0, bits.length - size);
+}

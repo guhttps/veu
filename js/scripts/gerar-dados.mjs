@@ -25,6 +25,8 @@ const lists = {
   stopwords: wordlist("stopwords.txt"),
   places: [...new Set([...wordlist("places.txt"), ...wordlist("ibge_municipios.txt")])],
   organizations: wordlist("organizations.txt"),
+  // Lista oficial do BIP-39: a ordem é o valor de cada palavra na frase de recuperação.
+  bip39: wordlist("bip39.txt"),
 };
 const secrets = JSON.parse(readFileSync(join(data, "segredos.json"), "utf8")).regras;
 const groups = JSON.parse(readFileSync(join(data, "grupos.json"), "utf8")).grupos;

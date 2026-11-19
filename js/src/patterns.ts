@@ -95,6 +95,16 @@ const CTX_BIRTH_COLUMN = [
   "birth_date", "birthdate", "date_of_birth", "dob", "data de nascimento", "data nascimento",
 ];
 const CTX_MAC = ["mac", "endereco mac", "mac address", "macaddress", "hwaddr", "ether", "bssid"];
+const CTX_IMEI = ["imei", "imei1", "imei 1", "imei2", "imei 2"];
+const CTX_BOLETO = ["boleto", "linha digitavel", "codigo de barras", "fatura", "pagamento", "pagar", "conta", "vencimento"];
+const CTX_CERTIDAO = ["certidao", "matricula", "registro civil", "nascimento", "casamento", "obito", "cartorio", "registro"];
+// E-mail disfarçado ("joao.silva [at] gmail [dot] com", "maria arroba gmail ponto com").
+const OBF_AT = "\\s*[\\[({<]\\s*(?:at|arroba)\\s*[\\])}>]\\s*";
+const OBF_DOT = "(?:\\s*[\\[({<]\\s*(?:dot|ponto)\\s*[\\])}>]\\s*|\\s+(?:dot|ponto)\\s+)";
+const EMAIL_TLDS = "(?:com|net|org|br|gov|edu|io|me|co|info|biz|dev|app|pt|us|uk|es|ar|mx|cl|uy|py|de|fr|it|jus|mil|adv"
+  + "|ind|tech|online|site)";
+// Coordenadas em graus, minutos e (opcional) segundos: 23°33'01"S 46°38'02"W.
+const DMS = "\\d{1,3}\\s*°\\s*\\d{1,2}(?:[.,]\\d+)?\\s*['′’]\\s*(?:\\d{1,2}(?:[.,]\\d+)?\\s*(?:\"|″|”|''|′′)\\s*)?";
 const CTX_COORD = [
   "coordenadas", "coordenada", "localizacao", "local", "gps", "lat", "latitude", "lng", "lon", "longitude",
   "geolocalizacao", "posicao", "location",
@@ -217,8 +227,13 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   spec("CTPS", `(?<![${W}])s[ée]rie[ \\t]*(?:n[º°o]\\.?[ \\t]*)?(?<valor>\\d{3,5}(?:-?[A-Z]{2})?)(?![${W}])`,
     S(null, null, 0.85), { context: CTX_CTPS, flags: "i", before: 40 }),
   // Contatos
-  spec("EMAIL", `(?<![\\p{L}\\p{N}_.+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}${E}`,
+  spec("EMAIL", `(?<![\\p{L}\\p{N}_.%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}${E}`,
     S(0.95), { context: CTX_EMAIL }),
+  // O lookbehind cobre todos os caracteres do usuário (inclusive o %): a busca só começa no início de cada trecho.
+  spec("EMAIL", `(?<![\\p{L}\\p{N}_.%+-])[A-Za-z0-9._%+-]+${OBF_AT}[A-Za-z0-9-]+(?:(?:${OBF_DOT}|\\.)[A-Za-z0-9-]+)*`
+    + `(?:${OBF_DOT}|\\.)${EMAIL_TLDS}${E}`, S(0.9), { flags: "i", name: "disfarcado" }),
+  spec("EMAIL", `(?<![\\p{L}\\p{N}_.%+-])[A-Za-z0-9._%+-]+\\s+(?:at|arroba)\\s+[A-Za-z0-9-]+(?:${OBF_DOT}[A-Za-z0-9-]+)*`
+    + `${OBF_DOT}${EMAIL_TLDS}${E}`, S(0.85), { flags: "i", name: "disfarcado" }),
   // Codificado em URL ("checkout?email=ana%40example.com"): o %40 é o @.
   spec("EMAIL", `(?<![\\p{L}\\p{N}_.+-])[A-Za-z0-9._+-]+%40[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}${E}`,
     S(0.9), { context: CTX_EMAIL, name: "url" }),
@@ -241,6 +256,20 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   // Financeiro
   spec("CARTAO_CREDITO", `${B}\\d(?:[ -]?\\d){12,18}${E}`, S(0.85, null, 0.95, 0.6),
     { validator: v.isValidCard, context: CTX_CARD }),
+  // CVV do cartão: só o número depois de "CVV", "CVC" ou "código de segurança".
+  spec("CARTAO_CREDITO", `${B}(?:CVV2?|CVC2?|CSC|c[óo]d(?:igo|\\.)?\\s+de\\s+seguran[çc]a)(?:\\s+do\\s+cart[ãa]o)?`
+    + `[\\s:=nº°.\\-]{0,5}(?<valor>\\d{3,4})${E}`, S(0.9), { flags: "i", name: "cvv" }),
+  // Boleto: linha digitável bancária (47 dígitos), de arrecadação (48, começa com 8) e código de barras (44).
+  spec("BOLETO", `${B}\\d{5}\\.?\\d{5}[ \\t]+\\d{5}\\.?\\d{6}[ \\t]+\\d{5}\\.?\\d{6}[ \\t]+\\d[ \\t]+\\d{14}${E}`, S(0.95, 0.8),
+    { validator: v.isValidBoleto }),
+  spec("BOLETO", `${B}8\\d{10}[ \\-]?\\d(?:[ \\t]+\\d{11}[ \\-]?\\d){3}${E}`, S(0.95, 0.8), { validator: v.isValidBoleto }),
+  spec("BOLETO", `${B}(?:\\d{44}|\\d{47,48})${E}`, S(0.9, null, 0.97), { validator: v.isValidBoleto, context: CTX_BOLETO }),
+  // Pix copia e cola (BR Code): traz a chave, o nome e a cidade de quem recebe. Duas buscas na linha (até a
+  // primeira e até a última terminação "6304" + CRC); só vale com o CRC certo.
+  spec("CHAVE_PIX", `${B}000201[^\\n]{20,600}?6304[0-9A-Fa-f]{4}(?![0-9A-Fa-f])`, S(0.99),
+    { validator: v.isValidBrcode, name: "brcode" }),
+  spec("CHAVE_PIX", `${B}000201[^\\n]{20,600}6304[0-9A-Fa-f]{4}(?![0-9A-Fa-f])`, S(0.99),
+    { validator: v.isValidBrcode, name: "brcode" }),
   spec("IBAN", `${B}[A-Z]{2}\\d{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,4})?${E}`, S(0.95, null, 1.0),
     { validator: v.isValidIban, context: CTX_IBAN }),
   spec("CHAVE_PIX", `${B}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}${E}`,
@@ -266,6 +295,17 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   spec("COORDENADAS",
     `(?<![${W}.\\-])-?(?:[0-8]?\\d|90)\\.\\d{4,8}[ \\t]*,[ \\t]*-?(?:1[0-7]\\d|0?\\d?\\d|180)\\.\\d{4,8}(?![${W}]|\\.\\d)`,
     S(0.8, null, 0.9, 0.85), { validator: v.isLikelyCoordinates, context: CTX_COORD, before: 40 }),
+  spec("COORDENADAS", `(?<![${W}.])${DMS}[NSns](?![${W}])[\\s,;/]{0,4}${DMS}[LOWElowe](?![${W}])`, S(0.9),
+    { validator: v.isValidDms, name: "gms" }),
+  // Celular: IMEI (15 dígitos com Luhn). Com "IMEI" por perto, vence o cartão de crédito.
+  spec("IMEI", `${B}\\d{2}[ \\-]?\\d{6}[ \\-]?\\d{6}[ \\-]?\\d${E}`, S(0.86, null, 0.97),
+    { validator: v.isValidImei, context: CTX_IMEI }),
+  // Matrícula de certidão do registro civil (nascimento, casamento, óbito): 32 dígitos.
+  spec("CERTIDAO", `${B}\\d{6}[ .]?\\d{2}[ .]?\\d{2}[ .]?\\d{4}[ .]?\\d[ .]?\\d{5}[ .]?\\d{3}[ .]?\\d{7}[ .\\-]?\\d{2}${E}`,
+    S(0.9, null, 0.97), { validator: v.isLikelyCertidao, context: CTX_CERTIDAO }),
+  // Registro Nacional Migratório (RNM, antigo RNE) de estrangeiros no Brasil.
+  spec("RG", `${B}(?:RNM|RNE|CRNM)${E}[\\s:nº°.\\-]{0,6}(?<valor>[A-Za-z]\\d{6}-?[0-9A-Za-z])${E}`, S(0.9),
+    { flags: "i", name: "rnm" }),
   // Números de cadastro (prontuário, matrícula, carteirinha, apólice), só com o contexto; datas e valores ficam.
   spec("CADASTRO", `(?<![${W}.,/$\\-])(?<!R\\$ )\\d[\\d.\\-/]{3,22}\\d(?![${W}]|,\\d)`, S(null, null, 0.8),
     { context: CTX_CADASTRO, before: 30, exclude: isDate }),

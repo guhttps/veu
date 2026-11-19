@@ -6,6 +6,15 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 ## [Unreleased]
 
 ### Adicionado
+- **Mais tipos de dados**, em Python e JavaScript:
+  - **frases de recuperação de carteiras de criptomoeda** (`CHAVE_PRIVADA`): 12 a 24 palavras da lista oficial do BIP-39, numeradas ou não. Valem pelo checksum (os vetores oficiais são testados) ou com "seed", "carteira", "frase de recuperação" por perto; uma lista de palavras em inglês sem isso fica;
+  - **Pix copia e cola** (`CHAVE_PIX`): o código inteiro, que traz a chave, o nome e a cidade de quem recebe, conferido pelo CRC16;
+  - **boleto** (`BOLETO`): linha digitável bancária e de arrecadação e código de barras, pelos dígitos verificadores; a linha formatada some mesmo com um dígito errado;
+  - **matrícula de certidão** de nascimento, casamento e óbito (`CERTIDAO`, 32 dígitos), pela estrutura do registro civil;
+  - **IMEI de celular** (`IMEI`, com Luhn): antes ele era escondido como cartão de crédito;
+  - **RNM** (antigo RNE) de estrangeiros, como `RG`; **CVV** do cartão; **coordenadas em graus, minutos e segundos** (`23°33'01"S 46°38'02"W`); **e-mails disfarçados** (`joao [at] gmail [dot] com`, `maria arroba empresa ponto com`);
+  - **segredos**: tokens em links (`?token=`, `X-Amz-Signature=`), segredos de 2FA (`otpauth://...secret=`), senha de QR de Wi-Fi (`WIFI:...;P:...;`) e códigos de verificação ("seu código de verificação é 483920").
+  O operador sintético gera IMEI, boleto e certidão falsos e válidos no mesmo formato.
 - **Extensão em português e inglês:** o nome e a descrição vêm de `extensao/_locales`, então o navegador mostra o nome no idioma de quem usa e as lojas do Edge e do Firefox ganham uma página em cada idioma. Um teste confere que todo idioma cabe nos limites das lojas.
 - **Simulação de uso** (`scripts/simular_usuarios.py`): textos de 23 perfis de trabalho (advogada, contador, médica, RH, atendimento por WhatsApp, programador, suporte de TI, imobiliária, Portugal, Argentina, Chile e outros), com dados fictícios, conferindo vazamento, exagero, a volta dos dados e se Python e JavaScript concordam.
 
@@ -38,6 +47,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Disfarces na entrada:** letras cirílicas e gregas iguais às latinas ("mаria@...") e dígitos arábico-índicos, persas, devanágari e bengali são normalizados para a detecção (Python e JavaScript agora concordam neles). CPF com hífens no lugar dos pontos e com um espaço entre cada dígito também é reconhecido.
 
 ### Corrigido
+- **Tokens depois de um link na mesma linha:** em `https://site/reset?token=8f3a...`, a busca por atribuições pegava `https:` com o resto da linha e não olhava o `token=` que vinha dentro. Agora continua depois de cada separador.
+- **E-mail lento com "%":** a busca de e-mail começava em cada letra depois de um `%` e varria o resto do texto. 60 mil caracteres de `%40%40...` levavam 1 s (21 s com o e-mail disfarçado); agora levam 0,2 s.
 - **Senhas em frases de suporte:** "resetei a senha para Tmp#4821", "troquei a senha pra ...", "a senha do wifi fica ..." e "password to ..." agora são escondidas, sem pegar frases comuns ("senha para acessar o sistema"). O ponto que fecha a frase não entra mais na senha.
 - **Rótulos de formulário viravam nomes:** num comprovante Pix, "Para: Fulano" na linha de cima fazia de "Chave Pix:" um nome de pessoa. A palavra de contexto agora vale na mesma linha, ou só quando fecha a linha de cima ("Nome:" com o nome embaixo continua funcionando).
 

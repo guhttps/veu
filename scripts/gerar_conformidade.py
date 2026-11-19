@@ -92,6 +92,22 @@ EXTRA = [
     "CPF 529-982-247-25, CPF 5 2 9 9 8 2 2 4 7 2 5 e a sequência 5 2 9 9 8 2 2 4 7 2 5 do sorteio.",
     "e-mail mаria.souza@example.com e cliente Маria Souza.",
     "CPF ٥٢٩.٩٨٢.٢٤٧-٢٥ e CPF ५२९.९८२.२४७-२५.",
+    # Tipos novos: carteira cripto, 2FA, Wi-Fi, links com token, OTP, CVV, Pix, boleto, certidão, RNM, IMEI, GPS.
+    "minha seed: abandon ability able about above absent absorb abstract absurd abuse access accident",
+    "1. legal 2. winner 3. thank 4. year 5. wave 6. sausage 7. worth 8. useful 9. legal 10. winner 11. thank 12. yellow",
+    "Lista: about above across act action actor actual add address adult advance advice after again against age",
+    "Redefinir: https://app.example.com/reset?token=8f3a9c2b7d1e4f6a9b0c3d5e7f1a2b4c&u=2 e "
+    "otpauth://totp/Empresa:joao?secret=JBSWY3DPEHPK3PXP&issuer=Empresa",
+    "WIFI:T:WPA;S:CasaSouza;P:minhaSenha2024!;; Seu código de verificação é 483920. OTP: 1234.",
+    "cartão final 4242, validade 12/27, CVV 123; código de segurança do cartão: 9876",
+    "Pix: 00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-4266554400005204000053039865802BR5913Fulano de Tal"
+    "6008BRASILIA62070503***63041D3D",
+    "Linha digitável: 34191.79001 01043.510047 91020.150008 1 96610000017500; inválida: "
+    "34191.79001 01043.510048 91020.150008 1 96610000017500",
+    "Matrícula da certidão: 104539 01 55 2013 1 00012 021 0000123 55. RNM V123456-7.",
+    "IMEI do aparelho: 35-209900-176148-1; cartão 352099001761481; localização 23°33'01\"S 46°38'02\"W",
+    "joao.silva [at] gmail [dot] com, maria arroba empresa ponto com ponto br e te vejo at home dot",
+    "X-Amz-Signature=3f2c1a9e8b7d4e6f9a0b1c2d3e4f5a6b7c8d9e0f&X-Amz-Credential=abc",
 ]
 
 
