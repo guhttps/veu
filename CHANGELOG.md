@@ -5,6 +5,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-19
+
 ### Adicionado
 - **Mais tipos de dados**, em Python e JavaScript:
   - **frases de recuperação de carteiras de criptomoeda** (`CHAVE_PRIVADA`): 12 a 24 palavras da lista oficial do BIP-39, numeradas ou não. Valem pelo checksum (os vetores oficiais são testados) ou com "seed", "carteira", "frase de recuperação" por perto; uma lista de palavras em inglês sem isso fica;
@@ -16,8 +18,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
   - **segredos**: tokens em links (`?token=`, `X-Amz-Signature=`), segredos de 2FA (`otpauth://...secret=`), senha de QR de Wi-Fi (`WIFI:...;P:...;`) e códigos de verificação ("seu código de verificação é 483920").
   O operador sintético gera IMEI, boleto e certidão falsos e válidos no mesmo formato.
 - **Extensão em português e inglês:** o nome e a descrição vêm de `extensao/_locales`, então o navegador mostra o nome no idioma de quem usa e as lojas do Edge e do Firefox ganham uma página em cada idioma. Um teste confere que todo idioma cabe nos limites das lojas.
-- **Simulação de uso** (`scripts/simular_usuarios.py`): textos de 23 perfis de trabalho (advogada, contador, médica, RH, atendimento por WhatsApp, programador, suporte de TI, imobiliária, Portugal, Argentina, Chile e outros), com dados fictícios, conferindo vazamento, exagero, a volta dos dados e se Python e JavaScript concordam.
-
+- **Simulação de uso** (`scripts/simular_usuarios.py`): textos de 72 perfis de trabalho (advogada, contador, médica, RH, atendimento por WhatsApp, programador, suporte de TI, imobiliária, Portugal, Argentina, Chile e outros), com dados fictícios, conferindo vazamento, exagero, a volta dos dados e se Python e JavaScript concordam.
 - **Registro profissional** (`REGISTRO_PROFISSIONAL`): OAB, CRM, CRO, CREA, CRF, COREN, CRC, CRP e outros conselhos, com o estado ("OAB/SP 123.456", "CRM-SC nº 12345", "CRP 06/123456"). Só o número some; a sigla e o estado ficam, para a IA saber de que profissional se trata. Sem o estado, "CRM 365" continua sendo software.
 - **CTPS** (`CTPS`): número e série da carteira de trabalho antiga, com o contexto por perto.
 - **Logins nome.sobrenome** ("gislaine.vieira", "/home/joao_silva") viram `PESSOA`, sem pegar domínios (`maria.souza.com.br`), arquivos (`config.yaml`) nem palavras comuns.
@@ -31,7 +32,6 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **E-mail codificado em URL** ("checkout?email=ana%40example.com"), **endereço sem número na nota fiscal** (`<xLgr>`, logradouro) e **contexto de nascimento em inglês** ("date of birth", "DOB", "born").
 - **Simulação de ponta a ponta** (`scripts/simular_ponta_a_ponta.py`): CSV, Excel, Word, PowerPoint, JSON, texto e PDF pela linha de comando, e o proxy na frente de um provedor falso (OpenAI e Anthropic, com e sem streaming) que grava tudo o que recebe. Confere que o provedor nunca vê um dado real e que uma ferramenta de e-mail chamada pela IA recebe só marcadores.
 - A simulação ganhou técnicos lidando com acessos (AWS, Kubernetes, Docker, VPN, HTTP, chave SSH, CI, Slack, inventário de rede, firewall, Active Directory, cabeçalhos de e-mail, pentest, SQL) e mais tipos de dados (extrato, exame, matrícula, apólice, IMEI, documentos de EUA, Espanha, Itália, Reino Unido e Índia, IBAN e cripto): 50 perfis.
-
 - **Simulação de ataques** (`scripts/simular_ataques.py`): disfarces para passar pela detecção, roubo de dados pela volta (links, imagens, HTML, CSS, `javascript:`, `data:`, `mailto:`, marcadores disfarçados, streaming), textos feitos para travar as regex e ataques ao servidor (DNS rebinding, CSRF, token, caminhos maliciosos, corpo gigante, JSON quebrado). 63 conferências.
 
 ### Segurança
@@ -370,7 +370,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/guhttps/veu/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/guhttps/veu/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/guhttps/veu/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/guhttps/veu/compare/v0.6.0...v0.7.0
