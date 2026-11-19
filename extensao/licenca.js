@@ -4,8 +4,8 @@
 // própria chave. A chave pública e o endereço do servidor são definidos por nuvem/gerar-chaves.mjs.
 "use strict";
 (() => {
-  const CHAVE_PUBLICA = ""; // base64url dos 32 bytes da chave pública Ed25519 (vazio: o Pro ainda não está no ar)
-  const SERVIDOR = ""; // endereço do servidor de licenças (nuvem/worker.js)
+  const CHAVE_PUBLICA = "62O3t2ByV5o4dWL3VZNTl5mXWQjwOZm9ndF6hDB20U8"; // chave pública Ed25519 (base64url), de nuvem/gerar-chaves.mjs
+  const SERVIDOR = "https://licencas.veu-pro.workers.dev"; // servidor de licenças (nuvem/worker.js)
   const PREFIXO = "VEU1.";
 
   function deBase64url(texto) {

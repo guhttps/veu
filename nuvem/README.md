@@ -27,10 +27,10 @@ Os segredos (a chave privada e o access token do Mercado Pago) vão direto do se
    npx wrangler login
    ```
 2. **Chaves das licenças:** na pasta do projeto, rode `node nuvem/gerar-chaves.mjs`. A chave privada fica em `C:\Users\<você>\.veu-licencas\chave-privada.txt`, e a pública entra sozinha na extensão e no `wrangler.toml`.
-3. **Publicar o servidor:** dentro de `nuvem`, rode `npx wrangler deploy`. O endereço aparece no fim, algo como `https://veu-licencas.<sua-conta>.workers.dev`. Ele não é segredo.
+3. **Publicar o servidor:** dentro de `nuvem`, rode `npx wrangler deploy`. O endereço aparece no fim, algo como `https://licencas.veu-pro.workers.dev`. Ele não é segredo.
 4. **Enviar a chave privada:** dentro de `nuvem`, rode `npx wrangler secret put CHAVE_PRIVADA < "$HOME\.veu-licencas\chave-privada.txt"` (no PowerShell: `Get-Content "$HOME\.veu-licencas\chave-privada.txt" | npx wrangler secret put CHAVE_PRIVADA`).
 5. **Mercado Pago:** na sua conta pessoal, abra [Suas integrações](https://www.mercadopago.com.br/developers/panel/app), crie uma aplicação ("Assinaturas") e copie o **Access Token de produção**. Envie para a Cloudflare com `npx wrangler secret put MP_TOKEN` e cole o token quando o wrangler pedir.
-6. **Planos:** no PowerShell, rode `$env:MP_TOKEN = "<o mesmo access token>"; node nuvem/criar-planos.mjs https://veu-licencas.<sua-conta>.workers.dev` e depois `npx wrangler deploy` de novo. O script mostra os links de assinar.
+6. **Planos:** no PowerShell, rode `$env:MP_TOKEN = "<o mesmo access token>"; node nuvem/criar-planos.mjs https://licencas.veu-pro.workers.dev` e depois `npx wrangler deploy` de novo. O script mostra os links de assinar.
 7. **Me avise** com o endereço do servidor e os dois links de assinar (nenhum deles é segredo). Eu termino o resto (lista abaixo) e lanço a versão.
 
 ## Antes de lançar (eu faço)
