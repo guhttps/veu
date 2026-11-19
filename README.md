@@ -412,7 +412,7 @@ pip install -e ".[dev]"
 pytest                    # 1067 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
-python scripts/simular_usuarios.py --rodadas 5    # 72 perfis de trabalho usando o Véu, com dados fictícios
+python scripts/simular_usuarios.py --rodadas 5    # 77 perfis de trabalho usando o Véu, com dados fictícios
 python scripts/simular_ponta_a_ponta.py           # arquivos pela linha de comando e o proxy com um provedor falso
 python scripts/simular_ataques.py                 # disfarces, roubo pela volta, ReDoS e ataques ao servidor
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa

@@ -863,6 +863,82 @@ CENARIOS += [
 ]
 
 
+# --- Rodada 6: atendimento em outros idiomas -----------------------------------------------------------------------
+
+_NOMES_EXT = {
+    "en": (("Emily", "Michael", "Priya", "Oluwaseun", "Hannah", "Tyler"), ("Johnson", "Okonkwo", "Sharma", "Thompson")),
+    "es": (("Lucía", "Mateo", "Valentina", "Santiago", "Ximena"), ("García", "Fernández", "Ortega", "Quispe")),
+    "fr": (("Thibault", "Camille", "Élodie", "Mathis"), ("Lefebvre", "Dubois", "Moreau", "Girard")),
+    "de": (("Jürgen", "Lukas", "Annika", "Henrike"), ("Schwarzkopf", "Bergmann", "Vogel", "Hartmann")),
+}
+
+
+def _nome_ext(lingua: str):
+    def gerar(rng):
+        nomes, sobrenomes = _NOMES_EXT[lingua]
+        return f"{rng.choice(nomes)} {rng.choice(sobrenomes)}"
+    return gerar
+
+
+def _digitos(rng, n):
+    return "".join(rng.choice("0123456789") for _ in range(n))
+
+
+CENARIOS += [
+    Cenario(
+        "Support (EN): customer e-mail",
+        "Hi, my name is <<nome>>. My order #48213 hasn't arrived. Ship to <<rua>>, Springfield, IL <<zip>>. "
+        "Call me at <<tel>>. Please draft a reply.",
+        {"nome": ("PESSOA", _nome_ext("en")),
+         "rua": ("ENDERECO", lambda rng: f"{rng.randint(10, 9999)} {rng.choice(('Maple', 'Oak', 'Evergreen', 'Cedar'))} "
+                                         f"{rng.choice(('Street', 'Avenue', 'Drive', 'Lane', 'Terrace'))}"),
+         "zip": ("CEP", lambda rng: _digitos(rng, 5)),
+         "tel": ("TELEFONE", lambda rng: f"({rng.randint(201, 989)}) {rng.randint(200, 999)}-{_digitos(rng, 4)}")},
+        manter=["#48213", "Springfield"],
+    ),
+    Cenario(
+        "Atención al cliente (ES)",
+        "Hola, me llamo <<nome>>. Vivo en <<calle>>, <<cp>> Madrid. Mi tel <<tel>>. ¿Cuándo llega mi pedido?",
+        {"nome": ("PESSOA", _nome_ext("es")),
+         "calle": ("ENDERECO", lambda rng: f"Calle {rng.choice(('Mayor', 'Alcalá', 'Serrano', 'Gran Vía'))} "
+                                           f"{rng.randint(1, 200)}"),
+         "cp": ("CEP", lambda rng: "28" + _digitos(rng, 3)),
+         "tel": ("TELEFONE", lambda rng: f"{rng.randint(600, 699)} {_digitos(rng, 3)} {_digitos(rng, 3)}")},
+        manter=["Madrid", "pedido"],
+    ),
+    Cenario(
+        "Service client (FR)",
+        "Bonjour, je m'appelle <<nome>>, né le <<nasc>>, j'habite <<rue>>, <<cp>> Paris. Merci de corriger mon "
+        "adresse de livraison.",
+        {"nome": ("PESSOA", _nome_ext("fr")),
+         "nasc": ("DATA_NASCIMENTO", lambda rng: f"{rng.randint(1, 28):02d}/{rng.randint(1, 12):02d}/{rng.randint(1950, 2005)}"),
+         "rue": ("ENDERECO", lambda rng: f"{rng.randint(1, 120)} rue {rng.choice(('de Rivoli', 'du Bac', 'de la Paix'))}"),
+         "cp": ("CEP", lambda rng: "750" + f"{rng.randint(1, 20):02d}")},
+        manter=["Paris", "livraison"],
+    ),
+    Cenario(
+        "Kundendienst (DE)",
+        "Hallo, ich heiße <<nome>>, geboren am <<nasc>>, wohnhaft <<strasse>>, <<plz>> Berlin. Handy <<handy>>. "
+        "Bitte ändern Sie meine Adresse.",
+        {"nome": ("PESSOA", _nome_ext("de")),
+         "nasc": ("DATA_NASCIMENTO", lambda rng: f"{rng.randint(1, 28):02d}.{rng.randint(1, 12):02d}.{rng.randint(1950, 2005)}"),
+         "strasse": ("ENDERECO", lambda rng: f"{rng.choice(('Haupt', 'Garten', 'Linden', 'Schiller'))}straße "
+                                             f"{rng.randint(1, 99)}"),
+         "plz": ("CEP", lambda rng: "10" + _digitos(rng, 3)),
+         "handy": ("TELEFONE", lambda rng: f"015{rng.randint(1, 9)} {_digitos(rng, 8)}")},
+        manter=["Berlin", "Adresse"],
+    ),
+    Cenario(
+        "Portugal: reclamação com morada",
+        "Olá, sou o <<nome>>, morada Rua Augusta <<n>>, <<cp>> Lisboa, telemóvel <<tlm>>. A encomenda não chegou.",
+        {"nome": ("PESSOA", _nome), "n": (None, lambda rng: str(rng.randint(1, 300))),
+         "cp": ("CEP", lambda rng: f"1{_digitos(rng, 3)}-{_digitos(rng, 3)}"),
+         "tlm": ("TELEFONE", lambda rng: f"9{rng.choice('1236')}{_digitos(rng, 1)} {_digitos(rng, 3)} {_digitos(rng, 3)}")},
+        manter=["Lisboa", "encomenda"],
+    ),
+]
+
+
 @dataclass
 class Caso:
     perfil: str
