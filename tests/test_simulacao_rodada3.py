@@ -22,7 +22,7 @@ def test_password_right_after_the_word(text, password):
 
 
 @pytest.mark.parametrize(
-    "text", ["senha inválida", "senha 123456", "senha alterada com sucesso", "a senha forte é importante"]
+    "text", ["senha inválida", "senha de 6 dígitos", "senha alterada com sucesso", "a senha forte é importante"]
 )
 def test_bare_password_needs_a_password_shape(text):
     assert Veu().anonymize(text).text == text

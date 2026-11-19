@@ -5,6 +5,14 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+- **Mais cripto:** endereços TRON (USDT na rede TRC20), Litecoin e Dogecoin e chaves públicas estendidas (`xpub`) viram `CRIPTO`, pelo checksum; chaves privadas de Bitcoin (WIF e `xprv`) e uma chave de Ethereum com "chave privada" por perto viram `CHAVE_PRIVADA`.
+- **Mais chaves de infraestrutura:** chaves do `age`, chaves do PuTTY (`.ppk`) e chaves PEM codificadas em base64 (o `client-key-data` do kubeconfig); certificados em base64 ficam.
+- **Senha e PIN só de números** ("senha do banco 739201", "PIN do cartão: 4821"); anos ("a senha expira em 2027") ficam. **Número de benefício do INSS** ("NB 123.456.789-0") como `CADASTRO`.
+
+### Corrigido
+- **Horário Unix virava telefone:** em JWT, logs e URLs, `"exp":1735689600` e `ts=1735689600` eram escondidos como `TELEFONE` (17 é um DDD válido), e a IA perdia a hora de expiração. Dez dígitos começando com 1, colados a uma chave ou a "timestamp", sem contexto de telefone, ficam; "telefone=11987654321" continua escondido. "phone" e "mobile" viraram contexto de telefone.
+
 ## [0.8.0] - 2026-11-19
 
 ### Adicionado

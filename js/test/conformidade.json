@@ -1264,7 +1264,7 @@
    "generalizado": "Login [PESSOA], pasta /home/[PESSOA]/docs, ssh humberto.maciel@10.0.0.0/24. Não são logins: maria.souza.com.br, config.yaml, nota.fiscal, rosa.silva."
   },
   {
-   "texto": "Login admin, senha bGsEDD$34. Rede Empresa_Visitantes, senha F73rbT@27. Não são senhas: senha inválida, senha 123456, senha alterada com sucesso.",
+   "texto": "Login admin, senha bGsEDD$34. Rede Empresa_Visitantes, senha F73rbT@27. Não são senhas: senha inválida, senha de 6 dígitos, senha alterada com sucesso. Senha numérica: senha do banco 739201.",
    "entidades": [
     [
      "SENHA",
@@ -1277,11 +1277,17 @@
      61,
      70,
      0.75
+    ],
+    [
+     "SENHA",
+     183,
+     189,
+     0.75
     ]
    ],
-   "anonimizado": "Login admin, senha [SENHA_1]. Rede Empresa_Visitantes, senha [SENHA_2]. Não são senhas: senha inválida, senha 123456, senha alterada com sucesso.",
-   "mascarado": "Login admin, senha ********. Rede Empresa_Visitantes, senha ********. Não são senhas: senha inválida, senha 123456, senha alterada com sucesso.",
-   "generalizado": "Login admin, senha [SENHA]. Rede Empresa_Visitantes, senha [SENHA]. Não são senhas: senha inválida, senha 123456, senha alterada com sucesso."
+   "anonimizado": "Login admin, senha [SENHA_1]. Rede Empresa_Visitantes, senha [SENHA_2]. Não são senhas: senha inválida, senha de 6 dígitos, senha alterada com sucesso. Senha numérica: senha do banco [SENHA_3].",
+   "mascarado": "Login admin, senha ********. Rede Empresa_Visitantes, senha ********. Não são senhas: senha inválida, senha de 6 dígitos, senha alterada com sucesso. Senha numérica: senha do banco ********.",
+   "generalizado": "Login admin, senha [SENHA]. Rede Empresa_Visitantes, senha [SENHA]. Não são senhas: senha inválida, senha de 6 dígitos, senha alterada com sucesso. Senha numérica: senha do banco [SENHA]."
   },
   {
    "texto": "Cookie: session_id=d8a3d4d8bd11e4f65709e86bed6dfd05; theme=dark\nSet-Cookie: PHPSESSID=9a8b7c6d5e4f3a2b1c0d; path=/",
@@ -1765,6 +1771,126 @@
    "anonimizado": "X-Amz-Signature=[SEGREDO_1]&X-Amz-Credential=abc",
    "mascarado": "X-Amz-Signature=****&X-Amz-Credential=abc",
    "generalizado": "X-Amz-Signature=[SEGREDO]&X-Amz-Credential=abc"
+  },
+  {
+   "texto": "USDT TJRabPrwbZy45sbavfcjinPJC18kjpRTv8, LTC LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz, DOGE DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L, errado TJRabPrwbZy45sbavfcjinPJC18kjpRTv9",
+   "entidades": [
+    [
+     "CRIPTO",
+     5,
+     39,
+     0.97
+    ],
+    [
+     "CRIPTO",
+     45,
+     79,
+     0.97
+    ],
+    [
+     "CRIPTO",
+     86,
+     120,
+     0.97
+    ]
+   ],
+   "anonimizado": "USDT [CRIPTO_1], LTC [CRIPTO_2], DOGE [CRIPTO_3], errado TJRabPrwbZy45sbavfcjinPJC18kjpRTv9",
+   "mascarado": "USDT ********************************v8, LTC ********************************Uz, DOGE ********************************7L, errado TJRabPrwbZy45sbavfcjinPJC18kjpRTv9",
+   "generalizado": "USDT [CRIPTO], LTC [CRIPTO], DOGE [CRIPTO], errado TJRabPrwbZy45sbavfcjinPJC18kjpRTv9"
+  },
+  {
+   "texto": "WIF 5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ e xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
+   "entidades": [
+    [
+     "CHAVE_PRIVADA",
+     4,
+     55,
+     0.99
+    ],
+    [
+     "CHAVE_PRIVADA",
+     58,
+     169,
+     0.99
+    ]
+   ],
+   "anonimizado": "WIF [CHAVE_PRIVADA_1] e [CHAVE_PRIVADA_2]",
+   "mascarado": "WIF ******** e ********",
+   "generalizado": "WIF [CHAVE_PRIVADA] e [CHAVE_PRIVADA]"
+  },
+  {
+   "texto": "minha chave privada é 4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318; sha256: 4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318",
+   "entidades": [
+    [
+     "CHAVE_PRIVADA",
+     22,
+     86,
+     0.9
+    ]
+   ],
+   "anonimizado": "minha chave privada é [CHAVE_PRIVADA_1]; sha256: 4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318",
+   "mascarado": "minha chave privada é ********; sha256: 4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318",
+   "generalizado": "minha chave privada é [CHAVE_PRIVADA]; sha256: 4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318"
+  },
+  {
+   "texto": "client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVB e client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM4akNDQWRxZ0F3SUJBZ0lJ",
+   "entidades": [
+    [
+     "CHAVE_PRIVADA",
+     17,
+     81,
+     0.97
+    ]
+   ],
+   "anonimizado": "client-key-data: [CHAVE_PRIVADA_1] e client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM4akNDQWRxZ0F3SUJBZ0lJ",
+   "mascarado": "client-key-data: ******** e client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM4akNDQWRxZ0F3SUJBZ0lJ",
+   "generalizado": "client-key-data: [CHAVE_PRIVADA] e client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM4akNDQWRxZ0F3SUJBZ0lJ"
+  },
+  {
+   "texto": "Benefício do INSS NB 123.456.789-0. PIN do cartão: 4821, senha do banco 739201, a senha expira em 2027.",
+   "entidades": [
+    [
+     "CADASTRO",
+     21,
+     34,
+     0.8
+    ],
+    [
+     "SENHA",
+     51,
+     55,
+     0.75
+    ],
+    [
+     "SENHA",
+     72,
+     78,
+     0.75
+    ]
+   ],
+   "anonimizado": "Benefício do INSS NB [CADASTRO_1]. PIN do cartão: [SENHA_1], senha do banco [SENHA_2], a senha expira em 2027.",
+   "mascarado": "Benefício do INSS NB ***.***.**9-0. PIN do cartão: ********, senha do banco ********, a senha expira em 2027.",
+   "generalizado": "Benefício do INSS NB [CADASTRO]. PIN do cartão: [SENHA], senha do banco [SENHA], a senha expira em 2027."
+  },
+  {
+   "texto": "{\"sub\":\"42\",\"exp\":1735689600,\"iat\":1735686000} ts=1735689600 timestamp 1735689600 phone=1135689600",
+   "entidades": [
+    [
+     "TELEFONE",
+     71,
+     81,
+     0.65
+    ],
+    [
+     "TELEFONE",
+     88,
+     98,
+     0.65
+    ]
+   ],
+   "anonimizado": "{\"sub\":\"42\",\"exp\":1735689600,\"iat\":1735686000} ts=1735689600 timestamp [TELEFONE_1] phone=[TELEFONE_2]",
+   "mascarado": "{\"sub\":\"42\",\"exp\":1735689600,\"iat\":1735686000} ts=1735689600 timestamp ********00 phone=********00",
+   "generalizado": "{\"sub\":\"42\",\"exp\":1735689600,\"iat\":1735686000} ts=1735689600 timestamp (17) ****-**** phone=(11) ****-****"
   },
   {
    "texto": "Sou o Rui Porto, moro na Rua de Santa Catarina, 120, 4050-262 Porto. O Sr. Porto aguarda.",

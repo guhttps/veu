@@ -599,7 +599,7 @@ function bech32Ok(value: string): boolean {
   const separator = lower.lastIndexOf("1");
   const hrp = lower.slice(0, Math.max(separator, 0));
   const data = lower.slice(separator + 1);
-  if ((hrp !== "bc" && hrp !== "tb") || data.length < 6 || [...data].some((c) => !BECH32.includes(c))) return false;
+  if ((hrp !== "bc" && hrp !== "tb" && hrp !== "ltc") || data.length < 6 || [...data].some((c) => !BECH32.includes(c))) return false;
   const values = [...[...hrp].map((c) => c.charCodeAt(0) >> 5), 0, ...[...hrp].map((c) => c.charCodeAt(0) & 31),
     ...[...data].map((c) => BECH32.indexOf(c))];
   let check = 1;
@@ -613,10 +613,50 @@ function bech32Ok(value: string): boolean {
   return check === 1 || check === 0x2bc830a3; // bech32 (v0) e bech32m (Taproot)
 }
 
+/** Conteúdo de um valor Base58Check (sem os 4 bytes do checksum), ou null se o checksum não bate. */
+function base58checkPayload(value: string): Uint8Array | null {
+  if (!value || [...value].some((char) => !BASE58.includes(char))) return null;
+  let number = 0n;
+  for (const char of value) number = number * 58n + BigInt(BASE58.indexOf(char));
+  const bytes: number[] = [];
+  while (number > 0n) {
+    bytes.unshift(Number(number & 0xffn));
+    number >>= 8n;
+  }
+  const zeros = value.length - value.replace(/^1+/, "").length;
+  const raw = new Uint8Array([...new Array<number>(zeros).fill(0), ...bytes]);
+  if (raw.length < 5) return null;
+  const digest = sha256(sha256(raw.slice(0, -4)));
+  return digest.slice(0, 4).every((byte, i) => byte === raw[raw.length - 4 + i]) ? raw.slice(0, -4) : null;
+}
+
+// Versões Base58Check: endereços de TRON (USDT TRC20), Litecoin e Dogecoin, e chaves estendidas BIP-32.
+const ADDRESS_VERSIONS: Record<string, number> = { T: 0x41, L: 0x30, M: 0x32, D: 0x1e };
+const EXTENDED_PUBLIC = ["0488b21e", "049d7cb2", "04b24746", "043587cf"];
+const EXTENDED_PRIVATE = ["0488ade4", "049d7878", "04b2430c", "04358394"];
+const hex4 = (bytes: Uint8Array): string => [...bytes.slice(0, 4)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+
+/** Chave privada de Bitcoin no formato WIF (5..., K..., L...) ou estendida (xprv), pelo checksum. */
+export function isValidCryptoPrivateKey(value: string): boolean {
+  const payload = base58checkPayload(value);
+  if (!payload) return false;
+  if (value.slice(1, 4) === "prv") return payload.length === 78 && EXTENDED_PRIVATE.includes(hex4(payload));
+  return (payload[0] === 0x80 || payload[0] === 0xef)
+    && (payload.length === 33 || (payload.length === 34 && payload[33] === 1));
+}
+
 export function isValidCryptoAddress(value: string): boolean {
   if (/^0x[0-9a-fA-F]{40}$/.test(value)) return true;
   if (/^[13][1-9A-HJ-NP-Za-km-z]{25,34}$/.test(value)) return base58checkOk(value);
-  if (/^(?:bc|tb)1[02-9ac-hj-np-z]{11,71}$/.test(value.toLowerCase())
+  if (/^[TLMD][1-9A-HJ-NP-Za-km-z]{26,34}$/.test(value)) {
+    const payload = base58checkPayload(value);
+    return payload !== null && payload.length === 21 && payload[0] === ADDRESS_VERSIONS[value[0]];
+  }
+  if (/^[xyzt]pub[1-9A-HJ-NP-Za-km-z]{100,112}$/.test(value)) {
+    const payload = base58checkPayload(value);
+    return payload !== null && payload.length === 78 && EXTENDED_PUBLIC.includes(hex4(payload));
+  }
+  if (/^(?:bc|tb|ltc)1[02-9ac-hj-np-z]{11,71}$/.test(value.toLowerCase())
     && (value === value.toLowerCase() || value === value.toUpperCase())) return bech32Ok(value);
   return false;
 }

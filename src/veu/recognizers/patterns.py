@@ -81,6 +81,8 @@ class PatternSpec:
     # Ajuste final da pontuação (por exemplo, telefone com ou sem separadores).
     adjust: Callable[[str, float], float | None] | None = None
     exclude: Callable[[str], bool] | None = None
+    # Sem contexto, descarta pelo que está em volta no texto (text, start, end): "exp":1735689600 não é telefone.
+    exclude_at: Callable[[str, int, int], bool] | None = None
     name: str = ""
     compiled: re.Pattern = field(init=False, repr=False)
     context_regex: re.Pattern | None = field(init=False, repr=False)
@@ -103,7 +105,7 @@ CTX_CTPS = ("ctps", "c.t.p.s", "carteira de trabalho", "carteira profissional")
 _UFS = r"(?:AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)"
 CTX_PHONE = (
     "tel", "tel.", "telefone", "telefones", "celular", "cel", "cel.", "whatsapp", "whats", "zap", "wpp",
-    "contato", "fone", "ligar", "ligue", "ramal", "numero",
+    "contato", "fone", "ligar", "ligue", "ramal", "numero", "phone", "mobile", "cellphone",
 )
 CTX_CEP = ("cep",)
 CTX_PLATE = ("placa", "veiculo", "carro", "moto", "caminhao", "automovel")
@@ -138,7 +140,8 @@ _DMS = r"\d{1,3}\s*°\s*\d{1,2}(?:[.,]\d+)?\s*['′’]\s*(?:\d{1,2}(?:[.,]\d+)?
 CTX_CADASTRO = (
     "prontuario", "carteirinha", "carteira do convenio", "carteira do plano", "cartao do convenio",
     "cartao do plano", "numero da carteira", "matricula", "ra", "registro academico", "apolice",
-    "codigo do beneficiario", "numero do beneficiario",
+    "codigo do beneficiario", "numero do beneficiario", "nb", "numero do beneficio", "beneficio do inss",
+    "beneficio inss",
 )
 CTX_ACCOUNT = ("conta", "conta corrente", "conta-corrente", "c/c", "cc", "agencia", "ag", "ag.", "poupanca", "conta poupanca")
 CTX_PROCESS = ("processo", "autos", "proc", "proc.", "acao", "numero do processo")
@@ -180,12 +183,27 @@ CTX_HOST = ("servidor", "server", "host", "hostname", "banco", "database", "cone
 CTX_SHELL = ("ssh", "scp", "sftp", "psql", "mysql", "telnet", "nc", "docker", "redis-cli", "mongosh")
 # Terminações de nomes que só existem dentro de uma rede (RFC 6762, RFC 8375 e os costumes de redes de empresas).
 _INTERNAL_TLDS = r"(?:local|localdomain|internal|interna|interno|lan|corp|intranet|home\.arpa)"
-CTX_CRYPTO = ("carteira", "wallet", "bitcoin", "btc", "ethereum", "eth", "cripto", "usdt")
+CTX_CRYPTO = ("carteira", "wallet", "bitcoin", "btc", "ethereum", "eth", "cripto", "usdt", "tron", "trc20", "litecoin",
+              "ltc", "dogecoin", "doge")
+CTX_PRIVATE_KEY = ("chave privada", "private key", "privkey", "priv key", "secret key", "chave secreta", "private_key")
 
 
 def _mrz_name_line(value: str) -> bool:
     """1ª linha da MRZ: "P<" + país + sobrenome<<nomes, completando com "<"."""
     return "<<" in value[5:] and any(char.isalpha() for char in value[5:])
+
+
+# Horário Unix (2001 a 2033: 10 dígitos começando com 1) colado a uma chave ("exp":, ts=) ou a "timestamp".
+_TIMESTAMP_BEFORE = re.compile(
+    r"(?:[=:][ \t]*[\"']?|\b(?:timestamp|epoch|unix|ts|exp|iat|nbf|time|created|updated|expires)[\"' \t:=]*)$",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_timestamp(text: str, start: int, end: int) -> bool:
+    value = text[start:end]
+    return (len(value) == 10 and value.isdigit() and value[0] == "1"
+            and _TIMESTAMP_BEFORE.search(text[max(0, start - 16):start]) is not None)
 
 
 def _phone_adjust(value: str, score: float) -> float | None:
@@ -299,7 +317,7 @@ DEFAULT_SPECS: list[PatternSpec] = [
     PatternSpec(
         "TELEFONE",
         r"(?<![\w+])(?:\+?55[\s.-]?)?(?:\(\d{2}\)|\d{2})[\s.-]?(?:9[\s.]?\d{4}|[2-5]\d{3})[\s.-]?\d{4}" + E,
-        Scores(0.85, None, 0.95), v.is_valid_phone, CTX_PHONE, adjust=_phone_adjust,
+        Scores(0.85, None, 0.95), v.is_valid_phone, CTX_PHONE, adjust=_phone_adjust, exclude_at=_looks_like_timestamp,
     ),
     PatternSpec("TELEFONE", B + r"9\d{4}-\d{4}" + E, Scores(0.7, None, 0.9), None, CTX_PHONE),
     # Internacional: +código do país (menos o 55, coberto acima) e grupos de dígitos.
@@ -474,6 +492,16 @@ DEFAULT_SPECS: list[PatternSpec] = [
                 exclude=lambda value: value.isdigit() or value.isalpha()),
     PatternSpec("CRIPTO", r"(?<![\w])(?:0x[0-9a-fA-F]{40}|[13][1-9A-HJ-NP-Za-km-z]{25,34}|(?:bc|tb)1[02-9ac-hj-np-z]{11,71})"
                 + E, Scores(0.9, None, 0.97), v.is_valid_crypto_address, CTX_CRYPTO),
+    # TRON (USDT TRC20), Litecoin, Dogecoin e chaves públicas estendidas (xpub), todos pelo checksum Base58Check.
+    PatternSpec("CRIPTO", r"(?<![\w])(?:[TLMD][1-9A-HJ-NP-Za-km-z]{26,34}|[xyzt]pub[1-9A-HJ-NP-Za-km-z]{100,112}"
+                r"|ltc1[02-9ac-hj-np-z]{11,71})" + E, Scores(0.9, None, 0.97), v.is_valid_crypto_address, CTX_CRYPTO,
+                name="carteiras"),
+    # Chave privada de Bitcoin: WIF ("5Hue...", "KwDi...") e estendida (xprv), pelo checksum.
+    PatternSpec("CHAVE_PRIVADA", r"(?<![\w])(?:[59KLc][1-9A-HJ-NP-Za-km-z]{50,51}|[xyzt]prv[1-9A-HJ-NP-Za-km-z]{100,112})"
+                + E, Scores(0.99), v.is_valid_crypto_private_key, name="cripto"),
+    # Chave privada de Ethereum (64 hexadecimais) só com "chave privada"/"private key" por perto: hashes ficam.
+    PatternSpec("CHAVE_PRIVADA", r"(?<![\w])(?:0x)?[0-9a-fA-F]{64}" + E, Scores(None, None, 0.9), None, CTX_PRIVATE_KEY,
+                before=50, name="cripto"),
     # Infraestrutura. Uma porta é só um número: vale colada a um IP ou a um servidor, depois de "porta"/"port" ou
     # numa opção de comando (-p), nunca solta. O grupo "valor" é o que vira o marcador; o resto é só o contexto.
     PatternSpec("PORTA", B + r"(?:\d{1,3}\.){3}\d{1,3}:(?P<valor>\d{2,5})" + E, Scores(0.9), v.is_valid_port),
@@ -531,6 +559,8 @@ class PatternRecognizer:
                 if spec.context_regex is not None:
                     window = context_window(text, start, end, spec.before, spec.after)
                     has_context = spec.context_regex.search(window) is not None
+                if not has_context and spec.exclude_at and spec.exclude_at(text, start, end):
+                    continue
                 score = spec.scores.pick(is_valid, has_context)
                 if score is not None and spec.adjust:
                     score = spec.adjust(value, score)

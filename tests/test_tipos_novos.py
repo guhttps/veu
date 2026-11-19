@@ -103,3 +103,52 @@ def test_synthetic_operator_keeps_the_new_formats_valid():
     result = Veu().with_operator("sintetico").anonymize(text)
     assert "35-209900" not in result.text and "[" not in result.text
     assert result.restore(result.text) == text
+
+
+# Segunda leva: carteiras e chaves de cripto, chaves de infraestrutura, INSS, PIN e horários Unix.
+@pytest.mark.parametrize("text,label,value", [
+    ("manda o USDT para TJRabPrwbZy45sbavfcjinPJC18kjpRTv8 na rede TRC20", "CRIPTO", "TJRabPrwbZy45sbavfcjinPJC18kjpRTv8"),
+    ("LTC: LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz", "CRIPTO", "LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz"),
+    ("DOGE DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L", "CRIPTO", "DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L"),
+    ("xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8",
+     "CRIPTO", "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8"),
+    ("chave WIF 5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ", "CHAVE_PRIVADA",
+     "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"),
+    ("xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
+     "CHAVE_PRIVADA",
+     "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi"),
+    ("minha chave privada é 4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318", "CHAVE_PRIVADA",
+     "4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318"),
+    ("AGE-SECRET-KEY-1QQPZRY9X8GF2TVDW0S3JN54KHCE6MUA7LQPZRY9X8GF2TVDW0S3JN54KHCE6MU", "CHAVE_PRIVADA",
+     "AGE-SECRET-KEY-1QQPZRY9X8GF2TVDW0S3JN54KHCE6MUA7LQPZRY9X8GF2TVDW0S3JN54KHCE6MU"),
+    ("client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVB", "CHAVE_PRIVADA",
+     "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVB"),
+    ("Meu benefício do INSS é NB 123.456.789-0", "CADASTRO", "123.456.789-0"),
+    ("PIN do cartão: 4821, ok", "SENHA", "4821"),
+    ("a senha do banco 739201", "SENHA", "739201"),
+])
+def test_second_batch_is_hidden(text, label, value):
+    assert labels(text).get(label) == value
+
+
+def test_putty_private_key_is_hidden():
+    key = ("PuTTY-User-Key-File-3: ssh-ed25519\nEncryption: none\nComment: x\nPublic-Lines: 1\nAAAAC3NzaC1lZDI1NTE5\n"
+           "Private-Lines: 1\nAAAAIDN3cmV0c2VjcmV0c2VjcmV0c2VjcmV0c2Vj\nPrivate-MAC: 9b2f1c")
+    assert "AAAAIDN3cmV0" not in Veu().anonymize(key).text
+
+
+@pytest.mark.parametrize("text", [
+    "sha256: 4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318",  # hash sem "chave privada"
+    "client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM4akNDQWRxZ0F3SUJBZ0lJ",  # certificado
+    "TJRabPrwbZy45sbavfcjinPJC18kjpRTv9",  # checksum errado
+    "a senha expira em 2027; senha de 6 dígitos; senha alterada em 12/03/2024",
+    '{"sub":"42","exp":1735689600,"iat":1735686000}',  # horário Unix num JWT não é telefone
+    "GET /api?ts=1735689600&page=2 e timestamp 1735689600",
+])
+def test_second_batch_lookalikes_stay(text):
+    assert Veu().anonymize(text).text == text
+
+
+@pytest.mark.parametrize("text", ["telefone=11987654321", "fone: 1135689600", "phone=1135689600", "ligue 1135689600"])
+def test_phones_with_context_still_hidden_after_a_key(text):
+    assert "TELEFONE" in labels(text)

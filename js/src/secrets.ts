@@ -58,6 +58,9 @@ const OTP_CODE = new RegExp(
   + "[^\\d\\n]{0,25}?(?<!\\d)(\\d{4,8})(?!\\d)",
   "gdi",
 );
+// Senha ou PIN só de números sem separador ("senha do banco 739201", "PIN do cartão 4821"). Um ano solto depois
+// de "senha" ("a senha expira em 2027") fica, a não ser que a palavra seja PIN.
+const NUMERIC_PIN = /(?<![A-Za-z0-9])(senha|pin|passcode)(?![A-Za-z])[^\d\n]{0,25}?(?<!\d)(\d{4,8})(?!\d|[.,/:-]\d)/dgi;
 // Frase de recuperação de carteira (BIP-39): 12 a 24 palavras da lista, separadas por espaço, vírgula ou numeração.
 const SEED_WORD = /[A-Za-z]+/g;
 const SEED_GAP = /^[ \t\r\n,;]*(?:\d{1,2}[ \t]*[.):-]?[ \t]*)?$/;
@@ -188,6 +191,12 @@ export class SecretRecognizer implements Recognizer {
     for (const match of text.matchAll(OTP_CODE)) {
       const [start, end] = match.indices![1]!;
       yield { label: "SENHA", start, end, score: 0.8, recognizer: this.name };
+    }
+    for (const match of text.matchAll(NUMERIC_PIN)) {
+      const digits = match[2];
+      if (digits.length === 4 && Number(digits) >= 1950 && Number(digits) <= 2099 && match[1].toLowerCase() !== "pin") continue;
+      const [start, end] = match.indices![2]!;
+      yield { label: "SENHA", start, end, score: 0.75, recognizer: this.name };
     }
     yield* this.seedPhrases(text);
     for (const match of text.matchAll(PROSE_PASSWORD)) {

@@ -76,7 +76,7 @@ EXTRA = [
     "Login gislaine.vieira, pasta /home/joao_silva/docs, ssh humberto.maciel@10.0.0.5. Não são logins: "
     "maria.souza.com.br, config.yaml, nota.fiscal, rosa.silva.",
     "Login admin, senha bGsEDD$34. Rede Empresa_Visitantes, senha F73rbT@27. Não são senhas: senha inválida, "
-    "senha 123456, senha alterada com sucesso.",
+    "senha de 6 dígitos, senha alterada com sucesso. Senha numérica: senha do banco 739201.",
     "Cookie: session_id=d8a3d4d8bd11e4f65709e86bed6dfd05; theme=dark\nSet-Cookie: PHPSESSID=9a8b7c6d5e4f3a2b1c0d; path=/",
     "INSERT INTO clientes (id, nome, nascimento) VALUES\n(1021, 'Ana Lima', '1985-04-03'),\n(1022, 'Rui Costa', "
     "'1990-12-01');\nSELECT * FROM pedidos WHERE criado_em > '2026-01-01';\nnome;nascimento\nAna Lima;03/04/1985",
@@ -108,6 +108,17 @@ EXTRA = [
     "IMEI do aparelho: 35-209900-176148-1; cartão 352099001761481; localização 23°33'01\"S 46°38'02\"W",
     "joao.silva [at] gmail [dot] com, maria arroba empresa ponto com ponto br e te vejo at home dot",
     "X-Amz-Signature=3f2c1a9e8b7d4e6f9a0b1c2d3e4f5a6b7c8d9e0f&X-Amz-Credential=abc",
+    # Segunda leva: cripto, chaves de infraestrutura, INSS, PIN e horários Unix.
+    "USDT TJRabPrwbZy45sbavfcjinPJC18kjpRTv8, LTC LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz, DOGE DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L,"
+    " errado TJRabPrwbZy45sbavfcjinPJC18kjpRTv9",
+    "WIF 5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ e xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqji"
+    "ChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
+    "minha chave privada é 4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318; sha256: "
+    "4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318",
+    "client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVB e "
+    "client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM4akNDQWRxZ0F3SUJBZ0lJ",
+    "Benefício do INSS NB 123.456.789-0. PIN do cartão: 4821, senha do banco 739201, a senha expira em 2027.",
+    '{"sub":"42","exp":1735689600,"iat":1735686000} ts=1735689600 timestamp 1735689600 phone=1135689600',
     # Simulação, rodada 5: sobrenome que também é cidade.
     "Sou o Rui Porto, moro na Rua de Santa Catarina, 120, 4050-262 Porto. O Sr. Porto aguarda.",
     "A cliente Ana Campos mora em Campos/RJ e em Campos - RJ; o réu João Lima é da comarca de Lima. A Campos ligou.",

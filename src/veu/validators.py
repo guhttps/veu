@@ -707,7 +707,7 @@ _BECH32 = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 def _bech32_ok(value: str) -> bool:
     lower = value.lower()
     hrp, _, data = lower.rpartition("1")
-    if hrp not in ("bc", "tb") or len(data) < 6 or any(c not in _BECH32 for c in data):
+    if hrp not in ("bc", "tb", "ltc") or len(data) < 6 or any(c not in _BECH32 for c in data):
         return False
     values = [ord(c) >> 5 for c in hrp] + [0] + [ord(c) & 31 for c in hrp] + [_BECH32.index(c) for c in data]
     check = 1
@@ -720,15 +720,55 @@ def _bech32_ok(value: str) -> bool:
     return check in (1, 0x2BC830A3)  # bech32 (v0) e bech32m (Taproot)
 
 
+def _base58check_payload(value: str) -> bytes | None:
+    """Conteúdo de um valor Base58Check (sem os 4 bytes do checksum), ou None se o checksum não bate."""
+    import hashlib
+
+    if not value or any(char not in _BASE58 for char in value):
+        return None
+    number = 0
+    for char in value:
+        number = number * 58 + _BASE58.index(char)
+    raw = b"\x00" * (len(value) - len(value.lstrip("1"))) + number.to_bytes((number.bit_length() + 7) // 8, "big")
+    if len(raw) < 5 or hashlib.sha256(hashlib.sha256(raw[:-4]).digest()).digest()[:4] != raw[-4:]:
+        return None
+    return raw[:-4]
+
+
+# Versões Base58Check: endereços de TRON (USDT TRC20), Litecoin e Dogecoin, e chaves estendidas BIP-32.
+_ADDRESS_VERSIONS = {"T": (0x41,), "L": (0x30,), "M": (0x32,), "D": (0x1E,)}
+_EXTENDED_PUBLIC = (bytes.fromhex("0488B21E"), bytes.fromhex("049D7CB2"), bytes.fromhex("04B24746"),
+                    bytes.fromhex("043587CF"))
+_EXTENDED_PRIVATE = (bytes.fromhex("0488ADE4"), bytes.fromhex("049D7878"), bytes.fromhex("04B2430C"),
+                     bytes.fromhex("04358394"))
+
+
 def is_valid_crypto_address(value: str) -> bool:
-    """Endereço de carteira: Bitcoin (Base58Check ou bech32) ou Ethereum (0x + 40 hexadecimais)."""
+    """Endereço de carteira: Bitcoin, TRON, Litecoin, Dogecoin (Base58Check), bech32, Ethereum (0x + 40
+    hexadecimais) ou chave pública estendida (xpub, que revela todos os endereços da carteira)."""
     if re.fullmatch(r"0x[0-9a-fA-F]{40}", value):
         return True
     if re.fullmatch(r"[13][1-9A-HJ-NP-Za-km-z]{25,34}", value):
         return _base58check_ok(value)
-    if re.fullmatch(r"(?:bc|tb)1[02-9ac-hj-np-z]{11,71}", value.lower()) and (value.islower() or value.isupper()):
+    if re.fullmatch(r"[TLMD][1-9A-HJ-NP-Za-km-z]{26,34}", value):
+        payload = _base58check_payload(value)
+        return payload is not None and len(payload) == 21 and payload[0] in _ADDRESS_VERSIONS[value[0]]
+    if re.fullmatch(r"[xyzt]pub[1-9A-HJ-NP-Za-km-z]{100,112}", value):
+        payload = _base58check_payload(value)
+        return payload is not None and len(payload) == 78 and payload[:4] in _EXTENDED_PUBLIC
+    if re.fullmatch(r"(?:bc|tb|ltc)1[02-9ac-hj-np-z]{11,71}", value.lower()) and (value.islower() or value.isupper()):
         return _bech32_ok(value)
     return False
+
+
+def is_valid_crypto_private_key(value: str) -> bool:
+    """Chave privada de Bitcoin no formato WIF (5..., K..., L...) ou estendida (xprv), pelo checksum."""
+    payload = _base58check_payload(value)
+    if payload is None:
+        return False
+    if value[1:4] == "prv":
+        return len(payload) == 78 and payload[:4] in _EXTENDED_PRIVATE
+    return payload[0] in (0x80, 0xEF) and (len(payload) == 33 or (len(payload) == 34 and payload[-1] == 1))
 
 
 def is_valid_mac(value: str) -> bool:

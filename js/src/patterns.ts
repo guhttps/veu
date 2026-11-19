@@ -32,6 +32,8 @@ export interface PatternSpec {
   after: number;
   adjust?: (value: string, score: number) => number | null;
   exclude?: (value: string) => boolean;
+  /** Sem contexto, descarta pelo que está em volta no texto: "exp":1735689600 não é telefone. */
+  excludeAt?: (text: string, start: number, end: number) => boolean;
   name?: string;
 }
 
@@ -43,6 +45,7 @@ interface SpecOptions {
   after?: number;
   adjust?: (value: string, score: number) => number | null;
   exclude?: (value: string) => boolean;
+  excludeAt?: (text: string, start: number, end: number) => boolean;
   name?: string;
 }
 
@@ -58,6 +61,7 @@ export function spec(label: string, pattern: string, scores: Scores, options: Sp
     after: options.after ?? 20,
     adjust: options.adjust,
     exclude: options.exclude,
+    excludeAt: options.excludeAt,
     name: options.name,
   };
 }
@@ -78,7 +82,7 @@ const CTX_CTPS = ["ctps", "c.t.p.s", "carteira de trabalho", "carteira profissio
 const UFS = "(?:AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)";
 const CTX_PHONE = [
   "tel", "tel.", "telefone", "telefones", "celular", "cel", "cel.", "whatsapp", "whats", "zap", "wpp",
-  "contato", "fone", "ligar", "ligue", "ramal", "numero",
+  "contato", "fone", "ligar", "ligue", "ramal", "numero", "phone", "mobile", "cellphone",
 ];
 const CTX_CEP = ["cep"];
 const CTX_PLATE = ["placa", "veiculo", "carro", "moto", "caminhao", "automovel"];
@@ -113,7 +117,8 @@ const CTX_COORD = [
 const CTX_CADASTRO = [
   "prontuario", "carteirinha", "carteira do convenio", "carteira do plano", "cartao do convenio",
   "cartao do plano", "numero da carteira", "matricula", "ra", "registro academico", "apolice",
-  "codigo do beneficiario", "numero do beneficiario",
+  "codigo do beneficiario", "numero do beneficiario", "nb", "numero do beneficio", "beneficio do inss",
+  "beneficio inss",
 ];
 const isDate = (value: string) => /^(?:\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{4}-\d{2}-\d{2})$/.test(value);
 const CTX_ACCOUNT = ["conta", "conta corrente", "conta-corrente", "c/c", "cc", "agencia", "ag", "ag.", "poupanca", "conta poupanca"];
@@ -157,11 +162,20 @@ const CTX_SHELL = ["ssh", "scp", "sftp", "psql", "mysql", "telnet", "nc", "docke
 // Terminações de nomes que só existem dentro de uma rede (RFC 6762, RFC 8375 e os costumes de redes de empresas).
 const INTERNAL_TLDS = "(?:local|localdomain|internal|interna|interno|lan|corp|intranet|home\\.arpa)";
 const W = "\\p{L}\\p{N}_";
-const CTX_CRYPTO = ["carteira", "wallet", "bitcoin", "btc", "ethereum", "eth", "cripto", "usdt"];
+const CTX_CRYPTO = ["carteira", "wallet", "bitcoin", "btc", "ethereum", "eth", "cripto", "usdt", "tron", "trc20", "litecoin",
+  "ltc", "dogecoin", "doge"];
+const CTX_PRIVATE_KEY = ["chave privada", "private key", "privkey", "priv key", "secret key", "chave secreta", "private_key"];
 // 1ª linha da MRZ: "P<" + país + sobrenome<<nomes, completando com "<".
 const mrzNameLine = (value: string): boolean => value.slice(5).includes("<<") && /[A-Z]/.test(value.slice(5));
 
 const phoneAdjust = (value: string, score: number): number => (/[()\s.+-]/u.test(value) ? score : score - 0.3);
+// Horário Unix (2001 a 2033: 10 dígitos começando com 1) colado a uma chave ("exp":, ts=) ou a "timestamp".
+const TIMESTAMP_BEFORE =
+  /(?:[=:][ \t]*["']?|(?<![\p{L}\p{N}_])(?:timestamp|epoch|unix|ts|exp|iat|nbf|time|created|updated|expires)["' \t:=]*)$/iu;
+const looksLikeTimestamp = (text: string, start: number, end: number): boolean => {
+  const value = text.slice(start, end);
+  return value.length === 10 && /^1\d{9}$/.test(value) && TIMESTAMP_BEFORE.test(text.slice(Math.max(0, start - 16), start));
+};
 const isYear = (value: string): boolean => /^(?:19|20)\d{2}$/.test(value);
 // Documentos já mascarados pela metade ("324.327.***-**", "***.982.247-**"): os dígitos que sobram ainda
 // identificam a pessoa. Só valem com pelo menos 3 dígitos à mostra.
@@ -239,7 +253,7 @@ export const DEFAULT_SPECS: PatternSpec[] = [
     S(0.9), { context: CTX_EMAIL, name: "url" }),
   spec("TELEFONE",
     `(?<![\\p{L}\\p{N}_+])(?:\\+?55[\\s.-]?)?(?:\\(\\d{2}\\)|\\d{2})[\\s.-]?(?:9[\\s.]?\\d{4}|[2-5]\\d{3})[\\s.-]?\\d{4}${E}`,
-    S(0.85, null, 0.95), { validator: v.isValidPhone, context: CTX_PHONE, adjust: phoneAdjust }),
+    S(0.85, null, 0.95), { validator: v.isValidPhone, context: CTX_PHONE, adjust: phoneAdjust, excludeAt: looksLikeTimestamp }),
   spec("TELEFONE", `${B}9\\d{4}-\\d{4}${E}`, S(0.7, null, 0.9), { context: CTX_PHONE }),
   spec("TELEFONE",
     `(?<![\\p{L}\\p{N}_+])\\+(?!55)[1-9]\\d{0,2}(?:[\\s.-]?\\(?\\d{1,4}\\)?){1,2}(?:[\\s.-]?\\d{2,4}){2,4}${E}`,
@@ -372,6 +386,16 @@ export const DEFAULT_SPECS: PatternSpec[] = [
     { validator: v.isValidVin, context: CTX_VIN, exclude: (value) => /^(?:\d+|[A-Z]+)$/.test(value) }),
   spec("CRIPTO", `${B}(?:0x[0-9a-fA-F]{40}|[13][1-9A-HJ-NP-Za-km-z]{25,34}|(?:bc|tb)1[02-9ac-hj-np-z]{11,71})${E}`,
     S(0.9, null, 0.97), { validator: v.isValidCryptoAddress, context: CTX_CRYPTO }),
+  // TRON (USDT TRC20), Litecoin, Dogecoin e chaves públicas estendidas (xpub), todos pelo checksum Base58Check.
+  spec("CRIPTO", `${B}(?:[TLMD][1-9A-HJ-NP-Za-km-z]{26,34}|[xyzt]pub[1-9A-HJ-NP-Za-km-z]{100,112}`
+    + `|ltc1[02-9ac-hj-np-z]{11,71})${E}`, S(0.9, null, 0.97),
+    { validator: v.isValidCryptoAddress, context: CTX_CRYPTO, name: "carteiras" }),
+  // Chave privada de Bitcoin: WIF ("5Hue...", "KwDi...") e estendida (xprv), pelo checksum.
+  spec("CHAVE_PRIVADA", `${B}(?:[59KLc][1-9A-HJ-NP-Za-km-z]{50,51}|[xyzt]prv[1-9A-HJ-NP-Za-km-z]{100,112})${E}`, S(0.99),
+    { validator: v.isValidCryptoPrivateKey, name: "cripto" }),
+  // Chave privada de Ethereum (64 hexadecimais) só com "chave privada"/"private key" por perto: hashes ficam.
+  spec("CHAVE_PRIVADA", `${B}(?:0x)?[0-9a-fA-F]{64}${E}`, S(null, null, 0.9),
+    { context: CTX_PRIVATE_KEY, before: 50, name: "cripto" }),
   // Infraestrutura. Uma porta é só um número: vale colada a um IP ou a um servidor, depois de "porta"/"port" ou
   // numa opção de comando (-p), nunca solta. O grupo "valor" é o que vira o marcador; o resto é só o contexto.
   spec("PORTA", `${B}(?:\\d{1,3}\\.){3}\\d{1,3}:(?<valor>\\d{2,5})${E}`, S(0.9), { validator: v.isValidPort }),
@@ -427,6 +451,7 @@ export class PatternRecognizer implements Recognizer {
         if (item.context) {
           hasContext = item.context.test(contextWindow(text, start, start + value.length, item.before, item.after));
         }
+        if (!hasContext && item.excludeAt?.(text, start, start + value.length)) continue;
         let score = pickScore(item.scores, isValid, hasContext);
         if (score !== null && item.adjust) score = item.adjust(value, score);
         if (score === null || score <= 0) continue;

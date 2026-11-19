@@ -108,7 +108,7 @@ Commands are in Portuguese: `anonimizar` (anonymize), `restaurar` (restore), `le
 | People and contacts | names (IBGE 2022 census lists, capitalization and context), e-mails (also disguised: `john [at] gmail [dot] com`), phones (Brazilian and international), addresses, dates of birth |
 | Brazilian documents | CPF, CNPJ (including the 2026 alphanumeric format), RG, CNH, voter ID, PIS, SUS card, passport, work card (CTPS), professional licenses (OAB, CRM, CREA...), patient, student, health plan and policy numbers, GPS coordinates, CEP, license plates, RENAVAM, lawsuit numbers, bank accounts, Pix keys and Pix copy-and-paste codes (CRC checked), boletos (check digits), birth and marriage certificate numbers, RNM (foreign residents) |
 | Other countries | Portugal, Argentina, Mexico, Chile, Uruguay, Colombia, Peru, Ecuador, Paraguay, Venezuela, Angola, Mozambique, US, Spain, Italy, France, Germany, UK, Netherlands, Canada, India; passport MRZ, VIN |
-| Financial | credit cards (Luhn) and CVV, IBAN, Bitcoin and Ethereum addresses |
+| Financial | credit cards (Luhn) and CVV, IBAN, Bitcoin, Ethereum, TRON (USDT), Litecoin and Dogecoin addresses |
 | IT infrastructure | IP addresses, ports (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`; never a bare number) internal server names (`db.internal`, `cache.prod.local`), MAC addresses and phone IMEIs |
 | Secrets | API keys from 30+ services, JWT and bearer tokens, tokens in links (`?token=`), passwords (also Wi-Fi QR codes), verification codes, 2FA secrets (`otpauth://`), private keys, crypto wallet recovery phrases (BIP-39 checksum), connection URLs with passwords |
 

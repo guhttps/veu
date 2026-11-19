@@ -108,13 +108,14 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 - ☑️ **Você escolhe o que esconder:** caixinhas por grupo na página, na extensão e no painel, com escolha tipo a tipo. Desmarcar senhas e chaves mostra um aviso.
 - 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CTPS, registro profissional (OAB, CRM, CREA...), números de cadastro (prontuário, matrícula, carteirinha do convênio, apólice), CEP, placa, RENAVAM, conta bancária, chave Pix, Pix copia e cola (conferido pelo CRC), boleto (linha digitável e código de barras, pelos verificadores), matrícula de certidão de nascimento e casamento, RNM de estrangeiros e processo do CNJ. Logins no formato nome.sobrenome, e-mails disfarçados (`joao [at] gmail [dot] com`), coordenadas de GPS (decimais ou em graus, minutos e segundos), CVV e datas de nascimento em tabelas (SQL, CSV) também somem.
 - 🌎 **Portugal e América Latina:** NIF, Cartão de Cidadão e NISS; CUIT/CUIL, CURP, RFC, RUT, NIT, RUC, RIF, DNI e cédulas, também pelos dígitos verificadores.
-- 🌐 **África lusófona, EUA, Europa, Canadá e Índia:** NUIT e BI (Angola e Moçambique), SSN, ITIN e Medicare (EUA), DNI e NIE (Espanha), codice fiscale (Itália), NIR (França), Steuer-ID (Alemanha), National Insurance e NHS (Reino Unido), BSN (Países Baixos), SIN (Canadá), Aadhaar e PAN (Índia); também passaportes pela zona de leitura (MRZ), chassi (VIN) e carteiras de Bitcoin e Ethereum.
+- 🌐 **África lusófona, EUA, Europa, Canadá e Índia:** NUIT e BI (Angola e Moçambique), SSN, ITIN e Medicare (EUA), DNI e NIE (Espanha), codice fiscale (Itália), NIR (França), Steuer-ID (Alemanha), National Insurance e NHS (Reino Unido), BSN (Países Baixos), SIN (Canadá), Aadhaar e PAN (Índia); também passaportes pela zona de leitura (MRZ), chassi (VIN) e carteiras de Bitcoin, Ethereum, TRON (USDT), Litecoin e Dogecoin.
 - 🔑 **Segredos:**
   - chaves da OpenAI, Anthropic, AWS, Google, GitHub, Stripe, Slack, Hugging Face, Notion, Mercado Pago, Asaas e mais 20 serviços;
   - JWT e tokens Bearer;
   - senhas (`DB_PASSWORD=...`, "a senha é ...", QR de Wi-Fi) e códigos de verificação ("seu código é 483920");
   - tokens em links (`?token=...`, `X-Amz-Signature=...`) e segredos de 2FA (`otpauth://...secret=...`);
-  - frases de recuperação de carteiras (12 a 24 palavras do BIP-39, pelo checksum ou com "seed" e "carteira" por perto);
+  - frases de recuperação de carteiras (12 a 24 palavras do BIP-39, pelo checksum ou com "seed" e "carteira" por perto), chaves privadas de Bitcoin (WIF, `xprv`) e de Ethereum;
+  - chaves do `age`, do PuTTY e chaves PEM em base64 (kubeconfig);
   - chaves privadas e URLs de banco com senha.
 - ✅ **Validação de verdade:**
   - dígitos verificadores de CPF, CNPJ, PIS, CNS, CNH, título, RENAVAM, processo CNJ, IBAN, cartões, IMEI e boletos, CRC do Pix copia e cola e checksum das frases de recuperação;
@@ -408,7 +409,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 1012 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 1035 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 python scripts/simular_usuarios.py --rodadas 5    # 72 perfis de trabalho usando o Véu, com dados fictícios

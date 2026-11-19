@@ -76,6 +76,11 @@ OTP_CODE = re.compile(
     r"[^\d\n]{0,25}?(?<!\d)(\d{4,8})(?!\d)",
     re.IGNORECASE,
 )
+# Senha ou PIN só de números sem separador ("senha do banco 739201", "PIN do cartão 4821"). Um ano solto depois
+# de "senha" ("a senha expira em 2027") fica, a não ser que a palavra seja PIN.
+NUMERIC_PIN = re.compile(
+    r"(?<![A-Za-z0-9])(senha|pin|passcode)(?![A-Za-z])[^\d\n]{0,25}?(?<!\d)(\d{4,8})(?!\d|[.,/:-]\d)", re.IGNORECASE
+)
 # Frase de recuperação de carteira (BIP-39): 12 a 24 palavras da lista, separadas por espaço, vírgula ou numeração.
 SEED_WORD = re.compile(r"[A-Za-z]+")
 SEED_GAP = re.compile(r"[ \t\r\n,;]*(?:\d{1,2}[ \t]*[.):-]?[ \t]*)?")
@@ -223,6 +228,11 @@ class SecretRecognizer:
                 position = match.end(3)
         for match in OTP_CODE.finditer(text):
             yield Candidate("SENHA", match.start(1), match.end(1), 0.8, self.name)
+        for match in NUMERIC_PIN.finditer(text):
+            digits = match.group(2)
+            if len(digits) == 4 and 1950 <= int(digits) <= 2099 and match.group(1).lower() != "pin":
+                continue
+            yield Candidate("SENHA", match.start(2), match.end(2), 0.75, self.name)
         yield from self._seed_phrases(text)
         for match in PROSE_PASSWORD.finditer(text):
             start, end = match.span(2)
