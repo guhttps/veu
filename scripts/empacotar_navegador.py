@@ -46,6 +46,9 @@ def write_zip(output: Path, manifest: dict) -> None:
                 archive.write(EXTENSION / name, name)
         for icon in sorted((EXTENSION / "icones").glob("*.png")):
             archive.write(icon, f"icones/{icon.name}")
+        # Nome e descrição em cada idioma: as lojas mostram uma página por idioma do pacote.
+        for messages in sorted((EXTENSION / "_locales").glob("*/messages.json")):
+            archive.write(messages, f"_locales/{messages.parent.name}/messages.json")
 
 
 def main() -> int:

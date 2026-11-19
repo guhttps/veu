@@ -5,6 +5,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+- **Extensão em português e inglês:** o nome e a descrição vêm de `extensao/_locales`, então o navegador mostra o nome no idioma de quem usa e as lojas do Edge e do Firefox ganham uma página em cada idioma. Um teste confere que todo idioma cabe nos limites das lojas.
+
 ## [0.7.2] - 2026-11-18
 
 ### Corrigido

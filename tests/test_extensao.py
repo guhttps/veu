@@ -21,10 +21,16 @@ def test_content_script_runs_before_the_page():
 
 
 def test_manifest_fits_the_store_limits():
-    # A Chrome Web Store e a loja do Edge recusam o pacote se a descrição passar de 132 caracteres.
+    # A Chrome Web Store e a loja do Edge recusam o pacote se a descrição passar de 132 caracteres. O nome e a
+    # descrição vêm de _locales, um arquivo por idioma; todo idioma precisa das duas mensagens.
     manifest = json.loads((EXTENSION / "manifest.json").read_text(encoding="utf-8"))
-    assert len(manifest["description"]) <= 132
-    assert len(manifest["name"]) <= 75
+    assert manifest["name"] == "__MSG_extensionName__" and manifest["description"] == "__MSG_extensionDescription__"
+    locales = {path.parent.name: json.loads(path.read_text(encoding="utf-8"))
+               for path in (EXTENSION / "_locales").glob("*/messages.json")}
+    assert {"en", "pt_BR"} <= set(locales) and manifest["default_locale"] in locales
+    for messages in locales.values():
+        assert len(messages["extensionName"]["message"]) <= 75
+        assert len(messages["extensionDescription"]["message"]) <= 132
 
 
 def test_content_script_recognizes_hash_placeholders():
@@ -33,12 +39,28 @@ def test_content_script_recognizes_hash_placeholders():
     assert re.search(pattern, "[CPF_3fa2c1d9e07b4a12]")
 
 
-def test_firefox_manifest():
+def _packager():
     import importlib.util
 
     spec = importlib.util.spec_from_file_location("empacotar", ROOT / "scripts" / "empacotar_navegador.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    return module
+
+
+def test_package_includes_every_language(tmp_path):
+    if not (EXTENSION / "veu.global.js").exists():
+        return  # o pacote só se monta depois de scripts/empacotar_navegador.py
+    manifest = json.loads((EXTENSION / "manifest.json").read_text(encoding="utf-8"))
+    output = tmp_path / "pacote.zip"
+    _packager().write_zip(output, manifest)
+    with zipfile.ZipFile(output) as archive:
+        names = set(archive.namelist())
+    assert {"_locales/en/messages.json", "_locales/pt_BR/messages.json"} <= names
+
+
+def test_firefox_manifest():
+    module = _packager()
     manifest = json.loads((EXTENSION / "manifest.json").read_text(encoding="utf-8"))
     firefox = module.firefox_manifest(manifest)
     assert firefox["background"] == {"scripts": ["fundo.js"]}

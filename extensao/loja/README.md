@@ -29,7 +29,7 @@ Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capt
 
 **Nome:** Véu: proteção de dados para IA
 
-**Resumo** (vem do manifesto; as lojas aceitam no máximo 132 caracteres): Esconde CPF, nomes, telefones, chaves de API e senhas antes de enviar ao ChatGPT, Claude, Gemini e outras IAs. Roda no navegador.
+**Resumo** (vem de `extensao/_locales/pt_BR/messages.json`; em inglês, de `_locales/en`; as lojas aceitam no máximo 132 caracteres): Esconde CPF, nomes, telefones, chaves de API e senhas antes de enviar ao ChatGPT, Claude, Gemini e outras IAs. Roda no navegador.
 
 **Descrição:**
 

@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Véu: proteção de dados para IA",
+    "description": "Nome da extensão no navegador e nas lojas (no máximo 75 caracteres)."
+  },
+  "extensionDescription": {
+    "message": "Esconde CPF, nomes, telefones, chaves de API e senhas antes de enviar ao ChatGPT, Claude, Gemini e outras IAs. Roda no navegador.",
+    "description": "Descrição curta no navegador e nas lojas (no máximo 132 caracteres)."
+  }
+}

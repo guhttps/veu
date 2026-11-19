@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Véu: proteção de dados para IA",
+  "name": "__MSG_extensionName__",
   "short_name": "Véu",
   "version": "0.7.2",
-  "description": "Esconde CPF, nomes, telefones, chaves de API e senhas antes de enviar ao ChatGPT, Claude, Gemini e outras IAs. Roda no navegador.",
+  "description": "__MSG_extensionDescription__",
+  "default_locale": "en",
   "homepage_url": "https://github.com/guhttps/veu",
   "minimum_chrome_version": "120",
   "icons": {

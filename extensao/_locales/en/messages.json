@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Véu: data protection for AI",
+    "description": "Extension name shown by the browser and the stores (at most 75 characters)."
+  },
+  "extensionDescription": {
+    "message": "Hides names, ID numbers, phone numbers, API keys and passwords before you send text to ChatGPT, Claude, Gemini and other AIs.",
+    "description": "Short description shown by the browser and the stores (at most 132 characters)."
+  }
+}
