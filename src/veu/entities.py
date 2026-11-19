@@ -17,6 +17,7 @@ LABELS: dict[str, str] = {
     "CTPS": "Carteira de trabalho (CTPS)",
     "REGISTRO_PROFISSIONAL": "Registro em conselho profissional (OAB, CRM, CRO, CREA...)",
     "CADASTRO": "Número de cadastro (prontuário, matrícula, carteirinha do convênio, apólice)",
+    "TERMO": "Termo de uma lista própria (cliente, projeto, produto)",
     "CERTIDAO": "Matrícula de certidão de nascimento, casamento ou óbito",
     "TELEFONE": "Telefone",
     "EMAIL": "E-mail",

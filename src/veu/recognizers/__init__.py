@@ -6,6 +6,7 @@ from veu.recognizers.optional import LLMRecognizer, SpacyRecognizer
 from veu.recognizers.patterns import DEFAULT_SPECS, PatternRecognizer, PatternSpec, Scores, custom_spec
 from veu.recognizers.persons import PersonRecognizer
 from veu.recognizers.secrets import SecretRecognizer
+from veu.recognizers.terms import TermRecognizer
 
 __all__ = [
     "DEFAULT_SPECS",
@@ -18,6 +19,7 @@ __all__ = [
     "Recognizer",
     "Scores",
     "SecretRecognizer",
+    "TermRecognizer",
     "SpacyRecognizer",
     "custom_spec",
 ]

@@ -5,6 +5,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+- **Listas próprias** (`TERMO` e `PESSOA`): termos que sempre somem, sem ligar para maiúsculas, acentos e espaços, e só como palavra inteira ("Projeto Netuno" acha "PROJETO  NETUNO", mas não "Projeto Netunos"). Em Python (`Veu(terms=...)` ou `[deteccao.termos]` no `veu.toml`) e em JavaScript (`new Veu({ terms })`).
+- **Base do Véu Pro** (ainda não lançado): chave de licença assinada (Ed25519), que a extensão confere sem internet; campo "Véu Pro" no ícone da extensão, com as listas próprias guardadas só no navegador (fora da sincronização da conta); a TI pode distribuir a chave e as listas pela política (`licenca`, `listaNomes`, `listaTermos`). O servidor de licenças (`nuvem/`, Cloudflare Workers) confere a assinatura no Mercado Pago, entrega a chave depois do pagamento e renova enquanto a assinatura estiver ativa, sem banco de dados e sem nunca receber textos.
+
+### Corrigido
+- A constante `VERSION` da biblioteca JavaScript estava em 0.6.0; agora um teste confere todas as versões do projeto.
+
 ## [0.8.1] - 2026-11-19
 
 ### Adicionado

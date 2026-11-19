@@ -20,6 +20,7 @@ from veu.recognizers import (
     Recognizer,
     SecretRecognizer,
     SpacyRecognizer,
+    TermRecognizer,
     custom_spec,
 )
 from veu.vault import Vault
@@ -55,7 +56,7 @@ def build_recognizers(config: Config) -> list[Recognizer]:
         )
         for pattern in config.custom_patterns
     ]
-    recognizers: list[Recognizer] = []
+    recognizers: list[Recognizer] = [TermRecognizer(config.terms)] if config.terms else []
     for name in config.detectors:
         if name == "padroes":
             recognizers.append(PatternRecognizer([*DEFAULT_SPECS, *custom]))

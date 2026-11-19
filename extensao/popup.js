@@ -17,7 +17,49 @@
     $("#restaurar-respostas").checked = config.restaurarRespostas;
     $("#restaurar-respostas").disabled = travado("restaurarRespostas");
     mostrarGrupos(travado("tiposDesligados") || travado("tipos"));
+    mostrarPro(travado);
   }
+
+  // Véu Pro: a chave confere a assinatura; as listas próprias só valem com ela.
+  function mostrarPro(travado) {
+    const pro = config.pro || { ativo: false };
+    const validade = pro.exp ? new Date(pro.exp * 1000).toLocaleDateString("pt-BR") : "";
+    const plano = pro.plano === "empresa" ? "Véu Empresa" : "Véu Pro";
+    $("#pro-estado").textContent = pro.ativo
+      ? `${plano} ativo até ${validade}${pro.email ? ` (${pro.email})` : ""}${pro.daEmpresa ? ", pela sua empresa" : ""}.`
+      : pro.motivo === "vencida" ? `A chave venceu em ${validade}. Se a assinatura está ativa, o Véu renova sozinho.`
+      : "Sem chave neste navegador. Com o Pro, você cria listas de nomes e termos que sempre somem.";
+    $("#pro-ativar").hidden = pro.ativo || pro.daEmpresa;
+    $("#pro-remover").hidden = !pro.exp || pro.daEmpresa;
+    $("#pro-listas").hidden = !pro.ativo;
+    $("#lista-nomes").value = (config.listaNomes || []).join("\n");
+    $("#lista-termos").value = (config.listaTermos || []).join("\n");
+    $("#lista-nomes").disabled = travado("listaNomes");
+    $("#lista-termos").disabled = travado("listaTermos");
+  }
+
+  async function pedir(mensagem) {
+    const resposta = await chrome.runtime.sendMessage(mensagem);
+    if (resposta?.erro) {
+      $("#pro-estado").textContent = resposta.erro;
+      return false;
+    }
+    config = resposta;
+    mostrar();
+    if (aba?.id) chrome.tabs.sendMessage(aba.id, { tipo: "recarregar" }).catch(() => {});
+    return true;
+  }
+
+  $("#pro-botao").addEventListener("click", async () => {
+    if (await pedir({ tipo: "ativarLicenca", chave: $("#pro-chave").value })) $("#pro-chave").value = "";
+  });
+  $("#pro-remover").addEventListener("click", () => pedir({ tipo: "removerLicenca" }));
+  $("#salvar-listas").addEventListener("click", async () => {
+    const linhas = (campo) => $(campo).value.split("\n").map((linha) => linha.trim()).filter(Boolean);
+    if (await pedir({ tipo: "salvarListas", listaNomes: linhas("#lista-nomes"), listaTermos: linhas("#lista-termos") })) {
+      $("#pro-estado").textContent = "Listas salvas.";
+    }
+  });
 
   // Caixinhas por grupo (os mesmos grupos da página e do painel). A empresa pode travar a escolha.
   function mostrarGrupos(travadas) {

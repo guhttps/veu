@@ -5,9 +5,9 @@
       "id": "pessoas",
       "titulo": "Nomes e contatos",
       "titulo_en": "Names and contacts",
-      "exemplo": "nomes, telefones, e-mails, endereços, CEP, coordenadas de GPS, datas de nascimento",
-      "exemplo_en": "names, phone numbers, e-mails, addresses, postal codes, GPS coordinates, dates of birth",
-      "tipos": ["PESSOA", "TELEFONE", "EMAIL", "ENDERECO", "CEP", "COORDENADAS", "DATA_NASCIMENTO"]
+      "exemplo": "nomes, telefones, e-mails, endereços, CEP, coordenadas de GPS, datas de nascimento e as suas listas próprias",
+      "exemplo_en": "names, phone numbers, e-mails, addresses, postal codes, GPS coordinates, dates of birth and your own lists",
+      "tipos": ["PESSOA", "TELEFONE", "EMAIL", "ENDERECO", "CEP", "COORDENADAS", "DATA_NASCIMENTO", "TERMO"]
     },
     {
       "id": "documentos",

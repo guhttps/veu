@@ -309,7 +309,7 @@ veu restaurar resposta.docx --cofre cofre.json -o resposta-final.docx
 
 Formatos estruturados (CURP, RFC, Cartão de Cidadão, CUIT e RIF com a pontuação típica, SSN com hífens, DNI espanhol, codice fiscale, NIR com espaços, MRZ, VIN e carteiras) são reconhecidos sozinhos. Números puros, que um CPF ou um protocolo poderiam imitar, só com a palavra de contexto por perto ("NIF", "CUIT", "RUC", "cédula", "BSN", "SIN", "Aadhaar"). Num formato que existe nos dois lados, como `12.345.678-5`, sem contexto, vence o rótulo brasileiro.
 
-Também dá para adicionar padrões próprios (matrícula, número de cliente...) no [`veu.toml`](examples/veu.toml).
+Também dá para adicionar padrões próprios (matrícula, número de cliente...) no [`veu.toml`](examples/veu.toml), e **listas próprias**: nomes e termos que sempre somem, sem ligar para maiúsculas e acentos (`[deteccao.termos]`, `Veu(terms={"PESSOA": ["Joana Prado"], "TERMO": ["Projeto Netuno"]})` ou `new Veu({ terms: ... })` no JavaScript). Na extensão, as listas fazem parte do Véu Pro.
 
 ## Operadores
 
@@ -409,7 +409,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 1067 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 1077 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 python scripts/simular_usuarios.py --rodadas 5    # 77 perfis de trabalho usando o Véu, com dados fictícios

@@ -5,6 +5,8 @@ import re
 import zipfile
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 EXTENSION = ROOT / "extensao"
 
@@ -63,7 +65,7 @@ def test_firefox_manifest():
     module = _packager()
     manifest = json.loads((EXTENSION / "manifest.json").read_text(encoding="utf-8"))
     firefox = module.firefox_manifest(manifest)
-    assert firefox["background"] == {"scripts": ["fundo.js"]}
+    assert firefox["background"] == {"scripts": ["licenca.js", "fundo.js"]}
     assert firefox["browser_specific_settings"]["gecko"]["id"] == "veu@guhttps.github.io"
     assert "minimum_chrome_version" not in firefox and firefox["version"] == manifest["version"]
     # A Mozilla recusa extensões novas que não declaram se coletam dados.
@@ -82,47 +84,13 @@ def test_zips_when_built(tmp_path):
     assert "scripts" in manifest["background"]
 
 
-SERVICE_WORKER_HARNESS = r"""
-const fs = require("fs"), vm = require("vm");
-const store = { sync: {}, session: {} };
-const area = (name) => ({
-  get: async (key) => (key === null ? { ...store[name] } : { [key]: store[name][key] }),
-  set: async (values) => { Object.assign(store[name], values); },
-  remove: async () => {},
-  setAccessLevel: () => {},
-});
-let listener;
-const event = () => ({ addListener: (fn) => { listener ??= fn; } });
-const chrome = {
-  storage: { managed: { get: async () => ({}) }, sync: area("sync"), session: area("session") },
-  runtime: { onMessage: { addListener: (fn) => { listener = fn; } }, onInstalled: event(),
-             getURL: (path) => "chrome-extension://veu/" + path },
-  tabs: { onRemoved: event() }, contextMenus: { onClicked: event() },
-  action: { setBadgeBackgroundColor: async () => {}, setBadgeText: async () => {} },
-};
-vm.runInNewContext(fs.readFileSync(process.argv[1], "utf8"), { chrome, console });
-const send = (sender) => new Promise((resolve) =>
-  listener({ tipo: "salvarPreferencias", preferencias: { ativo: false } }, sender, resolve));
-(async () => {
-  const fromPage = await send({ tab: { id: 7 }, url: "https://chatgpt.com/" });
-  const afterPage = store.sync.ativo ?? null;
-  const fromPopup = await send({ id: "veu", url: "chrome-extension://veu/popup.html", tab: { id: 8 } });
-  console.log(JSON.stringify({ fromPage, afterPage, fromPopup: fromPopup.ativo, afterPopup: store.sync.ativo }));
-})();
-"""
-
-
-def test_only_the_popup_changes_preferences():
-    """O script que roda dentro dos sites de IA não consegue desligar a proteção pelo service worker."""
+@pytest.mark.parametrize("arquivo", ["extensao/teste/fundo.test.mjs", "nuvem/worker.test.mjs"])
+def test_service_worker_and_license_server(arquivo):
+    """Preferências só pelo ícone, licença do Pro, listas próprias e o servidor de licenças (testes em Node)."""
     import shutil
     import subprocess
 
     if not shutil.which("node"):
-        import pytest
-
         pytest.skip("precisa do Node")
-    result = subprocess.run(["node", "-e", SERVICE_WORKER_HARNESS, str(EXTENSION / "fundo.js")],
-                            capture_output=True, text=True, encoding="utf-8", check=True)
-    data = json.loads(result.stdout)
-    assert "erro" in data["fromPage"] and data["afterPage"] is None
-    assert data["fromPopup"] is False and data["afterPopup"] is False
+    result = subprocess.run(["node", "--test", arquivo], cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
+    assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-2000:]

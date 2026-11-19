@@ -145,6 +145,8 @@ class Config:
     # Itens no cache de detecção (0 desliga): agentes reenviam a conversa inteira a cada turno.
     detection_cache: int = 2048
     custom_patterns: tuple[dict, ...] = ()
+    # Listas próprias: termos sempre escondidos, por tipo ([deteccao.termos] PESSOA = ["Joana Prado"]).
+    terms: dict[str, tuple[str, ...]] = field(default_factory=dict)
     spacy_model: str = "pt_core_news_lg"
     llm_url: str | None = None
     llm_model: str | None = None
@@ -231,7 +233,7 @@ class Config:
             raise ConfigError(f"Perfil desconhecido: {self.profile}. Use um de {', '.join(PROFILES)}.")
         if not 0 <= self.threshold <= 1:
             raise ConfigError("O limiar precisa estar entre 0 e 1.")
-        unknown = [label for label in (*self.labels, *self.block, *self.operators) if label not in LABELS
+        unknown = [label for label in (*self.labels, *self.block, *self.operators, *self.terms) if label not in LABELS
                    and label not in {str(p.get("entidade", "")).upper() for p in self.custom_patterns}]
         if unknown:
             raise ConfigError(f"Entidades desconhecidas: {', '.join(unknown)}. Válidas: {', '.join(LABELS)}.")
@@ -327,7 +329,7 @@ class Config:
 _SECTIONS = {
     "deteccao": {
         "limiar": "threshold", "entidades": "labels", "ignorar": "allowlist", "detectores": "detectors",
-        "personalizados": "custom_patterns", "modelo_spacy": "spacy_model", "llm": None,
+        "personalizados": "custom_patterns", "modelo_spacy": "spacy_model", "llm": None, "termos": "terms",
         "ignorar_padroes": "allow_patterns", "cache": "detection_cache", "modelo_ml": "ml_model",
     },
     "anonimizacao": {

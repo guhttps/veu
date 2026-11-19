@@ -1,5 +1,11 @@
 // Service worker da extensão: configuração (política da empresa + escolhas do usuário), cofre por aba e menus.
 "use strict";
+// Licença do Véu Pro (licenca.js). No Firefox, a página de fundo já carrega o arquivo antes deste.
+if (typeof importScripts === "function" && !globalThis.veuLicenca) importScripts("licenca.js");
+
+const HORA = 3600 * 1000;
+const DIA = 24 * HORA;
+const LIMITE_LISTA = 2000; // itens por lista própria
 
 const PADRAO = {
   ativo: true,
@@ -13,6 +19,8 @@ const PADRAO = {
   travarConfiguracao: false,
   orientacao: "", // mensagem da empresa nos avisos (política gerenciada)
   linkOrientacao: "",
+  listaNomes: [], // listas próprias (Pro): ficam só neste navegador, em storage.local
+  listaTermos: [],
 };
 
 async function politica() {
@@ -27,11 +35,52 @@ async function politica() {
 async function configuracao() {
   const empresa = await politica();
   const usuario = empresa.travarConfiguracao ? {} : await chrome.storage.sync.get(null);
-  const final = { ...PADRAO, ...usuario, ...empresa };
+  // As listas próprias têm nomes de clientes: ficam em storage.local, fora da sincronização da conta do navegador.
+  const listas = await chrome.storage.local.get(["listaNomes", "listaTermos"]);
+  const final = { ...PADRAO, ...usuario, ...listas, ...empresa };
   final.gerenciada = Object.keys(empresa).length > 0;
   final.camposDaEmpresa = Object.keys(empresa);
+  final.pro = await estadoPro(empresa);
   return final;
 }
+
+// Véu Pro ------------------------------------------------------------------------------------------------------
+let renovando = null;
+
+/** Situação da licença: a da empresa (política) ou a colada no ícone. Perto do vencimento, renova sozinha. */
+async function estadoPro(empresa) {
+  const licencas = globalThis.veuLicenca;
+  const salvo = await chrome.storage.local.get(["licenca", "licencaTentativa"]);
+  const chave = empresa.licenca || salvo.licenca;
+  if (!chave || !licencas) return { ativo: false };
+  const resultado = await licencas.verificar(chave);
+  const licenca = resultado.licenca;
+  const faltam = licenca ? licenca.exp * 1000 - Date.now() : Infinity;
+  if (licenca && !empresa.licenca && faltam < 7 * DIA && Date.now() - (salvo.licencaTentativa || 0) > 12 * HORA) {
+    renovando ??= renovarLicenca(chave).finally(() => { renovando = null; });
+  }
+  return { ativo: resultado.valida, motivo: resultado.motivo, plano: licenca?.plano, email: licenca?.email,
+    exp: licenca?.exp, daEmpresa: Boolean(empresa.licenca) };
+}
+
+async function renovarLicenca(chave) {
+  await chrome.storage.local.set({ licencaTentativa: Date.now() });
+  const resposta = await globalThis.veuLicenca.renovar(chave);
+  if (resposta.chave && (await globalThis.veuLicenca.verificar(resposta.chave)).valida) {
+    await chrome.storage.local.set({ licenca: resposta.chave });
+  }
+  return resposta;
+}
+
+const MOTIVOS = {
+  formato: "Isto não parece uma chave do Véu: ela começa com VEU1.",
+  assinatura: "Esta chave não foi emitida pelo Véu.",
+  vencida: "Esta chave venceu. Se a assinatura está ativa, o Véu tenta renovar sozinho.",
+  "sem-chave-publica": "O Véu Pro ainda não foi lançado.",
+};
+
+const limparLista = (lista) => (Array.isArray(lista) ? lista : [])
+  .map((item) => String(item).trim().slice(0, 200)).filter((item) => item.length >= 2).slice(0, LIMITE_LISTA);
 
 const chaveDoCofre = (abaId) => `cofre:${abaId}`;
 const chaveDaContagem = (abaId) => `contagem:${abaId}`;
@@ -46,6 +95,8 @@ async function atualizarSelo(abaId) {
 
 chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
   const abaId = remetente.tab?.id ?? mensagem.abaId;
+  // Páginas da própria extensão (o ícone, também aberto numa aba); o script dentro dos sites de IA não conta.
+  const daExtensao = (remetente.url || "").startsWith(chrome.runtime.getURL(""));
   (async () => {
     switch (mensagem.tipo) {
       case "configuracao":
@@ -65,11 +116,31 @@ chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
       }
       case "contagem":
         return (await chrome.storage.session.get(chaveDaContagem(abaId)))[chaveDaContagem(abaId)] || {};
+      case "ativarLicenca": {
+        if (!daExtensao) return { erro: "A chave só é ativada pelo ícone do Véu." };
+        const chave = String(mensagem.chave || "").trim();
+        const resultado = await globalThis.veuLicenca.verificar(chave);
+        if (!resultado.valida && resultado.motivo !== "vencida") return { erro: MOTIVOS[resultado.motivo] || "Chave inválida." };
+        await chrome.storage.local.set({ licenca: chave, licencaTentativa: 0 });
+        if (!resultado.valida) await renovarLicenca(chave);
+        return configuracao();
+      }
+      case "removerLicenca":
+        if (!daExtensao) return { erro: "A chave só é removida pelo ícone do Véu." };
+        await chrome.storage.local.remove(["licenca", "licencaTentativa"]);
+        return configuracao();
+      case "salvarListas": {
+        if (!daExtensao) return { erro: "As listas só mudam pelo ícone do Véu." };
+        const atual = await configuracao();
+        if (!atual.pro.ativo) return { erro: "As listas próprias fazem parte do Véu Pro." };
+        const listas = { listaNomes: limparLista(mensagem.listaNomes), listaTermos: limparLista(mensagem.listaTermos) };
+        for (const campo of atual.camposDaEmpresa) delete listas[campo];
+        await chrome.storage.local.set(listas);
+        return configuracao();
+      }
       case "salvarPreferencias": {
         // Só o popup muda as preferências: o script que roda dentro dos sites de IA nunca desliga a proteção.
-        if (!(remetente.url || "").startsWith(chrome.runtime.getURL(""))) {
-          return { erro: "As preferências só mudam pelo ícone do Véu." };
-        }
+        if (!daExtensao) return { erro: "As preferências só mudam pelo ícone do Véu." };
         const atual = await configuracao();
         if (atual.travarConfiguracao) return { erro: "A configuração é definida pela sua empresa." };
         const permitidas = Object.fromEntries(

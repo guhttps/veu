@@ -1,0 +1,12 @@
+# Servidor de licenças do Véu Pro na Cloudflare Workers (plano gratuito). Veja nuvem/README.md.
+name = "veu-licencas"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+[vars]
+# Preenchida por node nuvem/gerar-chaves.mjs.
+CHAVE_PUBLICA = ""
+# Preenchida por node nuvem/criar-planos.mjs: {"id do plano no Mercado Pago": {"plano": "pro", "nome": "..."}}.
+PLANOS = '{}'
+
+# Segredos (nunca neste arquivo): npx wrangler secret put CHAVE_PRIVADA e npx wrangler secret put MP_TOKEN

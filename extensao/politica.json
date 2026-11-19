@@ -41,6 +41,23 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "licenca": {
+      "title": "Chave do Véu Pro ou Empresa",
+      "description": "Chave de licença (VEU1...) distribuída pela TI. Libera as funções pagas sem que cada pessoa cole a chave.",
+      "type": "string"
+    },
+    "listaNomes": {
+      "title": "Lista própria: nomes sempre escondidos (Pro)",
+      "description": "Nomes de clientes, pacientes ou funcionários escondidos em qualquer grafia, sem ligar para maiúsculas e acentos.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "listaTermos": {
+      "title": "Lista própria: termos sempre escondidos (Pro)",
+      "description": "Nomes de projetos, produtos e códigos internos da empresa.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
     "restaurarRespostas": {
       "title": "Mostrar os dados reais nas respostas",
       "description": "Troca os marcadores das respostas pelos dados reais na página. Desligado por padrão: o código do site de IA também consegue ler o que está na página.",

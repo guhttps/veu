@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parent.parent
 BUNDLE = ROOT / "js" / "dist" / "veu.global.js"
 EXTENSION = ROOT / "extensao"
 WEB = ROOT / "web"
-EXTENSION_FILES = ("manifest.json", "politica.json", "fundo.js", "conteudo.js", "popup.html", "popup.css", "popup.js",
-                   "veu.global.js")
+EXTENSION_FILES = ("manifest.json", "politica.json", "licenca.js", "fundo.js", "conteudo.js", "popup.html", "popup.css",
+                   "popup.js", "veu.global.js")
 
 
 FIREFOX_ID = "veu@guhttps.github.io"
@@ -29,7 +29,8 @@ FIREFOX_ID = "veu@guhttps.github.io"
 def firefox_manifest(manifest: dict) -> dict:
     """Manifesto para o Firefox: página de fundo em vez de service worker e o identificador do complemento."""
     result = {key: value for key, value in manifest.items() if key != "minimum_chrome_version"}
-    result["background"] = {"scripts": [manifest["background"]["service_worker"]]}
+    # No Chrome, o service worker carrega licenca.js com importScripts; no Firefox, a página de fundo lista os dois.
+    result["background"] = {"scripts": ["licenca.js", manifest["background"]["service_worker"]]}
     # A Mozilla exige que extensões novas declarem se coletam dados (o Firefox mostra isso ao instalar). O Véu não
     # coleta nada; a chave existe a partir do Firefox 140.
     result["browser_specific_settings"] = {"gecko": {

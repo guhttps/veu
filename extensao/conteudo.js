@@ -35,6 +35,8 @@
       labels: ligados.length < permitidos.length || config.tipos?.length ? ligados : undefined,
       allowlist: config.ignorar || [],
       allowPatterns: config.ignorarPadroes || [],
+      // Listas próprias (Véu Pro): nomes e termos que sempre somem, em qualquer grafia.
+      terms: config.pro?.ativo ? { PESSOA: config.listaNomes || [], TERMO: config.listaTermos || [] } : undefined,
     });
     const salvo = await mensagem({ tipo: "carregarCofre" });
     if (salvo) cofre = Vault.fromJSON(salvo);

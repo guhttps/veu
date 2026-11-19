@@ -6,6 +6,7 @@ import type { Entity, Recognizer } from "./entities.ts";
 import { PatternRecognizer, customPattern, DEFAULT_SPECS, type PatternSpec } from "./patterns.ts";
 import { PersonRecognizer } from "./persons.ts";
 import { SecretRecognizer } from "./secrets.ts";
+import { TermRecognizer } from "./terms.ts";
 import { counter } from "./text.ts";
 import { StreamRestorer, Vault } from "./vault.ts";
 
@@ -18,12 +19,13 @@ export { AddressRecognizer } from "./addresses.ts";
 export { PatternRecognizer, customPattern, DEFAULT_SPECS } from "./patterns.ts";
 export { PersonRecognizer } from "./persons.ts";
 export { SecretRecognizer, keyKind, looksRandom, secretPrefix } from "./secrets.ts";
+export { TermRecognizer, foldKeepingPositions } from "./terms.ts";
 export { DetectionCache } from "./cache.ts";
 export { StreamRestorer, Vault, linkContext, neutralizePlaceholders, normalizeValue, restoreAllowed, urlHost } from "./vault.ts";
 export type { RestoreContext, RestorePolicy, VaultData, VaultEntry } from "./vault.ts";
 export * as validators from "./validators.ts";
 
-export const VERSION = "0.6.0";
+export const VERSION = "0.8.1";
 
 export const DETECTORS = ["padroes", "nomes", "enderecos", "segredos"] as const;
 export type Detector = (typeof DETECTORS)[number];
@@ -48,13 +50,15 @@ export interface VeuOptions extends AnalyzerOptions, AnonymizerOptions {
   instructModel?: boolean;
   /** Tipos que fazem a requisição ser recusada em vez de escondida (usado pelas integrações). */
   block?: string[];
+  /** Listas próprias: termos sempre escondidos, por tipo ({ PESSOA: ["Joana Prado"], TERMO: ["Projeto Netuno"] }). */
+  terms?: Record<string, readonly string[]>;
 }
 
 function buildRecognizers(options: VeuOptions): Recognizer[] {
   const detectors = options.detectors ?? [...DETECTORS];
   const custom: PatternSpec[] = (options.customPatterns ?? []).map((p) =>
     customPattern(p.entidade, p.padrao, p.pontuacao ?? 0.9, p.contexto ?? [], p.exigeContexto ?? false));
-  const recognizers: Recognizer[] = [];
+  const recognizers: Recognizer[] = options.terms && Object.keys(options.terms).length ? [new TermRecognizer(options.terms)] : [];
   for (const name of detectors) {
     if (name === "padroes") recognizers.push(new PatternRecognizer([...DEFAULT_SPECS, ...custom]));
     else if (name === "nomes") recognizers.push(new PersonRecognizer());

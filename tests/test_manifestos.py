@@ -55,3 +55,22 @@ def test_mcp_registry_server_json_matches_the_package():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert f"<!-- mcp-name: {server['name']} -->" in readme  # o registro confere a posse do pacote no PyPI por aqui
     assert server["name"].startswith("io.github.guhttps/") and len(server["description"]) <= 100
+
+
+def test_every_version_string_matches_the_package():
+    """A constante VERSION do JavaScript ficou em 0.6.0 por três versões: agora todo lugar com versão é conferido."""
+    import json
+    import re
+
+    root = Path(__file__).resolve().parent.parent
+    found = {
+        "js/package.json": json.loads((root / "js" / "package.json").read_text(encoding="utf-8"))["version"],
+        "n8n/package.json": json.loads((root / "n8n" / "package.json").read_text(encoding="utf-8"))["version"],
+        "extensao/manifest.json": json.loads((root / "extensao" / "manifest.json").read_text(encoding="utf-8"))["version"],
+        "plugin.json": json.loads((root / "plugin" / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))["version"],
+        "js/src/index.ts": re.search(r'export const VERSION = "([^"]+)"',
+                                     (root / "js" / "src" / "index.ts").read_text(encoding="utf-8")).group(1),
+    }
+    from veu import __version__
+
+    assert found == dict.fromkeys(found, __version__)
