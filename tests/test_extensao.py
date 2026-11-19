@@ -20,6 +20,13 @@ def test_content_script_runs_before_the_page():
     assert manifest["content_scripts"][0]["run_at"] == "document_start"
 
 
+def test_manifest_fits_the_store_limits():
+    # A Chrome Web Store e a loja do Edge recusam o pacote se a descrição passar de 132 caracteres.
+    manifest = json.loads((EXTENSION / "manifest.json").read_text(encoding="utf-8"))
+    assert len(manifest["description"]) <= 132
+    assert len(manifest["name"]) <= 75
+
+
 def test_content_script_recognizes_hash_placeholders():
     source = (EXTENSION / "conteudo.js").read_text(encoding="utf-8")
     pattern = re.search(r"const PLACEHOLDER = /(.+)/;", source).group(1).replace("\\\\", "\\")
