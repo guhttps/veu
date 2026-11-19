@@ -18,6 +18,8 @@ from urllib.parse import urlsplit
 import httpx
 from starlette.applications import Starlette
 from starlette.concurrency import run_in_threadpool
+from starlette.datastructures import MutableHeaders
+from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from starlette.routing import Route
@@ -61,6 +63,26 @@ def is_local_host(host: str) -> bool:
         return ipaddress.ip_address(host).is_loopback
     except ValueError:
         return False
+
+
+class SecurityHeaders:
+    """nosniff e no-referrer em todas as respostas (as do provedor ganham também a CSP sandbox, em _response_headers)."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        async def with_headers(message):
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                headers.setdefault("x-content-type-options", "nosniff")
+                headers.setdefault("referrer-policy", "no-referrer")
+            await send(message)
+
+        await self.app(scope, receive, with_headers)
 
 
 class BodyTooLarge(Exception):
@@ -575,7 +597,7 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         if siem is not None:
             await run_in_threadpool(siem.close)
 
-    app = Starlette(routes=routes, lifespan=lifespan)
+    app = Starlette(routes=routes, lifespan=lifespan, middleware=[Middleware(SecurityHeaders)])
     app.state.config = config
     app.state.veu = veu
     app.state.siem = siem

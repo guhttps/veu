@@ -11,6 +11,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Senha e PIN só de números** ("senha do banco 739201", "PIN do cartão: 4821"); anos ("a senha expira em 2027") ficam. **Número de benefício do INSS** ("NB 123.456.789-0") como `CADASTRO`.
 
 ### Segurança
+- **Cabeçalhos em todas as respostas:** `X-Content-Type-Options: nosniff` e `Referrer-Policy: no-referrer` agora saem também nos erros JSON e na API, não só nas respostas repassadas do provedor (achado do nikto no modo exposto, rodando a 0.8.0 do PyPI num Kali). No mesmo teste, o token curto foi recusado, a comparação do token levou o mesmo tempo para qualquer tentativa e o nmap não identificou o servidor.
 - **Extensão:** o service worker aceitava mudar as preferências (inclusive desligar a proteção) a partir do script que roda dentro dos sites de IA. Agora só páginas da própria extensão (o ícone) mudam as preferências. Nenhum site conseguia mandar essa mensagem, mas é uma barreira a menos se o script de conteúdo for enganado um dia.
 
 ### Corrigido

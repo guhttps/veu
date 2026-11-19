@@ -95,3 +95,15 @@ def test_exposed_server_refuses_short_tokens(options):
 def test_short_token_is_still_fine_on_localhost():
     create_app(Config(token="curto"))
     create_app(Config(host="0.0.0.0", token="x" * 20))
+
+
+def test_every_response_has_nosniff_and_no_referrer():
+    """nikto no modo exposto: os erros JSON (401, 404) também saem com os cabeçalhos de segurança."""
+    import httpx
+    from test_server import Upstream, call
+
+    app = create_app(Config(), upstream_transport=httpx.MockTransport(Upstream()))
+    for method, path in (("GET", "/veu/saude"), ("POST", "/veu/v1/detectar"), ("GET", "/veu/nao-existe")):
+        response = call(app, method, path, json={"texto": "x"} if method == "POST" else None)
+        assert response.headers["x-content-type-options"] == "nosniff", path
+        assert response.headers["referrer-policy"] == "no-referrer", path
