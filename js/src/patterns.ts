@@ -89,6 +89,23 @@ const CTX_BIRTH = [
   "nascimento", "nasc", "nasc.", "nascido", "nascida", "nasceu", "data de nascimento", "dn", "d.n",
   "aniversario", "nascida em", "nascido em",
 ];
+// Nomes de coluna: em tabelas (SQL, CSV, JSON), o cabeçalho "nascimento" fica longe do valor.
+const CTX_BIRTH_COLUMN = [
+  "nascimento", "data_nascimento", "dt_nascimento", "datanascimento", "data_nasc", "dt_nasc", "nasc",
+  "birth_date", "birthdate", "date_of_birth", "dob", "data de nascimento", "data nascimento",
+];
+const CTX_MAC = ["mac", "endereco mac", "mac address", "macaddress", "hwaddr", "ether", "bssid"];
+const CTX_COORD = [
+  "coordenadas", "coordenada", "localizacao", "local", "gps", "lat", "latitude", "lng", "lon", "longitude",
+  "geolocalizacao", "posicao", "location",
+];
+// Números de cadastro em instituições: prontuário, matrícula (RA), carteirinha do convênio, apólice.
+const CTX_CADASTRO = [
+  "prontuario", "carteirinha", "carteira do convenio", "carteira do plano", "cartao do convenio",
+  "cartao do plano", "numero da carteira", "matricula", "ra", "registro academico", "apolice",
+  "codigo do beneficiario", "numero do beneficiario",
+];
+const isDate = (value: string) => /^(?:\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{4}-\d{2}-\d{2})$/.test(value);
 const CTX_ACCOUNT = ["conta", "conta corrente", "conta-corrente", "c/c", "cc", "agencia", "ag", "ag.", "poupanca", "conta poupanca"];
 const CTX_PROCESS = ["processo", "autos", "proc", "proc.", "acao", "numero do processo"];
 const CTX_EMAIL = ["email", "e-mail"];
@@ -234,6 +251,17 @@ export const DEFAULT_SPECS: PatternSpec[] = [
     S(null, null, 0.85), { validator: v.isPlausibleBirthdate, context: CTX_BIRTH, before: 35, after: 0 }),
   spec("DATA_NASCIMENTO", `${B}\\d{1,2}\\s+de\\s+(?:${MONTHS})\\s+de\\s+\\d{4}${E}`, S(null, null, 0.85),
     { validator: v.isPlausibleBirthdate, context: CTX_BIRTH, flags: "i", before: 35, after: 0 }),
+  // Em tabelas, só datas dentro de uma célula (depois de aspas, vírgula, ponto e vírgula, barra ou tabulação) e
+  // com a coluna "nascimento" no cabeçalho: "INSERT ... (nome, nascimento) VALUES ('Ana', '1985-04-03')".
+  spec("DATA_NASCIMENTO", `(?<=['";,|\\t])[ ]?(?<valor>\\d{4}-\\d{2}-\\d{2}|\\d{1,2}/\\d{1,2}/\\d{4})(?![${W}])`,
+    S(null, null, 0.8), { validator: v.isPlausibleBirthdate, context: CTX_BIRTH_COLUMN, before: 600, after: 0, name: "tabela" }),
+  // Coordenadas de GPS ("-23.550520, -46.633308"): sem contexto, só com sinal negativo e cinco casas decimais.
+  spec("COORDENADAS",
+    `(?<![${W}.\\-])-?(?:[0-8]?\\d|90)\\.\\d{4,8}[ \\t]*,[ \\t]*-?(?:1[0-7]\\d|0?\\d?\\d|180)\\.\\d{4,8}(?![${W}]|\\.\\d)`,
+    S(0.8, null, 0.9, 0.85), { validator: v.isLikelyCoordinates, context: CTX_COORD, before: 40 }),
+  // Números de cadastro (prontuário, matrícula, carteirinha, apólice), só com o contexto; datas e valores ficam.
+  spec("CADASTRO", `(?<![${W}.,/$\\-])(?<!R\\$ )\\d[\\d.\\-/]{3,22}\\d(?![${W}]|,\\d)`, S(null, null, 0.8),
+    { context: CTX_CADASTRO, before: 30, exclude: isDate }),
   // Processos judiciais
   spec("PROCESSO", `${B}\\d{7}-\\d{2}\\.\\d{4}\\.\\d\\.\\d{2}\\.\\d{4}${E}`, S(0.9, 0.6, 1.0, 0.75),
     { validator: v.isValidProcessoCnj, context: CTX_PROCESS }),
@@ -312,6 +340,13 @@ export const DEFAULT_SPECS: PatternSpec[] = [
     { validator: v.isValidPort, context: CTX_SHELL, before: 60 }),
   spec("PORTA", `(?<![${W}\\-])-[pP]\\s+\\d{2,5}:(?<valor>\\d{2,5})${E}`, S(null, null, 0.85),
     { validator: v.isValidPort, context: CTX_SHELL, before: 60 }),
+  // Endereço MAC de placa de rede ("95:7F:76:CE:A3:DA", "1c-bb-bd-4a-58-ad", "aabb.ccdd.eeff").
+  spec("MAC", `(?<![${W}:.\\-])[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}(?![${W}:.\\-])`, S(0.85),
+    { validator: v.isValidMac, context: CTX_MAC }),
+  spec("MAC", `(?<![${W}:.\\-])[0-9A-Fa-f]{2}(?:-[0-9A-Fa-f]{2}){5}(?![${W}:.\\-])`, S(0.85),
+    { validator: v.isValidMac, context: CTX_MAC }),
+  spec("MAC", `(?<![${W}.:\\-])[0-9A-Fa-f]{4}\\.[0-9A-Fa-f]{4}\\.[0-9A-Fa-f]{4}(?![${W}.:\\-])`, S(null, null, 0.85),
+    { validator: v.isValidMac, context: CTX_MAC }),
   spec("SERVIDOR", `(?<![${W}.@\\-])(?:[A-Za-z0-9\\-]+\\.)+${INTERNAL_TLDS}(?![${W}\\-]|\\.[A-Za-z])`, S(0.85), { flags: "i" }),
 ];
 

@@ -114,6 +114,22 @@ CTX_BIRTH = (
     "nascimento", "nasc", "nasc.", "nascido", "nascida", "nasceu", "data de nascimento", "dn", "d.n",
     "aniversario", "nascida em", "nascido em",
 )
+# Nomes de coluna: em tabelas (SQL, CSV, JSON), o cabeçalho "nascimento" fica longe do valor.
+CTX_BIRTH_COLUMN = (
+    "nascimento", "data_nascimento", "dt_nascimento", "datanascimento", "data_nasc", "dt_nasc", "nasc",
+    "birth_date", "birthdate", "date_of_birth", "dob", "data de nascimento", "data nascimento",
+)
+CTX_MAC = ("mac", "endereco mac", "mac address", "macaddress", "hwaddr", "ether", "bssid")
+CTX_COORD = (
+    "coordenadas", "coordenada", "localizacao", "local", "gps", "lat", "latitude", "lng", "lon", "longitude",
+    "geolocalizacao", "posicao", "location",
+)
+# Números de cadastro em instituições: prontuário, matrícula (RA), carteirinha do convênio, apólice.
+CTX_CADASTRO = (
+    "prontuario", "carteirinha", "carteira do convenio", "carteira do plano", "cartao do convenio",
+    "cartao do plano", "numero da carteira", "matricula", "ra", "registro academico", "apolice",
+    "codigo do beneficiario", "numero do beneficiario",
+)
 CTX_ACCOUNT = ("conta", "conta corrente", "conta-corrente", "c/c", "cc", "agencia", "ag", "ag.", "poupanca", "conta poupanca")
 CTX_PROCESS = ("processo", "autos", "proc", "proc.", "acao", "numero do processo")
 CTX_EMAIL = ("email", "e-mail")
@@ -306,6 +322,24 @@ DEFAULT_SPECS: list[PatternSpec] = [
         "DATA_NASCIMENTO", B + rf"\d{{1,2}}\s+de\s+(?:{_MONTHS})\s+de\s+\d{{4}}" + E, Scores(None, None, 0.85),
         v.is_plausible_birthdate, CTX_BIRTH, flags=re.IGNORECASE, before=35, after=0,
     ),
+    # Em tabelas, só datas dentro de uma célula (depois de aspas, vírgula, ponto e vírgula, barra ou tabulação) e
+    # com a coluna "nascimento" no cabeçalho: "INSERT ... (nome, nascimento) VALUES ('Ana', '1985-04-03')".
+    PatternSpec(
+        "DATA_NASCIMENTO", r"(?<=['\";,|\t])[ ]?(?P<valor>\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}/\d{4})(?![\w])",
+        Scores(None, None, 0.8), v.is_plausible_birthdate, CTX_BIRTH_COLUMN, before=600, after=0, name="tabela",
+    ),
+    # Coordenadas de GPS ("-23.550520, -46.633308"): sem contexto, só com sinal negativo e cinco casas decimais.
+    PatternSpec(
+        "COORDENADAS",
+        r"(?<![\w.-])-?(?:[0-8]?\d|90)\.\d{4,8}[ \t]*,[ \t]*-?(?:1[0-7]\d|0?\d?\d|180)\.\d{4,8}(?![\w]|\.\d)",
+        Scores(0.8, None, 0.9, 0.85), v.is_likely_coordinates, CTX_COORD, before=40,
+    ),
+    # Números de cadastro (prontuário, matrícula, carteirinha, apólice), só com o contexto; datas e valores ficam.
+    PatternSpec(
+        "CADASTRO", r"(?<![\w.,/$-])(?<!R\$ )\d[\d.\-/]{3,22}\d(?![\w]|,\d)", Scores(None, None, 0.8), None, CTX_CADASTRO,
+        before=30, exclude=lambda value: re.fullmatch(r"\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{4}-\d{2}-\d{2}", value)
+        is not None,
+    ),
     # Processos judiciais
     PatternSpec(
         "PROCESSO", B + r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}" + E, Scores(0.9, 0.6, 1.0, 0.75),
@@ -395,6 +429,13 @@ DEFAULT_SPECS: list[PatternSpec] = [
                 CTX_SHELL, before=60),
     PatternSpec("PORTA", r"(?<![\w-])-[pP]\s+\d{2,5}:(?P<valor>\d{2,5})" + E, Scores(None, None, 0.85), v.is_valid_port,
                 CTX_SHELL, before=60),
+    # Endereço MAC de placa de rede ("95:7F:76:CE:A3:DA", "1c-bb-bd-4a-58-ad", "aabb.ccdd.eeff").
+    PatternSpec("MAC", r"(?<![\w:.-])[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}(?![\w:.-])", Scores(0.85), v.is_valid_mac,
+                CTX_MAC),
+    PatternSpec("MAC", r"(?<![\w:.-])[0-9A-Fa-f]{2}(?:-[0-9A-Fa-f]{2}){5}(?![\w:.-])", Scores(0.85), v.is_valid_mac,
+                CTX_MAC),
+    PatternSpec("MAC", r"(?<![\w.:-])[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}(?![\w.:-])", Scores(None, None, 0.85),
+                v.is_valid_mac, CTX_MAC),
     PatternSpec("SERVIDOR", r"(?<![\w.@-])(?:[A-Za-z0-9-]+\.)+" + _INTERNAL_TLDS + r"(?![\w-]|\.[A-Za-z])", Scores(0.85),
                 flags=re.IGNORECASE),
 ]

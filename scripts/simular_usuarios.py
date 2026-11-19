@@ -75,6 +75,67 @@ def chave(prefixo: str, rng: random.Random, tamanho: int = 40) -> str:
                              for _ in range(tamanho))
 
 
+def _alnum(rng: random.Random, tamanho: int, letras: str = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789") -> str:
+    return "".join(rng.choice(letras) for _ in range(tamanho))
+
+
+_B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+
+
+def ssn(rng: random.Random) -> str:
+    return _sorteia(rng, lambda: f"{rng.randint(1, 899):03d}-{rng.randint(1, 99):02d}-{rng.randint(1, 9999):04d}",
+                    v.is_valid_ssn)
+
+
+def dni_es(rng: random.Random) -> str:
+    numero = rng.randint(10_000_000, 99_999_999)
+    return f"{numero}{'TRWAGMYFPDXBNJZSQVHLCKE'[numero % 23]}"
+
+
+def nino(rng: random.Random) -> str:
+    return _sorteia(rng, lambda: _alnum(rng, 2, "ABCEGHJKLMNPRSTWXYZ") + _alnum(rng, 6, "0123456789")
+                    + rng.choice("ABCD"), v.is_valid_nino)
+
+
+def codice_fiscale(rng: random.Random) -> str:
+    def gerar():
+        return (_alnum(rng, 6, "BCDFGHLMNPRSTVZ") + f"{rng.randint(40, 99)}" + rng.choice("ABCDEHLMPRST")
+                + f"{rng.randint(1, 28):02d}" + rng.choice("ABCDEFGHILM") + f"{rng.randint(100, 999)}"
+                + rng.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+    return _sorteia(rng, gerar, v.is_valid_codice_fiscale)
+
+
+def aadhaar(rng: random.Random) -> str:
+    def gerar():
+        d = str(rng.randint(2, 9)) + _alnum(rng, 11, "0123456789")
+        return f"{d[:4]} {d[4:8]} {d[8:]}"
+    return _sorteia(rng, gerar, v.is_valid_aadhaar)
+
+
+def _luhn_ok(numero: str) -> bool:
+    soma = 0
+    for i, digito in enumerate(reversed(numero)):
+        n = int(digito) * (2 if i % 2 else 1)
+        soma += n - 9 if n > 9 else n
+    return soma % 10 == 0
+
+
+def imei(rng: random.Random) -> str:
+    return _sorteia(rng, lambda: "35" + _alnum(rng, 13, "0123456789"), _luhn_ok)
+
+
+def ssh_privada(rng: random.Random) -> str:
+    # Montada em pedaços, para os scanners de segredos não confundirem com uma chave de verdade.
+    linhas = ["".join(rng.choice(_B64) for _ in range(70)) for _ in range(4)]
+    return "-----BEGIN OPENSSH " + "PRIVATE KEY-----\n" + "\n".join(linhas) + "\n-----END OPENSSH " + "PRIVATE KEY-----"
+
+
+def jwt(rng: random.Random) -> str:
+    url = _B64.replace("+", "-").replace("/", "_")
+    return ("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." + "eyJ" + "".join(rng.choice(url) for _ in range(60)) + "."
+            + "".join(rng.choice(url) for _ in range(43)))
+
+
 def host_interno(rng: random.Random) -> str:
     return f"{rng.choice(('db', 'srv', 'app', 'erp', 'fs'))}{rng.randint(1, 9):02d}.{rng.choice(('corp', 'local', 'internal', 'lan'))}"
 
@@ -306,7 +367,7 @@ CENARIOS: list[Cenario] = [
         "Agendado: Sra. <<nome>> dia 20/11 às 14h, dentista Dr. <<p2>>, retorno. Contato (whats) <<tel>>. "
         "Convênio Unimed, carteirinha <<carteira>>. Mande a confirmação para a paciente.",
         {"nome": ("PESSOA", _nome), "p2": ("PESSOA", _primeiro), "tel": ("TELEFONE", s.fake_phone),
-         "carteira": ("CONVENIO?", lambda rng: "".join(rng.choice("0123456789") for _ in range(17)))},
+         "carteira": ("CADASTRO", lambda rng: "".join(rng.choice("0123456789") for _ in range(17)))},
         manter=["20/11 às 14h", "Unimed"],
     ),
     Cenario(
@@ -322,12 +383,240 @@ CENARIOS: list[Cenario] = [
 # --- Execução ---------------------------------------------------------------------------------------------------
 
 
+def _senha(rng):
+    return chave("", rng, 6) + rng.choice("@#!$") + str(rng.randint(10, 99))
+
+
+def _b64(rng, tamanho):
+    return "".join(rng.choice(_B64) for _ in range(tamanho))
+
+
+def _login(rng):
+    return s.fold(_nome(rng, 2)).lower().replace(" ", ".")
+
+
+def _nasc_iso(rng):
+    return s.fake_birthdate(rng, "iso")
+
+
+def _nasc_extenso(rng):
+    return s.fake_birthdate(rng, "extenso")
+
+
+def _maiusculo(rng):
+    return _nome(rng).upper()
+
+
+# Técnicos lidando com acessos, e mais tipos de dados (rodada 3 da simulação).
+CENARIOS += [
+    Cenario(
+        "Nuvem: credenciais da AWS",
+        "Configurei o CLI mas dá AccessDenied. Meu ~/.aws/credentials:\n[default]\naws_access_key_id = <<akid>>\n"
+        "aws_secret_access_key = <<segredo>>\nregion = sa-east-1\n\nO usuário IAM é <<login>>.",
+        {"akid": ("CHAVE_API", lambda rng: "AK" + "IA" + _alnum(rng, 16)), "segredo": ("SEGREDO", lambda rng: _b64(rng, 40)),
+         "login": ("PESSOA", _login)},
+        manter=["sa-east-1", "AccessDenied"],
+    ),
+    Cenario(
+        "Kubernetes: segredo",
+        "apiVersion: v1\nkind: Secret\nmetadata:\n  name: db-credenciais\ndata:\n  username: YWRtaW4=\n"
+        "  password: <<senha>>\n---\nO pod fica em CrashLoopBackOff, por quê?",
+        {"senha": ("SENHA", lambda rng: _b64(rng, 24))},
+        manter=["CrashLoopBackOff", "db-credenciais"],
+    ),
+    Cenario(
+        "Docker: compose com senhas",
+        "services:\n  db:\n    image: postgres:16\n    environment:\n      POSTGRES_USER: app\n      POSTGRES_PASSWORD: "
+        "<<pg>>\n  api:\n    environment:\n      - JWT_SECRET=<<jwtsecret>>\n      - SMTP_PASS=<<smtp>>\n\n"
+        "Por que a api não conecta no banco?",
+        {"pg": ("SENHA", _senha), "jwtsecret": ("SEGREDO", lambda rng: _b64(rng, 32)), "smtp": ("SENHA", _senha)},
+        manter=["postgres:16", "POSTGRES_USER: app"],
+    ),
+    Cenario(
+        "Redes: VPN WireGuard",
+        "[Interface]\nPrivateKey = <<privada>>\nAddress = 10.8.0.2/24\n\n[Peer]\nPublicKey = <<publica>>\nEndpoint = "
+        "<<ip>>:51820\nAllowedIPs = 0.0.0.0/0\n\nA VPN conecta mas não navega.",
+        {"privada": ("SEGREDO", lambda rng: _b64(rng, 43) + "="), "publica": (None, lambda rng: _b64(rng, 43) + "="),  # chave pública: não é segredo
+         "ip": ("IP", s.fake_ipv4)},
+        manter=["AllowedIPs"],
+    ),
+    Cenario(
+        "API: requisição HTTP",
+        "POST /v1/clientes HTTP/1.1\nHost: api.empresa.example\nAuthorization: Bearer <<jwt>>\nCookie: session_id=<<sessao>>; "
+        "theme=dark\nContent-Type: application/json\n\n{\"nome\": \"<<nome>>\", \"cpf\": \"<<cpf>>\", \"nascimento\": "
+        "\"<<nasc>>\"}\n\nA API devolve 422, o que falta no corpo?",
+        {"jwt": ("TOKEN", jwt), "sessao": ("SEGREDO", lambda rng: _alnum(rng, 32, "abcdef0123456789")),
+         "nome": ("PESSOA", _nome), "cpf": ("CPF", s.fake_cpf), "nasc": ("DATA_NASCIMENTO", _nasc_iso)},
+        manter=["422", "theme=dark"],
+    ),
+    Cenario(
+        "Suporte: senha na URL do painel",
+        "Não consigo abrir https://admin:<<senha>>@painel.<<host>>/dashboard no Chrome, dá erro de certificado.",
+        {"senha": ("SENHA", _senha), "host": ("SERVIDOR", host_interno)},
+        manter=["erro de certificado"],
+    ),
+    Cenario(
+        "Deploy: chave SSH colada",
+        "Meu deploy pede a chave, colei aqui:\n<<chave>>\nComo transformo em formato PEM?",
+        {"chave": ("CHAVE_PRIVADA", ssh_privada)},
+        manter=["formato PEM"],
+    ),
+    Cenario(
+        "CI: tokens no log",
+        "Run npm publish\nnpm notice Publishing to https://registry.npmjs.org/\nnpm error 403 Forbidden\n"
+        "env: GITHUB_TOKEN=<<ghp>> NPM_TOKEN=<<npm>>\nO que está errado?",
+        {"ghp": ("TOKEN", lambda rng: "gh" + "p_" + _alnum(rng, 36, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")),
+         "npm": ("TOKEN", lambda rng: "np" + "m_" + _alnum(rng, 36, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))},
+        manter=["403 Forbidden", "registry.npmjs.org"],
+    ),
+    Cenario(
+        "Monitoramento: webhook do Slack",
+        "O alerta do Grafana não chega no Slack. Webhook: https://hooks.slack.com/services/<<t>>/<<b>>/<<x>>",
+        {"t": ("SEGREDO?", lambda rng: "T" + _alnum(rng, 8)), "b": ("SEGREDO?", lambda rng: "B" + _alnum(rng, 8)),
+         "x": ("SEGREDO", lambda rng: _alnum(rng, 24, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))},
+        manter=["Grafana"],
+    ),
+    Cenario(
+        "Infra: inventário de rede",
+        "hostname;ip;mac;responsavel\n<<host>>;<<ip>>;<<mac>>;<<nome>>\n<<host2>>;<<ip2>>;<<mac2>>;<<nome2>>\n\n"
+        "Quais máquinas estão sem dono?",
+        {"host": ("SERVIDOR", host_interno), "ip": ("IP", s.fake_ipv4), "mac": ("MAC", lambda rng: ":".join(
+            _alnum(rng, 2, "0123456789ABCDEF") for _ in range(6))), "nome": ("PESSOA", _nome),
+         "host2": ("SERVIDOR", host_interno), "ip2": ("IP", s.fake_ipv4), "mac2": ("MAC", lambda rng: "-".join(
+             _alnum(rng, 2, "0123456789abcdef") for _ in range(6))), "nome2": ("PESSOA", _nome)},
+        manter=["hostname;ip;mac;responsavel"],
+    ),
+    Cenario(
+        "Infra: firewall",
+        "iptables -A INPUT -s <<ip>> -p tcp --dport 3306 -j ACCEPT\niptables -A INPUT -s 10.20.0.0/16 -j DROP\n"
+        "O MySQL do <<host>> não aceita conexão do servidor de relatórios.",
+        {"ip": ("IP", s.fake_ipv4), "host": ("SERVIDOR", host_interno)},
+        manter=["-j ACCEPT", "MySQL"],
+    ),
+    Cenario(
+        "Infra: Active Directory",
+        "PS> Get-ADUser -Identity <<login>> -Properties *\nDistinguishedName : CN=<<nome>>,OU=Financeiro,DC=empresa,"
+        "DC=local\nEmailAddress      : <<email>>\nLastLogonDate     : 17/11/2026 08:12\n\nPor que a conta está bloqueada?",
+        {"login": ("PESSOA", _login), "nome": ("PESSOA", _nome), "email": ("EMAIL", s.fake_email)},
+        manter=["OU=Financeiro", "17/11/2026 08:12"],
+    ),
+    Cenario(
+        "Segurança: cabeçalhos de e-mail",
+        "From: <<nome>> <<<email>>>\nTo: suporte@empresa.example\nReceived: from <<host>> (<<ip>>) by mx.empresa.example\n"
+        "Subject: Fatura em atraso\n\nEsse e-mail é phishing?",
+        {"nome": ("PESSOA", _nome), "email": ("EMAIL", s.fake_email), "host": ("SERVIDOR", host_interno),
+         "ip": ("IP", s.fake_ipv4)},
+        manter=["Fatura em atraso"],
+    ),
+    Cenario(
+        "Segurança: relatório de pentest",
+        "Achado 3 (crítico): credenciais padrão no <<host>> (<<ip>>:8080). Login admin, senha <<senha>>. Também "
+        "encontramos a planilha clientes.xlsx com o CPF <<cpf>> de <<nome>>.\n\nReescreva para o relatório executivo.",
+        {"host": ("SERVIDOR", host_interno), "ip": ("IP", s.fake_ipv4), "senha": ("SENHA", _senha),
+         "cpf": ("CPF", s.fake_cpf), "nome": ("PESSOA", _nome)},
+        manter=["Achado 3", "clientes.xlsx"],
+    ),
+    Cenario(
+        "Recepção: senha do Wi-Fi",
+        "Wi-Fi para visitantes: rede Empresa_Visitantes, senha <<senha>>. Escreva um aviso para colar na recepção.",
+        {"senha": ("SENHA", _senha)},
+        manter=["Empresa_Visitantes"],
+    ),
+    Cenario(
+        "Banco de dados: dump SQL",
+        "INSERT INTO clientes (id, nome, cpf, email, telefone, nascimento) VALUES\n(1021, '<<nome>>', '<<cpf>>', "
+        "'<<email>>', '<<tel>>', '<<nasc>>'),\n(1022, '<<nome2>>', '<<cpf2>>', '<<email2>>', '<<tel2>>', '<<nasc2>>');\n\n"
+        "Otimize essa carga para 1 milhão de linhas.",
+        {"nome": ("PESSOA", _nome), "cpf": ("CPF", s.fake_cpf), "email": ("EMAIL", s.fake_email),
+         "tel": ("TELEFONE", s.fake_phone), "nasc": ("DATA_NASCIMENTO", _nasc_iso), "nome2": ("PESSOA", _nome),
+         "cpf2": ("CPF", lambda rng: s.fake_cpf(rng, False)), "email2": ("EMAIL", s.fake_email),
+         "tel2": ("TELEFONE", lambda rng: s.fake_phone(rng, "puro")), "nasc2": ("DATA_NASCIMENTO", _nasc_iso)},
+        manter=["1021", "1 milhão"],
+    ),
+    Cenario(
+        "Banco de dados: consulta lenta",
+        "SELECT * FROM pedidos WHERE cpf_cliente = '<<cpf>>' AND email = '<<email>>' AND criado_em > '2026-01-01';\n"
+        "Por que está lenta?",
+        {"cpf": ("CPF", lambda rng: s.fake_cpf(rng, False)), "email": ("EMAIL", s.fake_email)},
+        manter=["2026-01-01", "SELECT * FROM pedidos"],
+    ),
+    Cenario(
+        "Finanças pessoais: extrato",
+        "Extrato - Ag 1234 C/C <<conta>>\n15/11 PIX RECEBIDO <<nome>> 1.200,00\n16/11 PIX ENVIADO chave <<evp>> 350,00\n"
+        "17/11 TED <<nome2>> CPF <<cpf>> 2.000,00\n\nClassifique os gastos.",
+        {"conta": ("CONTA_BANCARIA", s.fake_account), "nome": ("PESSOA", _maiusculo),
+         "evp": ("CHAVE_PIX", s.fake_pix_key), "nome2": ("PESSOA", _maiusculo), "cpf": ("CPF", s.fake_cpf)},
+        manter=["1.200,00", "350,00"],
+    ),
+    Cenario(
+        "Laboratório: exame",
+        "Paciente: <<nome>>   Prontuário: <<prontuario>>\nNome da mãe: <<mae>>\nNascida em <<nasc>>\n"
+        "Hemoglobina glicada: 6,8%   Glicose em jejum: 132 mg/dL\n\nExplique o resultado em linguagem simples.",
+        {"nome": ("PESSOA", _nome), "prontuario": ("CADASTRO", lambda rng: str(rng.randint(100000, 9999999))),
+         "mae": ("PESSOA", _nome), "nasc": ("DATA_NASCIMENTO", _nasc_extenso)},
+        manter=["6,8%", "132 mg/dL"],
+    ),
+    Cenario(
+        "Universidade: aluno",
+        "Aluno: <<nome>> - RA <<ra>> - Curso: Engenharia Civil - 7º período\nE-mail institucional: <<email>>\n\n"
+        "Escreva um ofício sobre a colação de grau.",
+        {"nome": ("PESSOA", _nome), "ra": ("CADASTRO", lambda rng: f"20{rng.randint(10, 26)}{rng.randint(100000, 999999)}"),
+         "email": ("EMAIL", lambda rng: s.fake_email(rng, domain="aluno.empresa.example"))},
+        manter=["Engenharia Civil", "7º período"],
+    ),
+    Cenario(
+        "Seguradora: apólice",
+        "Segurado: <<nome>>, apólice nº <<apolice>>, CPF <<cpf>>, placa <<placa>>. Local do sinistro (app): "
+        "<<lat>>, <<lon>>.\nRedija a notificação.",
+        {"nome": ("PESSOA", _nome), "apolice": ("CADASTRO", lambda rng: f"{rng.randint(10**11, 10**12 - 1)}"),
+         "cpf": ("CPF", s.fake_cpf), "placa": ("PLACA", s.fake_plate),
+         "lat": ("COORDENADAS", lambda rng: f"-{rng.uniform(5, 30):.6f}"), "lon": ("COORDENADAS", lambda rng: f"-{rng.uniform(35, 60):.6f}")},
+    ),
+    Cenario(
+        "Celular roubado: IMEI",
+        "Meu celular foi roubado, o IMEI é <<imei>> e o número era <<tel>>. Como bloqueio?",
+        {"imei": ("IMEI?", imei), "tel": ("TELEFONE", s.fake_phone)},
+    ),
+    Cenario(
+        "Cliente: e-mail disfarçado",
+        "me manda no <<usuario>> (arroba) example (ponto) com ou no zap <<tel>>",
+        {"usuario": ("EMAIL?", lambda rng: _login(rng)), "tel": ("TELEFONE", s.fake_phone)},
+    ),
+    Cenario(
+        "Cartório: certidão",
+        "Certidão de nascimento: <<nome>>, nascido em <<nasc>>, filho de <<mae>> e de <<pai>>.",
+        {"nome": ("PESSOA", _nome), "nasc": ("DATA_NASCIMENTO", _nasc_extenso), "mae": ("PESSOA", _nome),
+         "pai": ("PESSOA", _nome)},
+    ),
+    Cenario(
+        "Cliente dos EUA",
+        "Hi, I'm <<nome>>, my SSN is <<ssn>> and my phone is <<tel>>. I need a letter for my bank.",
+        {"nome": ("PESSOA", _nome), "ssn": ("SSN", ssn),
+         "tel": ("TELEFONE", lambda rng: f"+1 415 555 01{rng.randint(10, 99)}")},
+    ),
+    Cenario(
+        "RH internacional: documentos",
+        "Funcionários estrangeiros: DNI <<dni>>, codice fiscale <<cf>>, NINO <<nino>>, Aadhaar <<aadhaar>>. Confira se "
+        "os documentos estão no formato certo.",
+        {"dni": ("DNI_ES", dni_es), "cf": ("CODICE_FISCALE", codice_fiscale), "nino": ("NINO", nino),
+         "aadhaar": ("AADHAAR", aadhaar)},
+    ),
+    Cenario(
+        "Freelancer: IBAN e cripto",
+        "Para pagar o freelancer: IBAN <<iban>> ou a carteira bitcoin <<btc>>.",
+        {"iban": ("IBAN", lambda rng: s.fake_iban(rng, "DE", 22)),
+         "btc": ("CRIPTO", lambda rng: "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")},
+    ),
+]
+
+
 @dataclass
 class Caso:
     perfil: str
     texto: str
     esperados: list[tuple[str, str]]  # (rótulo, valor)
     manter: list[str]
+    fundo: str = ""  # o texto do modelo, sem os dados
 
 
 def montar(cenario: Cenario, rng: random.Random) -> Caso:
@@ -339,17 +628,23 @@ def montar(cenario: Cenario, rng: random.Random) -> Caso:
         else:
             valores[campo] = gerar(rng)
     texto = re.sub(r"<<(\w+)>>", lambda m: valores[m.group(1)], cenario.texto)
-    esperados = [(cenario.campos[campo][0] or "", valor) for campo, valor in valores.items()]
-    return Caso(cenario.perfil, texto, esperados, cenario.manter)
+    esperados = [(cenario.campos[campo][0], valor) for campo, valor in valores.items() if cenario.campos[campo][0]]
+    fundo = re.sub(r"<<\w+>>", " ", cenario.texto)
+    return Caso(cenario.perfil, texto, esperados, cenario.manter, fundo)
 
 
 _LIGACOES = {"da", "de", "do", "das", "dos", "e"}
 
 
-def vazou(rotulo: str, valor: str, saida: str) -> bool:
+def vazou(rotulo: str, valor: str, saida: str, fundo: str = "") -> bool:
+    if rotulo == "CHAVE_PRIVADA":
+        return any(linha in saida for linha in valor.splitlines()[1:-1])
     if rotulo == "PESSOA":
-        # Um sobrenome que sobra já identifica: confere cada palavra do nome.
-        return any(re.search(rf"(?<!\w){re.escape(p)}(?!\w)", saida, re.IGNORECASE)
+        # Um sobrenome que sobra já identifica: confere cada palavra do nome. A palavra que o modelo do texto já
+        # tem ("Certidão de nascimento" e a sobrenome Nascimento) só conta se aparecer mais vezes que no modelo.
+        def vezes(palavra, texto):
+            return len(re.findall(rf"(?<!\w){re.escape(palavra)}(?!\w)", texto, re.IGNORECASE))
+        return any(vezes(p, saida) > vezes(p, fundo)
                    for p in valor.split() if p.lower() not in _LIGACOES and len(p) > 2)
     return valor in saida
 
@@ -386,12 +681,12 @@ def main() -> int:
         achados = []
         for rotulo, valor in caso.esperados:
             if rotulo.endswith("?"):
-                if vazou(rotulo, valor, saida):
+                if vazou(rotulo, valor, saida, caso.fundo):
                     total["sugestoes"] += 1
                     achados.append(f"sugestão  {rotulo[:-1]}: {valor}")
                 continue
             total["esperados"] += 1
-            if vazou(rotulo, valor, saida):
+            if vazou(rotulo, valor, saida, caso.fundo):
                 total["vazamentos"] += 1
                 achados.append(f"VAZOU     {rotulo}: {valor}")
         for trecho in caso.manter:

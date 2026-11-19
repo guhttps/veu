@@ -55,6 +55,16 @@ PROSE_PASSWORD = re.compile(
     re.IGNORECASE,
 )
 
+# Sem separador ("Login admin, senha bGsE$34", "rede Visitantes, senha Visit@2026"): só vale com cara de senha.
+PROSE_PASSWORD_BARE = re.compile(
+    r"(?<![A-Za-z0-9])(?:senha|password|passwd)[ \t]+[\"']?(" + VALUE_CHARS + r"{6,200})", re.IGNORECASE
+)
+# Cabeçalho Cookie: o valor de um cookie de sessão é uma credencial ("Cookie: session_id=9f2c...; theme=dark").
+COOKIE_HEADER = re.compile(r"^[ \t]*(?:set-)?cookie[ \t]*:[ \t]*([^\n]+)", re.IGNORECASE | re.MULTILINE)
+COOKIE_PAIR = re.compile(r"([A-Za-z0-9_.-]{1,60})=([^;\s]{8,4096})")
+SESSION_COOKIE_WORDS = frozenset({"session", "sessionid", "sess", "sessid", "sid", "phpsessid", "jsessionid", "auth",
+                                  "jwt", "remember"})
+
 PASSWORD_WORDS = frozenset({"password", "passwd", "passphrase", "pwd", "senha", "pass", "passw"})
 SECRET_WORDS = frozenset({"secret", "token", "apikey", "credential", "credentials", "credencial", "credenciais"})
 SECRET_PAIRS = frozenset({
@@ -142,6 +152,14 @@ def looks_random(value: str) -> bool:
     return False
 
 
+def looks_like_password(value: str) -> bool:
+    """Mistura de letras e números, ou símbolo com letras ou números: "Visit@2026" sim, "inválida" e "123456" não."""
+    digit = any(char.isdigit() for char in value)
+    alpha = any(char.isalpha() for char in value)
+    symbol = any(char in "@#$%!&*?+=_" for char in value)
+    return (digit and alpha) or (symbol and (digit or alpha))
+
+
 def plausible_password(value: str, prose: bool) -> bool:
     if len(value) < 4 or is_placeholder(value):
         return False
@@ -188,3 +206,17 @@ class SecretRecognizer:
                 end -= 1
             if plausible_password(text[start:end], prose=True):
                 yield Candidate("SENHA", start, end, 0.8, self.name)
+        for match in PROSE_PASSWORD_BARE.finditer(text):
+            start, end = match.span(1)
+            if match.group(1).endswith(".") and (end == len(text) or text[end].isspace()):
+                end -= 1
+            value = text[start:end]
+            if plausible_password(value, prose=True) and looks_like_password(value):
+                yield Candidate("SENHA", start, end, 0.75, self.name)
+        for header in COOKIE_HEADER.finditer(text):
+            offset = header.start(1)
+            for pair in COOKIE_PAIR.finditer(header.group(1)):
+                name, value = pair.group(1), pair.group(2)
+                words = set(key_words(name))
+                if (key_kind(name) or words & SESSION_COOKIE_WORDS) and (looks_random(value) or len(value) >= 16):
+                    yield Candidate("SEGREDO", offset + pair.start(2), offset + pair.end(2), 0.85, self.name)

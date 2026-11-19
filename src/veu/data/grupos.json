@@ -5,17 +5,17 @@
       "id": "pessoas",
       "titulo": "Nomes e contatos",
       "titulo_en": "Names and contacts",
-      "exemplo": "nomes, telefones, e-mails, endereços, CEP, datas de nascimento",
-      "exemplo_en": "names, phone numbers, e-mails, addresses, postal codes, dates of birth",
-      "tipos": ["PESSOA", "TELEFONE", "EMAIL", "ENDERECO", "CEP", "DATA_NASCIMENTO"]
+      "exemplo": "nomes, telefones, e-mails, endereços, CEP, coordenadas de GPS, datas de nascimento",
+      "exemplo_en": "names, phone numbers, e-mails, addresses, postal codes, GPS coordinates, dates of birth",
+      "tipos": ["PESSOA", "TELEFONE", "EMAIL", "ENDERECO", "CEP", "COORDENADAS", "DATA_NASCIMENTO"]
     },
     {
       "id": "documentos",
       "titulo": "Documentos",
       "titulo_en": "Brazilian documents",
-      "exemplo": "CPF, CNPJ, RG, CNH, título de eleitor, PIS, cartão do SUS, passaporte, CTPS, OAB e CRM, processos",
-      "exemplo_en": "CPF, CNPJ, RG, driver's license, voter ID, PIS, SUS card, passport, work card, bar and medical licenses, lawsuit numbers",
-      "tipos": ["CPF", "CNPJ", "RG", "CNH", "TITULO_ELEITOR", "PIS", "CNS", "PASSAPORTE", "CTPS", "REGISTRO_PROFISSIONAL", "PROCESSO"]
+      "exemplo": "CPF, CNPJ, RG, CNH, título de eleitor, PIS, cartão do SUS, passaporte, CTPS, OAB e CRM, matrícula e prontuário, processos",
+      "exemplo_en": "CPF, CNPJ, RG, driver's license, voter ID, PIS, SUS card, passport, work card, bar and medical licenses, student and patient IDs, lawsuit numbers",
+      "tipos": ["CPF", "CNPJ", "RG", "CNH", "TITULO_ELEITOR", "PIS", "CNS", "PASSAPORTE", "CTPS", "REGISTRO_PROFISSIONAL", "CADASTRO", "PROCESSO"]
     },
     {
       "id": "estrangeiros",
@@ -45,9 +45,9 @@
       "id": "infra",
       "titulo": "Infraestrutura de TI",
       "titulo_en": "IT infrastructure",
-      "exemplo": "endereços IP, portas e nomes de servidores internos",
-      "exemplo_en": "IP addresses, ports and internal server names",
-      "tipos": ["IP", "PORTA", "SERVIDOR"]
+      "exemplo": "endereços IP, portas, nomes de servidores internos e endereços MAC",
+      "exemplo_en": "IP addresses, ports, internal server names and MAC addresses",
+      "tipos": ["IP", "PORTA", "SERVIDOR", "MAC"]
     },
     {
       "id": "outros",

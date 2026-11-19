@@ -729,3 +729,24 @@ def is_valid_crypto_address(value: str) -> bool:
     if re.fullmatch(r"(?:bc|tb)1[02-9ac-hj-np-z]{11,71}", value.lower()) and (value.islower() or value.isupper()):
         return _bech32_ok(value)
     return False
+
+
+def is_valid_mac(value: str) -> bool:
+    """Endereço MAC com 12 dígitos hexadecimais, sem os reservados (tudo zero ou tudo F)."""
+    digits = re.sub(r"[^0-9A-Fa-f]", "", value).upper()
+    return len(digits) == 12 and digits not in ("000000000000", "FFFFFFFFFFFF")
+
+
+def is_likely_coordinates(value: str) -> bool:
+    """Par latitude, longitude com cara de GPS: cinco casas decimais e algum sinal negativo.
+
+    Sem isso ("12.3456, 45.6789"), só vale com contexto ("coordenadas", "GPS", "localização").
+    """
+    parts = [part.strip() for part in value.split(",")]
+    if len(parts) != 2:
+        return False
+    latitude, longitude = float(parts[0]), float(parts[1])
+    if abs(latitude) > 90 or abs(longitude) > 180:
+        return False
+    decimals = min(len(part.split(".")[1]) for part in parts)
+    return decimals >= 5 and (latitude < 0 or longitude < 0)

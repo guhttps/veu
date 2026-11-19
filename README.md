@@ -30,7 +30,7 @@ Você recebe    Pronto, Maria Souza! Configurei sk-proj-4f9a... no seu .env.
 Empresas e pessoas estão colocando IA no atendimento, nos contratos, no RH e no código. Junto com cada pergunta vão nomes, documentos e contatos de clientes, e também chaves de API e senhas. O Véu fica no meio do caminho e protege:
 
 - **Dados pessoais de qualquer país:** nomes, e-mails, telefones (com código de qualquer país), cartões, IBAN, endereços IP e datas de nascimento.
-- **A infraestrutura da empresa:** endereços IP, portas e nomes de servidores internos.
+- **A infraestrutura da empresa:** endereços IP, portas, nomes de servidores internos e endereços MAC.
 - **Documentos brasileiros, conferidos de verdade:** CPF, CNPJ (inclusive o alfanumérico de 2026), RG, CNH, PIS, cartão do SUS e outros, pelos dígitos verificadores.
 - **Segredos de qualquer serviço:** chaves de API de mais de 30 serviços, tokens, senhas, chaves privadas e URLs de banco com senha.
 
@@ -104,9 +104,9 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 ## Recursos
 
 - 🌍 **Dados pessoais de qualquer lugar:** nomes, e-mails, telefones (brasileiros e de qualquer país, com +código), endereços, cartões de crédito, IBAN, endereços IP (v4 e v6) e datas de nascimento.
-- 🖥️ **Infraestrutura:** IPs, portas (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`) e nomes de servidores internos (`db.interna`, `cache.prod.local`).
+- 🖥️ **Infraestrutura:** IPs, portas (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`) nomes de servidores internos (`db.interna`, `cache.prod.local`) e endereços MAC (`95:7F:76:CE:A3:DA`).
 - ☑️ **Você escolhe o que esconder:** caixinhas por grupo na página, na extensão e no painel, com escolha tipo a tipo. Desmarcar senhas e chaves mostra um aviso.
-- 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CTPS, registro profissional (OAB, CRM, CREA...), CEP, placa, RENAVAM, conta bancária, chave Pix e processo do CNJ. Logins no formato nome.sobrenome também somem.
+- 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CTPS, registro profissional (OAB, CRM, CREA...), números de cadastro (prontuário, matrícula, carteirinha do convênio, apólice), CEP, placa, RENAVAM, conta bancária, chave Pix e processo do CNJ. Logins no formato nome.sobrenome, coordenadas de GPS e datas de nascimento em tabelas (SQL, CSV) também somem.
 - 🌎 **Portugal e América Latina:** NIF, Cartão de Cidadão e NISS; CUIT/CUIL, CURP, RFC, RUT, NIT, RUC, RIF, DNI e cédulas, também pelos dígitos verificadores.
 - 🌐 **África lusófona, EUA, Europa, Canadá e Índia:** NUIT e BI (Angola e Moçambique), SSN, ITIN e Medicare (EUA), DNI e NIE (Espanha), codice fiscale (Itália), NIR (França), Steuer-ID (Alemanha), National Insurance e NHS (Reino Unido), BSN (Países Baixos), SIN (Canadá), Aadhaar e PAN (Índia); também passaportes pela zona de leitura (MRZ), chassi (VIN) e carteiras de Bitcoin e Ethereum.
 - 🔑 **Segredos:**
@@ -406,7 +406,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 860 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 877 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 VEU_HIPOTESES=5000 pytest tests/test_propriedades.py   # testes de propriedade com uma busca longa

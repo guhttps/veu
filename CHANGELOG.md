@@ -12,6 +12,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Registro profissional** (`REGISTRO_PROFISSIONAL`): OAB, CRM, CRO, CREA, CRF, COREN, CRC, CRP e outros conselhos, com o estado ("OAB/SP 123.456", "CRM-SC nº 12345", "CRP 06/123456"). Só o número some; a sigla e o estado ficam, para a IA saber de que profissional se trata. Sem o estado, "CRM 365" continua sendo software.
 - **CTPS** (`CTPS`): número e série da carteira de trabalho antiga, com o contexto por perto.
 - **Logins nome.sobrenome** ("gislaine.vieira", "/home/joao_silva") viram `PESSOA`, sem pegar domínios (`maria.souza.com.br`), arquivos (`config.yaml`) nem palavras comuns.
+- **Endereço MAC** (`MAC`, no grupo Infraestrutura de TI): "95:7F:76:CE:A3:DA", "1c-bb-bd-4a-58-ad" e, com contexto, "aabb.ccdd.eeff". Broadcast e horários ficam.
+- **Coordenadas de GPS** (`COORDENADAS`): "-23.550520, -46.633308". Sem contexto, só com cinco casas decimais e sinal negativo; "média 12.3456, 45.6789" fica.
+- **Números de cadastro** (`CADASTRO`): prontuário, matrícula (RA), carteirinha do convênio e apólice, com o contexto por perto. Datas e valores em reais ao lado ficam.
+- **Datas de nascimento em tabelas:** num `INSERT`, num CSV ou num JSON, a coluna "nascimento" no cabeçalho vale para as datas das linhas de baixo.
+- **Senha logo depois da palavra** ("Login admin, senha bGsE$34", "rede Visitantes, senha Visit@2026"), quando o valor tem cara de senha; "senha inválida" e "senha 123456" ficam.
+- **Cookies de sessão** (`Cookie: session_id=...`, `Set-Cookie: PHPSESSID=...`) viram `SEGREDO`.
+- A simulação ganhou técnicos lidando com acessos (AWS, Kubernetes, Docker, VPN, HTTP, chave SSH, CI, Slack, inventário de rede, firewall, Active Directory, cabeçalhos de e-mail, pentest, SQL) e mais tipos de dados (extrato, exame, matrícula, apólice, IMEI, documentos de EUA, Espanha, Itália, Reino Unido e Índia, IBAN e cripto): 50 perfis.
 
 ### Corrigido
 - **Senhas em frases de suporte:** "resetei a senha para Tmp#4821", "troquei a senha pra ...", "a senha do wifi fica ..." e "password to ..." agora são escondidas, sem pegar frases comuns ("senha para acessar o sistema"). O ponto que fecha a frase não entra mais na senha.

@@ -75,6 +75,16 @@ EXTRA = [
     "CTPS: 3492025 série 0533-SP; carteira de trabalho nº 1234567, SÉRIE 00012.",
     "Login gislaine.vieira, pasta /home/joao_silva/docs, ssh humberto.maciel@10.0.0.5. Não são logins: "
     "maria.souza.com.br, config.yaml, nota.fiscal, rosa.silva.",
+    "Login admin, senha bGsEDD$34. Rede Empresa_Visitantes, senha F73rbT@27. Não são senhas: senha inválida, "
+    "senha 123456, senha alterada com sucesso.",
+    "Cookie: session_id=d8a3d4d8bd11e4f65709e86bed6dfd05; theme=dark\nSet-Cookie: PHPSESSID=9a8b7c6d5e4f3a2b1c0d; path=/",
+    "INSERT INTO clientes (id, nome, nascimento) VALUES\n(1021, 'Ana Lima', '1985-04-03'),\n(1022, 'Rui Costa', "
+    "'1990-12-01');\nSELECT * FROM pedidos WHERE criado_em > '2026-01-01';\nnome;nascimento\nAna Lima;03/04/1985",
+    "MAC 95:7F:76:CE:A3:DA e 1c-bb-bd-4a-58-ad; ether aabb.ccdd.eeff. Não são: FF:FF:FF:FF:FF:FF, 10:30, "
+    "cisco aabb.ccdd.eeff.",
+    "Local do sinistro (app): -19.376349, -47.473154. Coordenadas 12.3456, 45.6789. Não é: média 12.3456, 45.6789.",
+    "Prontuário: 2412179 e RA 2024631292, carteirinha 91483354148818137, apólice nº 334553733535. Não são: "
+    "matrícula feita em 12/03/2024 e apólice com prêmio de R$ 1.234,56.",
 ]
 
 

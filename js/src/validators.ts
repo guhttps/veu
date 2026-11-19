@@ -620,3 +620,22 @@ export function isValidCryptoAddress(value: string): boolean {
     && (value === value.toLowerCase() || value === value.toUpperCase())) return bech32Ok(value);
   return false;
 }
+
+/** Endereço MAC com 12 dígitos hexadecimais, sem os reservados (tudo zero ou tudo F). */
+export function isValidMac(value: string): boolean {
+  const digits = value.replace(/[^0-9A-Fa-f]/g, "").toUpperCase();
+  return digits.length === 12 && digits !== "000000000000" && digits !== "FFFFFFFFFFFF";
+}
+
+/**
+ * Par latitude, longitude com cara de GPS: cinco casas decimais e algum sinal negativo.
+ * Sem isso ("12.3456, 45.6789"), só vale com contexto ("coordenadas", "GPS", "localização").
+ */
+export function isLikelyCoordinates(value: string): boolean {
+  const parts = value.split(",").map((part) => part.trim());
+  if (parts.length !== 2) return false;
+  const [latitude, longitude] = parts.map(Number);
+  if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return false;
+  const decimals = Math.min(...parts.map((part) => (part.split(".")[1] ?? "").length));
+  return decimals >= 5 && (latitude < 0 || longitude < 0);
+}

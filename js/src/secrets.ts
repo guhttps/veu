@@ -39,6 +39,14 @@ const PROSE_PASSWORD = new RegExp(
   "gdi",
 );
 
+// Sem separador ("Login admin, senha bGsE$34", "rede Visitantes, senha Visit@2026"): só vale com cara de senha.
+const PROSE_PASSWORD_BARE = new RegExp(`(?<![A-Za-z0-9])(?:senha|password|passwd)[ \\t]+["']?(${VALUE_CHARS}{6,200})`, "gdi");
+// Cabeçalho Cookie: o valor de um cookie de sessão é uma credencial ("Cookie: session_id=9f2c...; theme=dark").
+const COOKIE_HEADER = /^[ \t]*(?:set-)?cookie[ \t]*:[ \t]*([^\n]+)/dgim;
+const COOKIE_PAIR = /([A-Za-z0-9_.-]{1,60})=([^;\s]{8,4096})/dg;
+const SESSION_COOKIE_WORDS = new Set(["session", "sessionid", "sess", "sessid", "sid", "phpsessid", "jsessionid", "auth",
+  "jwt", "remember"]);
+
 const PASSWORD_WORDS = new Set(["password", "passwd", "passphrase", "pwd", "senha", "pass", "passw"]);
 const SECRET_WORDS = new Set(["secret", "token", "apikey", "credential", "credentials", "credencial", "credenciais"]);
 const SECRET_PAIRS = new Set([
@@ -111,6 +119,14 @@ export function looksRandom(value: string): boolean {
   return false;
 }
 
+/** Mistura de letras e números, ou símbolo com letras ou números: "Visit@2026" sim, "inválida" e "123456" não. */
+export function looksLikePassword(value: string): boolean {
+  const digit = /\p{Nd}/u.test(value);
+  const alpha = /\p{L}/u.test(value);
+  const symbol = /[@#$%!&*?+=_]/.test(value);
+  return (digit && alpha) || (symbol && (digit || alpha));
+}
+
 export function plausiblePassword(value: string, prose: boolean): boolean {
   if (value.length < 4 || isPlaceholder(value)) return false;
   return !(prose && isAlpha(value) && (isLower(value) || isLower(value.slice(1))));
@@ -153,6 +169,25 @@ export class SecretRecognizer implements Recognizer {
       const end = match[2].endsWith(".") && (matchEnd === text.length || /\s/.test(text[matchEnd])) ? matchEnd - 1 : matchEnd;
       if (plausiblePassword(text.slice(start, end), true)) {
         yield { label: "SENHA", start, end, score: 0.8, recognizer: this.name };
+      }
+    }
+    for (const match of text.matchAll(PROSE_PASSWORD_BARE)) {
+      const [start, matchEnd] = match.indices![1]!;
+      const end = match[1].endsWith(".") && (matchEnd === text.length || /\s/.test(text[matchEnd])) ? matchEnd - 1 : matchEnd;
+      const value = text.slice(start, end);
+      if (plausiblePassword(value, true) && looksLikePassword(value)) {
+        yield { label: "SENHA", start, end, score: 0.75, recognizer: this.name };
+      }
+    }
+    for (const header of text.matchAll(COOKIE_HEADER)) {
+      const offset = header.indices![1]![0];
+      for (const pair of header[1].matchAll(COOKIE_PAIR)) {
+        const [name, value] = [pair[1], pair[2]];
+        const session = keyWords(name).some((word) => SESSION_COOKIE_WORDS.has(word));
+        if ((keyKind(name) || session) && (looksRandom(value) || value.length >= 16)) {
+          const [start, end] = pair.indices![2]!;
+          yield { label: "SEGREDO", start: offset + start, end: offset + end, score: 0.85, recognizer: this.name };
+        }
       }
     }
   }

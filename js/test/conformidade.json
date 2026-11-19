@@ -1264,6 +1264,168 @@
    "generalizado": "Login [PESSOA], pasta /home/[PESSOA]/docs, ssh humberto.maciel@10.0.0.0/24. Não são logins: maria.souza.com.br, config.yaml, nota.fiscal, rosa.silva."
   },
   {
+   "texto": "Login admin, senha bGsEDD$34. Rede Empresa_Visitantes, senha F73rbT@27. Não são senhas: senha inválida, senha 123456, senha alterada com sucesso.",
+   "entidades": [
+    [
+     "SENHA",
+     19,
+     28,
+     0.75
+    ],
+    [
+     "SENHA",
+     61,
+     70,
+     0.75
+    ]
+   ],
+   "anonimizado": "Login admin, senha [SENHA_1]. Rede Empresa_Visitantes, senha [SENHA_2]. Não são senhas: senha inválida, senha 123456, senha alterada com sucesso.",
+   "mascarado": "Login admin, senha ********. Rede Empresa_Visitantes, senha ********. Não são senhas: senha inválida, senha 123456, senha alterada com sucesso.",
+   "generalizado": "Login admin, senha [SENHA]. Rede Empresa_Visitantes, senha [SENHA]. Não são senhas: senha inválida, senha 123456, senha alterada com sucesso."
+  },
+  {
+   "texto": "Cookie: session_id=d8a3d4d8bd11e4f65709e86bed6dfd05; theme=dark\nSet-Cookie: PHPSESSID=9a8b7c6d5e4f3a2b1c0d; path=/",
+   "entidades": [
+    [
+     "SEGREDO",
+     19,
+     51,
+     0.85
+    ],
+    [
+     "SEGREDO",
+     86,
+     106,
+     0.85
+    ]
+   ],
+   "anonimizado": "Cookie: session_id=[SEGREDO_1]; theme=dark\nSet-Cookie: PHPSESSID=[SEGREDO_2]; path=/",
+   "mascarado": "Cookie: session_id=****; theme=dark\nSet-Cookie: PHPSESSID=****; path=/",
+   "generalizado": "Cookie: session_id=[SEGREDO]; theme=dark\nSet-Cookie: PHPSESSID=[SEGREDO]; path=/"
+  },
+  {
+   "texto": "INSERT INTO clientes (id, nome, nascimento) VALUES\n(1021, 'Ana Lima', '1985-04-03'),\n(1022, 'Rui Costa', '1990-12-01');\nSELECT * FROM pedidos WHERE criado_em > '2026-01-01';\nnome;nascimento\nAna Lima;03/04/1985",
+   "entidades": [
+    [
+     "PESSOA",
+     59,
+     67,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     71,
+     81,
+     0.8
+    ],
+    [
+     "PESSOA",
+     93,
+     102,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     106,
+     116,
+     0.8
+    ],
+    [
+     "DATA_NASCIMENTO",
+     161,
+     171,
+     0.8
+    ],
+    [
+     "PESSOA",
+     190,
+     198,
+     0.9
+    ],
+    [
+     "DATA_NASCIMENTO",
+     199,
+     209,
+     0.85
+    ]
+   ],
+   "anonimizado": "INSERT INTO clientes (id, nome, nascimento) VALUES\n(1021, '[PESSOA_1]', '[DATA_NASCIMENTO_1]'),\n(1022, '[PESSOA_2]', '[DATA_NASCIMENTO_2]');\nSELECT * FROM pedidos WHERE criado_em > '[DATA_NASCIMENTO_3]';\nnome;nascimento\n[PESSOA_1];[DATA_NASCIMENTO_4]",
+   "mascarado": "INSERT INTO clientes (id, nome, nascimento) VALUES\n(1021, 'A*** L***', '****-**-03'),\n(1022, 'R*** C***', '****-**-01');\nSELECT * FROM pedidos WHERE criado_em > '****-**-01';\nnome;nascimento\nA*** L***;**/**/**85",
+   "generalizado": "INSERT INTO clientes (id, nome, nascimento) VALUES\n(1021, '[PESSOA]', '1985'),\n(1022, '[PESSOA]', '1990');\nSELECT * FROM pedidos WHERE criado_em > '2026';\nnome;nascimento\n[PESSOA];1985"
+  },
+  {
+   "texto": "MAC 95:7F:76:CE:A3:DA e 1c-bb-bd-4a-58-ad; ether aabb.ccdd.eeff. Não são: FF:FF:FF:FF:FF:FF, 10:30, cisco aabb.ccdd.eeff.",
+   "entidades": [
+    [
+     "MAC",
+     4,
+     21,
+     1.0
+    ],
+    [
+     "MAC",
+     24,
+     41,
+     1.0
+    ]
+   ],
+   "anonimizado": "MAC [MAC_1] e [MAC_2]; ether aabb.ccdd.eeff. Não são: FF:FF:FF:FF:FF:FF, 10:30, cisco aabb.ccdd.eeff.",
+   "mascarado": "MAC **:**:**:**:**:DA e **-**-**-**-**-ad; ether aabb.ccdd.eeff. Não são: FF:FF:FF:FF:FF:FF, 10:30, cisco aabb.ccdd.eeff.",
+   "generalizado": "MAC [MAC] e [MAC]; ether aabb.ccdd.eeff. Não são: FF:FF:FF:FF:FF:FF, 10:30, cisco aabb.ccdd.eeff."
+  },
+  {
+   "texto": "Local do sinistro (app): -19.376349, -47.473154. Coordenadas 12.3456, 45.6789. Não é: média 12.3456, 45.6789.",
+   "entidades": [
+    [
+     "COORDENADAS",
+     25,
+     47,
+     0.9
+    ],
+    [
+     "COORDENADAS",
+     61,
+     77,
+     0.85
+    ]
+   ],
+   "anonimizado": "Local do sinistro (app): [COORDENADAS_1]. Coordenadas [COORDENADAS_2]. Não é: média 12.3456, 45.6789.",
+   "mascarado": "Local do sinistro (app): -**.******, -**.****54. Coordenadas **.****, **.**89. Não é: média 12.3456, 45.6789.",
+   "generalizado": "Local do sinistro (app): [COORDENADAS]. Coordenadas [COORDENADAS]. Não é: média 12.3456, 45.6789."
+  },
+  {
+   "texto": "Prontuário: 2412179 e RA 2024631292, carteirinha 91483354148818137, apólice nº 334553733535. Não são: matrícula feita em 12/03/2024 e apólice com prêmio de R$ 1.234,56.",
+   "entidades": [
+    [
+     "CADASTRO",
+     12,
+     19,
+     0.8
+    ],
+    [
+     "CADASTRO",
+     25,
+     35,
+     0.8
+    ],
+    [
+     "CADASTRO",
+     49,
+     66,
+     0.8
+    ],
+    [
+     "CADASTRO",
+     79,
+     91,
+     0.8
+    ]
+   ],
+   "anonimizado": "Prontuário: [CADASTRO_1] e RA [CADASTRO_2], carteirinha [CADASTRO_3], apólice nº [CADASTRO_4]. Não são: matrícula feita em 12/03/2024 e apólice com prêmio de R$ 1.234,56.",
+   "mascarado": "Prontuário: *****79 e RA ********92, carteirinha ***************37, apólice nº **********35. Não são: matrícula feita em 12/03/2024 e apólice com prêmio de R$ 1.234,56.",
+   "generalizado": "Prontuário: [CADASTRO] e RA [CADASTRO], carteirinha [CADASTRO], apólice nº [CADASTRO]. Não são: matrícula feita em 12/03/2024 e apólice com prêmio de R$ 1.234,56."
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [
