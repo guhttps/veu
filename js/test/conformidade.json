@@ -1767,6 +1767,60 @@
    "generalizado": "X-Amz-Signature=[SEGREDO]&X-Amz-Credential=abc"
   },
   {
+   "texto": "Sou o Rui Porto, moro na Rua de Santa Catarina, 120, 4050-262 Porto. O Sr. Porto aguarda.",
+   "entidades": [
+    [
+     "PESSOA",
+     6,
+     15,
+     0.9
+    ],
+    [
+     "ENDERECO",
+     25,
+     51,
+     0.9
+    ]
+   ],
+   "anonimizado": "Sou o [PESSOA_1], moro na [ENDERECO_1], 4050-262 Porto. O Sr. [PESSOA_1] aguarda.",
+   "mascarado": "Sou o R*** P***, moro na *** ** ***** ********, *20, 4050-262 Porto. O Sr. P*** aguarda.",
+   "generalizado": "Sou o [PESSOA], moro na [ENDERECO], 4050-262 Porto. O Sr. [PESSOA] aguarda."
+  },
+  {
+   "texto": "A cliente Ana Campos mora em Campos/RJ e em Campos - RJ; o réu João Lima é da comarca de Lima. A Campos ligou.",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     20,
+     0.9
+    ],
+    [
+     "PESSOA",
+     63,
+     72,
+     0.9
+    ]
+   ],
+   "anonimizado": "A cliente [PESSOA_1] mora em Campos/RJ e em Campos - RJ; o réu [PESSOA_2] é da comarca de Lima. A [PESSOA_1] ligou.",
+   "mascarado": "A cliente A*** C*** mora em Campos/RJ e em Campos - RJ; o réu J*** L*** é da comarca de Lima. A C*** ligou.",
+   "generalizado": "A cliente [PESSOA] mora em Campos/RJ e em Campos - RJ; o réu [PESSOA] é da comarca de Lima. A [PESSOA] ligou."
+  },
+  {
+   "texto": "Boleto da conta de luz: 83620000001-1 23450048100-5 00000000001-1 23456789012-3 e conta 836200000011234500481000",
+   "entidades": [
+    [
+     "BOLETO",
+     24,
+     79,
+     0.8
+    ]
+   ],
+   "anonimizado": "Boleto da conta de luz: [BOLETO_1] e conta 836200000011234500481000",
+   "mascarado": "Boleto da conta de luz: ***********-* ***********-* ***********-* **********2-3 e conta 836200000011234500481000",
+   "generalizado": "Boleto da conta de luz: [BOLETO] e conta 836200000011234500481000"
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [

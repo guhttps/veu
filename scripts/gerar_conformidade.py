@@ -108,6 +108,10 @@ EXTRA = [
     "IMEI do aparelho: 35-209900-176148-1; cartão 352099001761481; localização 23°33'01\"S 46°38'02\"W",
     "joao.silva [at] gmail [dot] com, maria arroba empresa ponto com ponto br e te vejo at home dot",
     "X-Amz-Signature=3f2c1a9e8b7d4e6f9a0b1c2d3e4f5a6b7c8d9e0f&X-Amz-Credential=abc",
+    # Simulação, rodada 5: sobrenome que também é cidade.
+    "Sou o Rui Porto, moro na Rua de Santa Catarina, 120, 4050-262 Porto. O Sr. Porto aguarda.",
+    "A cliente Ana Campos mora em Campos/RJ e em Campos - RJ; o réu João Lima é da comarca de Lima. A Campos ligou.",
+    "Boleto da conta de luz: 83620000001-1 23450048100-5 00000000001-1 23456789012-3 e conta 836200000011234500481000",
 ]
 
 

@@ -130,6 +130,14 @@ export class AnonymizationResult {
 }
 
 // Palavras de nome (letras, com apóstrofo): a mesma definição do detector de nomes.
+// Sobrenome que também é cidade: depois de um código postal, de "cidade de" ou antes do estado, é o lugar.
+const PLACE_BEFORE = /(?:\d{4,5}-\d{3}[ \t]*|(?:cidade|munic[íi]pio|comarca)[ \t]+de[ \t]+)$/i;
+const PLACE_AFTER = /[ \t]*(?:\/[ \t]*|[-–][ \t]+)[A-Z]{2}(?![\p{L}\p{N}_])/uy;
+function placeAfter(text: string, end: number): boolean {
+  PLACE_AFTER.lastIndex = end;
+  return PLACE_AFTER.test(text);
+}
+
 const NAME_WORD = /[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)*/gu;
 const WORD_CHAR = /[\p{L}\p{N}_]/u;
 
@@ -270,6 +278,8 @@ export class Anonymizer {
       const key = fold(text.slice(start, end));
       // "Costa" é a pessoa; "costa" (o litoral) e "data de nascimento", não.
       if (capitalizedOnly.has(key) && text[start] === text[start].toLowerCase()) continue;
+      // "4050-262 Porto", "Campos/RJ": a cidade, não o Sr. Porto nem a Sra. Campos.
+      if (PLACE_BEFORE.test(text.slice(Math.max(0, start - 20), start)) || placeAfter(text, end)) continue;
       added.push({ label: "PESSOA", start, end, score: 0.7, recognizer: "vinculo", text: text.slice(start, end) });
       canonical.set(start, parts.get(key)!);
     }

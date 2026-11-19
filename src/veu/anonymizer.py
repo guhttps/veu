@@ -102,6 +102,9 @@ def mask_value(label: str, value: str) -> str:
 
 
 # Palavras de nome (letras, com apóstrofo): a mesma definição do detector de nomes.
+# Sobrenome que também é cidade: depois de um código postal, de "cidade de" ou antes do estado, é o lugar.
+_PLACE_BEFORE = re.compile(r"(?:\d{4,5}-\d{3}[ \t]*|(?:cidade|munic[íi]pio|comarca)[ \t]+de[ \t]+)$", re.IGNORECASE)
+_PLACE_AFTER = re.compile(r"[ \t]*(?:/[ \t]*|[-–][ \t]+)[A-Z]{2}(?![\w])")
 _NAME_WORD = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)*")
 
 
@@ -301,6 +304,8 @@ class Anonymizer:
             key = fold(text[start:end])
             if key in self._capitalized_only and not text[start].isupper():
                 continue  # "Costa" é a pessoa; "costa" (o litoral) e "data de nascimento", não
+            if _PLACE_BEFORE.search(text, max(0, start - 20), start) or _PLACE_AFTER.match(text, end):
+                continue  # "4050-262 Porto", "Campos/RJ": a cidade, não o Sr. Porto nem a Sra. Campos
             added.append(Entity("PESSOA", start, end, 0.7, text[start:end], "vinculo"))
             canonical[start] = parts[key]
         for entity in entities:

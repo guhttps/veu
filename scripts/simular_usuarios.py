@@ -175,7 +175,7 @@ CENARIOS: list[Cenario] = [
         "<<cnpj>>. Valor da causa: R$ 15.000,00.\n\nMelhore a redação dos fatos.",
         {"processo": ("PROCESSO", s.fake_processo), "nome": ("PESSOA", _nome), "rg": ("RG", s.fake_rg),
          "cpf": ("CPF", s.fake_cpf), "endereco": ("ENDERECO", s.fake_address), "cep": ("CEP", s.fake_cep),
-         "oab": ("REGISTRO?", lambda rng: f"{rng.randint(100, 499)}.{rng.randint(100, 999)}"),
+         "oab": ("REGISTRO_PROFISSIONAL", lambda rng: f"{rng.randint(100, 499)}.{rng.randint(100, 999)}"),
          "cnpj": ("CNPJ", s.fake_cnpj)},
         manter=["art. 5º", "Lei 13.709/2018", "R$ 15.000,00", "3ª VARA CÍVEL"],
     ),
@@ -199,7 +199,7 @@ CENARIOS: list[Cenario] = [
         "Escreva uma carta de encaminhamento para o psiquiatra.",
         {"nome": ("PESSOA", _nome), "nasc": ("DATA_NASCIMENTO", s.fake_birthdate), "cns": ("CNS", s.fake_cns),
          "tel": ("TELEFONE", s.fake_phone), "nome2": ("PESSOA", _nome),
-         "crm": ("REGISTRO?", lambda rng: str(rng.randint(10000, 39999)))},
+         "crm": ("REGISTRO_PROFISSIONAL", lambda rng: str(rng.randint(10000, 39999)))},
         manter=["CID F41.1", "50mg", "120/80"],
     ),
     Cenario(
@@ -208,8 +208,8 @@ CENARIOS: list[Cenario] = [
         "Nascimento: <<nasc>>\nEndereço: <<endereco>> - CEP <<cep>>\nBanco Exemplo, agência 1234, conta corrente "
         "<<conta>>\nChave Pix: <<email>>\nSalário: R$ 4.200,00\n\nMonte o e-mail de boas-vindas para segunda-feira.",
         {"nome": ("PESSOA", _nome), "cpf": ("CPF", s.fake_cpf), "pis": ("PIS", s.fake_pis),
-         "ctps": ("CTPS?", lambda rng: str(rng.randint(1_000_000, 9_999_999))),
-         "serie": ("CTPS?", lambda rng: f"{rng.randint(1, 999):04d}-SP"),
+         "ctps": ("CTPS", lambda rng: str(rng.randint(1_000_000, 9_999_999))),
+         "serie": ("CTPS", lambda rng: f"{rng.randint(1, 999):04d}-SP"),
          "nasc": ("DATA_NASCIMENTO", s.fake_birthdate), "endereco": ("ENDERECO", s.fake_address),
          "cep": ("CEP", s.fake_cep), "conta": ("CONTA_BANCARIA", s.fake_account), "email": ("EMAIL", s.fake_email)},
         manter=["R$ 4.200,00"],
@@ -255,7 +255,7 @@ CENARIOS: list[Cenario] = [
         "Suporte de TI: chamado",
         "Chamado #20931 - usuário <<nome>> (login <<login>>) não consegue acessar a VPN. Resetei a senha para "
         "<<senha>>. Máquina <<host>>, IP <<ip>>, ramal 4021. Escreva a resposta explicando como trocar a senha.",
-        {"nome": ("PESSOA", _nome), "login": ("USUARIO?", lambda rng: s.fold(_nome(rng, 2)).lower().replace(" ", ".")),
+        {"nome": ("PESSOA", _nome), "login": ("PESSOA", lambda rng: s.fold(_nome(rng, 2)).lower().replace(" ", ".")),
          "senha": ("SENHA", lambda rng: chave("Tmp#", rng, 8)), "host": ("SERVIDOR", host_interno),
          "ip": ("IP", s.fake_ipv4)},
         manter=["#20931", "VPN", "ramal 4021"],
@@ -473,7 +473,7 @@ CENARIOS += [
     Cenario(
         "Monitoramento: webhook do Slack",
         "O alerta do Grafana não chega no Slack. Webhook: https://hooks.slack.com/services/<<t>>/<<b>>/<<x>>",
-        {"t": ("SEGREDO?", lambda rng: "T" + _alnum(rng, 8)), "b": ("SEGREDO?", lambda rng: "B" + _alnum(rng, 8)),
+        {"t": ("SEGREDO", lambda rng: "T" + _alnum(rng, 8)), "b": ("SEGREDO", lambda rng: "B" + _alnum(rng, 8)),
          "x": ("SEGREDO", lambda rng: _alnum(rng, 24, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))},
         manter=["Grafana"],
     ),
@@ -576,12 +576,12 @@ CENARIOS += [
     Cenario(
         "Celular roubado: IMEI",
         "Meu celular foi roubado, o IMEI é <<imei>> e o número era <<tel>>. Como bloqueio?",
-        {"imei": ("IMEI?", imei), "tel": ("TELEFONE", s.fake_phone)},
+        {"imei": ("IMEI", imei), "tel": ("TELEFONE", s.fake_phone)},
     ),
     Cenario(
         "Cliente: e-mail disfarçado",
         "me manda no <<usuario>> (arroba) example (ponto) com ou no zap <<tel>>",
-        {"usuario": ("EMAIL?", lambda rng: _login(rng)), "tel": ("TELEFONE", s.fake_phone)},
+        {"usuario": ("PESSOA", lambda rng: _login(rng)), "tel": ("TELEFONE", s.fake_phone)},
     ),
     Cenario(
         "Cartório: certidão",
@@ -699,6 +699,170 @@ CENARIOS += [
 ]
 
 
+# --- Rodada 5: pagamentos, celulares, cripto, 2FA, cartório e outros tipos novos ----------------------------------
+
+def _tlv(tag: str, valor: str) -> str:
+    return f"{tag}{len(valor):02d}{valor}"
+
+
+def pix_copia_cola(rng: random.Random) -> str:
+    conta = _tlv("00", "br.gov.bcb.pix") + _tlv("01", s.fake_pix_key(rng))
+    corpo = (_tlv("00", "01") + _tlv("26", conta) + _tlv("52", "0000") + _tlv("53", "986")
+             + _tlv("54", f"{rng.randint(10, 999)}.{rng.randint(0, 99):02d}") + _tlv("58", "BR")
+             + _tlv("59", fold_upper(s.fake_name(rng, 2))[:25]) + _tlv("60", rng.choice(("SAO PAULO", "RECIFE", "CURITIBA")))
+             + _tlv("62", _tlv("05", "***")) + "6304")
+    return corpo + f"{v.crc16_ccitt(corpo.encode()):04X}"
+
+
+def fold_upper(texto: str) -> str:
+    import unicodedata
+
+    return "".join(c for c in unicodedata.normalize("NFD", texto) if not unicodedata.combining(c)).upper()
+
+
+def boleto(rng: random.Random) -> str:
+    d = s.fake_boleto(rng)
+    return f"{d[0:5]}.{d[5:10]} {d[10:15]}.{d[15:21]} {d[21:26]}.{d[26:32]} {d[32]} {d[33:]}"
+
+
+def conta_de_luz(rng: random.Random) -> str:
+    corpo = "836" + "".join(rng.choice("0123456789") for _ in range(40))
+    codigo = corpo[:3] + str(v._boleto_mod10(corpo)) + corpo[3:]
+    return " ".join(f"{bloco}-{v._boleto_mod10(bloco)}" for bloco in (codigo[i:i + 11] for i in range(0, 44, 11)))
+
+
+def certidao(rng: random.Random) -> str:
+    d = s.fake_certidao(rng)
+    return f"{d[0:6]} {d[6:8]} {d[8:10]} {d[10:14]} {d[14]} {d[15:20]} {d[20:23]} {d[23:30]} {d[30:32]}"
+
+
+def seed(rng: random.Random, palavras: int = 12) -> str:
+    import hashlib
+
+    from veu.recognizers.base import load_wordlist
+
+    tamanho = palavras * 11 * 32 // 33
+    entropia = rng.getrandbits(tamanho).to_bytes(tamanho // 8, "big")
+    resumo = format(int.from_bytes(hashlib.sha256(entropia).digest(), "big"), "0256b")
+    bits = format(int.from_bytes(entropia, "big"), f"0{tamanho}b") + resumo[:palavras * 11 - tamanho]
+    lista = load_wordlist("bip39.txt")
+    return " ".join(lista[int(bits[i:i + 11], 2)] for i in range(0, len(bits), 11))
+
+
+def ethereum(rng: random.Random) -> str:
+    return "0x" + "".join(rng.choice("0123456789abcdef") for _ in range(40))
+
+
+def totp(rng: random.Random) -> str:
+    return "".join(rng.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567") for _ in range(32))
+
+
+def gms(rng: random.Random) -> str:
+    def parte(graus):
+        return f"{rng.randint(1, graus)}°{rng.randint(0, 59):02d}'{rng.randint(0, 59):02d}\""
+    return f"{parte(33)}S {parte(73)}W"
+
+
+def email_disfarcado(rng: random.Random) -> str:
+    local, dominio = s.fake_email(rng, domain=rng.choice(("gmail.com", "hotmail.com", "empresa.com.br"))).split("@")
+    if rng.random() < 0.5:
+        return f"{local} [at] {dominio.replace('.', ' [dot] ')}"
+    return f"{local} arroba {dominio.replace('.', ' ponto ')}"
+
+
+CENARIOS += [
+    Cenario(
+        "Cobrança: boleto e Pix",
+        "Olá, <<p1>>! Segue o boleto da mensalidade de novembro:\n<<boleto>>\nSe preferir, pague com o Pix copia e "
+        "cola: <<pix>>\nReescreva esta mensagem de cobrança de um jeito mais educado.",
+        {"p1": ("PESSOA", _primeiro), "boleto": ("BOLETO", boleto), "pix": ("CHAVE_PIX", pix_copia_cola)},
+        manter=["mensalidade de novembro"],
+    ),
+    Cenario(
+        "Concessionária: conta de luz",
+        "Cliente <<nome>> (CPF <<cpf>>) pagou a fatura com o código <<luz>> e o pagamento não baixou. Responda.",
+        {"nome": ("PESSOA", _nome), "cpf": ("CPF", s.fake_cpf), "luz": ("BOLETO", conta_de_luz)},
+        manter=["não baixou"],
+    ),
+    Cenario(
+        "Assistência técnica de celular",
+        "OS 4471 — cliente <<nome>>, telefone <<tel>>, aparelho Galaxy A54, IMEI <<imei>>. Tela quebrada e bateria "
+        "estufada. Gere o laudo técnico.",
+        {"nome": ("PESSOA", _nome), "tel": ("TELEFONE", s.fake_phone), "imei": ("IMEI", imei)},
+        manter=["Galaxy A54", "OS 4471"],
+    ),
+    Cenario(
+        "Investidor: carteira de cripto",
+        "Perdi o acesso à corretora. Anotei a seed da carteira: <<seed>>. O endereço é <<eth>>. Dá para recuperar?",
+        {"seed": ("CHAVE_PRIVADA", seed), "eth": ("CRIPTO", ethereum)},
+        manter=["corretora"],
+    ),
+    Cenario(
+        "Investidor: frase de 24 palavras numerada",
+        "Backup da carteira fria:\n<<seed24>>\nComo guardo isso com segurança?",
+        {"seed24": ("CHAVE_PRIVADA", lambda rng: " ".join(f"{i}. {p}" for i, p in enumerate(seed(rng, 24).split(), 1)))},
+        manter=["carteira fria"],
+    ),
+    Cenario(
+        "TI: configurando 2FA",
+        "Configurei o 2FA do painel com otpauth://totp/Empresa:admin?secret=<<totp>>&issuer=Empresa e o código de "
+        "verificação <<otp>> não funciona. O relógio do servidor <<host>> pode estar errado?",
+        {"totp": ("SEGREDO", totp), "otp": ("SENHA", lambda rng: f"{rng.randint(100000, 999999)}"),
+         "host": ("SERVIDOR", host_interno)},
+        manter=["relógio do servidor"],
+    ),
+    Cenario(
+        "Suporte: link de redefinição de senha",
+        "O cliente <<nome>> (<<email>>) recebeu https://app.example.com/reset?token=<<token>>&uid=8812 e diz que o "
+        "link expirou. Escreva a resposta.",
+        {"nome": ("PESSOA", _nome), "email": ("EMAIL", s.fake_email),
+         "token": ("SEGREDO", lambda rng: "".join(rng.choice("0123456789abcdef") for _ in range(32)))},
+        manter=["uid=8812", "expirou"],
+    ),
+    Cenario(
+        "Cartório: segunda via de certidão",
+        "Requerente: <<nome>>, CPF <<cpf>>. Matrícula da certidão de nascimento: <<certidao>>. Redija o pedido de "
+        "segunda via.",
+        {"nome": ("PESSOA", _nome), "cpf": ("CPF", s.fake_cpf), "certidao": ("CERTIDAO", certidao)},
+        manter=["segunda via"],
+    ),
+    Cenario(
+        "Migração: estrangeiro no Brasil",
+        "<<nome>>, venezuelano, RNM <<rnm>>, CPF <<cpf>>, mora na <<endereco>>. Explique como renovar o documento.",
+        {"nome": ("PESSOA", _nome), "rnm": ("RG", lambda rng: f"{rng.choice('VGFW')}{rng.randint(100000, 999999)}-"
+                                                            f"{rng.randint(0, 9)}"),
+         "cpf": ("CPF", s.fake_cpf), "endereco": ("ENDERECO", s.fake_address)},
+        manter=["venezuelano"],
+    ),
+    Cenario(
+        "Pesquisa de campo: coordenadas",
+        "Ponto de coleta 3: <<gms>>, na propriedade de <<nome>>. Resuma as observações do solo.",
+        {"gms": ("COORDENADAS", gms), "nome": ("PESSOA", _nome)},
+        manter=["Ponto de coleta 3"],
+    ),
+    Cenario(
+        "Televendas: cartão por telefone",
+        "Cliente <<nome>> passou o cartão <<cartao>>, validade 08/29, CVV <<cvv>>. Como registro a venda sem guardar "
+        "o CVV?",
+        {"nome": ("PESSOA", _nome), "cartao": ("CARTAO_CREDITO", s.fake_card),
+         "cvv": ("CARTAO_CREDITO", lambda rng: f"{rng.randint(100, 999)}")},
+        manter=["validade 08/29"],
+    ),
+    Cenario(
+        "Recepção: QR do Wi-Fi",
+        "Texto do QR code da recepção: WIFI:T:WPA;S:Recepcao;P:<<wifi>>;; Escreva um aviso para os visitantes.",
+        {"wifi": ("SENHA", lambda rng: _senha(rng))},
+        manter=["S:Recepcao"],
+    ),
+    Cenario(
+        "Fórum: e-mail disfarçado",
+        "Quem quiser a planilha, me escreve: <<email>>. Abraço, <<p1>>.",
+        {"email": ("EMAIL", email_disfarcado), "p1": ("PESSOA", _primeiro)},
+        manter=["planilha"],
+    ),
+]
+
+
 @dataclass
 class Caso:
     perfil: str
@@ -716,6 +880,13 @@ def montar(cenario: Cenario, rng: random.Random) -> Caso:
             valores[campo] = s.fake_email(rng, name=nome) if nome else gerar(rng)
         else:
             valores[campo] = gerar(rng)
+            # Duas pessoas com o mesmo nome no mesmo texto ("Sra. Fabiano Pimentel" e "Dr. Fabiano") o Véu trata
+            # como uma só, de propósito ("a Fabiana ligou de novo"). Para medir o resto, a simulação não sorteia isso.
+            if cenario.campos[campo][0] == "PESSOA":
+                usadas = {p.lower() for c, x in valores.items() if c != campo and cenario.campos[c][0] == "PESSOA"
+                          for p in x.split()}
+                while usadas & {p.lower() for p in valores[campo].split() if len(p) > 2}:
+                    valores[campo] = gerar(rng)
     texto = re.sub(r"<<(\w+)>>", lambda m: valores[m.group(1)], cenario.texto)
     esperados = [(cenario.campos[campo][0], valor) for campo, valor in valores.items() if cenario.campos[campo][0]]
     fundo = re.sub(r"<<\w+>>", " ", cenario.texto)
@@ -726,8 +897,13 @@ _LIGACOES = {"da", "de", "do", "das", "dos", "e"}
 
 
 def vazou(rotulo: str, valor: str, saida: str, fundo: str = "") -> bool:
-    if rotulo == "CHAVE_PRIVADA":
+    if rotulo == "CHAVE_PRIVADA" and "\n" in valor:
         return any(linha in saida for linha in valor.splitlines()[1:-1])
+    if rotulo == "CHAVE_PRIVADA":  # frase de recuperação: quatro palavras seguidas já são um pedaço da chave
+        palavras = valor.split()
+        return any(" ".join(palavras[i:i + 4]) in saida for i in range(len(palavras) - 3))
+    if valor.isdigit() and len(valor) <= 8:  # CVV, código de verificação: o número inteiro, não dentro de outro
+        return re.search(rf"(?<!\d){valor}(?!\d)", saida) is not None
     if rotulo == "PESSOA":
         # Um sobrenome que sobra já identifica: confere cada palavra do nome. A palavra que o modelo do texto já
         # tem ("Certidão de nascimento" e a sobrenome Nascimento) só conta se aparecer mais vezes que no modelo.
