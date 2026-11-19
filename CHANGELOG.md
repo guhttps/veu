@@ -9,6 +9,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Extensão em português e inglês:** o nome e a descrição vêm de `extensao/_locales`, então o navegador mostra o nome no idioma de quem usa e as lojas do Edge e do Firefox ganham uma página em cada idioma. Um teste confere que todo idioma cabe nos limites das lojas.
 - **Simulação de uso** (`scripts/simular_usuarios.py`): textos de 23 perfis de trabalho (advogada, contador, médica, RH, atendimento por WhatsApp, programador, suporte de TI, imobiliária, Portugal, Argentina, Chile e outros), com dados fictícios, conferindo vazamento, exagero, a volta dos dados e se Python e JavaScript concordam.
 
+- **Registro profissional** (`REGISTRO_PROFISSIONAL`): OAB, CRM, CRO, CREA, CRF, COREN, CRC, CRP e outros conselhos, com o estado ("OAB/SP 123.456", "CRM-SC nº 12345", "CRP 06/123456"). Só o número some; a sigla e o estado ficam, para a IA saber de que profissional se trata. Sem o estado, "CRM 365" continua sendo software.
+- **CTPS** (`CTPS`): número e série da carteira de trabalho antiga, com o contexto por perto.
+- **Logins nome.sobrenome** ("gislaine.vieira", "/home/joao_silva") viram `PESSOA`, sem pegar domínios (`maria.souza.com.br`), arquivos (`config.yaml`) nem palavras comuns.
+
 ### Corrigido
 - **Senhas em frases de suporte:** "resetei a senha para Tmp#4821", "troquei a senha pra ...", "a senha do wifi fica ..." e "password to ..." agora são escondidas, sem pegar frases comuns ("senha para acessar o sistema"). O ponto que fecha a frase não entra mais na senha.
 - **Rótulos de formulário viravam nomes:** num comprovante Pix, "Para: Fulano" na linha de cima fazia de "Chave Pix:" um nome de pessoa. A palavra de contexto agora vale na mesma linha, ou só quando fecha a linha de cima ("Nome:" com o nome embaixo continua funcionando).

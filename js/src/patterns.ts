@@ -74,6 +74,8 @@ const CTX_PIS = ["pis", "pasep", "pis/pasep", "nit", "nis", "pis/nit"];
 const CTX_CNS = ["cns", "cartao sus", "cartao do sus", "cartao nacional de saude", "sus"];
 const CTX_RENAVAM = ["renavam"];
 const CTX_PASSAPORTE = ["passaporte", "passport"];
+const CTX_CTPS = ["ctps", "c.t.p.s", "carteira de trabalho", "carteira profissional"];
+const UFS = "(?:AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)";
 const CTX_PHONE = [
   "tel", "tel.", "telefone", "telefones", "celular", "cel", "cel.", "whatsapp", "whats", "zap", "wpp",
   "contato", "fone", "ligar", "ligue", "ramal", "numero",
@@ -183,6 +185,16 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   spec("RG", `${MB}${M}{1,2}\\.?${M}{3}\\.?${M}{2,3}-?${M}${ME}`, S(null, null, 0.85),
     { validator: partiallyMasked, context: CTX_RG, before: 20, name: "mascarado" }),
   spec("PASSAPORTE", `${B}[A-Z]{2}\\d{6}${E}`, S(null, null, 0.9), { context: CTX_PASSAPORTE, before: 30 }),
+  // Registro em conselho profissional ("OAB/SP 123.456", "CRM-SC nº 12345", "CRP 06/123456"). Só o número some:
+  // a sigla e o estado ficam, para a IA saber de que profissional se trata. Sem o estado, "CRM 365" seria software.
+  spec("REGISTRO_PROFISSIONAL",
+    `(?<![${W}/])(?:OAB|CRM|CRO|CREA|CRF|CRMV|CRN|COREN|CRC|CREFITO|CREFONO|CRBM|CRESS|CRA)[ \\t]?[-/ ][ \\t]?${UFS}` +
+    `[ \\t]*[,:]?[ \\t]*(?:(?:n[º°o]\\.?|número)[ \\t]*)?(?<valor>\\d{1,3}(?:\\.\\d{3}){1,2}|\\d{3,10})(?![${W}])`, S(0.9)),
+  spec("REGISTRO_PROFISSIONAL", `(?<![${W}/])CRP[ \\t]?[-/ ]?[ \\t]?(?<valor>\\d{2}/\\d{3,6})(?![${W}])`, S(0.9)),
+  // CTPS antiga, com número e série ("CTPS nº 1234567 série 0012-SP"); a digital usa o CPF.
+  spec("CTPS", `${B}\\d{5,8}${E}`, S(null, null, 0.85), { context: CTX_CTPS, before: 25 }),
+  spec("CTPS", `(?<![${W}])s[ée]rie[ \\t]*(?:n[º°o]\\.?[ \\t]*)?(?<valor>\\d{3,5}(?:-?[A-Z]{2})?)(?![${W}])`,
+    S(null, null, 0.85), { context: CTX_CTPS, flags: "i", before: 40 }),
   // Contatos
   spec("EMAIL", `(?<![\\p{L}\\p{N}_.+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}${E}`,
     S(0.95), { context: CTX_EMAIL }),

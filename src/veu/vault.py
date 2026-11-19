@@ -25,10 +25,10 @@ from veu.entities import LABELS, SECRET_LABELS
 DIGIT_LABELS = frozenset({
     "CPF", "TELEFONE", "CEP", "CARTAO_CREDITO", "PIS", "CNS", "CNH", "TITULO_ELEITOR", "RENAVAM",
     "CONTA_BANCARIA", "PROCESSO", "NIF_PT", "NISS_PT", "CUIT", "DNI", "NIT", "RUC", "CEDULA", "NUIT", "SSN",
-    "STEUER_ID", "NHS", "BSN", "SIN", "AADHAAR", "PORTA",
+    "STEUER_ID", "NHS", "BSN", "SIN", "AADHAAR", "PORTA", "REGISTRO_PROFISSIONAL",
 })
 CODE_LABELS = frozenset({"CNPJ", "RG", "PLACA", "PASSAPORTE", "CHAVE_PIX", "CC_PT", "CURP", "RFC", "RUT", "RIF",
-                         "BI_AO", "BI_MZ", "MBI", "DNI_ES", "CODICE_FISCALE", "NIR", "NINO", "PAN", "VIN"})
+                         "BI_AO", "BI_MZ", "MBI", "DNI_ES", "CODICE_FISCALE", "NIR", "NINO", "PAN", "VIN", "CTPS"})
 
 # O colchete final é opcional: modelos às vezes escrevem "[CPF_1" ou "[CPF 1]".
 _PLACEHOLDER = r"\[\s*(?P<ph_label>[A-Za-z]+(?:_[A-Za-z]+)*)[_\s-]+(?P<ph_id>[0-9A-Fa-f]{1,16})(?:\s*\]|(?![\w]))"

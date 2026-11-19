@@ -5,6 +5,8 @@ import { escapeRegex, fold, isLower, isUpper, textBefore, wordsRegex } from "./t
 
 const WORD = /[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)*/gu;
 const SPACE_GAP = /^[ \t]{1,2}$/;
+// Logins no formato nome.sobrenome ("gislaine.vieira", "joao_silva"); "@" e ".com" depois indicam e-mail ou domínio.
+const LOGIN = /(?<![\p{L}\p{N}_@.-])([a-z]{3,})[._]([a-z]{3,})(?![\p{L}\p{N}_@-]|\.[a-z])/gu;
 export const CONNECTORS: ReadonlySet<string> = new Set([
   "da", "de", "do", "das", "dos", "e", "del", "della", "di", "du", "van", "von", "der", "d",
 ]);
@@ -170,6 +172,7 @@ export class PersonRecognizer implements Recognizer {
       index = sequence[sequence.length - 1] + 1;
     }
     yield* this.lowercaseNames(text, words);
+    yield* this.loginNames(text);
   }
 
   private scoreSequence(text: string, tokens: Word[]): Candidate | null {
@@ -227,6 +230,17 @@ export class PersonRecognizer implements Recognizer {
 
   private strongContext(text: string, start: number): boolean {
     return STRONG_CONTEXT.test(fold(textBefore(text, start, 25)));
+  }
+
+  /** Logins no formato nome.sobrenome, comuns em chamados, logs e caminhos ("/home/joao.silva"). */
+  private *loginNames(text: string): Iterable<Candidate> {
+    for (const match of text.matchAll(LOGIN)) {
+      const [first, last] = [match[1], match[2]];
+      // A forma nome.sobrenome já é um sinal forte: basta o prenome não ser palavra comum ("rosa.silva" fica).
+      if (this.firstNames.has(first) && !this.ambiguous.has(first) && this.surnames.has(last)) {
+        yield { label: "PESSOA", start: match.index, end: match.index + match[0].length, score: 0.7, recognizer: this.name };
+      }
+    }
   }
 
   private *lowercaseNames(text: string, words: Word[]): Iterable<Candidate> {

@@ -14,6 +14,8 @@ from veu.recognizers.base import Candidate, folded_set, load_wordlist, text_befo
 
 _WORD = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)*")
 _SPACE_GAP = re.compile(r"[ \t]{1,2}")
+# Logins no formato nome.sobrenome ("gislaine.vieira", "joao_silva"); "@" e ".com" depois indicam e-mail ou domínio.
+_LOGIN = re.compile(r"(?<![\w@.-])([a-z]{3,})[._]([a-z]{3,})(?![\w@-]|\.[a-z])")
 CONNECTORS = frozenset({"da", "de", "do", "das", "dos", "e", "del", "della", "di", "du", "van", "von", "der", "d"})
 
 PERSON_CONTEXT = (
@@ -143,6 +145,15 @@ class PersonRecognizer:
                 yield found
             index = sequence[-1] + 1
         yield from self._lowercase_names(text, words)
+        yield from self._login_names(text)
+
+    def _login_names(self, text: str) -> Iterable[Candidate]:
+        """Logins no formato nome.sobrenome, comuns em chamados, logs e caminhos ("/home/joao.silva")."""
+        for match in _LOGIN.finditer(text):
+            first, last = match.group(1), match.group(2)
+            # A forma nome.sobrenome já é um sinal forte: basta o prenome não ser palavra comum ("rosa.silva" fica).
+            if first in self.first_names and first not in self.ambiguous and last in self.surnames:
+                yield Candidate("PESSOA", match.start(), match.end(), 0.7, self.name)
 
     def _score_sequence(self, text: str, tokens: list[tuple[int, int, str]]) -> Candidate | None:
         whole = [fold(token[2]) for token in tokens]

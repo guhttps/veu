@@ -99,6 +99,8 @@ CTX_PIS = ("pis", "pasep", "pis/pasep", "nit", "nis", "pis/nit")
 CTX_CNS = ("cns", "cartao sus", "cartao do sus", "cartao nacional de saude", "sus")
 CTX_RENAVAM = ("renavam",)
 CTX_PASSAPORTE = ("passaporte", "passport")
+CTX_CTPS = ("ctps", "c.t.p.s", "carteira de trabalho", "carteira profissional")
+_UFS = r"(?:AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)"
 CTX_PHONE = (
     "tel", "tel.", "telefone", "telefones", "celular", "cel", "cel.", "whatsapp", "whats", "zap", "wpp",
     "contato", "fone", "ligar", "ligue", "ramal", "numero",
@@ -228,6 +230,21 @@ DEFAULT_SPECS: list[PatternSpec] = [
     PatternSpec("RG", rf"(?<![\w*]){M}{{1,2}}\.?{M}{{3}}\.?{M}{{2,3}}-?{M}(?![\w*])", Scores(None, None, 0.85),
                 _partially_masked, CTX_RG, before=20, name="mascarado"),
     PatternSpec("PASSAPORTE", B + r"[A-Z]{2}\d{6}" + E, Scores(None, None, 0.9), None, CTX_PASSAPORTE, before=30),
+    # Registro em conselho profissional ("OAB/SP 123.456", "CRM-SC nº 12345", "CRP 06/123456"). Só o número some:
+    # a sigla e o estado ficam, para a IA saber de que profissional se trata. Sem o estado, "CRM 365" seria software.
+    PatternSpec(
+        "REGISTRO_PROFISSIONAL",
+        r"(?<![\w/])(?:OAB|CRM|CRO|CREA|CRF|CRMV|CRN|COREN|CRC|CREFITO|CREFONO|CRBM|CRESS|CRA)[ \t]?[-/ ][ \t]?" + _UFS
+        + r"[ \t]*[,:]?[ \t]*(?:(?:n[º°o]\.?|número)[ \t]*)?(?P<valor>\d{1,3}(?:\.\d{3}){1,2}|\d{3,10})(?![\w])",
+        Scores(0.9),
+    ),
+    PatternSpec("REGISTRO_PROFISSIONAL", r"(?<![\w/])CRP[ \t]?[-/ ]?[ \t]?(?P<valor>\d{2}/\d{3,6})(?![\w])", Scores(0.9)),
+    # CTPS antiga, com número e série ("CTPS nº 1234567 série 0012-SP"); a digital usa o CPF.
+    PatternSpec("CTPS", B + r"\d{5,8}" + E, Scores(None, None, 0.85), None, CTX_CTPS, before=25),
+    PatternSpec(
+        "CTPS", r"(?<![\w])s[ée]rie[ \t]*(?:n[º°o]\.?[ \t]*)?(?P<valor>\d{3,5}(?:-?[A-Z]{2})?)(?![\w])",
+        Scores(None, None, 0.85), None, CTX_CTPS, flags=re.IGNORECASE, before=40,
+    ),
     # Contatos
     PatternSpec(
         "EMAIL", r"(?<![\w.+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![\w])",

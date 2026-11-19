@@ -1162,6 +1162,108 @@
    "generalizado": "Preciso de uma senha para acessar o sistema e esqueci a senha para entrar no portal."
   },
   {
+   "texto": "Advogada (OAB/SP 123.456), Dra. Ana Lima (CRM-SC 34636), CRM/MG: 54.321, CREA-SP 5061234567, CRP 06/123456. Não são registros: Dynamics CRM 365, OAB 2024, a série 3 da escola.",
+   "entidades": [
+    [
+     "REGISTRO_PROFISSIONAL",
+     17,
+     24,
+     0.9
+    ],
+    [
+     "PESSOA",
+     32,
+     40,
+     0.9
+    ],
+    [
+     "REGISTRO_PROFISSIONAL",
+     49,
+     54,
+     0.9
+    ],
+    [
+     "REGISTRO_PROFISSIONAL",
+     65,
+     71,
+     0.9
+    ],
+    [
+     "REGISTRO_PROFISSIONAL",
+     81,
+     91,
+     0.9
+    ],
+    [
+     "REGISTRO_PROFISSIONAL",
+     97,
+     106,
+     0.9
+    ]
+   ],
+   "anonimizado": "Advogada (OAB/SP [REGISTRO_PROFISSIONAL_1]), Dra. [PESSOA_1] (CRM-SC [REGISTRO_PROFISSIONAL_2]), CRM/MG: [REGISTRO_PROFISSIONAL_3], CREA-SP [REGISTRO_PROFISSIONAL_4], CRP [REGISTRO_PROFISSIONAL_5]. Não são registros: Dynamics CRM 365, OAB 2024, a série 3 da escola.",
+   "mascarado": "Advogada (OAB/SP ***.*56), Dra. A*** L*** (CRM-SC ***36), CRM/MG: **.*21, CREA-SP ********67, CRP **/****56. Não são registros: Dynamics CRM 365, OAB 2024, a série 3 da escola.",
+   "generalizado": "Advogada (OAB/SP [REGISTRO_PROFISSIONAL]), Dra. [PESSOA] (CRM-SC [REGISTRO_PROFISSIONAL]), CRM/MG: [REGISTRO_PROFISSIONAL], CREA-SP [REGISTRO_PROFISSIONAL], CRP [REGISTRO_PROFISSIONAL]. Não são registros: Dynamics CRM 365, OAB 2024, a série 3 da escola."
+  },
+  {
+   "texto": "CTPS: 3492025 série 0533-SP; carteira de trabalho nº 1234567, SÉRIE 00012.",
+   "entidades": [
+    [
+     "CTPS",
+     6,
+     13,
+     0.85
+    ],
+    [
+     "CTPS",
+     20,
+     27,
+     0.85
+    ],
+    [
+     "CTPS",
+     53,
+     60,
+     0.85
+    ],
+    [
+     "CTPS",
+     68,
+     73,
+     0.85
+    ]
+   ],
+   "anonimizado": "CTPS: [CTPS_1] série [CTPS_2]; carteira de trabalho nº [CTPS_3], SÉRIE [CTPS_4].",
+   "mascarado": "CTPS: *****25 série ****-SP; carteira de trabalho nº *****67, SÉRIE ***12.",
+   "generalizado": "CTPS: [CTPS] série [CTPS]; carteira de trabalho nº [CTPS], SÉRIE [CTPS]."
+  },
+  {
+   "texto": "Login gislaine.vieira, pasta /home/joao_silva/docs, ssh humberto.maciel@10.0.0.5. Não são logins: maria.souza.com.br, config.yaml, nota.fiscal, rosa.silva.",
+   "entidades": [
+    [
+     "PESSOA",
+     6,
+     21,
+     0.7
+    ],
+    [
+     "PESSOA",
+     35,
+     45,
+     0.7
+    ],
+    [
+     "IP",
+     72,
+     80,
+     0.7
+    ]
+   ],
+   "anonimizado": "Login [PESSOA_1], pasta /home/[PESSOA_2]/docs, ssh humberto.maciel@[IP_1]. Não são logins: maria.souza.com.br, config.yaml, nota.fiscal, rosa.silva.",
+   "mascarado": "Login g***, pasta /home/j***/docs, ssh humberto.maciel@**.*.0.5. Não são logins: maria.souza.com.br, config.yaml, nota.fiscal, rosa.silva.",
+   "generalizado": "Login [PESSOA], pasta /home/[PESSOA]/docs, ssh humberto.maciel@10.0.0.0/24. Não são logins: maria.souza.com.br, config.yaml, nota.fiscal, rosa.silva."
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [

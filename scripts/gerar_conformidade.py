@@ -70,6 +70,11 @@ EXTRA = [
     "Nome:\nMaria Souza\nForma Pagamento: Boleto",
     "Resetei a senha para Tmp#4821xQ. Depois troquei a senha pra Mudar@2026; a senha do wifi fica casa2026.",
     "Preciso de uma senha para acessar o sistema e esqueci a senha para entrar no portal.",
+    "Advogada (OAB/SP 123.456), Dra. Ana Lima (CRM-SC 34636), CRM/MG: 54.321, CREA-SP 5061234567, CRP 06/123456. "
+    "Não são registros: Dynamics CRM 365, OAB 2024, a série 3 da escola.",
+    "CTPS: 3492025 série 0533-SP; carteira de trabalho nº 1234567, SÉRIE 00012.",
+    "Login gislaine.vieira, pasta /home/joao_silva/docs, ssh humberto.maciel@10.0.0.5. Não são logins: "
+    "maria.souza.com.br, config.yaml, nota.fiscal, rosa.silva.",
 ]
 
 

@@ -106,7 +106,7 @@ Commands are in Portuguese: `anonimizar` (anonymize), `restaurar` (restore), `le
 | Kind | Examples |
 |---|---|
 | People and contacts | names (IBGE 2022 census lists, capitalization and context), e-mails, phones (Brazilian and international), addresses, dates of birth |
-| Brazilian documents | CPF, CNPJ (including the 2026 alphanumeric format), RG, CNH, voter ID, PIS, SUS card, passport, CEP, license plates, RENAVAM, lawsuit numbers, bank accounts, Pix keys |
+| Brazilian documents | CPF, CNPJ (including the 2026 alphanumeric format), RG, CNH, voter ID, PIS, SUS card, passport, work card (CTPS), professional licenses (OAB, CRM, CREA...), CEP, license plates, RENAVAM, lawsuit numbers, bank accounts, Pix keys |
 | Other countries | Portugal, Argentina, Mexico, Chile, Uruguay, Colombia, Peru, Ecuador, Paraguay, Venezuela, Angola, Mozambique, US, Spain, Italy, France, Germany, UK, Netherlands, Canada, India; passport MRZ, VIN |
 | Financial | credit cards (Luhn), IBAN, Bitcoin and Ethereum addresses |
 | IT infrastructure | IP addresses, ports (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`; never a bare number) and internal server names (`db.internal`, `cache.prod.local`) |

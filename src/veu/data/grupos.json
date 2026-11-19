@@ -13,9 +13,9 @@
       "id": "documentos",
       "titulo": "Documentos",
       "titulo_en": "Brazilian documents",
-      "exemplo": "CPF, CNPJ, RG, CNH, título de eleitor, PIS, cartão do SUS, passaporte, processos",
-      "exemplo_en": "CPF, CNPJ, RG, driver's license, voter ID, PIS, SUS card, passport, lawsuit numbers",
-      "tipos": ["CPF", "CNPJ", "RG", "CNH", "TITULO_ELEITOR", "PIS", "CNS", "PASSAPORTE", "PROCESSO"]
+      "exemplo": "CPF, CNPJ, RG, CNH, título de eleitor, PIS, cartão do SUS, passaporte, CTPS, OAB e CRM, processos",
+      "exemplo_en": "CPF, CNPJ, RG, driver's license, voter ID, PIS, SUS card, passport, work card, bar and medical licenses, lawsuit numbers",
+      "tipos": ["CPF", "CNPJ", "RG", "CNH", "TITULO_ELEITOR", "PIS", "CNS", "PASSAPORTE", "CTPS", "REGISTRO_PROFISSIONAL", "PROCESSO"]
     },
     {
       "id": "estrangeiros",

@@ -10,6 +10,8 @@ export const LABELS: Record<string, string> = {
   PIS: "PIS, PASEP, NIT ou NIS",
   CNS: "Cartão Nacional de Saúde (SUS)",
   PASSAPORTE: "Passaporte",
+  CTPS: "Carteira de trabalho (CTPS)",
+  REGISTRO_PROFISSIONAL: "Registro em conselho profissional (OAB, CRM, CRO, CREA...)",
   TELEFONE: "Telefone",
   EMAIL: "E-mail",
   ENDERECO: "Endereço",
