@@ -132,7 +132,6 @@ a.botao { display: inline-block; text-decoration: none; }
 .preco { margin: 0; font-size: 30px; line-height: 1.2; font-weight: 700; letter-spacing: -.02em; }
 .preco small { display: inline-block; font-size: 14px; line-height: 1.4; font-weight: 400; color: var(--suave); letter-spacing: 0; }
 .depois { margin: 0; color: var(--suave); font-size: 14px; }
-.selo-fundador { justify-self: start; background: var(--destaque); outline: 1px solid var(--destaque-borda); border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 600; }
 .plano ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 15px; }
 .perguntas h3 { font-size: 16px; margin: 14px 0 4px; }
 .perguntas p { margin: 0; color: var(--suave); }
