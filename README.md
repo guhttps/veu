@@ -175,7 +175,7 @@ O cofre com o mapeamento entre marcadores e dados reais fica só com você (no n
 pip install veu                              # biblioteca, sem dependências
 pip install "veu[servidor,mcp,documentos]"   # com o proxy, o painel, o MCP e Excel/Word/PDF
 npm install @guhttps/veu                     # JavaScript e TypeScript
-docker run -p 8787:8787 -e VEU_TOKEN=um-segredo ghcr.io/guhttps/veu
+docker run -p 8787:8787 -e VEU_TOKEN=troque-por-um-segredo-longo ghcr.io/guhttps/veu
 brew install guhttps/veu/veu                 # macOS e Linux (Homebrew)
 scoop bucket add veu https://github.com/guhttps/scoop-veu; scoop install veu   # Windows (Scoop)
 ```

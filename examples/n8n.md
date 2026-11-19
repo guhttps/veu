@@ -5,7 +5,7 @@ Quando o fluxo usa um nó de IA pronto (OpenAI, Anthropic, Gemini, "AI Agent"), 
 Pré-requisito: o Véu rodando e acessível pelo n8n, por exemplo com Docker na mesma rede:
 
 ```bash
-docker run -d --name veu --network n8n -e VEU_TOKEN=troque-este-valor veu
+docker run -d --name veu --network n8n -e VEU_TOKEN=troque-por-um-segredo-longo veu
 ```
 
 ## Fluxo

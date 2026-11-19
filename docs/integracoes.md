@@ -737,10 +737,11 @@ Detalhes no [guia para empresas](empresas.md#litellm).
 
 ```bash
 docker build -t veu .
-docker run -p 8787:8787 -e VEU_TOKEN=troque-este-valor veu
+export VEU_TOKEN=$(openssl rand -hex 24)   # anote: os aplicativos mandam este token
+docker run -p 8787:8787 -e VEU_TOKEN veu
 ```
 
-Dentro do contêiner o Véu ouve em `0.0.0.0`, por isso ele **não inicia sem `VEU_TOKEN`**: com o token, todas as rotas (menos `/veu/saude`) exigem o cabeçalho `X-Veu-Token`. Numa rede interna isolada, sem publicar a porta, dá para liberar o uso sem token com `-e VEU_PERMITIR_SEM_TOKEN=1`. Para usar um `veu.toml`, monte o arquivo e aponte `VEU_CONFIG` para ele.
+Dentro do contêiner o Véu ouve em `0.0.0.0`, por isso ele **não inicia sem `VEU_TOKEN`** (de pelo menos 20 caracteres): com o token, todas as rotas (menos `/veu/saude`) exigem o cabeçalho `X-Veu-Token`. Numa rede interna isolada, sem publicar a porta, dá para liberar o uso sem token com `-e VEU_PERMITIR_SEM_TOKEN=1`. Para usar um `veu.toml`, monte o arquivo e aponte `VEU_CONFIG` para ele.
 
 ### Sessões do proxy
 

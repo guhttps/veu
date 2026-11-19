@@ -242,11 +242,11 @@ jobs:
       - run: docker build -t veu .
       - name: Teste de fumaça
         run: |
-          docker run -d --name veu -p 8787:8787 -e VEU_TOKEN=ci veu
+          docker run -d --name veu -p 8787:8787 -e VEU_TOKEN=token-de-teste-do-ci-com-32-letras veu
           for i in $(seq 1 30); do curl -fs http://127.0.0.1:8787/veu/saude && break; sleep 1; done
           curl -fs http://127.0.0.1:8787/veu/saude
           test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8787/veu/v1/detectar -d '{}')" = "401"
-          curl -fs http://127.0.0.1:8787/veu/v1/anonimizar -H "X-Veu-Token: ci" -H "Content-Type: application/json" \
+          curl -fs http://127.0.0.1:8787/veu/v1/anonimizar -H "X-Veu-Token: token-de-teste-do-ci-com-32-letras" -H "Content-Type: application/json" \
             -d '{"texto": "CPF 529.982.247-25"}' | tee resposta.json
           grep -q '"texto":"CPF \[CPF_1\]"' resposta.json
       - if: failure()
