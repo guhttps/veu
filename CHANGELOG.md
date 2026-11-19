@@ -5,6 +5,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-19
+
 ### Adicionado
 - **Mais cripto:** endereços TRON (USDT na rede TRC20), Litecoin e Dogecoin e chaves públicas estendidas (`xpub`) viram `CRIPTO`, pelo checksum; chaves privadas de Bitcoin (WIF e `xprv`) e uma chave de Ethereum com "chave privada" por perto viram `CHAVE_PRIVADA`.
 - **Mais chaves de infraestrutura:** chaves do `age`, chaves do PuTTY (`.ppk`) e chaves PEM codificadas em base64 (o `client-key-data` do kubeconfig); certificados em base64 ficam.
@@ -383,7 +385,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/guhttps/veu/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/guhttps/veu/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/guhttps/veu/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/guhttps/veu/compare/v0.7.0...v0.7.1
