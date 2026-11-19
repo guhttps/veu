@@ -18,7 +18,7 @@ docker run -d --name veu --network n8n -e VEU_TOKEN=troque-por-um-segredo-longo 
 
 - Método: `POST`
 - URL: `http://veu:8787/veu/v1/anonimizar`
-- Cabeçalho: `X-Veu-Token: troque-este-valor`
+- Cabeçalho: `X-Veu-Token: troque-por-um-segredo-longo`
 - Corpo (JSON): `{"texto": "{{ $json.mensagem }}"}`
 
 A resposta traz `texto` (já com os marcadores) e `sessao`.
@@ -33,7 +33,7 @@ Use `{{ $json.texto }}` como mensagem do usuário. No prompt de sistema, vale in
 
 - Método: `POST`
 - URL: `http://veu:8787/veu/v1/restaurar`
-- Cabeçalho: `X-Veu-Token: troque-este-valor`
+- Cabeçalho: `X-Veu-Token: troque-por-um-segredo-longo`
 - Corpo (JSON):
 
 ```json
