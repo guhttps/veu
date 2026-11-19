@@ -47,9 +47,10 @@ VALUE_CHARS = r"[^\s\"'`,;&<>()\[\]{}]"
 ASSIGNMENT = re.compile(
     r"(?<![A-Za-z0-9_.-])([A-Za-z_][A-Za-z0-9_.-]{0,60})[\"']?[ \t]*(=>|:=|=|:)[ \t]*[\"']?(" + VALUE_CHARS + r"{3,500})"
 )
-# Prosa: "a senha é Gato2024", "senha do wifi: casa1234".
+# Prosa: "a senha é Gato2024", "senha do wifi: casa1234", "resetei a senha para Tmp#4821", "password to ...".
 PROSE_PASSWORD = re.compile(
-    r"(?<![A-Za-z0-9])(?:senha|password|passwd)(?:[^\n:=]{0,25}?)(\s*(?::|=)\s*|\s+(?:é|eh|is)\s+)[\"']?("
+    r"(?<![A-Za-z0-9])(?:senha|password|passwd)(?:[^\n:=]{0,25}?)"
+    r"(\s*(?::|=)\s*|\s+(?:é|eh|is|fica|ficou|era|para|pra|to)\s+)[\"']?("
     + VALUE_CHARS + r"{3,200})",
     re.IGNORECASE,
 )
@@ -181,5 +182,9 @@ class SecretRecognizer:
             elif looks_random(value):
                 yield Candidate("SEGREDO", match.start(3), match.end(3), 0.85, self.name)
         for match in PROSE_PASSWORD.finditer(text):
-            if plausible_password(match.group(2), prose=True):
-                yield Candidate("SENHA", match.start(2), match.end(2), 0.8, self.name)
+            start, end = match.span(2)
+            # O ponto que fecha a frase não faz parte da senha: "resetei a senha para Tmp#4821."
+            if match.group(2).endswith(".") and (end == len(text) or text[end].isspace()):
+                end -= 1
+            if plausible_password(text[start:end], prose=True):
+                yield Candidate("SENHA", start, end, 0.8, self.name)

@@ -35,7 +35,7 @@ const ASSIGNMENT = new RegExp(
   `(?<![A-Za-z0-9_.-])([A-Za-z_][A-Za-z0-9_.-]{0,60})["']?[ \\t]*(=>|:=|=|:)[ \\t]*["']?(${VALUE_CHARS}{3,500})`, "gd",
 );
 const PROSE_PASSWORD = new RegExp(
-  `(?<![A-Za-z0-9])(?:senha|password|passwd)(?:[^\\n:=]{0,25}?)(\\s*(?::|=)\\s*|\\s+(?:é|eh|is)\\s+)["']?(${VALUE_CHARS}{3,200})`,
+  `(?<![A-Za-z0-9])(?:senha|password|passwd)(?:[^\\n:=]{0,25}?)(\\s*(?::|=)\\s*|\\s+(?:é|eh|is|fica|ficou|era|para|pra|to)\\s+)["']?(${VALUE_CHARS}{3,200})`,
   "gdi",
 );
 
@@ -148,8 +148,12 @@ export class SecretRecognizer implements Recognizer {
       }
     }
     for (const match of text.matchAll(PROSE_PASSWORD)) {
-      const [start, end] = match.indices![2]!;
-      if (plausiblePassword(match[2], true)) yield { label: "SENHA", start, end, score: 0.8, recognizer: this.name };
+      const [start, matchEnd] = match.indices![2]!;
+      // O ponto que fecha a frase não faz parte da senha: "resetei a senha para Tmp#4821."
+      const end = match[2].endsWith(".") && (matchEnd === text.length || /\s/.test(text[matchEnd])) ? matchEnd - 1 : matchEnd;
+      if (plausiblePassword(text.slice(start, end), true)) {
+        yield { label: "SENHA", start, end, score: 0.8, recognizer: this.name };
+      }
     }
   }
 }

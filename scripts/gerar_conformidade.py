@@ -65,6 +65,11 @@ EXTRA = [
     'PORT=8080, DB_PORT=5432 e {"host": "fila.corp", "port": 6379}. O servidor fila.empresa.example:5672 responde.',
     "Não são portas: reunião às 10:30, app.py:120, apartamento 302, relatório 2024, versão 1.2.3:45, porta 65536, "
     "nota 8080, db.interna.example e joao@empresa.local.",
+    # Achados da simulação de uso (scripts/simular_usuarios.py).
+    "Comprovante de transferência Pix\nDe: Altair Batista Linhares\nPara: Thiago Lima\nChave Pix: (82) 98501-3510",
+    "Nome:\nMaria Souza\nForma Pagamento: Boleto",
+    "Resetei a senha para Tmp#4821xQ. Depois troquei a senha pra Mudar@2026; a senha do wifi fica casa2026.",
+    "Preciso de uma senha para acessar o sistema e esqueci a senha para entrar no portal.",
 ]
 
 

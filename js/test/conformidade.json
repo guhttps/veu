@@ -1089,6 +1089,79 @@
    "generalizado": "Não são portas: reunião às 10:30, app.py:120, apartamento 302, relatório 2024, versão 1.2.3:45, porta 65536, nota 8080, db.interna.example e [EMAIL]."
   },
   {
+   "texto": "Comprovante de transferência Pix\nDe: Altair Batista Linhares\nPara: Thiago Lima\nChave Pix: (82) 98501-3510",
+   "entidades": [
+    [
+     "PESSOA",
+     37,
+     60,
+     0.9
+    ],
+    [
+     "PESSOA",
+     67,
+     78,
+     0.9
+    ],
+    [
+     "TELEFONE",
+     90,
+     105,
+     0.85
+    ]
+   ],
+   "anonimizado": "Comprovante de transferência Pix\nDe: [PESSOA_1]\nPara: [PESSOA_2]\nChave Pix: [TELEFONE_1]",
+   "mascarado": "Comprovante de transferência Pix\nDe: A*** B*** L***\nPara: T*** L***\nChave Pix: (**) *****-**10",
+   "generalizado": "Comprovante de transferência Pix\nDe: [PESSOA]\nPara: [PESSOA]\nChave Pix: (82) ****-****"
+  },
+  {
+   "texto": "Nome:\nMaria Souza\nForma Pagamento: Boleto",
+   "entidades": [
+    [
+     "PESSOA",
+     6,
+     17,
+     0.9
+    ]
+   ],
+   "anonimizado": "Nome:\n[PESSOA_1]\nForma Pagamento: Boleto",
+   "mascarado": "Nome:\nM*** S***\nForma Pagamento: Boleto",
+   "generalizado": "Nome:\n[PESSOA]\nForma Pagamento: Boleto"
+  },
+  {
+   "texto": "Resetei a senha para Tmp#4821xQ. Depois troquei a senha pra Mudar@2026; a senha do wifi fica casa2026.",
+   "entidades": [
+    [
+     "SENHA",
+     21,
+     31,
+     0.8
+    ],
+    [
+     "SENHA",
+     60,
+     70,
+     0.8
+    ],
+    [
+     "SENHA",
+     93,
+     101,
+     0.8
+    ]
+   ],
+   "anonimizado": "Resetei a senha para [SENHA_1]. Depois troquei a senha pra [SENHA_2]; a senha do wifi fica [SENHA_3].",
+   "mascarado": "Resetei a senha para ********. Depois troquei a senha pra ********; a senha do wifi fica ********.",
+   "generalizado": "Resetei a senha para [SENHA]. Depois troquei a senha pra [SENHA]; a senha do wifi fica [SENHA]."
+  },
+  {
+   "texto": "Preciso de uma senha para acessar o sistema e esqueci a senha para entrar no portal.",
+   "entidades": [],
+   "anonimizado": "Preciso de uma senha para acessar o sistema e esqueci a senha para entrar no portal.",
+   "mascarado": "Preciso de uma senha para acessar o sistema e esqueci a senha para entrar no portal.",
+   "generalizado": "Preciso de uma senha para acessar o sistema e esqueci a senha para entrar no portal."
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [

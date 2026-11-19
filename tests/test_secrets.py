@@ -163,3 +163,28 @@ def test_looks_random():
     assert looks_random(chars(30))
     assert not looks_random("my-app-secret")
     assert not looks_random("process.env.API")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Resetei a senha para Tmp#4821xQ.",
+        "troquei a senha pra Mudar@2026",
+        "mudei a senha do wifi para casa2026",
+        "a senha fica Xk92pq1.",
+        "I changed the password to Hunter2!",
+    ],
+)
+def test_prose_password_after_common_verbs(text):
+    # Achado da simulação de uso (scripts/simular_usuarios.py): chamados de suporte escrevem "senha para X".
+    result = Veu().anonymize(text)
+    assert [entity.label for entity in result.entities] == ["SENHA"]
+    assert not result.entities[0].text.endswith(".")
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["preciso de uma senha para acessar o sistema", "senha para o Facebook", "esqueci a senha para entrar no portal"],
+)
+def test_prose_password_ignores_ordinary_sentences(text):
+    assert Veu().anonymize(text).text == text

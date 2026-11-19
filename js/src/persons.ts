@@ -102,6 +102,7 @@ export class PersonRecognizer implements Recognizer {
   private places: Set<string>;
   private organizations: Set<string>;
   private context = wordsRegex(PERSON_CONTEXT)!;
+  private contextAtEnd = new RegExp(`${this.context.source}[^\\p{L}\\p{N}_]*$`, "u");
   private greeting = new RegExp(`(?:^|[^\\p{L}\\p{N}_])(?:${GREETINGS.map((g) => escapeRegex(fold(g))).join("|")})[\\s,!]*$`, "u");
 
   constructor(extraFirstNames: Iterable<string> = [], extraSurnames: Iterable<string> = []) {
@@ -126,7 +127,14 @@ export class PersonRecognizer implements Recognizer {
   }
 
   private hasContext(text: string, start: number, before = 30): boolean {
-    return this.context.test(fold(textBefore(text, start, before)));
+    // O contexto vale na mesma linha. Se a sequência abre a linha, só vale o rótulo que fecha a linha de cima
+    // ("Nome:" e o nome embaixo): "Para: Thiago Lima" não faz de "Chave Pix:", na linha seguinte, um nome.
+    const window = textBefore(text, start, before);
+    const cut = window.lastIndexOf("\n");
+    const line = window.slice(cut + 1);
+    if (cut < 0 || line.trim()) return this.context.test(fold(line));
+    const head = window.slice(0, cut);
+    return this.contextAtEnd.test(fold(head.slice(head.lastIndexOf("\n") + 1)));
   }
 
   *find(text: string): Iterable<Candidate> {

@@ -83,6 +83,7 @@ class PersonRecognizer:
         self.organizations = folded_set("organizations.txt")
         self._surname_or_connector = self.surnames | CONNECTORS
         self._context = words_regex(PERSON_CONTEXT)
+        self._context_at_end = re.compile(self._context.pattern + r"[^\w]*$")
         self._greeting = re.compile(
             r"(?:^|[^\w])(?:" + "|".join(re.escape(fold(g)) for g in GREETINGS) + r")[\s,!]*$"
         )
@@ -101,8 +102,12 @@ class PersonRecognizer:
         return not (word.isupper() and len(word) <= 3) or fold(word) in self.first_names or fold(word) in self.surnames
 
     def _has_context(self, text: str, start: int, before: int = 30) -> bool:
-        window = fold(text_before(text, start, before))
-        return self._context.search(window) is not None
+        # O contexto vale na mesma linha. Se a sequência abre a linha, só vale o rótulo que fecha a linha de cima
+        # ("Nome:" e o nome embaixo): "Para: Thiago Lima" não faz de "Chave Pix:", na linha seguinte, um nome.
+        head, newline, line = text_before(text, start, before).rpartition("\n")
+        if not newline or line.strip():
+            return self._context.search(fold(line)) is not None
+        return self._context_at_end.search(fold(head.rpartition("\n")[2])) is not None
 
     def find(self, text: str) -> Iterable[Candidate]:
         words = [(m.start(), m.end(), m.group()) for m in _WORD.finditer(text)]
