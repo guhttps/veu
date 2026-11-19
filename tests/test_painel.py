@@ -7,22 +7,29 @@ from pathlib import Path
 
 import httpx
 import pytest
-from test_server import Upstream, call
+from test_server import Upstream
+from test_server import call as server_call
 
 from veu import atalhos
 from veu.config import Config, load_config
 from veu.server import create_app
 from veu.server import panel as panel_module
-from veu.server.panel import PanelController, apply_settings, dump_toml, settings_from_config
+from veu.server.panel import PanelController, apply_settings, dump_toml, panel_key, settings_from_config
 
 CPF = "529.982.247-25"
 ROOT = Path(__file__).resolve().parent.parent
+KEY = "chave-do-painel-de-teste-com-32-letras"
+
+
+def call(app, method, path, **kwargs):
+    """Como a página aberta pelo atalho: manda a chave do painel em todas as chamadas."""
+    return server_call(app, method, path, headers={"x-veu-painel": KEY, **kwargs.pop("headers", {})}, **kwargs)
 
 
 @pytest.fixture
 def panel_app(tmp_path, monkeypatch):
     monkeypatch.setattr(atalhos, "autostart_enabled", lambda: False)
-    controller = PanelController(tmp_path / "veu.toml")
+    controller = PanelController(tmp_path / "veu.toml", key=KEY)
     app = create_app(Config(), upstream_transport=httpx.MockTransport(Upstream()), panel=controller)
     return app, controller
 
@@ -36,6 +43,35 @@ def test_page_and_state(panel_app):
     state = call(app, "GET", "/veu/painel/estado").json()
     assert state["configuracoes"]["categorias"] == list(panel_module.CATEGORIES)
     assert state["endereco"] == "http://127.0.0.1:8787" and set(state["aplicativos"]) == {"claude", "cursor"}
+
+
+@pytest.mark.parametrize("method,path", [
+    ("GET", "/veu/painel/estado"), ("POST", "/veu/painel/configuracoes"), ("POST", "/veu/painel/aplicativos/claude"),
+    ("POST", "/veu/painel/inicializacao"), ("POST", "/veu/painel/desligar"),
+    ("POST", "/veu/painel/arquivos/proteger?nome=a.txt"), ("POST", "/veu/painel/arquivos/restaurar?nome=a.txt"),
+])
+@pytest.mark.parametrize("key", [None, "", "errada", KEY[:-1]])
+def test_panel_api_needs_the_key(panel_app, method, path, key):
+    """Uma máquina virtual em NAT alcança o 127.0.0.1 e forja o Host: sem a chave, não lê nem muda nada."""
+    app, controller = panel_app
+    headers = {"host": "127.0.0.1:8787", **({"x-veu-painel": key} if key is not None else {})}
+    response = server_call(app, method, path, json={"categorias": ["outros"], "ativo": True}, headers=headers)
+    assert response.status_code == 401 and response.json()["error"]["type"] == "veu_painel_chave"
+    assert not controller.config_path.exists() and not controller.restart
+
+
+def test_panel_page_itself_needs_no_key(panel_app):
+    app, _ = panel_app
+    assert server_call(app, "GET", "/veu/painel").status_code == 200
+
+
+def test_panel_key_is_created_once_and_kept(tmp_path):
+    config = tmp_path / "veu" / "veu.toml"
+    key = panel_key(config)
+    assert len(key) >= 32 and panel_key(config) == key
+    assert (config.parent / "painel.chave").read_text(encoding="utf-8") == key
+    (config.parent / "painel.chave").write_text("curta", encoding="utf-8")
+    assert panel_key(config) not in (key, "curta")
 
 
 def test_panel_routes_only_exist_in_panel_mode():

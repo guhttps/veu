@@ -4,7 +4,7 @@ import json
 import httpx
 import pytest
 
-from veu.config import Config, ProviderConfig
+from veu.config import Config, ConfigError, ProviderConfig
 from veu.server import create_app, resolve_route
 
 PII = "Sou o Carlos Souza, CPF 529.982.247-25."
@@ -161,8 +161,17 @@ def test_server_side_keys_are_opt_in(upstream, monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-servidor")
     call(make_app(upstream), "POST", "/v1/chat/completions", json=chat("oi"))
     assert "authorization" not in upstream.requests[-1].headers
-    call(make_app(upstream, inject_keys=True), "POST", "/v1/chat/completions", json=chat("oi"))
+    app = make_app(upstream, inject_keys=True, token="segredo")
+    assert call(app, "POST", "/v1/chat/completions", json=chat("oi")).status_code == 401
+    call(app, "POST", "/v1/chat/completions", json=chat("oi"), headers={"X-Veu-Token": "segredo"})
     assert upstream.requests[-1].headers["authorization"] == "Bearer sk-servidor"
+
+
+def test_server_side_keys_need_a_token(upstream):
+    """Uma máquina virtual em NAT ou um contêiner alcança o 127.0.0.1: sem token, usaria as chaves de quem roda o Véu."""
+    with pytest.raises(ConfigError, match="VEU_TOKEN"):
+        make_app(upstream, inject_keys=True)
+    make_app(upstream, inject_keys=True, allow_no_token=True)
 
 
 def test_audit_log_has_counts_but_no_values(upstream, tmp_path):

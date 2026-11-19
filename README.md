@@ -394,7 +394,7 @@ O painel guarda o arquivo em `%APPDATA%\veu\veu.toml` no Windows, `~/Library/App
   - o cofre fica na memória (ou no seu Redis, cifrado com AES-256-GCM) e expira sem uso;
   - a leitura de links do proxy só acessa endereços públicos, também nos redirecionamentos;
   - a página web e a extensão não enviam nada pela internet;
-  - o painel só funciona no próprio computador.
+  - o painel só funciona no próprio computador e só aberto pelo atalho (ou pelo `veu painel`), que leva uma chave: máquinas virtuais e contêineres que alcançam o 127.0.0.1 não mudam as configurações.
 - **Auditoria:** o log tem só contagens (do que foi escondido e do que voltou), em cadeia de hashes (HMAC com segredo). `veu auditoria verificar` aponta linhas alteradas ou removidas, e a âncora (`veu auditoria ancorar`) acusa linhas apagadas no fim.
 - **Limites:** o Véu protege os dados da IA, mas não decide quem pode ver o quê dentro do seu sistema. Veja as [limitações](SECURITY.md#o-que-o-véu-não-faz).
 
@@ -406,7 +406,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 914 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 958 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 python scripts/simular_usuarios.py --rodadas 5    # 59 perfis de trabalho usando o Véu, com dados fictícios

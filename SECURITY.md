@@ -23,12 +23,15 @@ O modelo completo, com as fronteiras de confiança e os riscos que sobram, está
 | Adivinhar os valores do operador `hash` | HMAC-SHA256 com chave derivada, 64 bits e `VEU_SEGREDO` de no mínimo 32 caracteres |
 | Dados pessoais repetidos no log de auditoria | O log guarda só contagens por tipo; o log de acesso do servidor HTTP fica desligado (a URL pode ter `?key=`) |
 | Uso do proxy por terceiros na rede | Ouve só em `127.0.0.1` por padrão; fora do localhost, **não inicia sem `VEU_TOKEN`** |
-| Sites maliciosos abertos no navegador (CSRF e DNS rebinding) | No localhost, só aceita o Host `localhost`/`127.0.0.1` e recusa requisições com `Origin` de outro site |
+| Sites maliciosos abertos no navegador (CSRF e DNS rebinding) | No localhost, só aceita o Host `localhost` ou um IP de loopback (nomes como `127.0.0.1.site.example` são recusados) e recusa requisições com `Origin` de outro site |
+| Máquinas virtuais, contêineres e outros usuários do computador (alcançam o `127.0.0.1` e forjam o Host) | O painel só aceita chamadas com a chave dele (`painel.chave`, no perfil do usuário), que o atalho e o `veu painel` abrem no navegador; injetar chaves de API exige `VEU_TOKEN` |
 | Roubo de dados de outra sessão | Sessões do proxy são separadas pela credencial do cliente; a API REST só aceita sessões que ela mesma criou |
-| Uso das chaves de API do servidor por terceiros | Injeção de chaves desligada por padrão |
+| Uso das chaves de API do servidor por terceiros | Injeção de chaves desligada por padrão; ligada, o servidor só inicia com token |
 | Envio de dados por endpoints que ele não entende | `POST` em endpoints desconhecidos é bloqueado por padrão |
 | Vazamento de cookies do navegador para o provedor | Cookies, `Referer` e `Origin` não são repassados; `Set-Cookie` do provedor não volta |
 | Travamento por textos enormes | Limite de tamanho do corpo (`limite_corpo_mb`) e processamento fora do laço principal do servidor |
+| Conexões que mandam o cabeçalho devagar (slowloris) | Quem não termina o cabeçalho em 15 segundos é desconectado; o servidor não diz o nome nem a versão no cabeçalho `Server` |
+| HTML do provedor rodando script na origem do Véu (a mesma do painel) | Respostas repassadas saem com `Content-Security-Policy: sandbox` e `nosniff` |
 | Alteração ou remoção de linhas da auditoria | Cadeia de hashes com HMAC (`segredo_auditoria_env`) e `veu auditoria verificar` |
 | Uso do gateway por uma equipe com a política de outra | Token e política por equipe (`[equipes.NOME]`), comparados em tempo constante |
 | SSRF pela leitura de links (`expandir_links` e `ler_protegido` do MCP) | Só HTTPS para endereços públicos, conferidos em cada redirecionamento e no endereço a que a conexão chegou (contra DNS rebinding); no proxy, só os domínios de `dominios_expandidos`, e argumentos de ferramentas não são expandidos |

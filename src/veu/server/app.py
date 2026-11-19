@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import hmac
+import ipaddress
 import os
 import re
 import sys
@@ -37,7 +38,10 @@ HOP_HEADERS = frozenset({
 })
 RESPONSE_DROP = frozenset({
     "content-length", "content-encoding", "transfer-encoding", "connection", "keep-alive", "set-cookie",
+    "content-security-policy", "x-content-type-options",
 })
+# As respostas do provedor saem na origem do Véu (a mesma do painel): se vier HTML, ele não roda script aqui.
+PROXIED_SECURITY_HEADERS = {"content-security-policy": "sandbox; default-src 'none'", "x-content-type-options": "nosniff"}
 LOCAL_HOSTNAMES = frozenset({"localhost", "127.0.0.1", "::1"})
 CREDENTIAL_HEADERS = ("authorization", "x-api-key", "x-goog-api-key", "api-key")
 _GEMINI_PATH = re.compile(r":(?:streamGenerateContent|generateContent|countTokens|embedContent|batchEmbedContents)$")
@@ -48,7 +52,14 @@ def _error(message: str, status: int, kind: str = "veu_erro") -> JSONResponse:
 
 
 def is_local_host(host: str) -> bool:
-    return host in LOCAL_HOSTNAMES or host.startswith("127.")
+    """localhost ou um IP de loopback. Um nome como 127.0.0.1.site-do-atacante.example não vale: o dono do domínio
+    pode fazê-lo apontar para 127.0.0.1 (DNS rebinding) e a página dele passaria a falar com o Véu."""
+    if host in LOCAL_HOSTNAMES:
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 class BodyTooLarge(Exception):
@@ -108,6 +119,7 @@ def _forward_headers(request: Request, provider: ProviderConfig, config: Config)
 
 def _response_headers(response: httpx.Response, counts: Counter[str] | None = None) -> dict[str, str]:
     headers = {name: value for name, value in response.headers.items() if name.lower() not in RESPONSE_DROP}
+    headers.update(PROXIED_SECURITY_HEADERS)
     headers["x-veu-versao"] = __version__
     if counts:
         headers["x-veu-entidades"] = ", ".join(f"{label}={count}" for label, count in sorted(counts.items()))
@@ -144,6 +156,12 @@ def create_app(config: Config | None = None, *, upstream_transport: httpx.AsyncB
         raise ConfigError(
             f"O Véu vai ouvir em {config.host}, fora do localhost, sem token. Defina VEU_TOKEN (recomendado) ou, "
             "numa rede interna isolada, VEU_PERMITIR_SEM_TOKEN=1."
+        )
+    if config.inject_keys and not protected and not config.allow_no_token:
+        raise ConfigError(
+            "injetar_chaves = true usa as suas chaves de API para quem chamar o Véu, e máquinas virtuais e contêineres "
+            "alcançam o 127.0.0.1 do computador. Defina VEU_TOKEN (os aplicativos mandam o X-Veu-Token) ou, numa rede "
+            "isolada, VEU_PERMITIR_SEM_TOKEN=1."
         )
     veu = Veu(config)
     gateways: dict[str, Gateway] = {config.operator: Gateway(veu)}
@@ -579,6 +597,14 @@ def _panel_routes(panel, config: Config, veu: Veu, api_sessions, stats: Stats, g
     from veu.files import anonymize_file, restore_file
     from veu.server import panel as panel_module
 
+    def panel_guard(request: Request) -> Response | None:
+        """Host e origem como no resto do Véu, e a chave do painel (só a página aberta pelo atalho a conhece)."""
+        if (blocked := guard(request, check_token=False)) is not None:
+            return blocked
+        if not hmac.compare_digest(request.headers.get("x-veu-painel", "").encode(), panel.key.encode()):
+            return _error("Abra o painel pelo atalho do Véu ou com o comando veu painel.", 401, "veu_painel_chave")
+        return None
+
     async def page(request: Request) -> Response:
         if (blocked := guard(request, check_token=False)) is not None:
             return blocked
@@ -588,7 +614,7 @@ def _panel_routes(panel, config: Config, veu: Veu, api_sessions, stats: Stats, g
         })
 
     async def state(request: Request) -> Response:
-        if (blocked := guard(request, check_token=False)) is not None:
+        if (blocked := panel_guard(request)) is not None:
             return blocked
 
         def collect() -> dict:
@@ -618,7 +644,7 @@ def _panel_routes(panel, config: Config, veu: Veu, api_sessions, stats: Stats, g
         return data
 
     async def save(request: Request) -> Response:
-        if (blocked := guard(request, check_token=False)) is not None:
+        if (blocked := panel_guard(request)) is not None:
             return blocked
         try:
             settings = await read_payload(request)
@@ -629,7 +655,7 @@ def _panel_routes(panel, config: Config, veu: Veu, api_sessions, stats: Stats, g
         return JSONResponse({"ok": True, "reiniciando": True}, background=BackgroundTask(panel.stop, restart=True))
 
     async def connect_app(request: Request) -> Response:
-        if (blocked := guard(request, check_token=False)) is not None:
+        if (blocked := panel_guard(request)) is not None:
             return blocked
         app = request.path_params["app"]
         if app not in panel_module.mcp_apps():
@@ -642,7 +668,7 @@ def _panel_routes(panel, config: Config, veu: Veu, api_sessions, stats: Stats, g
         return JSONResponse(status)
 
     async def startup(request: Request) -> Response:
-        if (blocked := guard(request, check_token=False)) is not None:
+        if (blocked := panel_guard(request)) is not None:
             return blocked
         try:
             data = await read_payload(request)
@@ -652,7 +678,7 @@ def _panel_routes(panel, config: Config, veu: Veu, api_sessions, stats: Stats, g
         return JSONResponse({"inicializacao": await run_in_threadpool(atalhos.autostart_enabled)})
 
     async def shutdown(request: Request) -> Response:
-        if (blocked := guard(request, check_token=False)) is not None:
+        if (blocked := panel_guard(request)) is not None:
             return blocked
         return JSONResponse({"ok": True}, background=BackgroundTask(panel.stop))
 
@@ -669,7 +695,7 @@ def _panel_routes(panel, config: Config, veu: Veu, api_sessions, stats: Stats, g
                         headers={"content-disposition": disposition, "cache-control": "no-store", **headers})
 
     async def protect_file(request: Request) -> Response:
-        if (blocked := guard(request, check_token=False)) is not None:
+        if (blocked := panel_guard(request)) is not None:
             return blocked
         try:
             name, suffix = file_name(request)
@@ -700,7 +726,7 @@ def _panel_routes(panel, config: Config, veu: Veu, api_sessions, stats: Stats, g
                         {"x-veu-sessao": session_id, "x-veu-escondidos": json.dumps(counts)})
 
     async def restore_file_route(request: Request) -> Response:
-        if (blocked := guard(request, check_token=False)) is not None:
+        if (blocked := panel_guard(request)) is not None:
             return blocked
         try:
             name, suffix = file_name(request)
@@ -761,9 +787,11 @@ def run_panel(open_browser: bool = True, port: int | None = None) -> None:
 
     import uvicorn
 
-    from veu.server.panel import PanelController, user_config_path
+    from veu.server.panel import PanelController, panel_key, user_config_path
+    from veu.server.protocol import GuardedH11Protocol
 
     path = user_config_path()
+    key = panel_key(path)
     first = True
     while True:
         try:
@@ -773,16 +801,18 @@ def run_panel(open_browser: bool = True, port: int | None = None) -> None:
             config = Config()
         config = config.with_overrides(host="127.0.0.1", port=port or config.port,
                                        session_ttl=max(config.session_ttl, 12 * 3600))
-        url = f"http://127.0.0.1:{config.port}/veu/painel"
+        # A chave vai depois do #: o navegador não a manda em nenhum pedido, só a página do painel a lê.
+        url = f"http://127.0.0.1:{config.port}/veu/painel#chave={key}"
         if first and _already_running(config.port):
             print(f"O Véu já está ligado: {url}")
             if open_browser:
                 webbrowser.open(url)
             return
-        controller = PanelController(path)
+        controller = PanelController(path, key=key)
         app = create_app(config, panel=controller)
         server = uvicorn.Server(uvicorn.Config(app, host=config.host, port=config.port, log_level="warning",
-                                               access_log=False))
+                                               access_log=False, server_header=False,
+                                               http=GuardedH11Protocol))
         controller.server = server
         if first:
             print(f"\n  Véu {__version__} ligado.\n\n  Painel: {url}\n  Endereço para aplicativos: "
@@ -814,6 +844,8 @@ def run(config: Config | None = None, workers: int = 1) -> None:
 
     import uvicorn
 
+    from veu.server.protocol import GuardedH11Protocol
+
     config = config or load_config()
     print(f"Véu {__version__} em http://{config.host}:{config.port}  (playground: /veu/playground)", file=sys.stderr)
     # Sem log de acesso: a URL pode trazer a chave da API (?key= do Gemini). A auditoria do Véu não grava valores.
@@ -826,6 +858,9 @@ def run(config: Config | None = None, workers: int = 1) -> None:
         os.environ["VEU_HOST"], os.environ["VEU_PORTA"] = config.host, str(config.port)
         os.environ["VEU_PERFIL"] = config.profile
         uvicorn.run("veu.server.app:app_from_environment", factory=True, workers=workers, host=config.host,
-                    port=config.port, log_level="info", access_log=False)
+                    port=config.port, log_level="info", access_log=False, server_header=False,
+                    http=GuardedH11Protocol)
         return
-    uvicorn.run(create_app(config), host=config.host, port=config.port, log_level="info", access_log=False)
+    # Sem o cabeçalho Server: quem varre a rede (nmap, nikto) não fica sabendo o servidor e a versão.
+    uvicorn.run(create_app(config), host=config.host, port=config.port, log_level="info", access_log=False,
+                server_header=False, http=GuardedH11Protocol)

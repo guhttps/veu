@@ -26,6 +26,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - **Simulação de ataques** (`scripts/simular_ataques.py`): disfarces para passar pela detecção, roubo de dados pela volta (links, imagens, HTML, CSS, `javascript:`, `data:`, `mailto:`, marcadores disfarçados, streaming), textos feitos para travar as regex e ataques ao servidor (DNS rebinding, CSRF, token, caminhos maliciosos, corpo gigante, JSON quebrado). 63 conferências.
 
 ### Segurança
+- **Ataques de uma máquina virtual Kali:** o NAT do VirtualBox (e o Docker, e outros usuários do mesmo computador) alcança o `127.0.0.1` e pode mandar qualquer cabeçalho Host. Achados e correções:
+  - o painel aceitava ler o estado, mudar os tipos protegidos, ligar o início automático e desligar o Véu. Agora cada chamada precisa da chave do painel (`painel.chave`, criada no perfil do usuário), que o atalho e o `veu painel` passam ao navegador depois do `#` do endereço. Quem abrir o endereço sem a chave vê um aviso para usar o atalho;
+  - `injetar_chaves = true` sem token deixava qualquer programa local usar as chaves de API de quem roda o Véu: agora o servidor não inicia assim sem `VEU_TOKEN` (ou `VEU_PERMITIR_SEM_TOKEN=1`);
+  - a checagem de DNS rebinding aceitava qualquer Host começando com "127.", como `127.0.0.1.nip.io`, um domínio que o dono pode apontar para o seu computador. Agora só valem `localhost` e IPs de loopback;
+  - uma conexão com o cabeçalho pela metade ficava aberta para sempre (slowloris). Agora cai em 15 segundos;
+  - o cabeçalho `Server` não diz mais o servidor; respostas repassadas do provedor saem com `Content-Security-Policy: sandbox` e `nosniff`.
+  Request smuggling, cabeçalhos de 70 KB, JSON com 100 mil níveis, travessia de caminho e caminhos para trocar o destino do proxy já eram recusados.
 - **Restauração quadrática (ReDoS):** uma resposta com milhares de marcadores numa linha só ("[IP_1].[IP_1]...") levava 13 segundos para restaurar e podia travar o proxy. A checagem de links não varre mais a linha inteira a cada marcador: o mesmo texto leva 0,5 s, com o mesmo resultado.
 - **Links que ainda não fecharam:** um marcador dentro de `[x](javascript:fetch('...'+'[CPF_1]'))`, de `href="javascript:..."` ou de um link Markdown quebrado em duas linhas não recebe mais o dado real.
 - **Disfarces na entrada:** letras cirílicas e gregas iguais às latinas ("mаria@...") e dígitos arábico-índicos, persas, devanágari e bengali são normalizados para a detecção (Python e JavaScript agora concordam neles). CPF com hífens no lugar dos pontos e com um espaço entre cada dígito também é reconhecido.

@@ -73,11 +73,20 @@ def test_rest_api_only_accepts_server_created_sessions(app):
     assert call(app, "POST", "/veu/v1/restaurar", json={"texto": "[CPF_1]", "sessao": "p"}).status_code == 404
 
 
-@pytest.mark.parametrize("host", ["evil.example", "192.168.0.10:8787", "localhost.evil.example"])
+@pytest.mark.parametrize("host", [
+    "evil.example", "192.168.0.10:8787", "localhost.evil.example",
+    # Achados do Kali: nomes que começam como um IP de loopback mas são domínios (o dono aponta para 127.0.0.1).
+    "127.0.0.1.nip.io", "127.0.0.1.evil.example:8787", "127.evil.example", "localhost.", "0.0.0.0:8787",
+])
 def test_dns_rebinding_is_blocked(app, host):
     response = call(app, "POST", "/veu/v1/detectar", json={"texto": "x"}, headers={"Host": host})
     assert response.status_code == 403
     assert response.json()["error"]["type"] == "veu_host_invalido"
+
+
+@pytest.mark.parametrize("host", ["localhost:8787", "LOCALHOST", "127.0.0.1", "127.0.0.2:8787", "[::1]:8787"])
+def test_loopback_hosts_are_accepted(app, host):
+    assert call(app, "POST", "/veu/v1/detectar", json={"texto": "x"}, headers={"Host": host}).status_code == 200
 
 
 def test_cross_site_requests_are_blocked_but_same_origin_works(app, seen):

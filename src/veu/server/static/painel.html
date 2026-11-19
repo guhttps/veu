@@ -228,8 +228,19 @@ footer code { word-break: break-all; }
     avisar.tempo = setTimeout(() => { aviso.className = "aviso"; }, erro ? 6000 : 3200);
   }
 
+  // Chave do painel: chega no endereço (#chave=...) aberto pelo atalho ou pelo veu painel e fica só nesta aba.
+  // Sem ela, outros programas que alcançam o 127.0.0.1 (máquinas virtuais, contêineres) não mexem no Véu.
+  const chave = (() => {
+    const achada = /(?:^#|&)chave=([\w-]+)/.exec(location.hash);
+    if (location.hash) history.replaceState(null, "", location.pathname);
+    try {
+      if (achada) sessionStorage.setItem("veu-painel", achada[1]);
+      return achada ? achada[1] : sessionStorage.getItem("veu-painel") || "";
+    } catch { return achada ? achada[1] : ""; }
+  })();
+
   async function api(caminho, opcoes = {}) {
-    const resposta = await fetch(caminho, opcoes);
+    const resposta = await fetch(caminho, { ...opcoes, headers: { ...opcoes.headers, "x-veu-painel": chave } });
     const tipo = resposta.headers.get("content-type") || "";
     const dados = tipo.includes("json") ? await resposta.json() : null;
     if (!resposta.ok) throw new Error(dados?.error?.message || `Erro ${resposta.status}`);
@@ -383,7 +394,7 @@ footer code { word-break: break-all; }
   }
 
   async function enviarArquivo(caminho, arquivo) {
-    const resposta = await fetch(caminho, { method: "POST", body: arquivo });
+    const resposta = await fetch(caminho, { method: "POST", body: arquivo, headers: { "x-veu-painel": chave } });
     if (!resposta.ok) {
       let mensagem = `Erro ${resposta.status}`;
       try { mensagem = (await resposta.json()).error.message; } catch { /* sem detalhe */ }
@@ -562,8 +573,12 @@ footer code { word-break: break-all; }
     $("desligar").hidden = true;
   });
 
-  mostrarArquivos();
-  carregar().catch((erro) => avisar(erro.message, true));
+  if (!chave) {
+    $("principal").innerHTML = '<div class="desligado-tela"><h2>Abra o painel pelo atalho do Véu.</h2><p class="sub">Por segurança, o painel só funciona quando é aberto pelo atalho <b>Véu</b> na área de trabalho ou pelo comando <code>veu painel</code>.</p></div>';
+  } else {
+    mostrarArquivos();
+    carregar().catch((erro) => avisar(erro.message, true));
+  }
   setInterval(() => { if (!document.hidden && estado) api("/veu/painel/estado").then((dados) => { estado.estatisticas = dados.estatisticas; montarAtividade(); }).catch(() => {}); }, 15000);
 })();
 </script>

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 import shutil
 import sys
 import tomllib
@@ -207,6 +208,28 @@ def connect_mcp(app: str, enable: bool = True) -> dict:
 
 # Controle do servidor do painel -----------------------------------------------------------------------------------
 
+def panel_key(config_path: Path) -> str:
+    """Chave do painel (painel.chave, ao lado do veu.toml), criada na primeira vez.
+
+    O atalho e o veu painel abrem o navegador com ela no endereço (#chave=...), e a página manda a chave em cada
+    chamada. Assim, outros programas que alcançam o 127.0.0.1 com o cabeçalho Host forjado (máquinas virtuais em
+    NAT, contêineres, outros usuários do computador) não leem nem mudam as configurações.
+    """
+    path = config_path.with_name("painel.chave")
+    try:
+        key = path.read_text(encoding="utf-8").strip()
+        if len(key) >= 32:
+            return key
+    except OSError:
+        pass
+    key = secrets.token_urlsafe(32)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as file:
+        file.write(key)
+    return key
+
+
 @dataclass
 class PanelController:
     """Liga o painel ao processo: salvar as configurações reinicia o servidor com o veu.toml novo."""
@@ -215,6 +238,7 @@ class PanelController:
     restart: bool = False
     server: Any = None
     extras: dict = field(default_factory=dict)
+    key: str = field(default_factory=lambda: secrets.token_urlsafe(32))
 
     def stop(self, restart: bool = False) -> None:
         self.restart = restart
