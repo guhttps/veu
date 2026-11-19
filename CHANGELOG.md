@@ -8,6 +8,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 ### Adicionado
 - **Mais cripto:** endereços TRON (USDT na rede TRC20), Litecoin e Dogecoin e chaves públicas estendidas (`xpub`) viram `CRIPTO`, pelo checksum; chaves privadas de Bitcoin (WIF e `xprv`) e uma chave de Ethereum com "chave privada" por perto viram `CHAVE_PRIVADA`.
 - **Mais chaves de infraestrutura:** chaves do `age`, chaves do PuTTY (`.ppk`) e chaves PEM codificadas em base64 (o `client-key-data` do kubeconfig); certificados em base64 ficam.
+- **Textos em outros idiomas:** nomes fora das listas depois de "my name is", "me llamo", "je m'appelle", "ich heiße", "mi chiamo" e de tratamentos (Mrs., Señora, Madame, Herr, Frau, Signora; e "Senhora", "Doutor" e "Professor" em português); endereços da Espanha e da América Latina ("Calle Mayor 15"), da França ("10 rue de Rivoli"), da Alemanha ("Hauptstraße 5") e dos EUA ("742 Evergreen Terrace"); códigos postais de Portugal ("1100-053"), dos EUA ("IL 62704") e o de cinco dígitos antes da cidade (", 28013 Madrid."); telefones americanos ("(415) 555-0132") e de qualquer país com "tel", "móvil", "telemóvel" ou "Handy" por perto; e datas de nascimento com "né le", "geboren am", "nacido el", "nato il".
 - **Senha e PIN só de números** ("senha do banco 739201", "PIN do cartão: 4821"); anos ("a senha expira em 2027") ficam. **Número de benefício do INSS** ("NB 123.456.789-0") como `CADASTRO`.
 
 ### Segurança

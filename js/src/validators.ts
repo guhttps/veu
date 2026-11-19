@@ -785,3 +785,9 @@ export function isValidBip39(indexes: readonly number[]): boolean {
   const digest = [...sha256(entropy)].map((byte) => byte.toString(2).padStart(8, "0")).join("");
   return bits.slice(size) === digest.slice(0, bits.length - size);
 }
+
+/** Telefone de qualquer país sem o +código: de 8 a 13 dígitos, sem ser uma data. */
+export function isPlausiblePhoneDigits(value: string): boolean {
+  const digits = onlyDigits(value);
+  return digits.length >= 8 && digits.length <= 13 && parseDate(value) === null && !repeated(digits);
+}

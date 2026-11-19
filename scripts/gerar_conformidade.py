@@ -119,6 +119,13 @@ EXTRA = [
     "client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM4akNDQWRxZ0F3SUJBZ0lJ",
     "Benefício do INSS NB 123.456.789-0. PIN do cartão: 4821, senha do banco 739201, a senha expira em 2027.",
     '{"sub":"42","exp":1735689600,"iat":1735686000} ts=1735689600 timestamp 1735689600 phone=1135689600',
+    # Outros idiomas: nomes fora das listas, endereços, códigos postais, telefones e nascimento.
+    "My name is Priya Sharma, call me at (415) 555-0132. Ship to 742 Evergreen Terrace, Springfield, IL 62704.",
+    "Me llamo Oluwaseun Adeyemi, tel 55 1234 5678, vivo en Calle Mayor 15, 28013 Madrid. La Señora Okonkwo llamó.",
+    "Je m'appelle Thibault Lefebvre, né le 12/03/1985, j'habite 10 rue de Rivoli, 75001 Paris.",
+    "Ich heiße Jürgen Schwarzkopf, geboren am 01.02.1980, Hauptstraße 5, 10115 Berlin. Handy 0151 23456789. "
+    "Herr Schwarzkopf ruft an. Im Jahr 2023, 12345 Besucher kamen.",
+    "Mi chiamo Gianluca Bianchi. Olá, sou o João Silva, morada Rua Augusta 100, 1100-053 Lisboa, telemóvel 912 345 678.",
     # Simulação, rodada 5: sobrenome que também é cidade.
     "Sou o Rui Porto, moro na Rua de Santa Catarina, 120, 4050-262 Porto. O Sr. Porto aguarda.",
     "A cliente Ana Campos mora em Campos/RJ e em Campos - RJ; o réu João Lima é da comarca de Lima. A Campos ligou.",

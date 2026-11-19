@@ -83,7 +83,24 @@ const UFS = "(?:AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|R
 const CTX_PHONE = [
   "tel", "tel.", "telefone", "telefones", "celular", "cel", "cel.", "whatsapp", "whats", "zap", "wpp",
   "contato", "fone", "ligar", "ligue", "ramal", "numero", "phone", "mobile", "cellphone",
+  "cell", "call", "movil", "telefono", "telephone", "portable", "handy", "telefon", "cellulare", "telemovel", "tlm",
 ];
+// Endereços e códigos postais de outros países (Espanha e América Latina, França, Alemanha, Estados Unidos).
+const LETTER = "A-Za-zÀ-ÖØ-öø-ÿ";
+const ES_STREET = "(?<![\\p{L}\\p{N}_])(?:Calle|C/|Avenida|Avda\\.?|Plaza|Pza\\.?|Paseo|Carrera|Cra\\.?|Carretera|Camino|Ronda|"
+  + `Glorieta)\\s+(?:(?:de|del|la|las|los|el)\\s+)*[A-ZÀ-Ý][${LETTER}]+(?:\\s+(?:(?:de|del|la|las|los|el|y)\\s+)*`
+  + `[A-ZÀ-Ý][${LETTER}]+){0,3},?\\s+(?:n[ºo°]\\.?\\s*|#\\s*)?\\d{1,5}[A-Za-z]?(?![\\p{L}\\p{N}_])`;
+const FR_STREET = "(?<![\\p{L}\\p{N}_])\\d{1,4}(?:\\s?(?:bis|ter))?,?\\s+(?:[Rr]ue|[Aa]venue|[Bb]oulevard|[Bb]d|[Pp]lace|"
+  + "[Cc]hemin|[Aa]llée|[Ii]mpasse|[Qq]uai|[Rr]oute|[Cc]ours)\\s+(?:(?:de|du|des|la|le)\\s+|l'|d')*[A-ZÀ-Ý]["
+  + `${LETTER}'\\-]+(?:\\s+(?:(?:de|du|des|la|le)\\s+|l'|d')*[A-ZÀ-Ý][${LETTER}'\\-]+){0,3}`;
+const DE_STREET = "(?<![\\p{L}\\p{N}_])(?:[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*(?:straße|strasse|str\\.|weg|platz|"
+  + "allee|gasse|ring|damm|ufer)|[A-ZÄÖÜ][a-zäöüß]+\\s+(?:Straße|Strasse|Str\\.|Weg|Platz|Allee|Gasse|Ring|Damm|Ufer))"
+  + "\\s+\\d{1,4}[a-z]?(?![\\p{L}\\p{N}_])";
+const EN_STREET = "(?<![\\p{L}\\p{N}_])\\d{1,6}\\s+(?:[NSEW]\\.?\\s+)?[A-Z][a-z]+(?:\\s+[A-Z][a-z]+){0,3}\\s+(?:Street|St\\.|"
+  + "St|Avenue|Ave\\.?|Road|Rd\\.?|Boulevard|Blvd\\.?|Lane|Ln\\.?|Drive|Dr\\.?|Court|Ct\\.?|Terrace|Way|Place|Pl\\.?|"
+  + "Parkway|Pkwy\\.?|Circle|Cir\\.?|Highway|Hwy\\.?)(?![\\p{L}\\p{N}_])(?:,?\\s+(?:Apt|Suite|Unit|#)\\.?\\s*[\\p{L}\\p{N}_\\-]+)?";
+const US_STATES = "AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|"
+  + "OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC";
 const CTX_CEP = ["cep"];
 const CTX_PLATE = ["placa", "veiculo", "carro", "moto", "caminhao", "automovel"];
 const CTX_CARD = ["cartao", "credito", "debito", "visa", "mastercard", "master", "elo", "amex", "hipercard", "final"];
@@ -92,6 +109,8 @@ const CTX_IP = ["ip", "endereco ip", "ipv4", "ipv6", "acesso", "login"];
 const CTX_BIRTH = [
   "nascimento", "nasc", "nasc.", "nascido", "nascida", "nasceu", "data de nascimento", "dn", "d.n",
   "aniversario", "nascida em", "nascido em", "birth", "birth date", "birthdate", "date of birth", "dob", "born",
+  "ne le", "nee le", "date de naissance", "geboren am", "geboren", "geb.", "geburtsdatum", "nacido el",
+  "nacida el", "fecha de nacimiento", "nato il", "nata il", "data di nascita",
 ];
 // Nomes de coluna: em tabelas (SQL, CSV, JSON), o cabeçalho "nascimento" fica longe do valor.
 const CTX_BIRTH_COLUMN = [
@@ -255,6 +274,12 @@ export const DEFAULT_SPECS: PatternSpec[] = [
     `(?<![\\p{L}\\p{N}_+])(?:\\+?55[\\s.-]?)?(?:\\(\\d{2}\\)|\\d{2})[\\s.-]?(?:9[\\s.]?\\d{4}|[2-5]\\d{3})[\\s.-]?\\d{4}${E}`,
     S(0.85, null, 0.95), { validator: v.isValidPhone, context: CTX_PHONE, adjust: phoneAdjust, excludeAt: looksLikeTimestamp }),
   spec("TELEFONE", `${B}9\\d{4}-\\d{4}${E}`, S(0.7, null, 0.9), { context: CTX_PHONE }),
+  // Estados Unidos e Canadá: "(415) 555-0132".
+  spec("TELEFONE", `(?<![\\p{L}\\p{N}_+(])\\([2-9]\\d{2}\\)[ ]?[2-9]\\d{2}[\\-. ]\\d{4}${E}`, S(0.85, null, 0.95),
+    { context: CTX_PHONE, name: "nanp" }),
+  // Qualquer país, sem o +código, com "tel", "móvil", "telemóvel", "Handy" por perto: "55 1234 5678", "912 345 678".
+  spec("TELEFONE", `(?<![\\p{L}\\p{N}_+/.,\\-])\\d{2,5}(?:[ .\\-]\\d{2,8}){1,4}(?![\\p{L}\\p{N}_]|[.,/\\-]\\d)`,
+    S(null, null, 0.8), { validator: v.isPlausiblePhoneDigits, context: CTX_PHONE, before: 25, name: "contexto" }),
   spec("TELEFONE",
     `(?<![\\p{L}\\p{N}_+])\\+(?!55)[1-9]\\d{0,2}(?:[\\s.-]?\\(?\\d{1,4}\\)?){1,2}(?:[\\s.-]?\\d{2,4}){2,4}${E}`,
     S(0.8, null, 0.95), { validator: v.isValidIntlPhone, context: CTX_PHONE }),
@@ -264,6 +289,15 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   spec("CEP", `${B}\\d{2}\\.\\d{3}-\\d{3}${E}`, S(0.8, null, 0.95), { context: CTX_CEP }),
   spec("CEP", `${B}\\d{8}${E}`, S(null, null, 0.85), { context: CTX_CEP, before: 15 }),
   spec("CEP", `${B}\\d{5}\\s\\d{3}${E}`, S(null, null, 0.85), { context: CTX_CEP, before: 15 }),
+  // Códigos postais de fora: Portugal ("1100-053 Lisboa"), EUA ("IL 62704") e ", 28013 Madrid" depois do endereço.
+  spec("CEP", `${B}\\d{4}-\\d{3}(?=[ \\t]+[A-ZÀ-Ý])`, S(0.85), { name: "exterior" }),
+  spec("CEP", `(?<![\\p{L}\\p{N}_])(?:${US_STATES}),?[ \\t]+(?<valor>\\d{5}(?:-\\d{4})?)${E}`, S(0.85), { name: "exterior" }),
+  spec("CEP", "(?<=,[ ])\\d{5}(?=[ ][A-ZÀ-Ý][a-zà-ÿ]+(?:[ \\-][A-ZÀ-Ý][a-zà-ÿ]+)?(?:[.,;)\\n]|$))", S(0.8),
+    { name: "exterior" }),
+  spec("ENDERECO", ES_STREET, S(0.85), { name: "exterior" }),
+  spec("ENDERECO", FR_STREET, S(0.85), { name: "exterior" }),
+  spec("ENDERECO", DE_STREET, S(0.85), { name: "exterior" }),
+  spec("ENDERECO", EN_STREET, S(0.85), { name: "exterior" }),
   spec("PLACA", `${B}[A-Z]{3}-\\d{4}${E}`, S(0.8, null, 0.95), { context: CTX_PLATE }),
   spec("PLACA", `${B}[A-Z]{3}\\d[A-Z]\\d{2}${E}`, S(0.75, null, 0.95), { context: CTX_PLATE }),
   spec("PLACA", `${B}[A-Z]{3}\\d{4}${E}`, S(0.45, null, 0.9), { context: CTX_PLATE }),

@@ -16,7 +16,8 @@ _WORD = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)*
 _SPACE_GAP = re.compile(r"[ \t]{1,2}")
 # Logins no formato nome.sobrenome ("gislaine.vieira", "joao_silva"); "@" e ".com" depois indicam e-mail ou domínio.
 _LOGIN = re.compile(r"(?<![\w@.-])([a-z]{3,})[._]([a-z]{3,})(?![\w@-]|\.[a-z])")
-CONNECTORS = frozenset({"da", "de", "do", "das", "dos", "e", "del", "della", "di", "du", "van", "von", "der", "d"})
+CONNECTORS = frozenset({"da", "de", "do", "das", "dos", "e", "del", "della", "di", "du", "van", "von", "der", "d",
+                        "la", "le", "el", "il", "los", "las", "les"})
 
 PERSON_CONTEXT = (
     "sr", "sr.", "sra", "sra.", "srta", "senhor", "senhora", "dona", "dom", "seu", "dr", "dr.", "dra", "dra.",
@@ -32,6 +33,17 @@ PERSON_CONTEXT = (
     "a/c", "de:", "para:", "por", "com o", "com a", "pelo", "pela", "segurado", "segurada", "beneficiario",
     "beneficiaria", "dependente", "candidato", "candidata", "inquilino", "inquilina", "proprietario",
     "proprietaria", "comprador", "compradora", "vendedor", "vendedora", "destinatario", "remetente",
+    # Outros idiomas: tratamentos e apresentações.
+    "mr", "mr.", "mrs", "mrs.", "miss", "dear", "my name is", "senor", "senora", "senorita", "me llamo",
+    "mi nombre es", "monsieur", "madame", "mme", "mlle", "je m'appelle", "herr", "frau", "ich heisse",
+    "signor", "signora", "sig.", "sig.ra", "mi chiamo", "patient", "customer", "employee",
+)
+# Logo antes de um nome que não está nas listas ("Priya", "Oluwaseun"), estas expressões bastam.
+_STRONG_CONTEXT = re.compile(
+    r"(?<![\w])(?:meu nome e|me chamo|nome:|nome completo:|sr\.?|sra\.?|dona|dr\.?|dra\.?|senhora|senhor|doutora|"
+    r"doutor|professora|professor|my name is|mr\.?|mrs\.?|"
+    r"me llamo|mi nombre es|senora|senor|je m'appelle|monsieur|madame|mme\.?|ich heisse|herr|frau|mi chiamo|"
+    r"signora|signor)\s*$"
 )
 # Palavras que indicam empresa, órgão ou estabelecimento: a sequência não é um nome de pessoa.
 ORGANIZATION_WORDS = frozenset({
@@ -219,7 +231,7 @@ class PersonRecognizer:
 
     def _strong_context(self, text: str, start: int) -> bool:
         window = fold(text_before(text, start, 25))
-        return re.search(r"(?:meu nome e|me chamo|nome:|nome completo:|sr\.?|sra\.?|dona|dr\.?|dra\.?)\s*$", window) is not None
+        return _STRONG_CONTEXT.search(window) is not None
 
     def _lowercase_names(self, text: str, words: list[tuple[int, int, str]]) -> Iterable[Candidate]:
         """Nomes em minúsculas, comuns em conversas: "oi joao", "falei com maria souza"."""

@@ -1893,6 +1893,196 @@
    "generalizado": "{\"sub\":\"42\",\"exp\":1735689600,\"iat\":1735686000} ts=1735689600 timestamp (17) ****-**** phone=(11) ****-****"
   },
   {
+   "texto": "My name is Priya Sharma, call me at (415) 555-0132. Ship to 742 Evergreen Terrace, Springfield, IL 62704.",
+   "entidades": [
+    [
+     "PESSOA",
+     11,
+     23,
+     0.65
+    ],
+    [
+     "TELEFONE",
+     36,
+     50,
+     0.95
+    ],
+    [
+     "ENDERECO",
+     60,
+     81,
+     0.85
+    ],
+    [
+     "CEP",
+     99,
+     104,
+     0.85
+    ]
+   ],
+   "anonimizado": "My name is [PESSOA_1], call me at [TELEFONE_1]. Ship to [ENDERECO_1], Springfield, IL [CEP_1].",
+   "mascarado": "My name is P*** S***, call me at (***) ***-**32. Ship to *** ********* *****ce, Springfield, IL ***04.",
+   "generalizado": "My name is [PESSOA], call me at (41) ****-****. Ship to [ENDERECO], Springfield, IL [CEP]."
+  },
+  {
+   "texto": "Me llamo Oluwaseun Adeyemi, tel 55 1234 5678, vivo en Calle Mayor 15, 28013 Madrid. La Señora Okonkwo llamó.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     26,
+     0.65
+    ],
+    [
+     "TELEFONE",
+     32,
+     44,
+     0.8
+    ],
+    [
+     "ENDERECO",
+     54,
+     68,
+     0.85
+    ],
+    [
+     "CEP",
+     70,
+     75,
+     0.8
+    ],
+    [
+     "PESSOA",
+     94,
+     101,
+     0.6
+    ]
+   ],
+   "anonimizado": "Me llamo [PESSOA_1], tel [TELEFONE_1], vivo en [ENDERECO_1], [CEP_1] Madrid. La Señora [PESSOA_2] llamó.",
+   "mascarado": "Me llamo O*** A***, tel ** **** **78, vivo en ***** ***** 15, ***13 Madrid. La Señora O*** llamó.",
+   "generalizado": "Me llamo [PESSOA], tel (55) ****-****, vivo en [ENDERECO], [CEP] Madrid. La Señora [PESSOA] llamó."
+  },
+  {
+   "texto": "Je m'appelle Thibault Lefebvre, né le 12/03/1985, j'habite 10 rue de Rivoli, 75001 Paris.",
+   "entidades": [
+    [
+     "PESSOA",
+     13,
+     30,
+     0.65
+    ],
+    [
+     "DATA_NASCIMENTO",
+     38,
+     48,
+     0.85
+    ],
+    [
+     "ENDERECO",
+     59,
+     75,
+     0.85
+    ],
+    [
+     "CEP",
+     77,
+     82,
+     0.8
+    ]
+   ],
+   "anonimizado": "Je m'appelle [PESSOA_1], né le [DATA_NASCIMENTO_1], j'habite [ENDERECO_1], [CEP_1] Paris.",
+   "mascarado": "Je m'appelle T*** L***, né le **/**/**85, j'habite ** *** ** ****li, ***01 Paris.",
+   "generalizado": "Je m'appelle [PESSOA], né le 1985, j'habite [ENDERECO], [CEP] Paris."
+  },
+  {
+   "texto": "Ich heiße Jürgen Schwarzkopf, geboren am 01.02.1980, Hauptstraße 5, 10115 Berlin. Handy 0151 23456789. Herr Schwarzkopf ruft an. Im Jahr 2023, 12345 Besucher kamen.",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     28,
+     0.65
+    ],
+    [
+     "DATA_NASCIMENTO",
+     41,
+     51,
+     0.85
+    ],
+    [
+     "ENDERECO",
+     53,
+     66,
+     0.85
+    ],
+    [
+     "CEP",
+     68,
+     73,
+     0.8
+    ],
+    [
+     "TELEFONE",
+     88,
+     101,
+     0.8
+    ],
+    [
+     "PESSOA",
+     108,
+     119,
+     0.6
+    ],
+    [
+     "PESSOA",
+     129,
+     136,
+     0.65
+    ]
+   ],
+   "anonimizado": "Ich heiße [PESSOA_1], geboren am [DATA_NASCIMENTO_1], [ENDERECO_1], [CEP_1] Berlin. Handy [TELEFONE_1]. Herr [PESSOA_1] ruft an. [PESSOA_2] 2023, 12345 Besucher kamen.",
+   "mascarado": "Ich heiße J*** S***, geboren am **.**.**80, **********e 5, ***15 Berlin. Handy **** ******89. Herr S*** ruft an. I*** J*** 2023, 12345 Besucher kamen.",
+   "generalizado": "Ich heiße [PESSOA], geboren am 1980, [ENDERECO], [CEP] Berlin. Handy [TELEFONE]. Herr [PESSOA] ruft an. [PESSOA] 2023, 12345 Besucher kamen."
+  },
+  {
+   "texto": "Mi chiamo Gianluca Bianchi. Olá, sou o João Silva, morada Rua Augusta 100, 1100-053 Lisboa, telemóvel 912 345 678.",
+   "entidades": [
+    [
+     "PESSOA",
+     10,
+     26,
+     0.7
+    ],
+    [
+     "PESSOA",
+     39,
+     49,
+     0.9
+    ],
+    [
+     "ENDERECO",
+     58,
+     73,
+     0.9
+    ],
+    [
+     "CEP",
+     75,
+     83,
+     0.85
+    ],
+    [
+     "TELEFONE",
+     102,
+     113,
+     0.8
+    ]
+   ],
+   "anonimizado": "Mi chiamo [PESSOA_1]. Olá, sou o [PESSOA_2], morada [ENDERECO_1], [CEP_1] Lisboa, telemóvel [TELEFONE_1].",
+   "mascarado": "Mi chiamo G*** B***. Olá, sou o J*** S***, morada *** ******* *00, ****-*53 Lisboa, telemóvel *** *** *78.",
+   "generalizado": "Mi chiamo [PESSOA]. Olá, sou o [PESSOA], morada [ENDERECO], [CEP] Lisboa, telemóvel [TELEFONE]."
+  },
+  {
    "texto": "Sou o Rui Porto, moro na Rua de Santa Catarina, 120, 4050-262 Porto. O Sr. Porto aguarda.",
    "entidades": [
     [
@@ -1906,11 +2096,17 @@
      25,
      51,
      0.9
+    ],
+    [
+     "CEP",
+     53,
+     61,
+     0.85
     ]
    ],
-   "anonimizado": "Sou o [PESSOA_1], moro na [ENDERECO_1], 4050-262 Porto. O Sr. [PESSOA_1] aguarda.",
-   "mascarado": "Sou o R*** P***, moro na *** ** ***** ********, *20, 4050-262 Porto. O Sr. P*** aguarda.",
-   "generalizado": "Sou o [PESSOA], moro na [ENDERECO], 4050-262 Porto. O Sr. [PESSOA] aguarda."
+   "anonimizado": "Sou o [PESSOA_1], moro na [ENDERECO_1], [CEP_1] Porto. O Sr. [PESSOA_1] aguarda.",
+   "mascarado": "Sou o R*** P***, moro na *** ** ***** ********, *20, ****-*62 Porto. O Sr. P*** aguarda.",
+   "generalizado": "Sou o [PESSOA], moro na [ENDERECO], [CEP] Porto. O Sr. [PESSOA] aguarda."
   },
   {
    "texto": "A cliente Ana Campos mora em Campos/RJ e em Campos - RJ; o réu João Lima é da comarca de Lima. A Campos ligou.",

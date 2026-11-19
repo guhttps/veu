@@ -6,7 +6,7 @@ from veu import Veu
 
 
 @pytest.mark.parametrize("text,place", [
-    ("Sou o Rui Porto, moro na Rua de Santa Catarina, 120, 4050-262 Porto.", "4050-262 Porto"),
+    ("Sou o Rui Porto, moro na Rua de Santa Catarina, 120, 4050-262 Porto.", "] Porto."),  # o código postal some
     ("A cliente Ana Campos mora em Campos/RJ.", "Campos/RJ"),
     ("A cliente Ana Campos mora em Campos - RJ.", "Campos - RJ"),
     ("O réu é João Lima, da comarca de Lima.", "comarca de Lima"),

@@ -103,7 +103,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 
 ## Recursos
 
-- 🌍 **Dados pessoais de qualquer lugar:** nomes, e-mails, telefones (brasileiros e de qualquer país, com +código), endereços, cartões de crédito, IBAN, endereços IP (v4 e v6) e datas de nascimento.
+- 🌍 **Dados pessoais de qualquer lugar:** nomes (também fora das listas, depois de "meu nome é", "my name is", "me llamo", "je m'appelle", "ich heiße", "Mrs.", "Herr"), e-mails, telefones (brasileiros, americanos e de qualquer país, com +código ou com "tel", "móvil", "telemóvel", "Handy" por perto), endereços e códigos postais (Brasil, Portugal, Espanha, França, Alemanha, Itália e EUA), cartões de crédito, IBAN, endereços IP (v4 e v6) e datas de nascimento (também "né le", "geboren am", "nacido el").
 - 🖥️ **Infraestrutura:** IPs, portas (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`) nomes de servidores internos (`db.interna`, `cache.prod.local`) endereços MAC (`95:7F:76:CE:A3:DA`) e IMEI de celulares (`35-209900-176148-1`).
 - ☑️ **Você escolhe o que esconder:** caixinhas por grupo na página, na extensão e no painel, com escolha tipo a tipo. Desmarcar senhas e chaves mostra um aviso.
 - 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CTPS, registro profissional (OAB, CRM, CREA...), números de cadastro (prontuário, matrícula, carteirinha do convênio, apólice), CEP, placa, RENAVAM, conta bancária, chave Pix, Pix copia e cola (conferido pelo CRC), boleto (linha digitável e código de barras, pelos verificadores), matrícula de certidão de nascimento e casamento, RNM de estrangeiros e processo do CNJ. Logins no formato nome.sobrenome, e-mails disfarçados (`joao [at] gmail [dot] com`), coordenadas de GPS (decimais ou em graus, minutos e segundos), CVV e datas de nascimento em tabelas (SQL, CSV) também somem.
@@ -409,7 +409,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 1037 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 1067 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 python scripts/simular_usuarios.py --rodadas 5    # 72 perfis de trabalho usando o Véu, com dados fictícios

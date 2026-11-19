@@ -106,7 +106,24 @@ _UFS = r"(?:AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR
 CTX_PHONE = (
     "tel", "tel.", "telefone", "telefones", "celular", "cel", "cel.", "whatsapp", "whats", "zap", "wpp",
     "contato", "fone", "ligar", "ligue", "ramal", "numero", "phone", "mobile", "cellphone",
+    "cell", "call", "movil", "telefono", "telephone", "portable", "handy", "telefon", "cellulare", "telemovel", "tlm",
 )
+# Endereços e códigos postais de outros países (Espanha e América Latina, França, Alemanha, Estados Unidos).
+_LETTER = "A-Za-zÀ-ÖØ-öø-ÿ"
+_ES_STREET = (r"(?<![\w])(?:Calle|C/|Avenida|Avda\.?|Plaza|Pza\.?|Paseo|Carrera|Cra\.?|Carretera|Camino|Ronda|Glorieta)"
+              r"\s+(?:(?:de|del|la|las|los|el)\s+)*[A-ZÀ-Ý][" + _LETTER + r"]+(?:\s+(?:(?:de|del|la|las|los|el|y)\s+)*"
+              r"[A-ZÀ-Ý][" + _LETTER + r"]+){0,3},?\s+(?:n[ºo°]\.?\s*|#\s*)?\d{1,5}[A-Za-z]?(?![\w])")
+_FR_STREET = (r"(?<![\w])\d{1,4}(?:\s?(?:bis|ter))?,?\s+(?:[Rr]ue|[Aa]venue|[Bb]oulevard|[Bb]d|[Pp]lace|[Cc]hemin|"
+              r"[Aa]llée|[Ii]mpasse|[Qq]uai|[Rr]oute|[Cc]ours)\s+(?:(?:de|du|des|la|le)\s+|l'|d')*[A-ZÀ-Ý]["
+              + _LETTER + r"'-]+(?:\s+(?:(?:de|du|des|la|le)\s+|l'|d')*[A-ZÀ-Ý][" + _LETTER + r"'-]+){0,3}")
+_DE_STREET = (r"(?<![\w])(?:[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*(?:straße|strasse|str\.|weg|platz|allee|gasse|"
+              r"ring|damm|ufer)|[A-ZÄÖÜ][a-zäöüß]+\s+(?:Straße|Strasse|Str\.|Weg|Platz|Allee|Gasse|Ring|Damm|Ufer))"
+              r"\s+\d{1,4}[a-z]?(?![\w])")
+_EN_STREET = (r"(?<![\w])\d{1,6}\s+(?:[NSEW]\.?\s+)?[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}\s+(?:Street|St\.|St|Avenue|Ave\.?|"
+              r"Road|Rd\.?|Boulevard|Blvd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Terrace|Way|Place|Pl\.?|Parkway|Pkwy\.?|"
+              r"Circle|Cir\.?|Highway|Hwy\.?)(?![\w])(?:,?\s+(?:Apt|Suite|Unit|#)\.?\s*[\w-]+)?")
+_US_STATES = ("AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|"
+              "OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC")
 CTX_CEP = ("cep",)
 CTX_PLATE = ("placa", "veiculo", "carro", "moto", "caminhao", "automovel")
 CTX_CARD = ("cartao", "credito", "debito", "visa", "mastercard", "master", "elo", "amex", "hipercard", "final")
@@ -115,6 +132,8 @@ CTX_IP = ("ip", "endereco ip", "ipv4", "ipv6", "acesso", "login")
 CTX_BIRTH = (
     "nascimento", "nasc", "nasc.", "nascido", "nascida", "nasceu", "data de nascimento", "dn", "d.n",
     "aniversario", "nascida em", "nascido em", "birth", "birth date", "birthdate", "date of birth", "dob", "born",
+    "ne le", "nee le", "date de naissance", "geboren am", "geboren", "geb.", "geburtsdatum", "nacido el",
+    "nacida el", "fecha de nacimiento", "nato il", "nata il", "data di nascita",
 )
 # Nomes de coluna: em tabelas (SQL, CSV, JSON), o cabeçalho "nascimento" fica longe do valor.
 CTX_BIRTH_COLUMN = (
@@ -320,6 +339,12 @@ DEFAULT_SPECS: list[PatternSpec] = [
         Scores(0.85, None, 0.95), v.is_valid_phone, CTX_PHONE, adjust=_phone_adjust, exclude_at=_looks_like_timestamp,
     ),
     PatternSpec("TELEFONE", B + r"9\d{4}-\d{4}" + E, Scores(0.7, None, 0.9), None, CTX_PHONE),
+    # Estados Unidos e Canadá: "(415) 555-0132".
+    PatternSpec("TELEFONE", r"(?<![\w+(])\([2-9]\d{2}\)[ ]?[2-9]\d{2}[-. ]\d{4}" + E, Scores(0.85, None, 0.95), None,
+                CTX_PHONE, name="nanp"),
+    # Qualquer país, sem o +código, com "tel", "móvil", "telemóvel", "Handy" por perto: "55 1234 5678", "912 345 678".
+    PatternSpec("TELEFONE", r"(?<![\w+/.,-])\d{2,5}(?:[ .-]\d{2,8}){1,4}(?![\w]|[.,/-]\d)", Scores(None, None, 0.8),
+                v.is_plausible_phone_digits, CTX_PHONE, before=25, name="contexto"),
     # Internacional: +código do país (menos o 55, coberto acima) e grupos de dígitos.
     PatternSpec(
         "TELEFONE", r"(?<![\w+])\+(?!55)[1-9]\d{0,2}(?:[\s.-]?\(?\d{1,4}\)?){1,2}(?:[\s.-]?\d{2,4}){2,4}" + E,
@@ -331,6 +356,16 @@ DEFAULT_SPECS: list[PatternSpec] = [
     PatternSpec("CEP", B + r"\d{2}\.\d{3}-\d{3}" + E, Scores(0.8, None, 0.95), None, CTX_CEP),
     PatternSpec("CEP", B + r"\d{8}" + E, Scores(None, None, 0.85), None, CTX_CEP, before=15),
     PatternSpec("CEP", B + r"\d{5}\s\d{3}" + E, Scores(None, None, 0.85), None, CTX_CEP, before=15),
+    # Códigos postais de fora: Portugal ("1100-053 Lisboa"), EUA ("IL 62704") e ", 28013 Madrid" depois do endereço.
+    PatternSpec("CEP", B + r"\d{4}-\d{3}(?=[ \t]+[A-ZÀ-Ý])", Scores(0.85), name="exterior"),
+    PatternSpec("CEP", r"(?<![\w])(?:" + _US_STATES + r"),?[ \t]+(?P<valor>\d{5}(?:-\d{4})?)" + E, Scores(0.85),
+                name="exterior"),
+    PatternSpec("CEP", r"(?<=,[ ])\d{5}(?=[ ][A-ZÀ-Ý][a-zà-ÿ]+(?:[ -][A-ZÀ-Ý][a-zà-ÿ]+)?(?:[.,;)\n]|$))", Scores(0.8),
+                name="exterior"),
+    PatternSpec("ENDERECO", _ES_STREET, Scores(0.85), name="exterior"),
+    PatternSpec("ENDERECO", _FR_STREET, Scores(0.85), name="exterior"),
+    PatternSpec("ENDERECO", _DE_STREET, Scores(0.85), name="exterior"),
+    PatternSpec("ENDERECO", _EN_STREET, Scores(0.85), name="exterior"),
     PatternSpec("PLACA", B + r"[A-Z]{3}-\d{4}" + E, Scores(0.8, None, 0.95), None, CTX_PLATE),
     PatternSpec("PLACA", B + r"[A-Z]{3}\d[A-Z]\d{2}" + E, Scores(0.75, None, 0.95), None, CTX_PLATE),
     PatternSpec("PLACA", B + r"[A-Z]{3}\d{4}" + E, Scores(0.45, None, 0.9), None, CTX_PLATE),

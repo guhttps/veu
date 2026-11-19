@@ -226,3 +226,19 @@ Novembro
 Dezembro
 Pix
 Chave
+# Tratamentos em outros idiomas
+Herr
+Frau
+Madame
+Monsieur
+Mademoiselle
+Signora
+Signor
+Signorina
+Señora
+Señor
+Señorita
+Mister
+Mrs
+Mr
+Ms

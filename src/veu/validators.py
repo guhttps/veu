@@ -900,3 +900,9 @@ def is_valid_bip39(indexes: list[int]) -> bool:
     entropy = int(bits[:size], 2).to_bytes(size // 8, "big")
     digest = f"{int.from_bytes(hashlib.sha256(entropy).digest(), 'big'):0256b}"
     return bits[size:] == digest[:len(bits) - size]
+
+
+def is_plausible_phone_digits(value: str) -> bool:
+    """Telefone de qualquer país sem o +código: de 8 a 13 dígitos, sem ser uma data."""
+    digits = only_digits(value)
+    return 8 <= len(digits) <= 13 and parse_date(value) is None and not _repeated(digits)
