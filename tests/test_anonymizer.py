@@ -66,7 +66,9 @@ def test_synthetic_operator_produces_valid_lookalikes_and_restores():
     assert is_valid_cpf(by_label["CPF"]) and by_label["CPF"] != "529.982.247-25"
     assert is_valid_phone(by_label["TELEFONE"])
     assert by_label["EMAIL"].rsplit("@", 1)[1] in ("example.com", "example.org", "example.net", "empresa.example")
-    assert "João" not in result.text and "529.982.247-25" not in result.text
+    # O nome falso é sorteado e pode repetir o primeiro nome ("João Pedro..."); o que não pode aparecer é o nome real.
+    assert "João da Silva" not in result.text and by_label["PESSOA"] != "João da Silva"
+    assert "529.982.247-25" not in result.text
     # O modelo pode tirar a pontuação do CPF falso; a restauração continua funcionando.
     digits = by_label["CPF"].replace(".", "").replace("-", "")
     assert result.restore(f"CPF {digits}") == "CPF 529.982.247-25"
