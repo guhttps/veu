@@ -20,6 +20,8 @@ export { PatternRecognizer, customPattern, DEFAULT_SPECS } from "./patterns.ts";
 export { PersonRecognizer } from "./persons.ts";
 export { SecretRecognizer, keyKind, looksRandom, secretPrefix } from "./secrets.ts";
 export { TermRecognizer, foldKeepingPositions } from "./terms.ts";
+export { crc32, documentKind, protectDocument, readZip, restoreDocument, rewriteXml, writeZip } from "./arquivos.ts";
+export type { DocumentKind, Span } from "./arquivos.ts";
 export { DetectionCache } from "./cache.ts";
 export { StreamRestorer, Vault, linkContext, neutralizePlaceholders, normalizeValue, restoreAllowed, urlHost } from "./vault.ts";
 export type { RestoreContext, RestorePolicy, VaultData, VaultEntry } from "./vault.ts";

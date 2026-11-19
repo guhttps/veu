@@ -65,6 +65,7 @@
     "ai": "7.0.145",
     "esbuild": "0.28.2",
     "openai": "7.38.0",
+    "pdfjs-dist": "6.5.438",
     "typescript": "7.0.2"
   }
 }

@@ -39,3 +39,4 @@ a.nota-pro { color: var(--marca); }
 .lista textarea { margin-top: 3px; }
 button.discreto { background: transparent; color: var(--suave); font-weight: 400; text-decoration: underline; padding: 4px 0; }
 [hidden] { display: none !important; }
+.pro-paginas { display: grid; gap: 2px; margin-top: 6px; }

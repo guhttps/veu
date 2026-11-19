@@ -118,6 +118,90 @@ function cdp(method, params = {}, sessionId) {
 }
 const pausa = (ms) => new Promise((pronto) => setTimeout(pronto, ms));
 
+// PDF mínimo com uma linha de texto (fonte Helvetica), para a página de arquivos ler com o pdf.js.
+function pdfCom(texto) {
+  const conteudo = `BT /F1 12 Tf 72 720 Td (${texto}) Tj ET`;
+  const objetos = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+    `<< /Length ${conteudo.length} >>\nstream\n${conteudo}\nendstream`, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"];
+  let pdf = "%PDF-1.4\n";
+  const posicoes = objetos.map((objeto, i) => {
+    const posicao = pdf.length;
+    pdf += `${i + 1} 0 obj\n${objeto}\nendobj\n`;
+    return posicao;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n${posicoes.map((p) => `${String(p).padStart(10, "0")} 00000 n \n`).join("")}`;
+  return `${pdf}trailer\n<< /Size ${objetos.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+}
+
+async function enviarArquivo(pagina, seletor, caminho) {
+  const { result } = await cdp("Runtime.evaluate", { expression: `document.querySelector(${JSON.stringify(seletor)})` }, pagina.sessionId);
+  await cdp("DOM.setFileInputFiles", { files: [caminho], objectId: result.objectId }, pagina.sessionId);
+}
+
+async function esperarArquivo(caminho) {
+  for (let i = 0; i < 40 && !existsSync(caminho); i++) await pausa(250);
+  return existsSync(caminho);
+}
+
+async function testarPro(id) {
+  const { writeZip, readZip } = await import("../../js/dist/index.js").then((m) => m.default ?? m);
+  const downloads = join(temporaria, "baixados");
+  await cdp("Browser.setDownloadBehavior", { behavior: "allow", downloadPath: downloads });
+
+  const icone = await abrir(`chrome-extension://${id}/popup.html`);
+  // O teste anterior desmarcou "Documentos": volta a esconder CPF.
+  if (!(await icone.avaliar(`document.getElementById("grupo-documentos").checked`))) {
+    await icone.avaliar(`document.getElementById("grupo-documentos").click()`);
+    await pausa(400);
+  }
+  await icone.avaliar(`document.getElementById("pro-chave").value = ${JSON.stringify(process.env.VEU_E2E_LICENCA)}`);
+  await icone.avaliar(`document.getElementById("pro-botao").click()`);
+  await pausa(800);
+  const estado = await icone.avaliar(`document.getElementById("pro-estado").textContent`);
+  confere(/ativo até/.test(estado), `a chave do Pro ativa pelo ícone (${estado})`);
+  await icone.avaliar(`document.getElementById("lista-nomes").value = "Joana Prado"; document.getElementById("salvar-listas").click()`);
+  await pausa(500);
+  await icone.fechar();
+
+  const chat = await abrir(`${base}/chat`);
+  await chat.avaliar(`document.getElementById("prompt-textarea").focus()`);
+  await chat.digitar("Encaminhe para a JOANA PRADO, CPF 529.982.247-25");
+  await chat.enter();
+  await pausa(300);
+  const comLista = await chat.avaliar(`document.getElementById("prompt-textarea").innerText`);
+  confere(!/joana/i.test(comLista) && comLista.includes("[PESSOA_1]") && comLista.includes("[CPF_1]"),
+    `a lista própria esconde o nome em maiúsculas (${comLista.trim()})`);
+  await chat.fechar();
+
+  const relatorio = await abrir(`chrome-extension://${id}/relatorio.html`);
+  const total = await relatorio.avaliar(`document.getElementById("total").textContent`);
+  confere(Number(total) > 0, `o relatório do mês conta os dados escondidos (${total})`);
+  await relatorio.fechar();
+
+  const arquivos = await abrir(`chrome-extension://${id}/arquivos.html`);
+  const docx = join(temporaria, "contrato.docx");
+  const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+  writeFileSync(docx, await writeZip(new Map([["word/document.xml", new TextEncoder().encode(
+    `<w:document ${W}><w:body><w:p><w:r><w:t>Contratante Maria Souza, CPF ${CPF}</w:t></w:r></w:p></w:body></w:document>`)]])));
+  await enviarArquivo(arquivos, "#proteger", docx);
+  const saidaDocx = join(downloads, "contrato-protegido.docx");
+  const baixouDocx = await esperarArquivo(saidaDocx);
+  const xml = baixouDocx ? new TextDecoder().decode((await readZip(new Uint8Array(readFileSync(saidaDocx)))).get("word/document.xml")) : "";
+  confere(xml.includes("[PESSOA_1]") && !xml.includes("Souza") && !xml.includes("529.982"), `o Word protegido é baixado sem os dados (${xml.slice(-80)})`);
+
+  const pdf = join(temporaria, "laudo.pdf");
+  writeFileSync(pdf, pdfCom(`Paciente Maria Souza, CPF ${CPF}`));
+  await enviarArquivo(arquivos, "#proteger", pdf);
+  const saidaPdf = join(downloads, "laudo-protegido.txt");
+  const textoPdf = (await esperarArquivo(saidaPdf)) ? readFileSync(saidaPdf, "utf8") : "";
+  confere(textoPdf.includes("[PESSOA_1]") && textoPdf.includes("[CPF_1]") && !textoPdf.includes("Souza"),
+    `o PDF vira texto protegido pelo pdf.js (${textoPdf.replace(/\n/g, " ").slice(0, 80)})`);
+
+  await arquivos.fechar();
+}
+
 async function abrir(url) {
   const { targetId } = await cdp("Target.createTarget", { url });
   const { sessionId } = await cdp("Target.attachToTarget", { targetId, flatten: true });
@@ -253,6 +337,9 @@ try {
   const semDocumentos = await chat2.avaliar(`document.getElementById("prompt-textarea").innerText`);
   confere(semDocumentos.includes("[PESSOA_1]") && semDocumentos.includes(CPF), `sem o grupo, o CPF passa (${semDocumentos.trim()})`);
   await chat2.fechar();
+
+  // Véu Pro: só com uma chave de teste (VEU_E2E_LICENCA), emitida por nuvem/emitir-licenca.mjs com poucos dias.
+  if (process.env.VEU_E2E_LICENCA) await testarPro(id);
 } catch (erro) {
   falhas += 1;
   console.error(erro);

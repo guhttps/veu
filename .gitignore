@@ -27,6 +27,9 @@ js/dist/
 js/src/data.ts
 js/build-test/
 extensao/veu.global.js
+extensao/pdf.min.mjs
+extensao/pdf.worker.min.mjs
+extensao/pdfjs-LICENSE.txt
 web/veu.global.js
 web/docs/
 .hypothesis/

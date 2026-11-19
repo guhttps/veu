@@ -20,7 +20,10 @@ BUNDLE = ROOT / "js" / "dist" / "veu.global.js"
 EXTENSION = ROOT / "extensao"
 WEB = ROOT / "web"
 EXTENSION_FILES = ("manifest.json", "politica.json", "licenca.js", "fundo.js", "conteudo.js", "popup.html", "popup.css",
-                   "popup.js", "veu.global.js")
+                   "popup.js", "veu.global.js", "pagina.css", "relatorio.html", "relatorio.js", "arquivos.html",
+                   "arquivos.js", "pdf.min.mjs", "pdf.worker.min.mjs", "pdfjs-LICENSE.txt")
+# pdf.js (Mozilla, Apache-2.0) lê o texto dos PDFs na página de arquivos do Véu Pro. Vem sem mudanças do npm.
+PDFJS = ROOT / "js" / "node_modules" / "pdfjs-dist"
 
 
 FIREFOX_ID = "veu@guhttps.github.io"
@@ -61,6 +64,12 @@ def main() -> int:
         return 1
     for target in (EXTENSION, WEB):
         shutil.copyfile(BUNDLE, target / "veu.global.js")
+    if not (PDFJS / "build" / "pdf.min.mjs").exists():
+        print("Falta o pdf.js: rode 'npm ci' na pasta js.", file=sys.stderr)
+        return 1
+    for name in ("pdf.min.mjs", "pdf.worker.min.mjs"):
+        shutil.copyfile(PDFJS / "build" / name, EXTENSION / name)
+    shutil.copyfile(PDFJS / "LICENSE", EXTENSION / "pdfjs-LICENSE.txt")
     manifest = json.loads((EXTENSION / "manifest.json").read_text(encoding="utf-8"))
     version = manifest["version"]
     output = ROOT / "dist" / f"veu-extensao-{version}.zip"

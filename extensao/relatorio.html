@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Véu Pro: relatório do mês</title>
+  <link rel="stylesheet" href="pagina.css">
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icones/32.png" alt="">
+      <h1 id="titulo">Relatório do mês</h1>
+      <select id="mes" class="nao-imprimir" aria-label="Mês"></select>
+    </header>
+    <p id="sem-pro" class="aviso" hidden>O relatório mensal faz parte do Véu Pro. Ative a sua chave no ícone do Véu.</p>
+    <div id="conteudo" hidden>
+      <p class="suave">Quantos dados pessoais e segredos o Véu escondeu antes de chegarem aos sites de IA. O relatório tem só contagens: nenhum texto e nenhum dado foi guardado. Pode servir de registro para o encarregado de dados (LGPD).</p>
+      <div class="numeros">
+        <div class="numero"><b id="total">0</b><span>dados escondidos</span></div>
+        <div class="numero"><b id="envios">0</b><span>mensagens protegidas</span></div>
+        <div class="numero"><b id="qtd-tipos">0</b><span>tipos de dado diferentes</span></div>
+        <div class="numero"><b id="qtd-sites">0</b><span>sites de IA</span></div>
+      </div>
+      <section class="painel">
+        <h2>Por dia</h2>
+        <div id="dias" class="dias" role="img" aria-label="Dados escondidos por dia do mês"></div>
+        <div class="dias-legenda"><span>dia 1</span><span id="ultimo-dia"></span></div>
+      </section>
+      <section class="painel">
+        <h2>Por tipo de dado</h2>
+        <div class="tabela"><table>
+          <thead><tr><th>Tipo</th><th>Grupo</th><th class="n">Escondidos</th></tr></thead>
+          <tbody id="tipos"></tbody>
+        </table></div>
+      </section>
+      <section class="painel">
+        <h2>Por site</h2>
+        <div class="tabela"><table>
+          <thead><tr><th>Site</th><th class="n">Escondidos</th></tr></thead>
+          <tbody id="sites"></tbody>
+        </table></div>
+      </section>
+      <div class="acoes">
+        <button id="imprimir">Imprimir ou salvar em PDF</button>
+        <button id="csv" class="secundario">Baixar planilha (CSV)</button>
+        <button id="apagar" class="secundario">Apagar o histórico</button>
+      </div>
+      <p class="suave nao-imprimir">O histórico fica só neste navegador, com os últimos 13 meses.</p>
+    </div>
+  </main>
+  <script src="veu.global.js"></script>
+  <script src="relatorio.js"></script>
+</body>
+</html>

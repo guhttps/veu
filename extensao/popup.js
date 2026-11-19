@@ -32,6 +32,7 @@
     $("#pro-ativar").hidden = pro.ativo || pro.daEmpresa;
     $("#pro-remover").hidden = !pro.exp || pro.daEmpresa;
     $("#pro-listas").hidden = !pro.ativo;
+    $("#pro-paginas").hidden = !pro.ativo;
     $("#lista-nomes").value = (config.listaNomes || []).join("\n");
     $("#lista-termos").value = (config.listaTermos || []).join("\n");
     $("#lista-nomes").disabled = travado("listaNomes");
@@ -68,6 +69,16 @@
     if (await pedir({ tipo: "ativarLicenca", chave: $("#pro-chave").value })) $("#pro-chave").value = "";
   });
   $("#pro-remover").addEventListener("click", () => pedir({ tipo: "removerLicenca" }));
+  // Arquivos usa o cofre da aba aberta: as respostas da IA nessa aba também voltam com os dados reais.
+  $("#abrir-arquivos").addEventListener("click", () => {
+    let site = "";
+    try {
+      site = aba?.url ? new URL(aba.url).hostname : "";
+    } catch { /* aba sem endereço */ }
+    const pagina = aba?.id && /^https?:/.test(aba.url || "") ? `arquivos.html?aba=${aba.id}&site=${encodeURIComponent(site)}` : "arquivos.html";
+    chrome.tabs.create({ url: chrome.runtime.getURL(pagina) });
+  });
+  $("#abrir-relatorio").addEventListener("click", () => chrome.tabs.create({ url: chrome.runtime.getURL("relatorio.html") }));
   $("#salvar-listas").addEventListener("click", async () => {
     const linhas = (campo) => $(campo).value.split("\n").map((linha) => linha.trim()).filter(Boolean);
     if (await pedir({ tipo: "salvarListas", listaNomes: linhas("#lista-nomes"), listaTermos: linhas("#lista-termos") })) {

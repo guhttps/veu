@@ -92,6 +92,38 @@ const MOTIVOS = {
   "sem-chave-publica": "O Véu Pro ainda não foi lançado.",
 };
 
+// Relatório mensal (Pro): só contagens por mês, tipo, site e dia. Nenhum texto e nenhum valor ficam guardados.
+const MESES_NO_RELATORIO = 13;
+let gravandoRelatorio = Promise.resolve();
+
+function registrarNoRelatorio(contagem, endereco) {
+  const tarefa = async () => {
+    const total = Object.values(contagem || {}).reduce((soma, n) => soma + n, 0);
+    if (!total || !(await estadoPro(await politica())).ativo) return;
+    let site = "arquivos protegidos";
+    if (endereco !== "arquivos") {
+      try {
+        site = new URL(endereco).hostname.replace(/^www\./, "") || "outro";
+      } catch {
+        site = "outro";
+      }
+    }
+    const agora = new Date();
+    const mes = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`;
+    const { relatorio = {} } = await chrome.storage.local.get("relatorio");
+    const atual = relatorio[mes] ||= { tipos: {}, sites: {}, dias: {}, envios: 0 };
+    for (const [rotulo, n] of Object.entries(contagem)) atual.tipos[rotulo] = (atual.tipos[rotulo] || 0) + n;
+    atual.sites[site] = (atual.sites[site] || 0) + total;
+    const dia = String(agora.getDate());
+    atual.dias[dia] = (atual.dias[dia] || 0) + total;
+    atual.envios += 1;
+    for (const velho of Object.keys(relatorio).sort().slice(0, -MESES_NO_RELATORIO)) delete relatorio[velho];
+    await chrome.storage.local.set({ relatorio });
+  };
+  gravandoRelatorio = gravandoRelatorio.then(tarefa, tarefa); // uma gravação por vez, sem perder contagens
+  return gravandoRelatorio;
+}
+
 const limparLista = (lista) => (Array.isArray(lista) ? lista : [])
   .map((item) => String(item).trim().slice(0, 200)).filter((item) => item.length >= 2).slice(0, LIMITE_LISTA);
 
@@ -107,9 +139,10 @@ async function atualizarSelo(abaId) {
 }
 
 chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
-  const abaId = remetente.tab?.id ?? mensagem.abaId;
   // Páginas da própria extensão (o ícone, também aberto numa aba); o script dentro dos sites de IA não conta.
   const daExtensao = (remetente.url || "").startsWith(chrome.runtime.getURL(""));
+  // A página de arquivos usa o cofre da aba da IA (abaId); o script de uma página só usa o da própria aba.
+  const abaId = (daExtensao && mensagem.abaId) || (remetente.tab?.id ?? mensagem.abaId);
   (async () => {
     switch (mensagem.tipo) {
       case "configuracao":
@@ -125,8 +158,19 @@ chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
         for (const [rotulo, n] of Object.entries(mensagem.contagem || {})) atual[rotulo] = (atual[rotulo] || 0) + n;
         await chrome.storage.session.set({ [chave]: atual });
         await atualizarSelo(abaId);
+        await registrarNoRelatorio(mensagem.contagem, daExtensao ? "arquivos" : remetente.tab?.url || remetente.url);
         return atual;
       }
+      case "relatorio": {
+        if (!daExtensao) return { erro: "O relatório só abre pelo ícone do Véu." };
+        const config = await configuracao();
+        const { relatorio = {} } = await chrome.storage.local.get("relatorio");
+        return { pro: config.pro, meses: config.pro.ativo ? relatorio : {} };
+      }
+      case "apagarRelatorio":
+        if (!daExtensao) return { erro: "O relatório só muda pelo ícone do Véu." };
+        await chrome.storage.local.remove("relatorio");
+        return { meses: {} };
       case "contagem":
         return (await chrome.storage.session.get(chaveDaContagem(abaId)))[chaveDaContagem(abaId)] || {};
       case "ativarLicenca": {

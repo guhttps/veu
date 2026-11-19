@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Véu Pro: arquivos</title>
+  <link rel="stylesheet" href="pagina.css">
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icones/32.png" alt="">
+      <h1>Proteger arquivos inteiros</h1>
+    </header>
+    <p id="sem-pro" class="aviso" hidden>Proteger arquivos inteiros faz parte do Véu Pro. Ative a sua chave no ícone do Véu.</p>
+    <div id="conteudo" hidden>
+      <p class="suave">Word, Excel e PowerPoint voltam no mesmo formato, com os dados trocados por marcadores e a formatação no lugar. PDF vira texto. Tudo acontece neste computador: o arquivo não sai do navegador.</p>
+      <p id="aba" class="aviso"></p>
+      <section class="painel">
+        <h2>Proteger um arquivo</h2>
+        <label class="soltar" id="soltar-proteger">
+          <input id="proteger" type="file" accept=".docx,.xlsx,.pptx,.pdf,.txt,.md,.csv,.json" hidden>
+          <b>Escolha ou solte um arquivo aqui</b><br>
+          <span class="suave">.docx, .xlsx, .pptx, .pdf, .txt, .md, .csv ou .json, até 50 MB</span>
+        </label>
+      </section>
+      <section class="painel">
+        <h2>Devolver os dados reais</h2>
+        <p class="suave">Para o arquivo que a IA devolveu (ou o protegido), com os marcadores desta aba.</p>
+        <label class="soltar" id="soltar-restaurar">
+          <input id="restaurar" type="file" accept=".docx,.xlsx,.pptx,.txt,.md,.csv,.json" hidden>
+          <b>Escolha ou solte um arquivo aqui</b>
+        </label>
+      </section>
+      <section class="painel">
+        <h2>Nesta sessão</h2>
+        <p id="vazio" class="suave">Nenhum arquivo ainda.</p>
+        <div id="feitos" class="lista-arquivos" aria-live="polite"></div>
+      </section>
+    </div>
+  </main>
+  <script src="veu.global.js"></script>
+  <script src="arquivos.js"></script>
+</body>
+</html>
