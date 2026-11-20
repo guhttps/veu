@@ -54,8 +54,10 @@
 
   const extensao = (nome) => nome.toLowerCase().split(".").pop();
   const base = (nome) => nome.replace(/\.[^.]+$/, "");
+  // "Nome de pessoa" vira "nome de pessoa", mas siglas como CPF e IBAN ficam em maiúsculas.
+  const minuscula = (nome) => (/^\p{Lu}[\p{Ll}-]/u.test(nome) ? nome[0].toLowerCase() + nome.slice(1) : nome);
   const resumo = (contagem) => Object.entries(contagem)
-    .map(([rotulo, n]) => `${n} ${(LABELS[rotulo] || rotulo).replace(/ \(.*\)$/, "").toLowerCase()}`).join(", ");
+    .map(([rotulo, n]) => `${n} ${minuscula((LABELS[rotulo] || rotulo).replace(/ \(.*\)$/, ""))}`).join(", ");
 
   function baixar(bytes, nome, tipo) {
     const link = document.createElement("a");
