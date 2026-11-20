@@ -5,11 +5,16 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-19
+
 ### Adicionado
+- **Véu Pro lançado** (R$ 9,90 por mês ou R$ 99 por ano): arquivos inteiros, listas próprias e relatório mensal na extensão, com os botões de pagar na [página de planos](https://guhttps.github.io/veu/planos.html), agora com link na página principal e aberta aos buscadores. Duas formas de pagar, as duas pelo Mercado Pago:
+  - **assinatura no cartão de crédito**, que renova a chave sozinha;
+  - **pagamento por período** (1 mês ou 1 ano) com **Pix**, cartão de crédito ou débito e saldo do Mercado Pago; no plano de 1 ano, também boleto e até 12 parcelas. A chave vale o período pago, não renova (a extensão não faz nenhuma conexão com ela) e o ícone avisa na última semana. O servidor de licenças cria a cobrança com uma referência aleatória (`/comprar`), confere o valor, a moeda e a situação do pagamento (`/pago`) e espera o Pix ou o boleto com a página se atualizando sozinha. Quem fechou a página recupera a chave com o número da operação e o e-mail do pagamento (`/recuperar`), sem nada guardado.
 - **Listas próprias** (`TERMO` e `PESSOA`): termos que sempre somem, sem ligar para maiúsculas, acentos e espaços, e só como palavra inteira ("Projeto Netuno" acha "PROJETO  NETUNO", mas não "Projeto Netunos"). Em Python (`Veu(terms=...)` ou `[deteccao.termos]` no `veu.toml`) e em JavaScript (`new Veu({ terms })`).
 - **Relatório mensal (Véu Pro):** com o Pro ativo, a extensão guarda só contagens (quantos dados de cada tipo foram escondidos, em que site e em que dia, nos últimos 13 meses) e mostra o mês numa página para imprimir, salvar em PDF ou baixar em CSV, útil como registro para o encarregado de dados.
 - **Arquivos inteiros na extensão (Véu Pro):** Word, Excel e PowerPoint voltam no mesmo formato, com os dados trocados por marcadores e a formatação no lugar (um nome dividido pela formatação também é achado), sem o autor nos metadados; CPF guardado como número no Excel vira texto com o marcador; PDF vira texto, lido pelo pdf.js que vem com a extensão. Os marcadores são os da aba da IA, então a resposta do chat volta com os dados reais, e a mesma página devolve os dados ao arquivo que a IA mandou. Tudo no navegador, com a proteção contra zip bomb. Na biblioteca JavaScript: `protectDocument`, `restoreDocument`, `readZip` e `writeZip`.
-- **Base do Véu Pro** (ainda não lançado): chave de licença assinada (Ed25519), que a extensão confere sem internet; campo "Véu Pro" no ícone da extensão, com as listas próprias guardadas só no navegador (fora da sincronização da conta); a TI pode distribuir a chave e as listas pela política (`licenca`, `listaNomes`, `listaTermos`). O servidor de licenças (`nuvem/`, Cloudflare Workers) confere a assinatura no Mercado Pago, entrega a chave depois do pagamento e renova enquanto a assinatura estiver ativa, sem banco de dados e sem nunca receber textos.
+- **Base do Véu Pro:** chave de licença assinada (Ed25519), que a extensão confere sem internet; campo "Véu Pro" no ícone da extensão, com as listas próprias guardadas só no navegador (fora da sincronização da conta); a TI pode distribuir a chave e as listas pela política (`licenca`, `listaNomes`, `listaTermos`). O servidor de licenças (`nuvem/`, Cloudflare Workers) confere a assinatura no Mercado Pago, entrega a chave depois do pagamento e renova enquanto a assinatura estiver ativa, sem banco de dados e sem nunca receber textos.
 
 ### Corrigido
 - A constante `VERSION` da biblioteca JavaScript estava em 0.6.0; agora um teste confere todas as versões do projeto.
@@ -394,7 +399,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/guhttps/veu/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/guhttps/veu/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/guhttps/veu/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/guhttps/veu/compare/v0.7.1...v0.7.2
