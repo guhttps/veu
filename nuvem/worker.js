@@ -113,7 +113,7 @@ label{display:block;margin:.8rem 0}ol li{margin:.3rem 0}.nota{color:#4b5f5b;font
     "referrer-policy": "no-referrer", "x-content-type-options": "nosniff" } });
 }
 
-const SUPORTE = `<a href="https://github.com/guhttps/veu/issues">github.com/guhttps/veu</a>`;
+const SUPORTE = `<a href="mailto:veu.ajuda@protonmail.com">veu.ajuda@protonmail.com</a> (ou em <a href="https://github.com/guhttps/veu/issues">github.com/guhttps/veu</a>)`;
 
 async function paginaDaChave(licenca, env, aviso) {
   const chave = await assinar(licenca, await chavePrivada(env));
@@ -133,8 +133,7 @@ async function pronto(url, env, agora) {
   if (!licenca) {
     const situacao = assinatura?.status ? ` (situação no Mercado Pago: ${escapar(assinatura.status)})` : "";
     return pagina("Ainda não confirmamos o pagamento", `<p>O Mercado Pago ainda não confirmou a assinatura${situacao}.
-Atualize esta página em alguns minutos. Se o problema continuar, responda o e-mail do Mercado Pago ou abra um pedido em
-${SUPORTE}.</p>`, 402);
+Atualize esta página em alguns minutos. Se o problema continuar, escreva para ${SUPORTE}.</p>`, 402);
   }
   return paginaDaChave(licenca, env, "Ela renova sozinha enquanto a assinatura estiver ativa.");
 }
@@ -174,7 +173,7 @@ async function comprar(url, env) {
   }
   if (!/^https:\/\/([a-z0-9-]+\.)*mercadopago\.com(\.br)?\//.test(destino)) {
     return pagina("O Mercado Pago não respondeu", `<p>Não consegui abrir o pagamento agora. Tente de novo em alguns minutos.
-Se continuar, abra um pedido em ${SUPORTE}.</p>`, 502);
+Se continuar, escreva para ${SUPORTE}.</p>`, 502);
   }
   return new Response(null, { status: 303, headers: { location: destino, "cache-control": "no-store", "referrer-policy": "no-referrer" } });
 }

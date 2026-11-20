@@ -8,6 +8,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 ### Adicionado
 - **Site do Véu:** a página principal ganhou uma apresentação (o que o Véu faz, um exemplo de antes e depois, onde usar e os planos), com a ferramenta logo abaixo, e as páginas de planos, privacidade e instalar ganharam o mesmo cabeçalho e rodapé.
 - **Arquivos inteiros na página web, grátis:** Word, Excel e PowerPoint voltam no mesmo formato, PDF vira texto (pdf.js servido pelo próprio site), tudo no navegador e com o mesmo cofre do texto, então a resposta da IA sobre o arquivo volta com os dados reais. Um arquivo por vez, até 10 MB.
+- **E-mail de suporte:** veu.ajuda@protonmail.com, nos planos (inclusive para começar o plano Empresa), na política de privacidade, no rodapé do site, nas páginas da chave e nas notas das lojas.
 - **Véu Pro na página:** a chave é colada e conferida na própria página, sem conexão. Ela libera vários arquivos de uma vez, arquivos de até 50 MB e as listas próprias de nomes e termos, que valem no texto e nos arquivos.
 
 ### Corrigido

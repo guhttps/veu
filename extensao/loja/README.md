@@ -8,7 +8,7 @@ Tudo o que as lojas do Edge e do Firefox pedem, pronto para copiar. Os pacotes f
 |---|---|
 | Site | https://guhttps.github.io/veu/ |
 | Política de privacidade | https://guhttps.github.io/veu/privacidade.html |
-| Suporte | https://github.com/guhttps/veu/issues |
+| Suporte | veu.ajuda@protonmail.com (e https://github.com/guhttps/veu/issues) |
 | Código-fonte | https://github.com/guhttps/veu |
 | Categoria no Edge | Productivity |
 | Categoria no Firefox | Privacy & Security |
