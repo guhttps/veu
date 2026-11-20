@@ -11,6 +11,8 @@ import { tmpdir } from "node:os";
 import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import servidorDeLicencas, { assinar, paraBase64url } from "../../nuvem/worker.js";
+
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const CHROMES = [
   process.argv[2], process.env.CHROME,
@@ -30,6 +32,78 @@ function confere(condicao, descricao) {
   console.log(`${condicao ? "ok  " : "FALHOU"} ${descricao}`);
   if (!condicao) falhas += 1;
 }
+
+// Servidor de licenças de verdade (nuvem/worker.js) rodando aqui, com um par de chaves de teste, os planos e preços do
+// wrangler.toml e um Mercado Pago falso. A extensão e a página conferem as chaves com a chave pública de teste e falam
+// com este servidor: dá para simular compra, ativação, renovação e mudança de preço sem dinheiro de verdade.
+const parDeTeste = await crypto.subtle.generateKey({ name: "Ed25519" }, true, ["sign", "verify"]);
+const PUBLICA_DE_TESTE = paraBase64url(await crypto.subtle.exportKey("raw", parDeTeste.publicKey));
+const wrangler = readFileSync(join(raiz, "nuvem", "wrangler.toml"), "utf8");
+const variavel = (nome) => new RegExp(`^${nome} = '(.*)'$`, "m").exec(wrangler)[1];
+const ambiente = {
+  CHAVE_PRIVADA: paraBase64url(await crypto.subtle.exportKey("pkcs8", parDeTeste.privateKey)),
+  CHAVE_PUBLICA: PUBLICA_DE_TESTE, MP_TOKEN: "token-de-teste", PLANOS: variavel("PLANOS"), PAGAMENTOS: variavel("PAGAMENTOS"),
+};
+const agoraEmSegundos = Math.floor(Date.now() / 1000);
+const CHAVE_DE_TESTE = await assinar({ v: 1, plano: "pro", email: "teste@example.com", assinatura: "manual-e2e",
+  emitida: agoraEmSegundos, exp: agoraEmSegundos + 86400 }, parDeTeste.privateKey);
+const dadosDaChave = (chave) => JSON.parse(Buffer.from(String(chave).split(".")[1], "base64url").toString());
+
+const mp = { preferencias: [], pagamentos: [], assinaturas: new Map() };
+const fetchDeVerdade = globalThis.fetch;
+globalThis.fetch = async (url, opcoes = {}) => {
+  const endereco = String(url);
+  if (!endereco.startsWith("https://api.mercadopago.com")) return fetchDeVerdade(url, opcoes);
+  if (endereco.endsWith("/checkout/preferences")) {
+    const preferencia = { ...JSON.parse(opcoes.body), id: `SIM-${mp.preferencias.length + 1}` };
+    mp.preferencias.push(preferencia);
+    return Response.json({ id: preferencia.id,
+      init_point: `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=${preferencia.id}` });
+  }
+  const busca = /\/v1\/payments\/search\?(.*)$/.exec(endereco);
+  if (busca) {
+    const referencia = new URLSearchParams(busca[1]).get("external_reference");
+    return Response.json({ results: mp.pagamentos.filter((pagamento) => pagamento.external_reference === referencia) });
+  }
+  const um = /\/v1\/payments\/(\d+)$/.exec(endereco);
+  const pagamento = um && mp.pagamentos.find((item) => String(item.id) === um[1]);
+  if (pagamento) return Response.json(pagamento);
+  const assinatura = /\/preapproval\/([A-Za-z0-9-]+)$/.exec(endereco);
+  if (assinatura && mp.assinaturas.has(assinatura[1])) return Response.json(mp.assinaturas.get(assinatura[1]));
+  return new Response("{}", { status: 404 });
+};
+/** Quem compra paga a última cobrança criada: Pix aprovado na hora ou boleto ainda pendente. */
+function pagarUltimaCobranca({ status = "approved", tipo = "bank_transfer" } = {}) {
+  const preferencia = mp.preferencias.at(-1);
+  const agora = new Date().toISOString();
+  const pagamento = { id: 900000000 + mp.pagamentos.length, status, currency_id: "BRL",
+    transaction_amount: preferencia.items[0].unit_price, date_created: agora, date_approved: status === "approved" ? agora : null,
+    external_reference: preferencia.external_reference, payer: { email: "cliente@example.com" }, payment_type_id: tipo };
+  mp.pagamentos.push(pagamento);
+  return { preferencia, pagamento };
+}
+
+const licencas = createServer(async (pedido, resposta) => {
+  const partes = [];
+  for await (const parte of pedido) partes.push(parte);
+  const request = new Request(`http://127.0.0.1:${licencas.address().port}${pedido.url}`, {
+    method: pedido.method, headers: { "content-type": pedido.headers["content-type"] || "text/plain" },
+    body: ["GET", "HEAD", "OPTIONS"].includes(pedido.method) ? undefined : Buffer.concat(partes),
+  });
+  const respostaDoServidor = await servidorDeLicencas.fetch(request, ambiente, {});
+  resposta.writeHead(respostaDoServidor.status, Object.fromEntries(respostaDoServidor.headers));
+  resposta.end(Buffer.from(await respostaDoServidor.arrayBuffer()));
+});
+await new Promise((pronto) => licencas.listen(0, "127.0.0.1", pronto));
+const SERVIDOR_DE_TESTE = `http://127.0.0.1:${licencas.address().port}`;
+const LICENCA_JS = readFileSync(join(raiz, "extensao", "licenca.js"), "utf8")
+  .replace(/const CHAVE_PUBLICA = "[^"]*"/, `const CHAVE_PUBLICA = "${PUBLICA_DE_TESTE}"`)
+  .replace(/const SERVIDOR = "[^"]*"/, `const SERVIDOR = "${SERVIDOR_DE_TESTE}"`);
+const noServidor = async (caminho, opcoes = {}) => {
+  const resposta = await fetchDeVerdade(`${SERVIDOR_DE_TESTE}${caminho}`, { redirect: "manual", ...opcoes });
+  return { status: resposta.status, local: resposta.headers.get("location"), html: await resposta.text() };
+};
+const chaveNaPagina = (html) => /VEU1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/.exec(html)?.[0];
 
 // Servidor local: a página web e um chat falso.
 const CHAT = `<!doctype html><meta charset="utf-8"><title>Chat falso</title>
@@ -67,6 +141,10 @@ const servidor = createServer((pedido, resposta) => {
     resposta.writeHead(200, { "content-type": "text/html; charset=utf-8" });
     return resposta.end(CHAT);
   }
+  if (caminho === "/web/licenca.js") { // a conferência da chave com a chave pública de teste
+    resposta.writeHead(200, { "content-type": "text/javascript" });
+    return resposta.end(LICENCA_JS);
+  }
   if (caminho.startsWith("/web/")) {
     const arquivo = join(raiz, "web", caminho.slice(5) || "index.html");
     if (existsSync(arquivo)) {
@@ -86,6 +164,7 @@ cpSync(join(raiz, "extensao"), extensao, { recursive: true, filter: (origem) => 
 const manifesto = JSON.parse(readFileSync(join(extensao, "manifest.json"), "utf8"));
 manifesto.content_scripts[0].matches.push("http://127.0.0.1/*");
 writeFileSync(join(extensao, "manifest.json"), JSON.stringify(manifesto));
+writeFileSync(join(extensao, "licenca.js"), LICENCA_JS);
 
 // Chrome com pipe de depuração (fd 3 escreve para o Chrome, fd 4 lê dele).
 const processo = spawn(chrome, [
@@ -157,7 +236,7 @@ async function testarPro(id) {
     await icone.avaliar(`document.getElementById("grupo-documentos").click()`);
     await pausa(400);
   }
-  await icone.avaliar(`document.getElementById("pro-chave").value = ${JSON.stringify(process.env.VEU_E2E_LICENCA)}`);
+  await icone.avaliar(`document.getElementById("pro-chave").value = ${JSON.stringify(CHAVE_DE_TESTE)}`);
   await icone.avaliar(`document.getElementById("pro-botao").click()`);
   await pausa(800);
   const estado = await icone.avaliar(`document.getElementById("pro-estado").textContent`);
@@ -201,6 +280,104 @@ async function testarPro(id) {
     `o PDF vira texto protegido pelo pdf.js (${textoPdf.replace(/\n/g, " ").slice(0, 80)})`);
 
   await arquivos.fechar();
+}
+
+// Os planos de hoje, de ponta a ponta: compra por Pix, ativação no ícone, aumento de preço, pagar mais um período pelo
+// ícone (preço guardado e dias somados), quem chega depois, boleto, recuperar a chave e assinatura que renova sozinha.
+async function testarPlanos(id) {
+  const precos = JSON.parse(ambiente.PAGAMENTOS);
+  const reais = (valor) => `R$ ${valor.toFixed(2).replace(".", ",")}`;
+
+  const compra = await noServidor("/comprar?periodo=mensal");
+  const primeira = mp.preferencias.at(-1);
+  confere(compra.status === 303 && /^https:\/\/www\.mercadopago\.com\.br\//.test(compra.local)
+    && primeira.items[0].unit_price === precos.mensal.valor
+    && JSON.stringify(primeira.payment_methods.excluded_payment_types) === '[{"id":"ticket"}]',
+  `plano de 1 mês: cobrança de ${reais(precos.mensal.valor)} no Mercado Pago, sem boleto`);
+  pagarUltimaCobranca();
+  const depoisDoPix = await noServidor(`/pago?ref=${primeira.external_reference}`);
+  const chaveMensal = chaveNaPagina(depoisDoPix.html);
+  confere(depoisDoPix.status === 200 && Boolean(chaveMensal), "depois do Pix, a página de volta mostra a chave");
+
+  const icone = await abrir(`chrome-extension://${id}/popup.html`);
+  await icone.avaliar(`document.getElementById("pro-chave").value = ${JSON.stringify(chaveMensal)};
+    document.getElementById("pro-botao").click()`);
+  await pausa(800);
+  const estado = await icone.avaliar(`[document.getElementById("pro-estado").textContent,
+    document.getElementById("pro-pagar").hidden, document.getElementById("pagar-mensal").textContent]`);
+  confere(/ativo até/.test(estado[0]) && !estado[1] && estado[2].includes(reais(precos.mensal.valor)),
+    `chave de 1 mês ativa no ícone, com o botão "${estado[2]}"`);
+
+  // O preço sobe: quem já paga continua no preço antigo e não perde os dias que faltavam.
+  ambiente.PAGAMENTOS = JSON.stringify({ ...precos, mensal: { ...precos.mensal, valor: 14.9 }, anual: { ...precos.anual, valor: 149 } });
+  const cobrancasAntes = mp.preferencias.length;
+  await icone.avaliar(`document.getElementById("pagar-mensal").click()`);
+  let renovacao;
+  for (let tentativa = 0; tentativa < 20 && !renovacao; tentativa++) {
+    await pausa(200);
+    if (mp.preferencias.length > cobrancasAntes) renovacao = mp.preferencias.at(-1);
+  }
+  confere(renovacao?.items[0].unit_price === precos.mensal.valor,
+    `com o preço novo (R$ 14,90), o ícone cobra ${renovacao ? reais(renovacao.items[0].unit_price) : "nada"} de quem já paga`);
+  await pausa(500);
+  const { targetInfos } = await cdp("Target.getTargets");
+  const abaDoPagamento = renovacao && targetInfos.find((alvo) => alvo.url.includes(`pref_id=${renovacao.id}`));
+  confere(Boolean(abaDoPagamento), "o pagamento abre numa aba do Mercado Pago");
+  if (abaDoPagamento) await cdp("Target.closeTarget", { targetId: abaDoPagamento.targetId });
+  if (renovacao) {
+    pagarUltimaCobranca();
+    const renovada = chaveNaPagina((await noServidor(`/pago?ref=${renovacao.external_reference}`)).html);
+    confere(Boolean(renovada) && dadosDaChave(renovada).exp === dadosDaChave(chaveMensal).exp + 30 * 86400,
+      "o mês novo começa quando o anterior acaba (nenhum dia perdido)");
+  }
+  await noServidor("/comprar?periodo=anual");
+  const novoCliente = mp.preferencias.at(-1);
+  confere(novoCliente.items[0].unit_price === 149 && novoCliente.payment_methods.installments === 12,
+    "quem chega depois paga o preço novo (1 ano por R$ 149,00, em até 12 vezes)");
+  ambiente.PAGAMENTOS = JSON.stringify(precos);
+
+  // Boleto: a página espera; compensado, a chave volta pelo número da operação e o e-mail.
+  await noServidor("/comprar?periodo=anual");
+  const { preferencia: doBoleto, pagamento: boleto } = pagarUltimaCobranca({ status: "pending", tipo: "ticket" });
+  const esperando = await noServidor(`/pago?ref=${doBoleto.external_reference}`);
+  confere(esperando.status === 202 && !chaveNaPagina(esperando.html) && esperando.html.includes("http-equiv=\"refresh\""),
+    "boleto ainda não pago: a página espera e se atualiza, sem chave");
+  boleto.status = "approved";
+  boleto.date_approved = new Date().toISOString();
+  const recuperada = await noServidor("/recuperar", { method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" }, body: `operacao=${boleto.id}&email=cliente%40example.com` });
+  confere(Boolean(chaveNaPagina(recuperada.html)), "boleto compensado: a chave volta pelo número da operação e o e-mail");
+
+  // Assinatura no cartão: a chave vem de /pronto e, perto do vencimento, a extensão renova sozinha.
+  const [planoMensal] = Object.keys(JSON.parse(ambiente.PLANOS));
+  const daqui = (dias) => new Date(Date.now() + dias * 86400000).toISOString();
+  mp.assinaturas.set("assinatura-e2e", { id: "assinatura-e2e", status: "authorized", preapproval_plan_id: planoMensal,
+    payer_email: "cliente@example.com", next_payment_date: daqui(1) });
+  const daAssinatura = chaveNaPagina((await noServidor("/pronto?preapproval_id=assinatura-e2e")).html);
+  confere(Boolean(daAssinatura), "assinatura no cartão: a página de volta mostra a chave");
+  mp.assinaturas.get("assinatura-e2e").next_payment_date = daqui(31); // o Mercado Pago cobrou o mês seguinte
+  await icone.avaliar(`document.getElementById("pro-chave").value = ${JSON.stringify(daAssinatura)};
+    document.getElementById("pro-botao").click()`);
+  let guardada = daAssinatura;
+  for (let tentativa = 0; tentativa < 20 && guardada === daAssinatura; tentativa++) {
+    await pausa(250);
+    await icone.avaliar(`chrome.runtime.sendMessage({ tipo: "configuracao" })`);
+    guardada = await icone.avaliar(`chrome.storage.local.get("licenca").then((itens) => itens.licenca)`);
+  }
+  confere(guardada !== daAssinatura && dadosDaChave(guardada).exp > dadosDaChave(daAssinatura).exp + 20 * 86400,
+    "assinatura: perto do vencimento, a extensão renova a chave sozinha");
+  confere(await icone.avaliar(`document.getElementById("pro-pagar").hidden`) === true,
+    "a assinatura não mostra os botões de pagar por período");
+  await icone.fechar();
+
+  // A página web aceita a chave paga por período e libera o Pro.
+  const pagina = await abrir(`${base}/web/index.html?lang=pt`);
+  await pagina.avaliar(`document.getElementById("pro").open = true;
+    document.getElementById("pro-chave").value = ${JSON.stringify(chaveMensal)}; document.getElementById("pro-botao").click()`);
+  await pausa(500);
+  confere(/ativo até/.test(await pagina.avaliar(`document.getElementById("pro-estado").textContent`)),
+    "a chave paga por período também ativa o Pro na página");
+  await pagina.fechar();
 }
 
 async function abrir(url) {
@@ -327,8 +504,8 @@ try {
     "no grátis, a página protege um arquivo por vez");
 
   // Véu Pro na página: a chave é conferida aqui mesmo, e libera vários arquivos e as listas próprias.
-  if (process.env.VEU_E2E_LICENCA) {
-    await docs.avaliar(`document.getElementById("pro").open = true; document.getElementById("pro-chave").value = ${JSON.stringify(process.env.VEU_E2E_LICENCA)}`);
+  {
+    await docs.avaliar(`document.getElementById("pro").open = true; document.getElementById("pro-chave").value = ${JSON.stringify(CHAVE_DE_TESTE)}`);
     await docs.avaliar(`document.getElementById("pro-botao").click()`);
     await pausa(500);
     const estadoPro = await docs.avaliar(`document.getElementById("pro-estado").textContent`);
@@ -404,14 +581,16 @@ try {
   confere(semDocumentos.includes("[PESSOA_1]") && semDocumentos.includes(CPF), `sem o grupo, o CPF passa (${semDocumentos.trim()})`);
   await chat2.fechar();
 
-  // Véu Pro: só com uma chave de teste (VEU_E2E_LICENCA), emitida por nuvem/emitir-licenca.mjs com poucos dias.
-  if (process.env.VEU_E2E_LICENCA) await testarPro(id);
+  // Véu Pro, com uma chave de teste do servidor de licenças local, e os planos de ponta a ponta.
+  await testarPro(id);
+  await testarPlanos(id);
 } catch (erro) {
   falhas += 1;
   console.error(erro);
 } finally {
   processo.kill();
   servidor.close();
+  licencas.close();
   await pausa(500);
   try {
     rmSync(temporaria, { recursive: true, force: true });

@@ -28,13 +28,15 @@ function carregar({ politica = {} } = {}) {
   let receptor;
   const evento = () => ({ addListener: () => {} });
   const renovacoes = [];
+  const abasAbertas = [];
+  const pagamentosPedidos = [];
   const contexto = {
     console, crypto, TextEncoder, TextDecoder, atob, btoa,
     chrome: {
       storage: { managed: { get: async () => ({ ...politica }) }, sync: area("sync"), session: area("session"), local: area("local") },
       runtime: { onMessage: { addListener: (fn) => { receptor = fn; } }, onInstalled: evento(),
         getURL: (caminho) => `chrome-extension://veu/${caminho}` },
-      tabs: { onRemoved: evento() }, contextMenus: { onClicked: evento() },
+      tabs: { onRemoved: evento(), create: async (opcoes) => { abasAbertas.push(opcoes.url); } }, contextMenus: { onClicked: evento() },
       action: { setBadgeBackgroundColor: async () => {}, setBadgeText: async () => {} },
     },
   };
@@ -45,12 +47,17 @@ function carregar({ politica = {} } = {}) {
     const { verificar } = contexto.veuLicenca;
     contexto.veuLicenca.verificar = (chave) => verificar(chave, publica);
     contexto.veuLicenca.renovar = async (chave) => { renovacoes.push(chave); return { chave: await licenca(30) }; };
+    contexto.veuLicenca.pagarPeriodo = async (chave, periodo) => {
+      pagamentosPedidos.push({ chave, periodo });
+      return periodo === "anual" ? { url: "https://golpe.example/pagar" }
+        : { url: "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=1", valor: 9.9, precoMantido: true };
+    };
   };
   vm.createContext(contexto);
   vm.runInContext(readFileSync(new URL("fundo.js", pasta), "utf8"), contexto);
   const enviar = (mensagem, remetente) => new Promise((resolver) => receptor(mensagem, remetente, resolver));
   return {
-    store, renovacoes,
+    store, renovacoes, abasAbertas, pagamentosPedidos,
     doIcone: (mensagem) => enviar(mensagem, { id: "veu", url: "chrome-extension://veu/popup.html" }),
     daPagina: (mensagem) => enviar(mensagem, { tab: { id: 7 }, url: "https://chatgpt.com/" }),
   };
@@ -131,4 +138,23 @@ test("a chave e as listas da empresa vêm da política e não mudam pelo ícone"
   const salva = await fundo.doIcone({ tipo: "salvarListas", listaNomes: ["Joana"], listaTermos: ["Outro"] });
   assert.deepEqual([...salva.listaTermos], ["Netuno"]);
   assert.deepEqual([...salva.listaNomes], ["Joana"]);
+});
+
+test("pagar mais um período: só pelo ícone, com a chave guardada, e só abre o Mercado Pago", async () => {
+  const fundo = carregar();
+  const chave = await licenca(20, { assinatura: undefined, pagamento: "123456789", precos: { mensal: 990, anual: 9900 } });
+  const config = await fundo.doIcone({ tipo: "ativarLicenca", chave });
+  assert.deepEqual({ ...config.pro.precos }, { mensal: 990, anual: 9900 });
+  assert.match((await fundo.daPagina({ tipo: "pagarPeriodo", periodo: "mensal" })).erro, /ícone/);
+  assert.match((await fundo.doIcone({ tipo: "pagarPeriodo", periodo: "vitalicio" })).erro, /1 mês ou 1 ano/);
+  const resposta = await fundo.doIcone({ tipo: "pagarPeriodo", periodo: "mensal" });
+  assert.equal(resposta.ok, true);
+  assert.equal(resposta.precoMantido, true);
+  assert.deepEqual(fundo.pagamentosPedidos.map((pedido) => pedido.chave), [chave]);
+  assert.deepEqual(fundo.abasAbertas, ["https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=1"]);
+  // Um servidor que devolvesse outro endereço não abre aba nenhuma.
+  assert.match((await fundo.doIcone({ tipo: "pagarPeriodo", periodo: "anual" })).erro, /inesperado/);
+  assert.equal(fundo.abasAbertas.length, 1);
+  await fundo.doIcone({ tipo: "removerLicenca" });
+  assert.match((await fundo.doIcone({ tipo: "pagarPeriodo", periodo: "mensal" })).erro, /Sem chave/);
 });

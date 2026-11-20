@@ -50,6 +50,22 @@
     }
   }
 
+  /**
+   * Mais um período para a chave paga por período: o servidor confere os preços guardados nela e devolve o endereço da
+   * cobrança no Mercado Pago ({ url, valor, precoMantido }) ou { erro }.
+   */
+  async function pagarPeriodo(chave, periodo, servidor = SERVIDOR) {
+    try {
+      const resposta = await fetch(`${servidor}/renovar-periodo`, {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chave, periodo }),
+      });
+      const dados = await resposta.json();
+      return resposta.ok && dados.url ? dados : { erro: dados.erro || `Erro ${resposta.status}` };
+    } catch {
+      return { erro: "Sem conexão com o servidor de licenças." };
+    }
+  }
+
   const ambiente = typeof self !== "undefined" ? self : globalThis;
-  ambiente.veuLicenca = { verificar, renovar, CHAVE_PUBLICA, SERVIDOR, PREFIXO };
+  ambiente.veuLicenca = { verificar, renovar, pagarPeriodo, CHAVE_PUBLICA, SERVIDOR, PREFIXO };
 })();

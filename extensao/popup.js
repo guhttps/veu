@@ -33,7 +33,11 @@
       : pro.motivo === "vencida" && pro.avulsa ? `O período pago terminou em ${validade}. Para continuar, pague mais um período.`
       : pro.motivo === "vencida" ? `A chave venceu em ${validade}. Se a assinatura está ativa, o Véu renova sozinho.`
       : "Sem chave neste navegador. Com o Pro, você cria listas de nomes e termos que sempre somem.";
-    $("#pro-pagar").hidden = !fimDoPeriodo;
+    // Pagar mais um período a qualquer hora: o preço guardado na chave vale, e os dias que faltam são somados.
+    $("#pro-pagar").hidden = !pro.avulsa || pro.daEmpresa;
+    const preco = (centavos) => (Number.isInteger(centavos) ? ` (R$ ${(centavos / 100).toFixed(2).replace(".", ",")})` : "");
+    $("#pagar-mensal").textContent = `Pagar mais 1 mês${preco(pro.precos?.mensal)}`;
+    $("#pagar-anual").textContent = `Pagar mais 1 ano${preco(pro.precos?.anual)}`;
     $("#pro-ativar").hidden = pro.ativo || pro.daEmpresa;
     $("#pro-remover").hidden = !pro.exp || pro.daEmpresa;
     $("#pro-listas").hidden = !pro.ativo;
@@ -74,6 +78,18 @@
     if (await pedir({ tipo: "ativarLicenca", chave: $("#pro-chave").value })) $("#pro-chave").value = "";
   });
   $("#pro-remover").addEventListener("click", () => pedir({ tipo: "removerLicenca" }));
+  for (const periodo of ["mensal", "anual"]) {
+    $(`#pagar-${periodo}`).addEventListener("click", async () => {
+      if (!(await permitirRenovacao())) {
+        $("#pro-estado").textContent = "Sem a permissão, o Véu não consegue abrir o pagamento pelo seu preço.";
+        return;
+      }
+      $("#pro-estado").textContent = "Abrindo o pagamento...";
+      const resposta = await chrome.runtime.sendMessage({ tipo: "pagarPeriodo", periodo });
+      $("#pro-estado").textContent = resposta?.erro || (resposta?.precoMantido
+        ? "O pagamento abriu numa aba nova, com o seu preço de sempre." : "O pagamento abriu numa aba nova.");
+    });
+  }
   // Arquivos usa o cofre da aba aberta: as respostas da IA nessa aba também voltam com os dados reais.
   $("#abrir-arquivos").addEventListener("click", () => {
     let site = "";

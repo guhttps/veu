@@ -62,7 +62,7 @@ async function estadoPro(empresa) {
   }
   return { ativo: resultado.valida, motivo: resultado.motivo, plano: licenca?.plano, email: licenca?.email,
     exp: licenca?.exp, daEmpresa: Boolean(empresa.licenca), avulsa: Boolean(licenca?.pagamento && !licenca.assinatura),
-    acabando: faltam < 7 * DIA };
+    acabando: faltam < 7 * DIA, precos: licenca?.precos };
 }
 
 // Só a chave de uma assinatura renova sozinha. A paga por período (Pix, boleto) e a emitida à mão, não: sem rede.
@@ -192,6 +192,21 @@ chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
         await chrome.storage.local.set({ licenca: chave, licencaTentativa: 0 });
         if (!resultado.valida) await renovarLicenca(chave);
         return configuracao();
+      }
+      case "pagarPeriodo": {
+        // Chave paga por período: o servidor cobra o próximo período pelo preço guardado nela e soma os dias que faltam.
+        if (!daExtensao) return { erro: "Só pelo ícone do Véu." };
+        const { licenca: chave } = await chrome.storage.local.get("licenca");
+        if (!chave) return { erro: "Sem chave neste navegador." };
+        if (!["mensal", "anual"].includes(mensagem.periodo)) return { erro: "Escolha 1 mês ou 1 ano." };
+        if (!(await podeRenovar())) return { erro: "Sem permissão para falar com o servidor de licenças." };
+        const resposta = await globalThis.veuLicenca.pagarPeriodo(chave, mensagem.periodo);
+        if (resposta.erro) return { erro: resposta.erro };
+        if (!/^https:\/\/([a-z0-9-]+\.)*mercadopago\.com(\.br)?\//.test(resposta.url || "")) {
+          return { erro: "O servidor de licenças devolveu um endereço inesperado." };
+        }
+        await chrome.tabs.create({ url: resposta.url });
+        return { ok: true, valor: resposta.valor, precoMantido: resposta.precoMantido };
       }
       case "removerLicenca":
         if (!daExtensao) return { erro: "A chave só é removida pelo ícone do Véu." };
