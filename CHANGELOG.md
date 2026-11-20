@@ -5,7 +5,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-11-20
+
 ### Adicionado
+- **Prévia nas redes sociais:** o link do site e da página de planos mostra a imagem do Véu ao ser compartilhado (WhatsApp, LinkedIn, X).
 - **Botões "Pagar mais 1 mês" e "Pagar mais 1 ano" no ícone da extensão**, para a chave paga por período: abrem o pagamento pelo preço guardado na chave.
 - **O teste no Chrome simula os planos de ponta a ponta** com o servidor de licenças de verdade e um Mercado Pago falso (compra por Pix, ativação, aumento de preço, pagar mais um período, boleto, recuperar a chave e assinatura que renova sozinha), sem precisar de chave real; as partes do Véu Pro agora rodam também no CI.
 - **Preço garantido para quem já paga:** se o preço subir, a assinatura continua no valor antigo enquanto estiver ativa (os planos antigos do Mercado Pago não mudam e continuam renovando a chave). No pagamento por período, a chave guarda os preços da primeira compra, e `/renovar-periodo` cobra o próximo período por eles até 30 dias depois do vencimento, somando os dias que faltavam (antes, quem pagava antes de vencer perdia esses dias). Os preços vão assinados pelo servidor na referência do pagamento, então ninguém os muda.
@@ -421,7 +424,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.2...HEAD
+[0.9.2]: https://github.com/guhttps/veu/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/guhttps/veu/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/guhttps/veu/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/guhttps/veu/compare/v0.8.0...v0.8.1
