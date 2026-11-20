@@ -105,6 +105,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
 
 - 🌍 **Dados pessoais de qualquer lugar:** nomes (também fora das listas, depois de "meu nome é", "my name is", "me llamo", "je m'appelle", "ich heiße", "Mrs.", "Herr"), e-mails, telefones (brasileiros, americanos e de qualquer país, com +código ou com "tel", "móvil", "telemóvel", "Handy" por perto), endereços e códigos postais (Brasil, Portugal, Espanha, França, Alemanha, Itália e EUA), cartões de crédito, IBAN, endereços IP (v4 e v6) e datas de nascimento (também "né le", "geboren am", "nacido el").
 - 🖥️ **Infraestrutura:** IPs, portas (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`) nomes de servidores internos (`db.interna`, `cache.prod.local`) endereços MAC (`95:7F:76:CE:A3:DA`) e IMEI de celulares (`35-209900-176148-1`).
+- 💼 **Véu Pro na extensão** (R$ 9,90 por mês ou R$ 99 por ano): arquivos inteiros (Word, Excel, PowerPoint e PDF) protegidos no navegador, listas próprias de nomes e termos que sempre somem e um relatório mensal só com contagens, para a LGPD. Assinatura no cartão ou pagamento por período com Pix, boleto, débito ou saldo do Mercado Pago. Tudo o que é aberto continua grátis. [Planos](https://guhttps.github.io/veu/planos.html).
 - ☑️ **Você escolhe o que esconder:** caixinhas por grupo na página, na extensão e no painel, com escolha tipo a tipo. Desmarcar senhas e chaves mostra um aviso.
 - 🇧🇷 **Documentos brasileiros:** CPF, CNPJ (numérico e alfanumérico), RG, CNH, título de eleitor, PIS/NIT, cartão do SUS, passaporte, CTPS, registro profissional (OAB, CRM, CREA...), números de cadastro (prontuário, matrícula, carteirinha do convênio, apólice), CEP, placa, RENAVAM, conta bancária, chave Pix, Pix copia e cola (conferido pelo CRC), boleto (linha digitável e código de barras, pelos verificadores), matrícula de certidão de nascimento e casamento, RNM de estrangeiros e processo do CNJ. Logins no formato nome.sobrenome, e-mails disfarçados (`joao [at] gmail [dot] com`), coordenadas de GPS (decimais ou em graus, minutos e segundos), CVV e datas de nascimento em tabelas (SQL, CSV) também somem.
 - 🌎 **Portugal e América Latina:** NIF, Cartão de Cidadão e NISS; CUIT/CUIL, CURP, RFC, RUT, NIT, RUC, RIF, DNI e cédulas, também pelos dígitos verificadores.
@@ -434,6 +435,7 @@ Para ver o site de documentação no seu computador: `pip install zensical==0.1.
 - [x] Documentos de Angola, Moçambique, Estados Unidos, Canadá, Índia e Europa; MRZ de passaporte, VIN e carteiras de criptomoeda
 - [x] Site de documentação com busca
 - [x] Homebrew (`brew install guhttps/veu/veu`) e Scoop (`scoop bucket add veu https://github.com/guhttps/scoop-veu`)
+- [x] Véu Pro: arquivos inteiros, listas próprias e relatório mensal na extensão, com chave assinada e pagamento por cartão, Pix ou boleto
 - [ ] Extensão nas lojas do Edge e do Firefox (textos, capturas e política de privacidade prontos em `extensao/loja/`)
 - [ ] Nomes de outras línguas sem precisar de modelo
 - [ ] Abrir Excel e Word direto na página web, sem instalar nada

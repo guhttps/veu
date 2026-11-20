@@ -25,10 +25,15 @@
     const pro = config.pro || { ativo: false };
     const validade = pro.exp ? new Date(pro.exp * 1000).toLocaleDateString("pt-BR") : "";
     const plano = pro.plano === "empresa" ? "Véu Empresa" : "Véu Pro";
+    // Chave paga por período (Pix, boleto): não renova sozinha, então avisamos perto do fim.
+    const fimDoPeriodo = pro.avulsa && !pro.daEmpresa && (pro.acabando || pro.motivo === "vencida");
     $("#pro-estado").textContent = pro.ativo
       ? `${plano} ativo até ${validade}${pro.email ? ` (${pro.email})` : ""}${pro.daEmpresa ? ", pela sua empresa" : ""}.`
+        + (fimDoPeriodo ? " O período pago está acabando: para continuar, pague mais um período." : "")
+      : pro.motivo === "vencida" && pro.avulsa ? `O período pago terminou em ${validade}. Para continuar, pague mais um período.`
       : pro.motivo === "vencida" ? `A chave venceu em ${validade}. Se a assinatura está ativa, o Véu renova sozinho.`
       : "Sem chave neste navegador. Com o Pro, você cria listas de nomes e termos que sempre somem.";
+    $("#pro-pagar").hidden = !fimDoPeriodo;
     $("#pro-ativar").hidden = pro.ativo || pro.daEmpresa;
     $("#pro-remover").hidden = !pro.exp || pro.daEmpresa;
     $("#pro-listas").hidden = !pro.ativo;

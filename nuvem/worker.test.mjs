@@ -13,6 +13,10 @@ const env = {
   CHAVE_PUBLICA: publica,
   MP_TOKEN: "token-de-teste",
   PLANOS: JSON.stringify({ "plano-mensal": { plano: "pro", nome: "Pro mensal" } }),
+  PAGAMENTOS: JSON.stringify({
+    mensal: { plano: "pro", nome: "Véu Pro por 1 mês", valor: 9.9, dias: 30, parcelas: 1, excluir: ["ticket"] },
+    anual: { plano: "pro", nome: "Véu Pro por 1 ano", valor: 99, dias: 365, parcelas: 12 },
+  }),
 };
 
 // A verificação da extensão (extensao/licenca.js), carregada como no navegador.
@@ -30,10 +34,24 @@ const assinaturas = {
   "assinatura-cancelada": { id: "assinatura-cancelada", status: "cancelled", preapproval_plan_id: "plano-mensal" },
 };
 const pedidosAoMercadoPago = [];
+const preferencias = [];
+const pagamentosNoMercadoPago = [];
 globalThis.fetch = async (url, opcoes) => {
-  pedidosAoMercadoPago.push(String(url));
+  const endereco = String(url);
+  pedidosAoMercadoPago.push(endereco);
   assert.equal(opcoes.headers.authorization, "Bearer token-de-teste");
-  const dados = assinaturas[String(url).split("/").pop()];
+  if (endereco.endsWith("/checkout/preferences")) {
+    preferencias.push(JSON.parse(opcoes.body));
+    return Response.json({ id: "pref-1", init_point: "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-1" });
+  }
+  // A busca devolve todos os pagamentos: o servidor tem de filtrar pela referência.
+  if (endereco.includes("/v1/payments/search?")) return Response.json({ results: pagamentosNoMercadoPago });
+  const pagamento = /\/v1\/payments\/(\d+)$/.exec(endereco);
+  if (pagamento) {
+    const dados = pagamentosNoMercadoPago.find((item) => String(item.id) === pagamento[1]);
+    return new Response(JSON.stringify(dados ?? { message: "not found" }), { status: dados ? 200 : 404 });
+  }
+  const dados = assinaturas[endereco.split("/").pop()];
   return new Response(JSON.stringify(dados ?? { message: "not found" }), { status: dados ? 200 : 404 });
 };
 
@@ -109,4 +127,137 @@ test("CORS para a extensão e nada além das rotas conhecidas", async () => {
   assert.equal((await chamar("/renovar", { method: "OPTIONS" })).status, 204);
   assert.equal((await chamar("/admin")).status, 404);
   assert.equal((await chamar("/pronto", { method: "POST" })).status, 404);
+});
+
+// Pagamento avulso (Pix, boleto, cartão, débito, saldo) ----------------------------------------------------------
+const formulario = (campos) => ({ method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
+  body: new URLSearchParams(campos).toString() });
+
+async function comprar(periodo) {
+  const resposta = await chamar(`/comprar?periodo=${periodo}`);
+  return { resposta, preferencia: preferencias.at(-1) };
+}
+
+function pagamento(referencia, extra = {}) {
+  const dados = { id: 100000000 + pagamentosNoMercadoPago.length, status: "approved", currency_id: "BRL",
+    transaction_amount: 9.9, date_approved: "2026-11-19T09:00:00.000-03:00", date_created: "2026-11-19T08:59:00.000-03:00",
+    external_reference: referencia, payer: { email: "cliente@example.com" }, payment_type_id: "bank_transfer", ...extra };
+  pagamentosNoMercadoPago.push(dados);
+  return dados;
+}
+
+test("comprar cria a cobrança com uma referência aleatória e leva ao Mercado Pago", async () => {
+  const { resposta, preferencia } = await comprar("mensal");
+  assert.equal(resposta.status, 303);
+  assert.equal(resposta.headers.get("location"), "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-1");
+  assert.match(preferencia.external_reference, /^mensal-[A-Za-z0-9_-]{24}$/);
+  assert.equal(preferencia.back_urls.success, `https://licencas.example/pago?ref=${preferencia.external_reference}`);
+  assert.deepEqual(preferencia.items.map((item) => [item.unit_price, item.currency_id, item.quantity]), [[9.9, "BRL", 1]]);
+  // No mensal, sem boleto (a tarifa fixa come o valor) e sem parcelas; no anual, boleto e até 12 vezes.
+  assert.deepEqual(preferencia.payment_methods.excluded_payment_types, [{ id: "ticket" }]);
+  assert.equal(preferencia.payment_methods.installments, 1);
+  const anual = (await comprar("anual")).preferencia;
+  assert.deepEqual(anual.payment_methods.excluded_payment_types, []);
+  assert.equal(anual.payment_methods.installments, 12);
+  assert.notEqual(anual.external_reference.slice(6), preferencia.external_reference.slice(7));
+
+  const antes = pedidosAoMercadoPago.length;
+  for (const periodo of ["vitalicio", "constructor", "__proto__", "toString", ""]) {
+    assert.equal((await chamar(`/comprar?periodo=${periodo}`)).status, 404, periodo);
+  }
+  assert.equal(pedidosAoMercadoPago.length, antes);
+});
+
+test("com o Pix aprovado, a página de volta mostra uma chave que vale pelo período pago", async () => {
+  const { preferencia } = await comprar("mensal");
+  pagamento("mensal-de-outra-pessoa-xxxxxxxxxxxxxxx", { transaction_amount: 9.9 });
+  const pago = pagamento(preferencia.external_reference);
+  const resposta = await chamar(`/pago?ref=${preferencia.external_reference}&payment_id=${pago.id}&status=approved`);
+  assert.equal(resposta.status, 200);
+  const html = await resposta.text();
+  assert.match(html, /vale até 19\/12\/2026/);
+  const conferida = await verificar(chaveDaPagina(html), publica, AGORA);
+  assert.equal(conferida.valida, true);
+  assert.equal(conferida.licenca.pagamento, String(pago.id));
+  assert.equal(conferida.licenca.assinatura, undefined);
+  assert.equal(conferida.licenca.email, "cliente@example.com");
+  assert.equal(conferida.licenca.exp, Date.parse("2026-11-19T09:00:00.000-03:00") / 1000 + 30 * 86400);
+  assert.equal((await verificar(chaveDaPagina(html), publica, Date.parse("2026-12-20T12:00:00Z"))).motivo, "vencida");
+
+  // Um ano por boleto, aprovado: vale 365 dias.
+  const anual = (await comprar("anual")).preferencia;
+  pagamento(anual.external_reference, { transaction_amount: 99, payment_type_id: "ticket" });
+  const chaveAnual = chaveDaPagina(await (await chamar(`/pago?ref=${anual.external_reference}`)).text());
+  assert.equal((await verificar(chaveAnual, publica, Date.parse("2027-11-17T12:00:00Z"))).valida, true);
+});
+
+test("pendente espera; valor menor, recusado, vencido ou referência inventada não dão chave", async () => {
+  const pendente = (await comprar("anual")).preferencia.external_reference;
+  pagamento(pendente, { status: "pending", transaction_amount: 99, payment_type_id: "ticket", date_approved: null });
+  const espera = await chamar(`/pago?ref=${pendente}`);
+  assert.equal(espera.status, 202);
+  const htmlEspera = await espera.text();
+  assert.match(htmlEspera, /http-equiv="refresh"/);
+  assert.match(htmlEspera, /recuperar/);
+  assert.equal(chaveDaPagina(htmlEspera), undefined);
+
+  // Pagou R$ 9,90 numa referência do plano anual (R$ 99): sem chave.
+  const barato = (await comprar("anual")).preferencia.external_reference;
+  pagamento(barato, { transaction_amount: 9.9 });
+  assert.equal((await chamar(`/pago?ref=${barato}`)).status, 402);
+
+  const dolar = (await comprar("mensal")).preferencia.external_reference;
+  pagamento(dolar, { currency_id: "USD" });
+  assert.equal((await chamar(`/pago?ref=${dolar}`)).status, 402);
+
+  const recusado = (await comprar("mensal")).preferencia.external_reference;
+  pagamento(recusado, { status: "rejected" });
+  const recusa = await chamar(`/pago?ref=${recusado}`);
+  assert.equal(recusa.status, 402);
+  assert.match(await recusa.text(), /Tentar de novo/);
+
+  const antigo = (await comprar("mensal")).preferencia.external_reference;
+  pagamento(antigo, { date_approved: "2025-01-10T10:00:00.000-03:00" });
+  assert.equal((await chamar(`/pago?ref=${antigo}`)).status, 410);
+
+  const antes = pedidosAoMercadoPago.length;
+  for (const ref of ["mensal-curta", "constructor-aaaaaaaaaaaaaaaaaaaaaaaa", "vitalicio-aaaaaaaaaaaaaaaaaaaaaaaa", ""]) {
+    assert.equal((await chamar(`/pago?ref=${ref}`)).status, 404, ref);
+  }
+  assert.equal(pedidosAoMercadoPago.length, antes);
+});
+
+test("recuperar devolve a chave só com o número da operação e o e-mail certos", async () => {
+  assert.match(await (await chamar("/recuperar")).text(), /<form method="post"/);
+  const { preferencia } = await comprar("mensal");
+  const pago = pagamento(preferencia.external_reference);
+  const certo = await chamar("/recuperar", formulario({ operacao: ` ${pago.id} `, email: "Cliente@Example.com " }));
+  assert.equal(certo.status, 200);
+  assert.equal((await verificar(chaveDaPagina(await certo.text()), publica, AGORA)).valida, true);
+
+  for (const campos of [{ operacao: pago.id, email: "outra@example.com" }, { operacao: "999999999", email: "cliente@example.com" },
+    { operacao: "12", email: "cliente@example.com" }, { operacao: pago.id, email: "" }]) {
+    const resposta = await chamar("/recuperar", formulario(campos));
+    assert.equal(resposta.status, 404, JSON.stringify(campos));
+    assert.equal(chaveDaPagina(await resposta.text()), undefined);
+  }
+  // Pagamento de outro produto na mesma conta do Mercado Pago: sem chave.
+  const outro = pagamento("pedido-da-loja-123", { transaction_amount: 500 });
+  assert.equal((await chamar("/recuperar", formulario({ operacao: outro.id, email: "cliente@example.com" }))).status, 404);
+  // Cobrança de uma assinatura ativa: a chave sai da assinatura.
+  const cobranca = pagamento(null, { metadata: { preapproval_id: "assinatura-ativa" } });
+  const daAssinatura = await chamar("/recuperar", formulario({ operacao: cobranca.id, email: "cliente@example.com" }));
+  assert.equal(daAssinatura.status, 200);
+  const licenca = (await verificar(chaveDaPagina(await daAssinatura.text()), publica, AGORA)).licenca;
+  assert.equal(licenca.assinatura, "assinatura-ativa");
+  assert.equal((await chamar("/recuperar", { method: "POST", body: "x".repeat(3000) })).status, 413);
+});
+
+test("a chave paga por período não renova sozinha", async () => {
+  const { preferencia } = await comprar("mensal");
+  pagamento(preferencia.external_reference);
+  const chave = chaveDaPagina(await (await chamar(`/pago?ref=${preferencia.external_reference}`)).text());
+  const resposta = await chamar("/renovar", { method: "POST", body: JSON.stringify({ chave }) });
+  assert.equal(resposta.status, 409);
+  assert.match((await resposta.json()).erro, /pague mais um período/);
 });

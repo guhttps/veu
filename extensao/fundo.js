@@ -56,11 +56,18 @@ async function estadoPro(empresa) {
   const resultado = await licencas.verificar(chave);
   const licenca = resultado.licenca;
   const faltam = licenca ? licenca.exp * 1000 - Date.now() : Infinity;
-  if (licenca && !empresa.licenca && faltam < 7 * DIA && Date.now() - (salvo.licencaTentativa || 0) > 12 * HORA) {
+  if (renovavel(licenca) && !empresa.licenca && faltam < 7 * DIA
+    && Date.now() - (salvo.licencaTentativa || 0) > 12 * HORA) {
     renovando ??= renovarLicenca(chave).finally(() => { renovando = null; });
   }
   return { ativo: resultado.valida, motivo: resultado.motivo, plano: licenca?.plano, email: licenca?.email,
-    exp: licenca?.exp, daEmpresa: Boolean(empresa.licenca) };
+    exp: licenca?.exp, daEmpresa: Boolean(empresa.licenca), avulsa: Boolean(licenca?.pagamento && !licenca.assinatura),
+    acabando: faltam < 7 * DIA };
+}
+
+// Só a chave de uma assinatura renova sozinha. A paga por período (Pix, boleto) e a emitida à mão, não: sem rede.
+function renovavel(licenca) {
+  return Boolean(licenca?.assinatura) && !String(licenca.assinatura).startsWith("manual");
 }
 
 // No Firefox, a renovação depende da permissão opcional de dados que o popup pede ao ativar a chave.
@@ -178,6 +185,10 @@ chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
         const chave = String(mensagem.chave || "").trim();
         const resultado = await globalThis.veuLicenca.verificar(chave);
         if (!resultado.valida && resultado.motivo !== "vencida") return { erro: MOTIVOS[resultado.motivo] || "Chave inválida." };
+        if (!resultado.valida && !renovavel(resultado.licenca)) {
+          const data = new Date(resultado.licenca.exp * 1000).toLocaleDateString("pt-BR");
+          return { erro: `Esta chave venceu em ${data}. Para continuar, pague mais um período na página de planos.` };
+        }
         await chrome.storage.local.set({ licenca: chave, licencaTentativa: 0 });
         if (!resultado.valida) await renovarLicenca(chave);
         return configuracao();

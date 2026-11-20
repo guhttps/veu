@@ -1,10 +1,16 @@
 // Servidor de licenças do Véu Pro (Cloudflare Workers). Não guarda nada e nunca recebe textos: só o retorno do
 // Mercado Pago depois do pagamento e, na renovação, a própria chave da pessoa.
 //
-//   GET  /pronto?preapproval_id=...   página de volta do Mercado Pago: confere o pagamento e mostra a chave
+// Assinatura (cartão de crédito, renova sozinha):
+//   GET  /pronto?preapproval_id=...   página de volta do Mercado Pago: confere a assinatura e mostra a chave
 //   POST /renovar  {"chave": "VEU1..."} chave nova enquanto a assinatura estiver ativa
+// Pagamento avulso (Pix, boleto, cartão de crédito ou débito, saldo do Mercado Pago; vale um período):
+//   GET  /comprar?periodo=mensal       cria a cobrança no Mercado Pago com uma referência aleatória e leva até ela
+//   GET  /pago?ref=...                 página de volta: confere o pagamento daquela referência e mostra a chave
+//   GET|POST /recuperar                chave de novo, com o número da operação e o e-mail do pagamento
 //
-// Variáveis (wrangler.toml): CHAVE_PUBLICA e PLANOS ({"id do plano no Mercado Pago": {"plano": "pro", "nome": "..."}}).
+// Variáveis (wrangler.toml): CHAVE_PUBLICA, PLANOS ({"id do plano no Mercado Pago": {"plano": "pro", "nome": "..."}})
+// e PAGAMENTOS ({"mensal": {"plano": "pro", "nome": "...", "valor": 9.9, "dias": 30, "parcelas": 1, "excluir": ["ticket"]}}).
 // Segredos (npx wrangler secret put): CHAVE_PRIVADA (nuvem/gerar-chaves.mjs) e MP_TOKEN (access token do Mercado Pago).
 
 export const PREFIXO = "VEU1.";
@@ -43,13 +49,41 @@ const chavePrivada = (env) => crypto.subtle.importKey("pkcs8", deBase64url(env.C
   ["sign"]);
 const chavePublica = (env) => crypto.subtle.importKey("raw", deBase64url(env.CHAVE_PUBLICA), { name: "Ed25519" }, false,
   ["verify"]);
-const planos = (env) => (typeof env.PLANOS === "string" ? JSON.parse(env.PLANOS || "{}") : env.PLANOS || {});
+const lerJson = (valor) => (typeof valor === "string" ? JSON.parse(valor || "{}") : valor || {});
+const planos = (env) => lerJson(env.PLANOS);
+const pagamentos = (env) => lerJson(env.PAGAMENTOS);
+const autorizacao = (env) => ({ authorization: `Bearer ${env.MP_TOKEN}` });
+const PAGINA_DE_PLANOS = "https://guhttps.github.io/veu/planos.html";
 
 async function assinaturaNoMercadoPago(env, id) {
   if (!/^[A-Za-z0-9-]{6,64}$/.test(id || "")) return null;
-  const resposta = await fetch(`${MERCADO_PAGO}/preapproval/${id}`, { headers: { authorization: `Bearer ${env.MP_TOKEN}` } });
+  const resposta = await fetch(`${MERCADO_PAGO}/preapproval/${id}`, { headers: autorizacao(env) });
   return resposta.ok ? resposta.json() : null;
 }
+
+// A referência de um pagamento avulso: "<período>-<24 caracteres aleatórios>". Só quem pagou conhece a parte aleatória,
+// então o endereço /pago?ref=... não dá para adivinhar.
+const REFERENCIA = /^([a-z]{3,12})-([A-Za-z0-9_-]{22,64})$/;
+
+function periodoDe(referencia, env) {
+  const nome = REFERENCIA.exec(String(referencia || ""))?.[1];
+  const tabela = pagamentos(env);
+  return nome && Object.hasOwn(tabela, nome) ? { nome, ...tabela[nome] } : null;
+}
+
+/** Licença para um pagamento avulso aprovado, no valor certo: vale `dias` a partir da aprovação. */
+function licencaDoPagamento(pagamento, env, agora) {
+  const periodo = periodoDe(pagamento?.external_reference, env);
+  if (!periodo || pagamento.status !== "approved" || pagamento.currency_id !== "BRL") return null;
+  if (!(Number(pagamento.transaction_amount) >= Number(periodo.valor) - 0.01)) return null;
+  const pago = Math.floor(Date.parse(pagamento.date_approved || pagamento.date_created || "") / 1000);
+  if (!Number.isFinite(pago)) return null;
+  return { v: 1, plano: periodo.plano || "pro", email: String(pagamento.payer?.email || ""), pagamento: String(pagamento.id),
+    emitida: Math.floor(agora / 1000), exp: pago + Math.min(Number(periodo.dias) || 30, 400) * DIA };
+}
+
+/** Data de um instante (segundos) no horário de Brasília, como 19/12/2026. */
+const dataBR = (segundos) => new Date((segundos - 3 * 3600) * 1000).toISOString().slice(0, 10).split("-").reverse().join("/");
 
 /** Licença para uma assinatura ativa de um plano conhecido, válida até a próxima cobrança mais 5 dias. */
 function licencaDe(assinatura, env, agora) {
@@ -67,15 +101,29 @@ const json = (dados, status = 200) => new Response(JSON.stringify(dados), {
 
 const escapar = (texto) => String(texto).replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 
-function pagina(titulo, corpo, status = 200) {
+function pagina(titulo, corpo, status = 200, cabeca = "") {
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escapar(titulo)}</title><style>body{font:16px/1.6 system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;color:#15201e}
-textarea{width:100%;font:13px ui-monospace,monospace;padding:.6rem;border:1px solid #c9d6d3;border-radius:8px}
-button{font:600 15px system-ui;padding:.6rem 1rem;border:0;border-radius:8px;background:#234e52;color:#fff;cursor:pointer}
-ol li{margin:.3rem 0}</style></head><body><h1>${escapar(titulo)}</h1>${corpo}</body></html>`;
+${cabeca}<title>${escapar(titulo)}</title><style>body{font:16px/1.6 system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;color:#15201e}
+textarea,input{width:100%;box-sizing:border-box;font:14px ui-monospace,monospace;padding:.6rem;border:1px solid #c9d6d3;border-radius:8px}
+button,.botao{display:inline-block;font:600 15px system-ui;padding:.6rem 1rem;border:0;border-radius:8px;background:#234e52;color:#fff;cursor:pointer;text-decoration:none}
+label{display:block;margin:.8rem 0}ol li{margin:.3rem 0}.nota{color:#4b5f5b;font-size:14px}</style></head>
+<body><h1>${escapar(titulo)}</h1>${corpo}</body></html>`;
   return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store",
-    "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'",
+    "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; base-uri 'none'",
     "referrer-policy": "no-referrer", "x-content-type-options": "nosniff" } });
+}
+
+const SUPORTE = `<a href="https://github.com/guhttps/veu/issues">github.com/guhttps/veu</a>`;
+
+async function paginaDaChave(licenca, env, aviso) {
+  const chave = await assinar(licenca, await chavePrivada(env));
+  return pagina("Pronto: o seu Véu Pro está ativo", `<p>Esta é a sua chave. ${aviso}</p>
+<textarea id="chave" rows="5" readonly>${escapar(chave)}</textarea>
+<p><button id="copiar">Copiar a chave</button> <span id="ok" role="status"></span></p>
+<ol><li>Clique no ícone do Véu, ao lado da barra de endereço.</li><li>Em <b>Véu Pro</b>, cole a chave e clique em <b>Ativar</b>.</li></ol>
+<p>Guarde a chave: ela também ativa o Véu Pro em outro navegador.</p>
+<script>document.getElementById("copiar").onclick=()=>navigator.clipboard.writeText(document.getElementById("chave").value)
+.then(()=>{document.getElementById("ok").textContent="Copiada."});</script>`);
 }
 
 async function pronto(url, env, agora) {
@@ -86,16 +134,119 @@ async function pronto(url, env, agora) {
     const situacao = assinatura?.status ? ` (situação no Mercado Pago: ${escapar(assinatura.status)})` : "";
     return pagina("Ainda não confirmamos o pagamento", `<p>O Mercado Pago ainda não confirmou a assinatura${situacao}.
 Atualize esta página em alguns minutos. Se o problema continuar, responda o e-mail do Mercado Pago ou abra um pedido em
-<a href="https://github.com/guhttps/veu/issues">github.com/guhttps/veu</a>.</p>`, 402);
+${SUPORTE}.</p>`, 402);
   }
-  const chave = await assinar(licenca, await chavePrivada(env));
-  return pagina("Pronto: o seu Véu Pro está ativo", `<p>Esta é a sua chave. Ela renova sozinha enquanto a assinatura estiver ativa.</p>
-<textarea id="chave" rows="5" readonly>${escapar(chave)}</textarea>
-<p><button id="copiar">Copiar a chave</button> <span id="ok" role="status"></span></p>
-<ol><li>Clique no ícone do Véu, ao lado da barra de endereço.</li><li>Em <b>Véu Pro</b>, cole a chave e clique em <b>Ativar</b>.</li></ol>
-<p>Guarde a chave: ela também ativa o Véu Pro em outro navegador.</p>
-<script>document.getElementById("copiar").onclick=()=>navigator.clipboard.writeText(document.getElementById("chave").value)
-.then(()=>{document.getElementById("ok").textContent="Copiada."});</script>`);
+  return paginaDaChave(licenca, env, "Ela renova sozinha enquanto a assinatura estiver ativa.");
+}
+
+const avisoDoPeriodo = (licenca) => `Ela vale até ${dataBR(licenca.exp)}. Depois disso, para continuar, pague mais um período
+ou assine na <a href="${PAGINA_DE_PLANOS}">página de planos</a>.`;
+
+/** Cria a cobrança avulsa no Mercado Pago (Checkout Pro) e leva a pessoa até ela. */
+async function comprar(url, env) {
+  const nome = url.searchParams.get("periodo") || "";
+  const tabela = pagamentos(env);
+  const periodo = /^[a-z]{3,12}$/.test(nome) && Object.hasOwn(tabela, nome) ? tabela[nome] : null;
+  if (!periodo) {
+    return pagina("Período desconhecido", `<p>Escolha um período na <a href="${PAGINA_DE_PLANOS}">página de planos</a>.</p>`, 404);
+  }
+  const referencia = `${nome}-${paraBase64url(crypto.getRandomValues(new Uint8Array(18)))}`;
+  const volta = `${url.origin}/pago?ref=${referencia}`;
+  let destino = "";
+  try {
+    const resposta = await fetch(`${MERCADO_PAGO}/checkout/preferences`, {
+      method: "POST", headers: { ...autorizacao(env), "content-type": "application/json" },
+      body: JSON.stringify({
+        items: [{ id: `veu-${nome}`, title: periodo.nome, quantity: 1, unit_price: Number(periodo.valor), currency_id: "BRL",
+          category_id: "services",
+          description: `Chave do Véu Pro por ${periodo.dias} dias. Se fechar a página, recupere em ${url.origin}/recuperar` }],
+        external_reference: referencia,
+        back_urls: { success: volta, pending: volta, failure: volta },
+        auto_return: "approved",
+        statement_descriptor: "VEU PRO",
+        payment_methods: { installments: Number(periodo.parcelas) || 1, excluded_payment_methods: [],
+          excluded_payment_types: (periodo.excluir || []).map((id) => ({ id })) },
+      }),
+    });
+    destino = resposta.ok ? (await resposta.json()).init_point || "" : "";
+  } catch {
+    destino = "";
+  }
+  if (!/^https:\/\/([a-z0-9-]+\.)*mercadopago\.com(\.br)?\//.test(destino)) {
+    return pagina("O Mercado Pago não respondeu", `<p>Não consegui abrir o pagamento agora. Tente de novo em alguns minutos.
+Se continuar, abra um pedido em ${SUPORTE}.</p>`, 502);
+  }
+  return new Response(null, { status: 303, headers: { location: destino, "cache-control": "no-store", "referrer-policy": "no-referrer" } });
+}
+
+const PENDENTES = new Set(["pending", "in_process", "authorized", "in_mediation"]);
+
+/** Página de volta do pagamento avulso: chave, espera (Pix ou boleto ainda não pagos) ou recusa. */
+async function pago(url, env, agora) {
+  const referencia = url.searchParams.get("ref") || url.searchParams.get("external_reference") || "";
+  const periodo = periodoDe(referencia, env);
+  if (!periodo) return pagina("Pagamento não encontrado", `<p>Este endereço não é de um pagamento do Véu Pro.</p>`, 404);
+  const busca = await fetch(`${MERCADO_PAGO}/v1/payments/search?external_reference=${encodeURIComponent(referencia)}`
+    + "&sort=date_created&criteria=desc&limit=20", { headers: autorizacao(env) }).catch(() => null);
+  if (!busca?.ok) {
+    return pagina("O Mercado Pago não respondeu", `<p>Atualize esta página em alguns minutos.</p>`, 502,
+      `<meta http-equiv="refresh" content="30">`);
+  }
+  const lista = ((await busca.json()).results || []).filter((pagamento) => pagamento.external_reference === referencia);
+  const aprovado = lista.map((pagamento) => licencaDoPagamento(pagamento, env, agora)).find(Boolean);
+  if (aprovado && aprovado.exp > agora / 1000) return paginaDaChave(aprovado, env, avisoDoPeriodo(aprovado));
+  if (aprovado) {
+    return pagina("Este período terminou", `<p>O período pago terminou em ${dataBR(aprovado.exp)}. Para continuar,
+pague mais um período na <a href="${PAGINA_DE_PLANOS}">página de planos</a>.</p>`, 410);
+  }
+  const endereco = escapar(`${url.origin}/pago?ref=${referencia}`);
+  if (lista.some((pagamento) => PENDENTES.has(pagamento.status))) {
+    return pagina("Esperando o pagamento", `<p>O Mercado Pago ainda não confirmou o pagamento. Pix leva alguns segundos;
+boleto, até 3 dias úteis. Esta página se atualiza sozinha.</p>
+<p>Pode fechar e voltar depois por este endereço (guarde-o):<br><a href="${endereco}">${endereco}</a></p>
+<p class="nota">Ou, com o boleto já pago, em <a href="${url.origin}/recuperar">${url.origin}/recuperar</a>, com o número da
+operação que vem no e-mail do Mercado Pago.</p>`, 202, `<meta http-equiv="refresh" content="20">`);
+  }
+  const motivo = lista[0]?.status ? ` (situação: ${escapar(lista[0].status)})` : "";
+  return pagina("O pagamento não foi concluído", `<p>Não encontramos um pagamento aprovado${motivo}. Se o pagamento foi
+recusado, nada foi cobrado.</p><p><a class="botao" href="${url.origin}/comprar?periodo=${periodo.nome}">Tentar de novo</a></p>`, 402);
+}
+
+function formularioDeRecuperar(url, mensagem = "", status = 200) {
+  return pagina("Recuperar a chave do Véu Pro", `${mensagem ? `<p role="alert"><b>${escapar(mensagem)}</b></p>` : ""}
+<p>Use o número da operação que está no e-mail do Mercado Pago e o e-mail usado no pagamento.</p>
+<form method="post" action="${url.origin}/recuperar">
+<label>Número da operação<input name="operacao" inputmode="numeric" autocomplete="off" required></label>
+<label>E-mail usado no pagamento<input name="email" type="email" autocomplete="email" required></label>
+<button>Mostrar a chave</button></form>
+<p class="nota">Os dois servem só para esta consulta ao Mercado Pago: nada fica guardado.</p>`, status);
+}
+
+/** Chave de novo para quem fechou a página: número da operação + e-mail do pagamento, conferidos no Mercado Pago. */
+async function recuperar(request, url, env, agora) {
+  if (request.method === "GET") return formularioDeRecuperar(url);
+  const corpo = await request.text();
+  if (corpo.length > 2000) return formularioDeRecuperar(url, "Pedido grande demais.", 413);
+  const campos = new URLSearchParams(corpo);
+  const operacao = String(campos.get("operacao") || "").replace(/\D/g, "");
+  const email = String(campos.get("email") || "").trim().toLowerCase();
+  const naoAchei = () => formularioDeRecuperar(url,
+    "Não encontramos um pagamento aprovado do Véu Pro com esse número e esse e-mail. Confira os dois no e-mail do Mercado Pago.", 404);
+  if (!/^\d{6,20}$/.test(operacao) || !email.includes("@")) return naoAchei();
+  const resposta = await fetch(`${MERCADO_PAGO}/v1/payments/${operacao}`, { headers: autorizacao(env) }).catch(() => null);
+  const pagamento = resposta?.ok ? await resposta.json() : null;
+  if (!pagamento || String(pagamento.payer?.email || "").trim().toLowerCase() !== email) return naoAchei();
+  const avulsa = licencaDoPagamento(pagamento, env, agora);
+  if (avulsa) {
+    return avulsa.exp > agora / 1000 ? paginaDaChave(avulsa, env, avisoDoPeriodo(avulsa))
+      : formularioDeRecuperar(url, `Esse período terminou em ${dataBR(avulsa.exp)}.`, 410);
+  }
+  if (periodoDe(pagamento.external_reference, env) && PENDENTES.has(pagamento.status)) {
+    return formularioDeRecuperar(url, "O Mercado Pago ainda não confirmou esse pagamento. Tente de novo mais tarde.", 202);
+  }
+  // Cobrança de uma assinatura: a chave sai da própria assinatura, se ela estiver ativa.
+  const licenca = licencaDe(await assinaturaNoMercadoPago(env, pagamento.metadata?.preapproval_id), env, agora);
+  return licenca ? paginaDaChave(licenca, env, "Ela renova sozinha enquanto a assinatura estiver ativa.") : naoAchei();
 }
 
 async function renovar(request, env, agora) {
@@ -109,6 +260,9 @@ async function renovar(request, env, agora) {
   }
   const atual = await abrir(pedido?.chave, await chavePublica(env));
   if (!atual) return json({ erro: "Chave inválida." }, 400);
+  if (atual.pagamento && !atual.assinatura) {
+    return json({ erro: `Esta chave foi paga por período e não renova sozinha: para continuar, pague mais um período em ${PAGINA_DE_PLANOS}.` }, 409);
+  }
   if (String(atual.assinatura).startsWith("manual")) {
     return json({ erro: "Esta chave foi emitida à mão: para renovar, fale com o suporte." }, 409);
   }
@@ -127,6 +281,9 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     if (url.pathname === "/pronto" && request.method === "GET") return pronto(url, env, agora);
     if (url.pathname === "/renovar" && request.method === "POST") return renovar(request, env, agora);
+    if (url.pathname === "/comprar" && request.method === "GET") return comprar(url, env);
+    if (url.pathname === "/pago" && request.method === "GET") return pago(url, env, agora);
+    if (url.pathname === "/recuperar" && ["GET", "POST"].includes(request.method)) return recuperar(request, url, env, agora);
     if (url.pathname === "/" && request.method === "GET") return json({ servico: "licenças do Véu Pro" });
     return json({ erro: "Endereço desconhecido." }, 404);
   },

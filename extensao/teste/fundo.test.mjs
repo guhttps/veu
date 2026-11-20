@@ -102,6 +102,26 @@ test("perto do vencimento, renova sozinho; longe, não", async () => {
   assert.equal(fundo.renovacoes.length, 1); // no máximo uma tentativa a cada 12 horas
 });
 
+test("a chave paga por período (Pix, boleto) não tenta renovar e avisa perto do fim", async () => {
+  const fundo = carregar();
+  const avulsa = (dias) => licenca(dias, { assinatura: undefined, pagamento: "123456789" });
+  const config = await fundo.doIcone({ tipo: "ativarLicenca", chave: await avulsa(3) });
+  await new Promise((resolver) => setTimeout(resolver, 50));
+  assert.equal(config.pro.ativo, true);
+  assert.equal(config.pro.avulsa, true);
+  assert.equal(config.pro.acabando, true);
+  assert.equal(fundo.renovacoes.length, 0); // nada vai para a rede
+  // Vencida, nem é guardada: o período pago acabou.
+  assert.match((await fundo.doIcone({ tipo: "ativarLicenca", chave: await avulsa(-1) })).erro, /pague mais um período/);
+  assert.equal(fundo.renovacoes.length, 0);
+  // A emitida à mão (cortesia, teste) também não renova.
+  fundo.store.local.licenca = await licenca(2, { assinatura: "manual-1" });
+  fundo.store.local.licencaTentativa = 0;
+  assert.equal((await fundo.doIcone({ tipo: "configuracao" })).pro.avulsa, false);
+  await new Promise((resolver) => setTimeout(resolver, 50));
+  assert.equal(fundo.renovacoes.length, 0);
+});
+
 test("a chave e as listas da empresa vêm da política e não mudam pelo ícone", async () => {
   const fundo = carregar({ politica: { licenca: await licenca(365, { plano: "empresa", pessoas: 50 }), listaTermos: ["Netuno"] } });
   const config = await fundo.doIcone({ tipo: "configuracao" });

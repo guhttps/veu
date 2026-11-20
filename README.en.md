@@ -112,6 +112,8 @@ Commands are in Portuguese: `anonimizar` (anonymize), `restaurar` (restore), `le
 | IT infrastructure | IP addresses, ports (`10.0.0.5:8080`, `PORT=5432`, `ssh -p 2222`; never a bare number) internal server names (`db.internal`, `cache.prod.local`), MAC addresses and phone IMEIs |
 | Secrets | API keys from 30+ services, JWT and bearer tokens, tokens in links (`?token=`), passwords (also Wi-Fi QR codes), verification codes, 2FA secrets (`otpauth://`), private keys, crypto wallet recovery phrases (BIP-39 checksum), connection URLs with passwords |
 
+**Véu Pro** (Brazil, R$ 9.90 a month or R$ 99 a year) adds whole-file protection (Word, Excel, PowerPoint and PDF, in the browser), own lists of names and terms that always disappear, and a monthly report with counts only to the extension. Pay with a card subscription or one period at a time with Pix, boleto, debit or Mercado Pago balance. Everything open stays free. [Plans](https://guhttps.github.io/veu/planos.html).
+
 People choose what to hide with checkboxes per group (and per type) on the web page, in the extension and in the local dashboard. Structured formats are recognized on their own. Bare numbers that a Brazilian document or an order number could imitate only count with a context word nearby ("SSN", "BSN", "NUIT"...). Custom patterns go in `veu.toml`.
 
 ## Benchmark

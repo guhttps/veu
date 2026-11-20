@@ -6,8 +6,6 @@
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'none'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
   <meta name="referrer" content="no-referrer">
-  <!-- Até o lançamento: fora dos buscadores e sem link nas outras páginas. No lançamento, tirar esta linha. -->
-  <meta name="robots" content="noindex">
   <title>Planos do Véu</title>
   <meta name="description" content="Planos do Véu: grátis para sempre, Pro para profissionais e planos sob medida para equipes. Seus textos nunca passam pelos nossos servidores.">
   <link rel="stylesheet" href="estilo.css">
@@ -29,7 +27,7 @@
 
   <main>
     <section class="painel chamada">
-      <p><b>Os planos pagos estão chegando.</b> Enquanto isso, o Véu grátis já protege os seus dados.</p>
+      <p><b>O Véu Pro chegou.</b> Assine no cartão ou pague com Pix, boleto, débito ou saldo do Mercado Pago. O Véu grátis continua grátis.</p>
       <a class="botao" href="./">Usar o Véu grátis</a>
     </section>
 
@@ -50,14 +48,20 @@
         <h2>Pro</h2>
         <p class="preco">R$ 9,90 <small>por mês</small></p>
         <p class="depois">Ou R$ 99 por ano, o equivalente a dois meses de graça.</p>
-        <!-- Botões de assinar: aparecem no lançamento, quando as funções do Pro estiverem prontas na extensão. -->
-        <p class="assinar" hidden>
+        <p class="forma"><b>Assinatura no cartão de crédito</b>, renova sozinha e você cancela quando quiser:</p>
+        <p class="assinar">
           <a class="botao" href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=f90b41a492514908bcc6abbb1ff8bd70" rel="noopener">Assinar por mês</a>
           <a class="botao secundario" href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=86dc21c3c9844ce689ac693c06498dad" rel="noopener">Assinar por ano</a>
         </p>
+        <p class="forma"><b>Pix, boleto, débito ou cartão</b>, pagando um período por vez:</p>
+        <p class="assinar">
+          <a class="botao secundario" href="https://licencas.veu-pro.workers.dev/comprar?periodo=mensal" rel="noopener">Pagar 1 mês</a>
+          <a class="botao secundario" href="https://licencas.veu-pro.workers.dev/comprar?periodo=anual" rel="noopener">Pagar 1 ano</a>
+        </p>
+        <p class="depois">Pagamento pelo Mercado Pago. A chave aparece na tela logo depois.</p>
         <ul>
           <li>Tudo do Grátis</li>
-          <li>Arquivos inteiros (Word, Excel e PDF) direto na extensão</li>
+          <li>Arquivos inteiros (Word, Excel, PowerPoint e PDF) direto na extensão</li>
           <li>Listas próprias: nomes de clientes e termos da sua empresa</li>
           <li>Relatório mensal do que deixou de ir para a IA, útil para a LGPD</li>
           <li>Suporte por e-mail</li>
@@ -87,8 +91,12 @@
       <p>Se um dia mudar, avisamos aqui e por e-mail antes de valer.</p>
       <h3>O plano grátis vai acabar?</h3>
       <p>Não. Tudo o que é aberto hoje continua aberto e grátis, com a licença MIT.</p>
-      <h3>Quando os planos pagos começam?</h3>
-      <p>Eles estão em construção. O lançamento vai ser anunciado nesta página e no GitHub do Véu.</p>
+      <h3>Quais são as formas de pagamento?</h3>
+      <p>Duas, as duas pelo Mercado Pago. A <b>assinatura</b> é no cartão de crédito: renova sozinha todo mês (ou todo ano), e a chave renova junto. O <b>pagamento por período</b> aceita Pix, cartão de crédito ou débito e saldo do Mercado Pago; no plano de 1 ano, também boleto e até 12 parcelas no cartão. Ele vale 1 mês ou 1 ano a partir da confirmação e não renova sozinho: perto do fim, a extensão avisa, e você paga mais um período se quiser. O Véu não vê os dados do seu cartão nem da sua conta.</p>
+      <h3>Como recebo a chave?</h3>
+      <p>Logo depois do pagamento, o Mercado Pago volta para uma página com a sua chave. Cole a chave no ícone do Véu, em Véu Pro. No Pix, a confirmação leva segundos; no boleto, até 3 dias úteis. Fechou a página antes? Em <a href="https://licencas.veu-pro.workers.dev/recuperar">licencas.veu-pro.workers.dev/recuperar</a>, com o número da operação do e-mail do Mercado Pago e o e-mail do pagamento.</p>
+      <h3>Como cancelo a assinatura?</h3>
+      <p>No Mercado Pago, em Assinaturas. Nada mais é cobrado, e a chave vale até o fim do período já pago.</p>
     </section>
   </main>
 </body>

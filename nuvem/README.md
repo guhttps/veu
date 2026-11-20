@@ -2,7 +2,8 @@
 
 Um servidor pequeno, na Cloudflare Workers (plano gratuito), que entrega e renova as chaves do Véu Pro. Ele não tem banco de dados e nunca recebe textos:
 
-- **Depois do pagamento**, o Mercado Pago manda a pessoa para `/pronto`. O servidor confere a assinatura no Mercado Pago, assina a chave (Ed25519) e mostra a chave na tela.
+- **Depois da assinatura** (cartão de crédito), o Mercado Pago manda a pessoa para `/pronto`. O servidor confere a assinatura no Mercado Pago, assina a chave (Ed25519) e mostra a chave na tela.
+- **No pagamento por período** (Pix, boleto, cartões, saldo), o botão da página de planos abre `/comprar?periodo=mensal` (ou `anual`). O servidor cria a cobrança no Mercado Pago (Checkout Pro) com uma referência aleatória e manda a pessoa para lá. Na volta, `/pago?ref=...` procura o pagamento daquela referência, confere a situação, a moeda e o valor e mostra uma chave que vale o período (sem renovação). Enquanto o Pix ou o boleto não são pagos, a página espera e se atualiza sozinha. Quem fechou a página usa `/recuperar`, com o número da operação e o e-mail do pagamento. Os períodos, os valores e os meios excluídos ficam em `PAGAMENTOS`, no `wrangler.toml` (o boleto fica fora do mensal porque a tarifa fixa levaria boa parte dos R$ 9,90).
 - **Na renovação**, a extensão manda só a própria chave para `/renovar`. O servidor pergunta ao Mercado Pago se a assinatura continua ativa e devolve uma chave nova.
 - **Na extensão**, a chave é conferida sem internet, com a chave pública que fica em `extensao/licenca.js`. Sem a chave privada, ninguém fabrica uma licença.
 
@@ -33,10 +34,6 @@ Os segredos (a chave privada e o access token do Mercado Pago) vão direto do se
 6. **Planos:** no PowerShell, rode `$env:MP_TOKEN = "<o mesmo access token>"; node nuvem/criar-planos.mjs https://licencas.veu-pro.workers.dev` e depois `npx wrangler deploy` de novo. O script mostra os links de assinar.
 7. **Me avise** com o endereço do servidor e os dois links de assinar (nenhum deles é segredo). Eu termino o resto (lista abaixo) e lanço a versão.
 
-## Antes de lançar (eu faço)
+## Mudar preços ou períodos
 
-- Endereço do servidor em `SERVIDOR`, no `extensao/licenca.js`.
-- Botões "Assinar" na página de planos, com os links do passo 6.
-- Política de privacidade: no Pro, a extensão fala com o servidor de licenças só para renovar a chave, mandando a própria chave.
-- Firefox: declarar em `data_collection_permissions` o dado que vai na chave (o e-mail), e atualizar as respostas de privacidade das lojas.
-- Uma assinatura de teste de ponta a ponta, cancelada em seguida.
+Assinatura: crie planos novos com `criar-planos.mjs` e troque os ids em `PLANOS` (quem já assina continua no plano antigo). Pagamento por período: mude `PAGAMENTOS` no `wrangler.toml`. Nos dois casos, rode `npx wrangler deploy` e atualize a página de planos (`web/planos.html`).

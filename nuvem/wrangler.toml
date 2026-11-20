@@ -9,4 +9,8 @@ CHAVE_PUBLICA = "62O3t2ByV5o4dWL3VZNTl5mXWQjwOZm9ndF6hDB20U8"
 # Preenchida por node nuvem/criar-planos.mjs: {"id do plano no Mercado Pago": {"plano": "pro", "nome": "..."}}.
 PLANOS = '{"f90b41a492514908bcc6abbb1ff8bd70":{"plano":"pro","nome":"Véu Pro mensal"},"86dc21c3c9844ce689ac693c06498dad":{"plano":"pro","nome":"Véu Pro anual"}}'
 
+# Pagamento avulso (Pix, boleto, cartões, saldo): um período por vez, sem renovação automática. "excluir" tira tipos de
+# pagamento do Mercado Pago ("ticket" = boleto e lotérica, cuja tarifa fixa levaria cerca de 40% de R$ 9,90).
+PAGAMENTOS = '{"mensal":{"plano":"pro","nome":"Véu Pro por 1 mês","valor":9.9,"dias":30,"parcelas":1,"excluir":["ticket"]},"anual":{"plano":"pro","nome":"Véu Pro por 1 ano","valor":99,"dias":365,"parcelas":12}}'
+
 # Segredos (nunca neste arquivo): npx wrangler secret put CHAVE_PRIVADA e npx wrangler secret put MP_TOKEN

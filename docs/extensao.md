@@ -43,10 +43,25 @@ Em **O que esconder**, também no ícone, você escolhe os grupos: nomes e conta
 - **Proteger num site qualquer:** selecione o texto num campo de qualquer site, clique com o botão direito e escolha **Véu: proteger o texto selecionado**.
 - **Ver o que foi protegido:** o número no ícone mostra quantos dados foram protegidos na aba, e o ícone lista os tipos.
 
+## Véu Pro
+
+Com uma chave do [Véu Pro](https://guhttps.github.io/veu/planos.html) (R$ 9,90 por mês ou R$ 99 por ano), o ícone ganha:
+
+- **Proteger um arquivo:** Word, Excel e PowerPoint voltam no mesmo formato, com os dados trocados pelos marcadores da aba da IA; PDF vira texto. A mesma página devolve os dados reais ao arquivo que a IA mandar de volta. O arquivo não sai do navegador.
+- **Listas próprias:** nomes de clientes e termos da empresa que sempre somem, guardados só neste navegador.
+- **Relatório do mês:** quantos dados de cada tipo deixaram de ir para a IA, por site e por dia, para imprimir ou baixar em CSV. Só números, nunca os valores.
+
+Para ativar, cole a chave em **Véu Pro**, no ícone, e clique em **Ativar**. A chave é conferida sem internet.
+
+- **Assinatura no cartão:** a chave renova sozinha perto do vencimento. É a única conexão de rede da extensão, e leva só a própria chave.
+- **Pagamento por período (Pix, boleto, débito, cartão ou saldo):** a chave vale 1 mês ou 1 ano e não renova; perto do fim, o ícone avisa. Fechou a página da chave? Recupere em [licencas.veu-pro.workers.dev/recuperar](https://licencas.veu-pro.workers.dev/recuperar), com o número da operação e o e-mail do pagamento.
+
+A TI pode distribuir a chave e as listas pela política (`licenca`, `listaNomes`, `listaTermos`): veja o [guia para empresas](empresas.md#extensão-gerenciada-pela-ti).
+
 ## Limites
 
 - **Detecção:** é automática e pode deixar passar algum dado. Confira antes de enviar.
-- **Arquivos anexados:** não são protegidos. Use a [página do Véu](https://guhttps.github.io/veu/) ou `veu anonimizar` antes de anexar.
+- **Arquivos anexados:** não são protegidos ao anexar. Use **Proteger um arquivo** (Véu Pro), o painel, ou `veu anonimizar` antes de anexar.
 - **Dados na tela:** a opção **Mostrar os dados reais nas respostas** vem desligada, porque, com ela ligada, os dados reais aparecem na página, e o código do site (inclusive ferramentas de análise e gravação de sessão) pode lê-los. Ligue só se isso não for um problema.
 - **O que você digita:** a extensão protege ao colar e ao enviar. O que você digita à mão fica no campo do site até o envio, e alguns sites salvam rascunhos enquanto você digita. Para textos com dados, cole em vez de digitar, ou use a [página do Véu](https://guhttps.github.io/veu/) antes.
 - **Não é uma barreira:** a extensão ajuda quem quer se proteger, mas não impede quem quer burlar (por exemplo, desligando-a). Para garantir, a TI pode travar a configuração pela política, e o proxy do Véu protege o tráfego de toda a empresa.
