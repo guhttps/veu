@@ -67,9 +67,12 @@ def main() -> int:
     if not (PDFJS / "build" / "pdf.min.mjs").exists():
         print("Falta o pdf.js: rode 'npm ci' na pasta js.", file=sys.stderr)
         return 1
-    for name in ("pdf.min.mjs", "pdf.worker.min.mjs"):
-        shutil.copyfile(PDFJS / "build" / name, EXTENSION / name)
-    shutil.copyfile(PDFJS / "LICENSE", EXTENSION / "pdfjs-LICENSE.txt")
+    # A página web também lê PDFs (arquivos inteiros) e confere a chave do Véu Pro com o mesmo licenca.js da extensão.
+    for target in (EXTENSION, WEB):
+        for name in ("pdf.min.mjs", "pdf.worker.min.mjs"):
+            shutil.copyfile(PDFJS / "build" / name, target / name)
+        shutil.copyfile(PDFJS / "LICENSE", target / "pdfjs-LICENSE.txt")
+    shutil.copyfile(EXTENSION / "licenca.js", WEB / "licenca.js")
     manifest = json.loads((EXTENSION / "manifest.json").read_text(encoding="utf-8"))
     version = manifest["version"]
     output = ROOT / "dist" / f"veu-extensao-{version}.zip"
@@ -77,7 +80,7 @@ def main() -> int:
     write_zip(output, manifest)
     firefox = ROOT / "dist" / f"veu-extensao-firefox-{version}.zip"
     write_zip(firefox, firefox_manifest(manifest))
-    print(f"{output.relative_to(ROOT)}, {firefox.relative_to(ROOT)} e web/veu.global.js prontos")
+    print(f"{output.relative_to(ROOT)}, {firefox.relative_to(ROOT)} e a página web (web/) prontos")
     return 0
 
 

@@ -13,20 +13,24 @@
 </head>
 <body>
   <header class="topo">
-    <div class="marca">
+    <a class="marca" href="./" aria-label="Véu, início">
       <span class="logo" aria-hidden="true"></span>
-      <div>
-        <h1>Privacidade</h1>
-        <p>Extensão e página do Véu. Atualizada em 19 de novembro de 2026.</p>
-      </div>
-    </div>
-    <nav class="links">
+      <span class="nome-marca">Véu</span>
+    </a>
+    <nav class="links" aria-label="Site">
+      <a class="discreto" href="./#usar">Usar agora</a>
+      <a class="discreto" href="./#onde">Extensão e programa</a>
+      <a class="discreto" href="planos.html">Planos</a>
+      <a class="discreto" href="docs/">Documentação</a>
       <a class="discreto" href="#english">English</a>
-      <a class="discreto" href="./">Voltar</a>
     </nav>
   </header>
 
   <main>
+    <div class="titulo-pagina">
+      <h1>Privacidade</h1>
+      <p>Extensão e página do Véu. Atualizada em 20 de novembro de 2026.</p>
+    </div>
     <section class="painel">
       <h2>Em uma frase</h2>
       <p>O Véu não coleta, não guarda em servidores e não envia a ninguém nenhum dado seu. A detecção roda dentro do seu navegador. A única exceção é a renovação da chave de quem assina o Véu Pro, e ela nunca leva um texto seu (veja abaixo).</p>
@@ -76,7 +80,7 @@
 
     <section class="painel">
       <h2>A página do Véu</h2>
-      <p>A página em guhttps.github.io/veu funciona do mesmo jeito: a detecção roda no navegador, e a política de segurança da página bloqueia qualquer conexão. O cofre fica só na aba aberta; a escolha de idioma e as caixinhas ficam salvas no navegador. A hospedagem é do GitHub Pages, que pode registrar acessos ao site como qualquer servidor web, sem nenhum texto seu.</p>
+      <p>A página em guhttps.github.io/veu funciona do mesmo jeito: a detecção roda no navegador, e a política de segurança da página bloqueia qualquer conexão. Os arquivos inteiros (Word, Excel, PowerPoint e PDF) também são lidos e protegidos no navegador; o PDF é lido pelo pdf.js, servido pelo próprio site. O cofre fica só na aba aberta; a escolha de idioma e as caixinhas ficam salvas no navegador. Se você ativar o Véu Pro na página, a chave e as listas próprias ficam no armazenamento deste navegador até você remover a chave; a chave é conferida na própria página, sem conexão. A hospedagem é do GitHub Pages, que pode registrar acessos ao site como qualquer servidor web, sem nenhum texto ou arquivo seu.</p>
     </section>
 
     <section class="painel">
@@ -94,9 +98,21 @@
         <li><b>Véu Pro:</b> paid through Mercado Pago, either as a card subscription or one period at a time (Pix, boleto, card or account balance), under Mercado Pago's own privacy policy. Véu's license server (licencas.veu-pro.workers.dev, on Cloudflare) checks the payment and shows the key, which holds the plan, the payment e-mail, the subscription or payment number, and the expiry date; the server keeps no database. The key recovery page asks for the operation number and e-mail only to check the payment at that moment. With a subscription key, near expiry, the extension sends its own key to the server to get a new one. That is its only network connection, it happens only with a subscription key, and it never carries your text, hidden data or own lists. A key paid for one period never renews and makes no connection. The key, the own lists and the monthly report (counts only: how many items of each type were hidden, on which site and day, for the last 13 months) stay in the browser's local storage, without syncing. Files protected on the files page never leave the browser; PDFs are read by the bundled pdf.js.</li>
         <li><b>What it does not do:</b> no network connections without Véu Pro (with it, only the key renewal above), no analytics, no tracking, no ads, no cookies, no data sales or sharing. It only reads other pages when you use one of its context menu items (protect the selected text, or copy the selection with the real data).</li>
         <li><b>Permissions:</b> storage (vault and preferences), contextMenus (the two context menu items), activeTab and scripting (act on the selected text in the current tab, only when you use the menu), and the AI sites listed above.</li>
+        <li><b>The Véu web page</b> (guhttps.github.io/veu) works the same way: detection runs in your browser and the page's security policy blocks every network connection. Whole files (Word, Excel, PowerPoint and PDF) are read and protected in the browser too; PDFs are read by pdf.js, served by the site itself. If you activate Véu Pro on the page, the key and your own lists stay in this browser's storage until you remove the key; the key is checked on the page itself, offline. The site is hosted on GitHub Pages, which may log visits like any web server, never your text or files.</li>
         <li><b>Contact:</b> github.com/guhttps/veu/issues. The code is open source (MIT).</li>
       </ul>
     </section>
   </main>
+
+  <footer class="rodape">
+    <nav class="links" aria-label="Rodapé">
+      <a class="discreto" href="planos.html">Planos</a>
+      <a class="discreto" href="instalar.html">Instalar</a>
+      <a class="discreto" href="docs/">Documentação</a>
+      <a class="discreto" href="privacidade.html">Privacidade</a>
+      <a class="discreto" href="https://github.com/guhttps/veu">Código aberto no GitHub</a>
+    </nav>
+    <p class="discreto">Véu, código aberto (licença MIT). Feito no Brasil.</p>
+  </footer>
 </body>
 </html>

@@ -31,6 +31,10 @@ extensao/pdf.min.mjs
 extensao/pdf.worker.min.mjs
 extensao/pdfjs-LICENSE.txt
 web/veu.global.js
+web/pdf.min.mjs
+web/pdf.worker.min.mjs
+web/pdfjs-LICENSE.txt
+web/licenca.js
 web/docs/
 .hypothesis/
 n8n/node_modules/

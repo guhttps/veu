@@ -52,10 +52,12 @@
   // Uma instância por configuração: montar as listas de nomes a cada tecla seria lento, e a mesma instância
   // reaproveita o cache de detecção de textos longos.
   const instancias = new Map();
+  // Com o Véu Pro ativo nesta página, as listas próprias (nomes e termos que sempre somem) entram também.
+  const termos = () => window.veuPro?.termos();
   function veuPara(lista, op) {
     const tipos = desligados.size ? tiposLigados() : undefined;
-    const chave = JSON.stringify([lista, op, tipos]);
-    if (!instancias.has(chave)) instancias.set(chave, new Veu({ allowlist: lista, operator: op, labels: tipos }));
+    const chave = JSON.stringify([lista, op, tipos, termos()]);
+    if (!instancias.has(chave)) instancias.set(chave, new Veu({ allowlist: lista, operator: op, labels: tipos, terms: termos() }));
     return instancias.get(chave);
   }
   // Textos grandes vão para um trabalhador (Web Worker): a página continua respondendo.
@@ -247,7 +249,7 @@
         mostrarComMarcadores(saida, data.texto);
       };
       trabalhador.postMessage({ id, texto, ignorar: [...ignorados], operador: operador.value, cofre: cofre.toJSON(),
-        tipos: desligados.size ? tiposLigados() : undefined });
+        tipos: desligados.size ? tiposLigados() : undefined, termos: termos() });
       return;
     }
     pedido += 1; // descarta respostas atrasadas do trabalhador
@@ -309,6 +311,25 @@
     };
     leitor.readAsText(arquivo, "utf-8");
     evento.target.value = "";
+  });
+
+  // Para a parte de arquivos (arquivos.js): o mesmo cofre, então a resposta da IA sobre um arquivo também volta
+  // com os dados reais no passo 3.
+  window.veuPagina = {
+    T, idioma, avisar,
+    cofre: () => Vault.fromJSON(cofre.toJSON()),
+    guardar(novo) {
+      cofre = novo;
+      salvarCofre();
+      atualizar();
+      restaurar();
+    },
+    veu: () => veuPara([...ignorados], "token"),
+    nomeDoTipo,
+  };
+  window.veuPro?.aoMudar(() => {
+    instancias.clear();
+    atualizar();
   });
 
   montarTipos();

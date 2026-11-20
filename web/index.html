@@ -7,91 +7,191 @@
         content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
   <meta name="referrer" content="no-referrer">
   <title>Véu: proteja seus dados antes de usar IA</title>
-  <meta name="description" content="Esconda CPF, nomes, telefones e senhas antes de colar no ChatGPT, Claude ou Gemini. Tudo acontece no seu navegador.">
+  <meta name="description" content="Esconda CPF, nomes, telefones e senhas antes de colar no ChatGPT, Claude ou Gemini. Textos e arquivos, tudo no seu navegador.">
+  <meta property="og:title" content="Véu: use IA sem entregar seus dados">
+  <meta property="og:description" content="Esconde CPF, nomes, telefones e senhas antes do ChatGPT, Claude ou Gemini, e devolve os dados reais na resposta. Grátis e de código aberto.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://guhttps.github.io/veu/">
+  <link rel="canonical" href="https://guhttps.github.io/veu/">
   <link rel="stylesheet" href="estilo.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23234e52'/%3E%3Cpath d='M8 12h16M8 17h12M8 22h8' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 </head>
 <body>
   <header class="topo">
-    <div class="marca">
+    <a class="marca" href="./" aria-label="Véu, início">
       <span class="logo" aria-hidden="true"></span>
-      <div>
-        <h1>Véu</h1>
-        <p data-t="subtitulo">Esconda seus dados antes de usar IA. Nada sai do seu computador.</p>
-      </div>
-    </div>
-    <nav class="links">
+      <span class="nome-marca">Véu</span>
+    </a>
+    <nav class="links" aria-label="Site">
+      <a class="discreto" href="#usar" data-t="navUsar">Usar agora</a>
+      <a class="discreto" href="#onde" data-t="navOnde">Extensão e programa</a>
+      <a class="discreto" href="planos.html" data-t="planos">Planos</a>
+      <a class="discreto" href="docs/" data-t="documentacao" data-t-href="documentacaoLink">Documentação</a>
       <a class="discreto" id="idioma" href="?lang=en" data-t="idioma">English</a>
-      <a class="discreto" href="docs/" target="_blank" rel="noopener" data-t="documentacao" data-t-href="documentacaoLink">Documentação</a>
-      <a class="discreto" href="planos.html" data-t="planos">Véu Pro</a>
-      <a class="discreto" href="privacidade.html" data-t="politica" data-t-href="politicaLink">Privacidade</a>
-      <a class="discreto" href="https://github.com/guhttps/veu" data-t="github">Código aberto no GitHub</a>
     </nav>
   </header>
 
   <main>
-    <ol class="passos" aria-label="Como funciona" data-t-aria="comoFunciona">
-      <li><b data-t="passo1b">Cole</b><span data-t="passo1"> o texto com dados pessoais</span></li>
-      <li><b data-t="passo2b">Copie</b><span data-t="passo2"> a versão protegida e cole na IA</span></li>
-      <li><b data-t="passo3b">Cole a resposta</b><span data-t="passo3"> da IA para ver os dados reais de volta</span></li>
-    </ol>
-
-    <section class="painel" aria-labelledby="t1">
-      <div class="cabeca">
-        <h2 id="t1"><span class="num">1</span> <span data-t="seuTexto">Seu texto</span></h2>
-        <label class="botao secundario arquivo">
-          <span data-t="abrirArquivo">Abrir arquivo</span>
-          <input id="arquivo" type="file" accept=".txt,.md,.csv,.tsv,.json,.jsonl,.log,.xml,.html,.yml,.yaml,.env,.ini,.sql">
-        </label>
-      </div>
-      <textarea id="entrada" rows="9" spellcheck="false" data-t-placeholder="exemploEntrada"
-        placeholder="Ex.: A cliente Maria Souza, CPF 529.982.247-25, pediu o reembolso. O telefone dela é (11) 98765-4321."></textarea>
-      <div id="achados" class="achados" aria-live="polite"></div>
-      <details class="tipos" id="tipos">
-        <summary><span data-t="oQueEsconder">O que esconder</span> <span id="tipos-resumo" class="tipos-resumo"></span></summary>
-        <div id="tipos-grupos" class="tipos-grupos"></div>
-      </details>
-    </section>
-
-    <section class="painel" aria-labelledby="t2">
-      <div class="cabeca">
-        <h2 id="t2"><span class="num">2</span> <span data-t="textoProtegido">Texto protegido</span></h2>
+    <section class="heroi" aria-labelledby="titulo-heroi">
+      <div class="heroi-texto">
+        <h1 id="titulo-heroi" data-t="heroiTitulo">Use IA sem entregar seus dados</h1>
+        <p class="heroi-sub" data-t="heroiTexto">O Véu troca nomes, CPF, telefones, chaves de API e senhas por marcadores antes do texto ir para o ChatGPT, Claude ou Gemini, e devolve os dados reais na resposta. Tudo no seu computador.</p>
         <div class="acoes">
-          <select id="operador" aria-label="Como esconder" data-t-aria="comoEsconder">
-            <option value="token" data-t="opToken">Marcadores reversíveis ([CPF_1])</option>
-            <option value="mascara" data-t="opMascara">Máscara (***.982.247-**)</option>
-            <option value="remover" data-t="opRemover">Remover ([CPF])</option>
-          </select>
-          <button id="copiar-protegido" class="botao" data-t="copiarParaIa">Copiar para a IA</button>
+          <a class="botao" href="#usar" data-t="heroiUsar">Proteger um texto agora</a>
+          <a class="botao secundario" href="#onde" data-t="heroiExtensao">Instalar a extensão</a>
         </div>
+        <p class="heroi-nota" data-t="heroiNota">Grátis, sem conta e de código aberto.</p>
       </div>
-      <pre id="saida" class="saida" tabindex="0" aria-label="Texto protegido" data-t-aria="textoProtegido"></pre>
-      <p class="dica" data-t="dica">Cole este texto no ChatGPT, Claude, Gemini ou qualquer IA. Ela não vê seus dados reais.</p>
+      <figure class="exemplo-antes-depois" aria-label="Exemplo" data-t-aria="exemploAria">
+        <div class="etapa">
+          <span class="etiqueta" data-t="exemploVoce">Você escreve</span>
+          <p><span data-t="ex1a">A cliente </span><b>Maria Souza</b><span data-t="ex1b">, CPF </span><b>529.982.247-25</b><span data-t="ex1c">, ligou do </span><b>(11) 98765-4321</b>.</p>
+        </div>
+        <div class="etapa ia">
+          <span class="etiqueta" data-t="exemploIa">A IA recebe</span>
+          <p><span data-t="ex1a">A cliente </span><mark>[PESSOA_1]</mark><span data-t="ex1b">, CPF </span><mark>[CPF_1]</mark><span data-t="ex1c">, ligou do </span><mark>[TELEFONE_1]</mark>.</p>
+        </div>
+        <div class="etapa">
+          <span class="etiqueta" data-t="exemploVolta">A resposta volta assim</span>
+          <p data-t="exemploResposta2">Retorne a ligação para Maria Souza no (11) 98765-4321.</p>
+        </div>
+      </figure>
     </section>
 
-    <section class="painel" aria-labelledby="t3">
-      <div class="cabeca">
-        <h2 id="t3"><span class="num">3</span> <span data-t="respostaIa">Resposta da IA</span></h2>
-        <button id="copiar-restaurado" class="botao" data-t="copiarRestaurado">Copiar com os dados reais</button>
+    <ul class="beneficios">
+      <li><b data-t="beneficio1t">Nada sai do seu computador</b><span data-t="beneficio1">A detecção roda no navegador e esta página bloqueia conexões. O Véu nunca vê o seu texto.</span></li>
+      <li><b data-t="beneficio2t">Os dados voltam na resposta</b><span data-t="beneficio2">Cada dado vira um marcador, como [CPF_1]. Quando a IA responde, os marcadores voltam a ser os dados reais.</span></li>
+      <li><b data-t="beneficio3t">Documentos conferidos</b><span data-t="beneficio3">CPF, CNPJ, cartões e documentos de 22 países são conferidos pelo dígito verificador: um número qualquer não vira CPF.</span></li>
+    </ul>
+
+    <section id="usar" class="ferramenta" aria-labelledby="titulo-usar">
+      <h2 class="titulo-secao" id="titulo-usar" data-t="usarTitulo">Proteger agora</h2>
+      <ol class="passos" aria-label="Como funciona" data-t-aria="comoFunciona">
+        <li><b data-t="passo1b">Cole</b><span data-t="passo1"> o texto com dados pessoais</span></li>
+        <li><b data-t="passo2b">Copie</b><span data-t="passo2"> a versão protegida e cole na IA</span></li>
+        <li><b data-t="passo3b">Cole a resposta</b><span data-t="passo3"> da IA para ver os dados reais de volta</span></li>
+      </ol>
+
+      <section class="painel" aria-labelledby="t1">
+        <div class="cabeca">
+          <h3 id="t1"><span class="num">1</span> <span data-t="seuTexto">Seu texto</span></h3>
+          <label class="botao secundario arquivo">
+            <span data-t="abrirArquivo">Abrir arquivo de texto</span>
+            <input id="arquivo" type="file" accept=".txt,.md,.csv,.tsv,.json,.jsonl,.log,.xml,.html,.yml,.yaml,.env,.ini,.sql">
+          </label>
+        </div>
+        <textarea id="entrada" rows="9" spellcheck="false" data-t-placeholder="exemploEntrada"
+          placeholder="Ex.: A cliente Maria Souza, CPF 529.982.247-25, pediu o reembolso. O telefone dela é (11) 98765-4321."></textarea>
+        <div id="achados" class="achados" aria-live="polite"></div>
+        <details class="tipos" id="tipos">
+          <summary><span data-t="oQueEsconder">O que esconder</span> <span id="tipos-resumo" class="tipos-resumo"></span></summary>
+          <div id="tipos-grupos" class="tipos-grupos"></div>
+        </details>
+      </section>
+
+      <section class="painel" aria-labelledby="t2">
+        <div class="cabeca">
+          <h3 id="t2"><span class="num">2</span> <span data-t="textoProtegido">Texto protegido</span></h3>
+          <div class="acoes">
+            <select id="operador" aria-label="Como esconder" data-t-aria="comoEsconder">
+              <option value="token" data-t="opToken">Marcadores reversíveis ([CPF_1])</option>
+              <option value="mascara" data-t="opMascara">Máscara (***.982.247-**)</option>
+              <option value="remover" data-t="opRemover">Remover ([CPF])</option>
+            </select>
+            <button id="copiar-protegido" class="botao" data-t="copiarParaIa">Copiar para a IA</button>
+          </div>
+        </div>
+        <pre id="saida" class="saida" tabindex="0" aria-label="Texto protegido" data-t-aria="textoProtegido"></pre>
+        <p class="dica" data-t="dica">Cole este texto no ChatGPT, Claude, Gemini ou qualquer IA. Ela não vê seus dados reais.</p>
+      </section>
+
+      <section class="painel" aria-labelledby="t3">
+        <div class="cabeca">
+          <h3 id="t3"><span class="num">3</span> <span data-t="respostaIa">Resposta da IA</span></h3>
+          <button id="copiar-restaurado" class="botao" data-t="copiarRestaurado">Copiar com os dados reais</button>
+        </div>
+        <textarea id="resposta" rows="6" spellcheck="false" data-t-placeholder="exemploResposta" placeholder="Cole aqui a resposta da IA. Os marcadores, como [PESSOA_1], voltam a ser os dados reais."></textarea>
+        <pre id="restaurado" class="saida" tabindex="0" aria-label="Resposta com os dados reais" data-t-aria="respostaReal"></pre>
+      </section>
+
+      <section class="painel" id="arquivos" aria-labelledby="t4">
+        <h3 id="t4" data-t="arquivosTitulo">Arquivos inteiros</h3>
+        <p class="dica" data-t="arquivosTexto">Word, Excel e PowerPoint voltam no mesmo formato, com os dados trocados por marcadores e a formatação no lugar. PDF vira texto. O arquivo não sai do seu computador, e a resposta da IA sobre ele volta com os dados reais no passo 3.</p>
+        <div class="soltar-par">
+          <label class="soltar" id="soltar-proteger">
+            <input id="arquivo-proteger" type="file" accept=".docx,.xlsx,.pptx,.pdf,.txt,.md,.csv,.tsv,.json,.jsonl,.log,.xml,.html,.yml,.yaml,.ini,.sql">
+            <b data-t="soltarProteger">Proteger um arquivo</b>
+            <span data-t="soltarProtegerTexto">Escolha ou solte aqui: .docx, .xlsx, .pptx, .pdf, .txt, .csv...</span>
+          </label>
+          <label class="soltar" id="soltar-devolver">
+            <input id="arquivo-devolver" type="file" accept=".docx,.xlsx,.pptx,.txt,.md,.csv,.tsv,.json,.jsonl,.log,.xml,.html,.yml,.yaml,.ini,.sql">
+            <b data-t="soltarDevolver">Devolver os dados reais</b>
+            <span data-t="soltarDevolverTexto">Para o arquivo que a IA devolveu (ou o protegido)</span>
+          </label>
+        </div>
+        <p id="arquivos-limite" class="dica">Grátis: um arquivo por vez, até 10 MB.</p>
+        <ul id="arquivos-feitos" class="arquivos-feitos" aria-live="polite"></ul>
+      </section>
+
+      <details class="painel pro-pagina" id="pro">
+        <summary><b data-t="proTitulo">Véu Pro nesta página</b> <span id="pro-resumo" class="tipos-resumo"></span></summary>
+        <p id="pro-estado" class="dica" aria-live="polite"></p>
+        <div id="pro-ativar">
+          <textarea id="pro-chave" rows="2" spellcheck="false" data-t-placeholder="proChave" placeholder="Cole aqui a sua chave (VEU1...)"></textarea>
+          <div class="acoes">
+            <button id="pro-botao" class="botao" data-t="proAtivar">Ativar</button>
+            <a class="botao secundario" href="planos.html" data-t="proConhecer">Conhecer o Véu Pro</a>
+          </div>
+        </div>
+        <div id="pro-ativo" hidden>
+          <label class="lista"><span data-t="listaNomes">Nomes que sempre somem (clientes, pacientes), um por linha</span>
+            <textarea id="lista-nomes" rows="3" spellcheck="false"></textarea></label>
+          <label class="lista"><span data-t="listaTermos">Termos da empresa (projetos, produtos, códigos internos), um por linha</span>
+            <textarea id="lista-termos" rows="3" spellcheck="false"></textarea></label>
+          <div class="acoes">
+            <button id="salvar-listas" class="botao" data-t="salvarListas">Salvar as listas</button>
+            <button id="pro-remover" class="botao secundario" data-t="proRemover">Remover a chave</button>
+          </div>
+          <p class="dica" data-t="proGuardado">A chave e as listas ficam só neste navegador.</p>
+        </div>
+      </details>
+
+      <section class="rodape-acoes">
+        <button id="limpar" class="botao secundario" data-t="apagarTudo">Apagar tudo</button>
+        <p class="privacidade" data-t="privacidade">
+          Esta página não envia nada pela internet: a detecção roda no seu navegador e a página bloqueia conexões.
+          Os dados ficam só nesta aba até você apagar ou fechar.
+        </p>
+      </section>
+    </section>
+
+    <section id="onde" aria-labelledby="titulo-onde">
+      <h2 class="titulo-secao" id="titulo-onde" data-t="ondeTitulo">O Véu onde você trabalha</h2>
+      <div class="cartoes">
+        <article class="painel cartao">
+          <h3 data-t="onde1t">Extensão do navegador</h3>
+          <p data-t="onde1">Protege o que você cola no ChatGPT, Claude, Gemini, Copilot, Perplexity e outros, antes de enviar. Chrome, Edge e Firefox.</p>
+          <a class="botao" href="docs/extensao/" data-t="onde1b">Como instalar</a>
+        </article>
+        <article class="painel cartao">
+          <h3 data-t="onde2t">Programa no computador</h3>
+          <p data-t="onde2">Um painel para arquivos e textos, que também conecta o Claude Desktop e o Cursor. Instala em 2 minutos, sem saber programar.</p>
+          <a class="botao secundario" href="instalar.html" data-t="onde2b">Instalar no computador</a>
+        </article>
+        <article class="painel cartao">
+          <h3 data-t="onde3t">Para programadores e empresas</h3>
+          <p data-t="onde3">Bibliotecas Python e JavaScript, proxy para OpenAI, Anthropic e Gemini, MCP, n8n e um gateway para a empresa toda.</p>
+          <a class="botao secundario" href="docs/" data-t="onde3b" data-t-href="documentacaoLink">Ver a documentação</a>
+        </article>
       </div>
-      <textarea id="resposta" rows="6" spellcheck="false" data-t-placeholder="exemploResposta" placeholder="Cole aqui a resposta da IA. Os marcadores, como [PESSOA_1], voltam a ser os dados reais."></textarea>
-      <pre id="restaurado" class="saida" tabindex="0" aria-label="Resposta com os dados reais" data-t-aria="respostaReal"></pre>
     </section>
 
-    <section class="rodape-acoes">
-      <button id="limpar" class="botao secundario" data-t="apagarTudo">Apagar tudo</button>
-      <p class="privacidade" data-t="privacidade">
-        Esta página não envia nada pela internet: a detecção roda no seu navegador e a página bloqueia conexões.
-        Os dados ficam só nesta aba até você apagar ou fechar.
-      </p>
-    </section>
-
-    <section class="painel destaque-instalar">
+    <section class="painel chamada-planos" aria-labelledby="titulo-planos">
       <div>
-        <h2 data-t="instalarTitulo">Quer proteger planilhas, documentos e PDFs?</h2>
-        <p data-t="instalarTexto">Instale o Véu no computador em 2 minutos, sem saber programar.</p>
+        <h2 id="titulo-planos" data-t="planosTitulo">Grátis para sempre. Pro para quem usa todo dia.</h2>
+        <p data-t="planosTexto">Tudo nesta página, a extensão e o programa são grátis. O Véu Pro (R$ 9,90 por mês) adiciona arquivos inteiros na extensão, listas próprias de nomes e termos, relatório mensal para a LGPD e vários arquivos de uma vez aqui. Pague com cartão, Pix ou boleto.</p>
       </div>
-      <a class="botao" href="instalar.html" data-t="instalarBotao">Instalar no computador</a>
+      <a class="botao" href="planos.html" data-t="planosBotao">Ver os planos</a>
     </section>
 
     <details class="mais">
@@ -105,9 +205,23 @@
     </details>
   </main>
 
+  <footer class="rodape">
+    <nav class="links" aria-label="Rodapé">
+      <a class="discreto" href="planos.html" data-t="planos">Planos</a>
+      <a class="discreto" href="instalar.html" data-t="rodapeInstalar">Instalar</a>
+      <a class="discreto" href="docs/" data-t="documentacao" data-t-href="documentacaoLink">Documentação</a>
+      <a class="discreto" href="privacidade.html" data-t="politica" data-t-href="politicaLink">Privacidade</a>
+      <a class="discreto" href="https://github.com/guhttps/veu" data-t="github">Código aberto no GitHub</a>
+    </nav>
+    <p class="discreto" data-t="rodapeTexto">Véu, código aberto (licença MIT). Feito no Brasil.</p>
+  </footer>
+
   <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
   <script src="veu.global.js"></script>
+  <script src="licenca.js"></script>
   <script src="textos.js"></script>
+  <script src="pro.js"></script>
   <script src="app.js"></script>
+  <script src="arquivos.js"></script>
 </body>
 </html>

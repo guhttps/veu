@@ -59,7 +59,8 @@ const CHAT = `<!doctype html><meta charset="utf-8"><title>Chat falso</title>
   campo.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(); } });
   document.getElementById("enviar").addEventListener("click", enviar);
 </script>`;
-const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".png": "image/png" };
+const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
+  ".png": "image/png" };
 const servidor = createServer((pedido, resposta) => {
   const caminho = new URL(pedido.url, "http://x").pathname;
   if (caminho === "/chat") {
@@ -280,6 +281,71 @@ try {
   confere(lembrou[0] === false && lembrou[1] === true, "a escolha fica salva no navegador");
   await recarregada.avaliar(`document.getElementById("grupo-infra").click()`);
   await recarregada.fechar();
+
+  // Arquivos inteiros na página: grátis, um por vez, com o mesmo cofre do texto.
+  const { writeZip, readZip } = await import("../../js/dist/index.js").then((m) => m.default ?? m);
+  const baixados = join(temporaria, "baixados");
+  await cdp("Browser.setDownloadBehavior", { behavior: "allow", downloadPath: baixados });
+  const xmlDoWord = async (caminho) => new TextDecoder().decode((await readZip(new Uint8Array(readFileSync(caminho)))).get("word/document.xml"));
+  const WORD = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+  const docs = await abrir(`${base}/web/index.html?lang=pt`);
+  const proposta = join(temporaria, "proposta.docx");
+  writeFileSync(proposta, await writeZip(new Map([["word/document.xml", new TextEncoder().encode(
+    `<w:document ${WORD}><w:body><w:p><w:r><w:t>Contratada Maria Souza, CPF ${CPF}</w:t></w:r></w:p></w:body></w:document>`)]])));
+  await enviarArquivo(docs, "#arquivo-proteger", proposta);
+  const propostaProtegida = join(baixados, "proposta-protegido.docx");
+  const xmlProtegido = (await esperarArquivo(propostaProtegida)) ? await xmlDoWord(propostaProtegida) : "";
+  confere(xmlProtegido.includes("[PESSOA_1]") && xmlProtegido.includes("[CPF_1]") && !xmlProtegido.includes("Souza"),
+    `a página protege um Word inteiro (${xmlProtegido.slice(-90)})`);
+  await docs.avaliar(`document.getElementById("resposta").focus()`);
+  await docs.digitar("A contratada é [PESSOA_1].");
+  await pausa(200);
+  const respostaDoArquivo = await docs.avaliar(`document.getElementById("restaurado").textContent`);
+  confere(respostaDoArquivo === "A contratada é Maria Souza.", `a resposta sobre o arquivo volta no passo 3 (${respostaDoArquivo})`);
+  await enviarArquivo(docs, "#arquivo-devolver", propostaProtegida);
+  const propostaDeVolta = join(baixados, "proposta-com-dados.docx");
+  const xmlDeVolta = (await esperarArquivo(propostaDeVolta)) ? await xmlDoWord(propostaDeVolta) : "";
+  confere(xmlDeVolta.includes(`Maria Souza, CPF ${CPF}`), "a página devolve os dados reais ao Word");
+  const exame = join(temporaria, "exame.pdf");
+  writeFileSync(exame, pdfCom(`Paciente Maria Souza, CPF ${CPF}`));
+  await enviarArquivo(docs, "#arquivo-proteger", exame);
+  const exameProtegido = join(baixados, "exame-protegido.txt");
+  const textoDoExame = (await esperarArquivo(exameProtegido)) ? readFileSync(exameProtegido, "utf8") : "";
+  confere(textoDoExame.includes("[PESSOA_1]") && textoDoExame.includes("[CPF_1]") && !textoDoExame.includes("Souza"),
+    `a página lê o PDF com o pdf.js e protege o texto (${textoDoExame.replace(/\n/g, " ").slice(0, 70)})`);
+  // Dois arquivos de uma vez no grátis: só o primeiro.
+  const soltarDois = (nomes) => docs.avaliar(`(() => {
+    const dados = new DataTransfer();
+    for (const nome of ${JSON.stringify(nomes)}) dados.items.add(new File(["Cliente Maria Souza, CPF ${CPF}"], nome, { type: "text/plain" }));
+    document.getElementById("soltar-proteger").dispatchEvent(new DragEvent("drop", { dataTransfer: dados, bubbles: true, cancelable: true }));
+  })()`);
+  await soltarDois(["lote-a.txt", "lote-b.txt"]);
+  const primeiro = await esperarArquivo(join(baixados, "lote-a-protegido.txt"));
+  await pausa(600);
+  const aviso = await docs.avaliar(`document.getElementById("arquivos-feitos").textContent`);
+  confere(primeiro && !existsSync(join(baixados, "lote-b-protegido.txt")) && /Véu Pro/.test(aviso),
+    "no grátis, a página protege um arquivo por vez");
+
+  // Véu Pro na página: a chave é conferida aqui mesmo, e libera vários arquivos e as listas próprias.
+  if (process.env.VEU_E2E_LICENCA) {
+    await docs.avaliar(`document.getElementById("pro").open = true; document.getElementById("pro-chave").value = ${JSON.stringify(process.env.VEU_E2E_LICENCA)}`);
+    await docs.avaliar(`document.getElementById("pro-botao").click()`);
+    await pausa(500);
+    const estadoPro = await docs.avaliar(`document.getElementById("pro-estado").textContent`);
+    confere(/ativo até/.test(estadoPro), `a chave do Pro ativa na página (${estadoPro.slice(0, 40)})`);
+    await docs.avaliar(`document.getElementById("lista-nomes").value = "Joana Prado"; document.getElementById("salvar-listas").click()`);
+    await pausa(400);
+    await docs.avaliar(`(() => { const e = document.getElementById("entrada"); e.value = "Fale com a JOANA PRADO amanhã."; e.dispatchEvent(new Event("input")); })()`);
+    await pausa(500);
+    const comLista = await docs.avaliar(`document.getElementById("saida").textContent`);
+    confere(!/joana/i.test(comLista) && /\[PESSOA_\d+\]/.test(comLista), `a lista própria vale na página (${comLista})`);
+    await soltarDois(["pro-a.txt", "pro-b.txt"]);
+    const doisBaixados = (await esperarArquivo(join(baixados, "pro-a-protegido.txt"))) && (await esperarArquivo(join(baixados, "pro-b-protegido.txt")));
+    confere(doisBaixados, "com o Pro, a página protege vários arquivos de uma vez");
+    await docs.avaliar(`document.getElementById("pro-remover").click()`);
+    await pausa(300);
+  }
+  await docs.fechar();
 
   // Extensão
   const { id } = await cdp("Extensions.loadUnpacked", { path: extensao });

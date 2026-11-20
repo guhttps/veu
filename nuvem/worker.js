@@ -4,7 +4,7 @@
 // Assinatura (cartão de crédito, renova sozinha):
 //   GET  /pronto?preapproval_id=...   página de volta do Mercado Pago: confere a assinatura e mostra a chave
 //   POST /renovar  {"chave": "VEU1..."} chave nova enquanto a assinatura estiver ativa
-// Pagamento avulso (Pix, boleto, cartão de crédito ou débito, saldo do Mercado Pago; vale um período):
+// Pagamento avulso (Pix, boleto, cartão, saldo ou parcelado do Mercado Pago; vale um período):
 //   GET  /comprar?periodo=mensal       cria a cobrança no Mercado Pago com uma referência aleatória e leva até ela
 //   GET  /pago?ref=...                 página de volta: confere o pagamento daquela referência e mostra a chave
 //   GET|POST /recuperar                chave de novo, com o número da operação e o e-mail do pagamento
