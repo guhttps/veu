@@ -5,6 +5,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-11-20
+
+### Segurança
+- **Contato dos pacotes:** o npm passa a mostrar o e-mail de suporte do Véu (veu.ajuda@protonmail.com) como contato dos pacotes `@guhttps/veu` e `@guhttps/n8n-nodes-veu`, no lugar de um e-mail pessoal. O histórico do repositório e os anexos das versões no GitHub foram limpos de um arquivo de cache do Cloudflare e de um nome real.
+
 ## [0.9.2] - 2026-11-20
 
 ### Adicionado
@@ -424,7 +429,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.2...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.3...HEAD
+[0.9.3]: https://github.com/guhttps/veu/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/guhttps/veu/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/guhttps/veu/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/guhttps/veu/compare/v0.8.1...v0.9.0
