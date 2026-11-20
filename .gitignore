@@ -38,3 +38,5 @@ web/licenca.js
 web/docs/
 .hypothesis/
 n8n/node_modules/
+# Cache do wrangler (Cloudflare): traz o e-mail e o id da conta.
+.wrangler/

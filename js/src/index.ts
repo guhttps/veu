@@ -27,7 +27,7 @@ export { StreamRestorer, Vault, linkContext, neutralizePlaceholders, normalizeVa
 export type { RestoreContext, RestorePolicy, VaultData, VaultEntry } from "./vault.ts";
 export * as validators from "./validators.ts";
 
-export const VERSION = "0.9.0";
+export const VERSION = "0.9.1";
 
 export const DETECTORS = ["padroes", "nomes", "enderecos", "segredos"] as const;
 export type Detector = (typeof DETECTORS)[number];

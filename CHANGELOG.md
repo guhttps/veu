@@ -5,6 +5,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-20
+
+### Segurança
+- **Dados de quem mantém o projeto fora dos pacotes:** o cache do wrangler (Cloudflare), com o e-mail e o id da conta, tinha entrado no repositório e no pacote de código da 0.9.0 no PyPI, e um comentário usava um nome real como exemplo. Os dois saíram; `.wrangler/` está no `.gitignore`, o pacote de código exclui `**/.wrangler`, `**/.env` e `**/node_modules`, e um teste novo impede que voltem.
+
 ### Adicionado
 - **Site do Véu:** a página principal ganhou uma apresentação (o que o Véu faz, um exemplo de antes e depois, onde usar e os planos), com a ferramenta logo abaixo, e as páginas de planos, privacidade e instalar ganharam o mesmo cabeçalho e rodapé.
 - **Arquivos inteiros na página web, grátis:** Word, Excel e PowerPoint voltam no mesmo formato, PDF vira texto (pdf.js servido pelo próprio site), tudo no navegador e com o mesmo cofre do texto, então a resposta da IA sobre o arquivo volta com os dados reais. Um arquivo por vez, até 10 MB.
@@ -408,7 +413,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/guhttps/veu/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/guhttps/veu/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/guhttps/veu/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/guhttps/veu/compare/v0.7.2...v0.8.0

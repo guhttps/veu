@@ -68,7 +68,7 @@ path = "src/veu/__init__.py"
 packages = ["src/veu"]
 
 [tool.hatch.build.targets.sdist]
-exclude = [".venv", ".github", "dist"]
+exclude = [".venv", ".github", "dist", "**/.wrangler", "**/node_modules", "**/.env"]
 
 [tool.ruff]
 line-length = 120
