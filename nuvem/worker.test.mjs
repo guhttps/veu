@@ -150,7 +150,8 @@ test("comprar cria a cobrança com uma referência aleatória e leva ao Mercado 
   const { resposta, preferencia } = await comprar("mensal");
   assert.equal(resposta.status, 303);
   assert.equal(resposta.headers.get("location"), "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-1");
-  assert.match(preferencia.external_reference, /^mensal-[A-Za-z0-9_-]{24}$/);
+  // "<período>-<aleatório>.<preços e vencimento anterior>.<assinatura do servidor>"
+  assert.match(preferencia.external_reference, /^mensal-[A-Za-z0-9_-]{24}\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{86}$/);
   assert.equal(preferencia.back_urls.success, `https://licencas.example/pago?ref=${preferencia.external_reference}`);
   assert.deepEqual(preferencia.items.map((item) => [item.unit_price, item.currency_id, item.quantity]), [[9.9, "BRL", 1]]);
   // No mensal, sem boleto (a tarifa fixa come o valor) e sem parcelas; no anual, boleto e até 12 vezes.
@@ -214,7 +215,8 @@ test("pendente espera; valor menor, recusado, vencido ou referência inventada n
   pagamento(recusado, { status: "rejected" });
   const recusa = await chamar(`/pago?ref=${recusado}`);
   assert.equal(recusa.status, 402);
-  assert.match(await recusa.text(), /Tentar de novo/);
+  // O botão leva ao período certo (antes levava ao título "Véu Pro por 1 mês", um endereço quebrado).
+  assert.match(await recusa.text(), /comprar\?periodo=mensal">Tentar de novo/);
 
   const antigo = (await comprar("mensal")).preferencia.external_reference;
   pagamento(antigo, { date_approved: "2025-01-10T10:00:00.000-03:00" });
@@ -260,4 +262,93 @@ test("a chave paga por período não renova sozinha", async () => {
   const resposta = await chamar("/renovar", { method: "POST", body: JSON.stringify({ chave }) });
   assert.equal(resposta.status, 409);
   assert.match((await resposta.json()).erro, /pague mais um período/);
+});
+
+// Preço garantido -------------------------------------------------------------------------------------------------
+const envMaisCaro = { ...env, PAGAMENTOS: JSON.stringify({
+  mensal: { plano: "pro", nome: "Véu Pro por 1 mês", valor: 14.9, dias: 30, parcelas: 1, excluir: ["ticket"] },
+  anual: { plano: "pro", nome: "Véu Pro por 1 ano", valor: 149, dias: 365, parcelas: 12 },
+}) };
+const chamarCom = (ambiente, caminho, opcoes, quando = AGORA) =>
+  servidor.fetch(new Request(`https://licencas.example${caminho}`, opcoes), ambiente, {}, quando);
+const pedirMaisUmPeriodo = (ambiente, chave, periodo, quando) => chamarCom(ambiente, "/renovar-periodo",
+  { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chave, periodo }) }, quando);
+
+async function chaveComprada(periodo = "mensal") {
+  const { preferencia } = await comprar(periodo);
+  pagamento(preferencia.external_reference, { transaction_amount: periodo === "mensal" ? 9.9 : 99 });
+  return chaveDaPagina(await (await chamar(`/pago?ref=${preferencia.external_reference}`)).text());
+}
+
+test("a chave paga por período guarda os preços da primeira compra", async () => {
+  const { licenca } = await verificar(await chaveComprada(), publica, AGORA);
+  assert.deepEqual({ ...licenca.precos }, { mensal: 990, anual: 9900 });
+});
+
+test("com o preço novo, quem já pagou renova pelo preço antigo e não perde os dias que faltavam", async () => {
+  const chave = await chaveComprada(); // vale até 19/12/2026
+  const antes = (await verificar(chave, publica, AGORA)).licenca;
+  const resposta = await pedirMaisUmPeriodo(envMaisCaro, chave, "mensal");
+  assert.equal(resposta.status, 200);
+  const dados = await resposta.json();
+  assert.equal(dados.valor, 9.9);
+  assert.equal(dados.precoMantido, true);
+  assert.match(dados.url, /^https:\/\/www\.mercadopago\.com\.br\//);
+  const preferencia = preferencias.at(-1);
+  assert.equal(preferencia.items[0].unit_price, 9.9);
+  // Pagou cinco dias depois, com a chave ainda valendo: o período novo começa quando o anterior acaba.
+  const cincoDias = AGORA + 5 * 86400 * 1000;
+  pagamento(preferencia.external_reference, { transaction_amount: 9.9, date_approved: new Date(cincoDias).toISOString() });
+  const nova = chaveDaPagina(await (await chamarCom(envMaisCaro, `/pago?ref=${preferencia.external_reference}`, undefined,
+    cincoDias)).text());
+  const licenca = (await verificar(nova, publica, cincoDias)).licenca;
+  assert.equal(licenca.exp, antes.exp + 30 * 86400);
+  assert.deepEqual({ ...licenca.precos }, { mensal: 990, anual: 9900 });
+  // E o preço antigo continua na vez seguinte, também no plano de 1 ano.
+  assert.equal((await (await pedirMaisUmPeriodo(envMaisCaro, nova, "anual", cincoDias)).json()).valor, 99);
+});
+
+test("quem chega depois, ou deixou a chave vencer há mais de 30 dias, paga o preço novo", async () => {
+  const chave = await chaveComprada();
+  const exp = (await verificar(chave, publica, AGORA)).licenca.exp;
+  const depois = (exp + 31 * 86400) * 1000;
+  const dados = await (await pedirMaisUmPeriodo(envMaisCaro, chave, "mensal", depois)).json();
+  assert.equal(dados.valor, 14.9);
+  assert.equal(dados.precoMantido, false);
+  // Primeira compra com o preço novo: pagar o valor antigo não dá chave.
+  await chamarCom(envMaisCaro, "/comprar?periodo=mensal");
+  const ref = preferencias.at(-1).external_reference;
+  assert.equal(preferencias.at(-1).items[0].unit_price, 14.9);
+  pagamento(ref, { transaction_amount: 9.9 });
+  assert.equal((await chamarCom(envMaisCaro, `/pago?ref=${ref}`)).status, 402);
+});
+
+test("ninguém baixa o preço mexendo na referência", async () => {
+  await pedirMaisUmPeriodo(envMaisCaro, await chaveComprada(), "mensal");
+  const [base, dados, assinatura] = preferencias.at(-1).external_reference.split(".");
+  const termos = JSON.parse(Buffer.from(dados, "base64url").toString());
+  termos.p.mensal = 100; // R$ 1,00
+  const adulterada = `${base}.${Buffer.from(JSON.stringify(termos)).toString("base64url")}.${assinatura}`;
+  pagamento(adulterada, { transaction_amount: 1 });
+  assert.equal(chaveDaPagina(await (await chamarCom(envMaisCaro, `/pago?ref=${adulterada}`)).text()), undefined);
+});
+
+test("mais um período recusa chave de assinatura, emitida à mão ou inválida; a página tem formulário", async () => {
+  const privada = await crypto.subtle.importKey("pkcs8", Buffer.from(env.CHAVE_PRIVADA, "base64url"), { name: "Ed25519" },
+    false, ["sign"]);
+  const deAssinatura = await assinar({ v: 1, plano: "pro", email: "", assinatura: "assinatura-ativa", emitida: 1,
+    exp: 9999999999 }, privada);
+  const resposta = await pedirMaisUmPeriodo(env, deAssinatura, "mensal");
+  assert.equal(resposta.status, 409);
+  assert.match((await resposta.json()).erro, /renova sozinha/);
+  const manual = await assinar({ v: 1, plano: "pro", email: "", assinatura: "manual-1", emitida: 1, exp: 9999999999 }, privada);
+  assert.equal((await pedirMaisUmPeriodo(env, manual, "mensal")).status, 409);
+  assert.equal((await pedirMaisUmPeriodo(env, "VEU1.abc.def", "mensal")).status, 400);
+  assert.equal((await pedirMaisUmPeriodo(env, await chaveComprada(), "vitalicio")).status, 400);
+  const antes = preferencias.length;
+  assert.equal(preferencias.length, antes); // nenhuma cobrança criada para pedidos recusados
+  assert.match(await (await chamar("/renovar-periodo")).text(), /<form method="post"/);
+  const pelaPagina = await chamar("/renovar-periodo", formulario({ chave: await chaveComprada(), periodo: "anual" }));
+  assert.equal(pelaPagina.status, 303);
+  assert.equal(preferencias.at(-1).items[0].unit_price, 99);
 });

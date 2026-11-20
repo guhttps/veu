@@ -5,6 +5,12 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+- **Preço garantido para quem já paga:** se o preço subir, a assinatura continua no valor antigo enquanto estiver ativa (os planos antigos do Mercado Pago não mudam e continuam renovando a chave). No pagamento por período, a chave guarda os preços da primeira compra, e `/renovar-periodo` cobra o próximo período por eles até 30 dias depois do vencimento, somando os dias que faltavam (antes, quem pagava antes de vencer perdia esses dias). Os preços vão assinados pelo servidor na referência do pagamento, então ninguém os muda.
+
+### Corrigido
+- O botão "Tentar de novo" da página de pagamento recusado levava a um endereço quebrado (o título do período no lugar do nome).
+
 ## [0.9.1] - 2026-11-20
 
 ### Segurança
