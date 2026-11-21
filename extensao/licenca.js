@@ -66,6 +66,19 @@
     }
   }
 
+  /** Cancela a assinatura da chave no Mercado Pago: { mensagem } ou { erro }. A chave vale até o vencimento. */
+  async function cancelarAssinatura(chave, servidor = SERVIDOR) {
+    try {
+      const resposta = await fetch(`${servidor}/cancelar`, {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chave }),
+      });
+      const dados = await resposta.json();
+      return resposta.ok && dados.ok ? { mensagem: dados.mensagem } : { erro: dados.erro || `Erro ${resposta.status}` };
+    } catch {
+      return { erro: "Sem conexão com o servidor de licenças." };
+    }
+  }
+
   const ambiente = typeof self !== "undefined" ? self : globalThis;
-  ambiente.veuLicenca = { verificar, renovar, pagarPeriodo, CHAVE_PUBLICA, SERVIDOR, PREFIXO };
+  ambiente.veuLicenca = { verificar, renovar, pagarPeriodo, cancelarAssinatura, CHAVE_PUBLICA, SERVIDOR, PREFIXO };
 })();

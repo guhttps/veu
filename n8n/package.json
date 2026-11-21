@@ -1,6 +1,6 @@
 {
   "name": "@guhttps/n8n-nodes-veu",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Nó do Véu para o n8n: esconde dados pessoais e segredos (CPF, nomes, telefones, e-mails, chaves de API) antes de mandar o texto para a IA e devolve os dados reais na resposta.",
   "license": "MIT",
   "author": "guhttps",

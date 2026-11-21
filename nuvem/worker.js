@@ -8,6 +8,7 @@
 //   GET  /comprar?periodo=mensal       cria a cobrança no Mercado Pago com uma referência aleatória e leva até ela
 //   GET  /pago?ref=...                 página de volta: confere o pagamento daquela referência e mostra a chave
 //   GET|POST /recuperar                chave de novo, com o número da operação e o e-mail do pagamento
+//   GET|POST /cancelar                 cancela a assinatura da chave no Mercado Pago (a chave vale até o vencimento)
 //   GET|POST /renovar-periodo          mais um período com a chave atual: mantém o preço da primeira compra e soma os
 //                                      dias que faltavam (JSON da extensão ou formulário da página)
 //
@@ -175,8 +176,11 @@ async function pronto(url, env, agora) {
     return pagina("Ainda não confirmamos o pagamento", `<p>O Mercado Pago ainda não confirmou a assinatura${situacao}.
 Atualize esta página em alguns minutos. Se o problema continuar, escreva para ${SUPORTE}.</p>`, 402);
   }
-  return paginaDaChave(licenca, env, "Ela renova sozinha enquanto a assinatura estiver ativa.");
+  return paginaDaChave(licenca, env, avisoDaAssinatura(url.origin));
 }
+
+const avisoDaAssinatura = (origem) => `Ela renova sozinha enquanto a assinatura estiver ativa. Para cancelar quando
+quiser: no ícone do Véu (Véu Pro → Cancelar a assinatura) ou em <a href="${origem}/cancelar">${origem}/cancelar</a>.`;
 
 const avisoDoPeriodo = (licenca, origem) => `Ela vale até ${dataBR(licenca.exp)}. Para continuar com o mesmo preço, pague
 mais um período pelo ícone do Véu (em Véu Pro) ou em <a href="${origem}/renovar-periodo">${origem}/renovar-periodo</a>, até 30 dias
@@ -343,7 +347,57 @@ async function recuperar(request, url, env, agora) {
   }
   // Cobrança de uma assinatura: a chave sai da própria assinatura, se ela estiver ativa.
   const licenca = licencaDe(await assinaturaNoMercadoPago(env, pagamento.metadata?.preapproval_id), env, agora);
-  return licenca ? paginaDaChave(licenca, env, "Ela renova sozinha enquanto a assinatura estiver ativa.") : naoAchei();
+  return licenca ? paginaDaChave(licenca, env, avisoDaAssinatura(url.origin)) : naoAchei();
+}
+
+function formularioDeCancelar(url, mensagem = "", status = 200) {
+  return pagina("Cancelar a assinatura do Véu Pro", `${mensagem ? `<p role="alert"><b>${escapar(mensagem)}</b></p>` : ""}
+<p>Cole a sua chave do Véu Pro e confirme. A assinatura é cancelada no Mercado Pago na hora: nada mais é cobrado, e a chave
+continua valendo até o fim do período já pago.</p>
+<form method="post" action="${url.origin}/cancelar">
+<label>Sua chave<textarea name="chave" rows="4" required spellcheck="false" placeholder="VEU1..."></textarea></label>
+<label><input type="checkbox" name="confirmo" value="sim" required style="width:auto"> Quero cancelar a assinatura</label>
+<p><button>Cancelar a assinatura</button></p>
+</form>
+<p class="nota">A chave serve só para achar a sua assinatura; nada fica guardado. Pagou por período (Pix, boleto)? Não há
+cobrança automática para cancelar. Dúvidas: ${SUPORTE}.</p>`, status);
+}
+
+/**
+ * Cancela a assinatura de uma chave (formulário da página ou JSON da extensão). Quem tem a chave é quem assina: ela é
+ * o comprovante, como na renovação. A chave atual continua valendo até o vencimento, e a renovação para de funcionar.
+ */
+async function cancelar(request, url, env) {
+  if (request.method === "GET") return formularioDeCancelar(url);
+  const ehJson = (request.headers.get("content-type") || "").includes("application/json");
+  const responder = (mensagem, status) => (ehJson ? json(status < 300 ? { ok: true, mensagem } : { erro: mensagem }, status)
+    : formularioDeCancelar(url, mensagem, status));
+  const corpo = await request.text();
+  if (corpo.length > 8000) return responder("Pedido grande demais.", 413);
+  let campos;
+  try {
+    campos = ehJson ? JSON.parse(corpo) : Object.fromEntries(new URLSearchParams(corpo));
+  } catch {
+    return responder("Pedido inválido.", 400);
+  }
+  if (!ehJson && campos?.confirmo !== "sim") return responder("Marque a confirmação para cancelar.", 400);
+  const atual = await abrir(String(campos?.chave || "").trim(), await chavePublica(env));
+  if (!atual) return responder("Isto não parece uma chave do Véu Pro.", 400);
+  if (!atual.assinatura || String(atual.assinatura).startsWith("manual")) {
+    return responder(atual.pagamento
+      ? "Esta chave foi paga por período: não há cobrança automática para cancelar. Ela vale até o fim do período pago."
+      : "Esta chave foi emitida à mão: para cancelar, escreva para o suporte.", 409);
+  }
+  const assinatura = await assinaturaNoMercadoPago(env, atual.assinatura);
+  if (!assinatura) return responder("Não encontrei esta assinatura no Mercado Pago. Escreva para o suporte.", 404);
+  const ate = dataBR(atual.exp);
+  if (assinatura.status === "cancelled") return responder(`Esta assinatura já estava cancelada. A chave vale até ${ate}.`, 200);
+  const resposta = await fetch(`${MERCADO_PAGO}/preapproval/${assinatura.id}`, {
+    method: "PUT", headers: { ...autorizacao(env), "content-type": "application/json" },
+    body: JSON.stringify({ status: "cancelled" }),
+  }).catch(() => null);
+  if (!resposta?.ok) return responder("O Mercado Pago não respondeu. Tente de novo em alguns minutos.", 502);
+  return responder(`Assinatura cancelada. Nada mais será cobrado, e a chave vale até ${ate}.`, 200);
 }
 
 async function renovar(request, env, agora) {
@@ -381,6 +435,7 @@ export default {
     if (url.pathname === "/comprar" && request.method === "GET") return comprar(url, env);
     if (url.pathname === "/pago" && request.method === "GET") return pago(url, env, agora);
     if (url.pathname === "/recuperar" && ["GET", "POST"].includes(request.method)) return recuperar(request, url, env, agora);
+    if (url.pathname === "/cancelar" && ["GET", "POST"].includes(request.method)) return cancelar(request, url, env);
     if (url.pathname === "/renovar-periodo" && ["GET", "POST"].includes(request.method)) {
       return renovarPeriodo(request, url, env, agora);
     }

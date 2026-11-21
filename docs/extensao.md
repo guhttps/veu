@@ -53,7 +53,7 @@ Com uma chave do [Véu Pro](https://guhttps.github.io/veu/planos.html) (R$ 9,90 
 
 Para ativar, cole a chave em **Véu Pro**, no ícone, e clique em **Ativar**. A chave é conferida sem internet.
 
-- **Assinatura no cartão:** a chave renova sozinha perto do vencimento. É a única conexão de rede da extensão, e leva só a própria chave.
+- **Assinatura no cartão:** a chave renova sozinha perto do vencimento. Para cancelar, use **Cancelar a assinatura** no ícone (dois cliques) ou [licencas.veu-pro.workers.dev/cancelar](https://licencas.veu-pro.workers.dev/cancelar); a chave vale até o fim do período pago. É a única conexão de rede da extensão, e leva só a própria chave.
 - **Pagamento por período (Pix, boleto, cartão ou saldo):** a chave vale 1 mês ou 1 ano e não renova sozinha; perto do fim, o ícone avisa. Os botões **Pagar mais 1 mês** e **Pagar mais 1 ano** do ícone cobram o preço da sua primeira compra (mesmo que o preço tenha subido, até 30 dias depois do vencimento) e somam os dias que faltavam. Fechou a página da chave? Recupere em [licencas.veu-pro.workers.dev/recuperar](https://licencas.veu-pro.workers.dev/recuperar), com o número da operação e o e-mail do pagamento.
 
 A TI pode distribuir a chave e as listas pela política (`licenca`, `listaNomes`, `listaTermos`): veja o [guia para empresas](empresas.md#extensão-gerenciada-pela-ti).

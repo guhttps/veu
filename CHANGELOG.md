@@ -5,7 +5,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.9.4] - 2026-11-21
+
 ### Adicionado
+- **Cancelar a assinatura direto pelo Véu:** em `licencas.veu-pro.workers.dev/cancelar` (colando a chave) ou no botão "Cancelar a assinatura" do ícone da extensão, com confirmação em dois cliques. O servidor cancela no Mercado Pago na hora; a chave vale até o fim do período pago. A página de planos e a de ajuda trazem o link direto.
 - **Página de ajuda** (`ajuda.html`), com link no menu de todas as páginas e na extensão: suporte por e-mail (Véu Pro, pagamento, chave), relatar um problema, sugerir e votar em ideias nas Discussões do GitHub e avisar de falhas de segurança em particular. Os formulários de chamado ficaram em português simples, perguntam onde o problema aconteceu (site, extensão, Véu Pro, programa) e lembram de não colar dados reais.
 
 ### Alterado
@@ -435,7 +438,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.3...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.4...HEAD
+[0.9.4]: https://github.com/guhttps/veu/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/guhttps/veu/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/guhttps/veu/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/guhttps/veu/compare/v0.9.0...v0.9.1

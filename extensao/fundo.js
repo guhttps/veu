@@ -62,7 +62,7 @@ async function estadoPro(empresa) {
   }
   return { ativo: resultado.valida, motivo: resultado.motivo, plano: licenca?.plano, email: licenca?.email,
     exp: licenca?.exp, daEmpresa: Boolean(empresa.licenca), avulsa: Boolean(licenca?.pagamento && !licenca.assinatura),
-    acabando: faltam < 7 * DIA, precos: licenca?.precos };
+    acabando: faltam < 7 * DIA, precos: licenca?.precos, assinatura: renovavel(licenca) };
 }
 
 // Só a chave de uma assinatura renova sozinha. A paga por período (Pix, boleto) e a emitida à mão, não: sem rede.
@@ -207,6 +207,13 @@ chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
         }
         await chrome.tabs.create({ url: resposta.url });
         return { ok: true, valor: resposta.valor, precoMantido: resposta.precoMantido };
+      }
+      case "cancelarAssinatura": {
+        if (!daExtensao) return { erro: "Só pelo ícone do Véu." };
+        const { licenca: chave } = await chrome.storage.local.get("licenca");
+        if (!chave) return { erro: "Sem chave neste navegador." };
+        if (!(await podeRenovar())) return { erro: "Sem permissão para falar com o servidor de licenças." };
+        return globalThis.veuLicenca.cancelarAssinatura(chave);
       }
       case "removerLicenca":
         if (!daExtensao) return { erro: "A chave só é removida pelo ícone do Véu." };

@@ -69,7 +69,10 @@ globalThis.fetch = async (url, opcoes = {}) => {
   const pagamento = um && mp.pagamentos.find((item) => String(item.id) === um[1]);
   if (pagamento) return Response.json(pagamento);
   const assinatura = /\/preapproval\/([A-Za-z0-9-]+)$/.exec(endereco);
-  if (assinatura && mp.assinaturas.has(assinatura[1])) return Response.json(mp.assinaturas.get(assinatura[1]));
+  if (assinatura && mp.assinaturas.has(assinatura[1])) {
+    if (opcoes.method === "PUT") Object.assign(mp.assinaturas.get(assinatura[1]), JSON.parse(opcoes.body)); // cancelar
+    return Response.json(mp.assinaturas.get(assinatura[1]));
+  }
   return new Response("{}", { status: 404 });
 };
 /** Quem compra paga a última cobrança criada: Pix aprovado na hora ou boleto ainda pendente. */
@@ -368,6 +371,15 @@ async function testarPlanos(id) {
     "assinatura: perto do vencimento, a extensão renova a chave sozinha");
   confere(await icone.avaliar(`document.getElementById("pro-pagar").hidden`) === true,
     "a assinatura não mostra os botões de pagar por período");
+  // Cancelar pelo ícone: dois cliques (o primeiro só pede confirmação), e o Mercado Pago recebe o cancelamento.
+  await icone.avaliar(`document.getElementById("pro-cancelar").click()`);
+  const primeiroClique = mp.assinaturas.get("assinatura-e2e").status;
+  await icone.avaliar(`document.getElementById("pro-cancelar").click()`);
+  for (let tentativa = 0; tentativa < 20 && mp.assinaturas.get("assinatura-e2e").status !== "cancelled"; tentativa++) await pausa(200);
+  await pausa(300);
+  const estadoCancelado = await icone.avaliar(`document.getElementById("pro-estado").textContent`);
+  confere(primeiroClique === "authorized" && mp.assinaturas.get("assinatura-e2e").status === "cancelled"
+    && /cancelada/.test(estadoCancelado), `cancelar a assinatura pelo ícone, com confirmação (${estadoCancelado.slice(0, 50)})`);
   await icone.fechar();
 
   // A página web aceita a chave paga por período e libera o Pro.

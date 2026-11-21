@@ -30,6 +30,7 @@ function carregar({ politica = {} } = {}) {
   const renovacoes = [];
   const abasAbertas = [];
   const pagamentosPedidos = [];
+  const cancelamentos = [];
   const contexto = {
     console, crypto, TextEncoder, TextDecoder, atob, btoa,
     chrome: {
@@ -47,6 +48,7 @@ function carregar({ politica = {} } = {}) {
     const { verificar } = contexto.veuLicenca;
     contexto.veuLicenca.verificar = (chave) => verificar(chave, publica);
     contexto.veuLicenca.renovar = async (chave) => { renovacoes.push(chave); return { chave: await licenca(30) }; };
+    contexto.veuLicenca.cancelarAssinatura = async (chave) => { cancelamentos.push(chave); return { mensagem: "Assinatura cancelada." }; };
     contexto.veuLicenca.pagarPeriodo = async (chave, periodo) => {
       pagamentosPedidos.push({ chave, periodo });
       return periodo === "anual" ? { url: "https://golpe.example/pagar" }
@@ -57,7 +59,7 @@ function carregar({ politica = {} } = {}) {
   vm.runInContext(readFileSync(new URL("fundo.js", pasta), "utf8"), contexto);
   const enviar = (mensagem, remetente) => new Promise((resolver) => receptor(mensagem, remetente, resolver));
   return {
-    store, renovacoes, abasAbertas, pagamentosPedidos,
+    store, renovacoes, abasAbertas, pagamentosPedidos, cancelamentos,
     doIcone: (mensagem) => enviar(mensagem, { id: "veu", url: "chrome-extension://veu/popup.html" }),
     daPagina: (mensagem) => enviar(mensagem, { tab: { id: 7 }, url: "https://chatgpt.com/" }),
   };
@@ -157,4 +159,16 @@ test("pagar mais um período: só pelo ícone, com a chave guardada, e só abre 
   assert.equal(fundo.abasAbertas.length, 1);
   await fundo.doIcone({ tipo: "removerLicenca" });
   assert.match((await fundo.doIcone({ tipo: "pagarPeriodo", periodo: "mensal" })).erro, /Sem chave/);
+});
+
+test("cancelar a assinatura: só pelo ícone, com a chave guardada", async () => {
+  const fundo = carregar();
+  const config = await fundo.doIcone({ tipo: "ativarLicenca", chave: await licenca(30) });
+  assert.equal(config.pro.assinatura, true);
+  assert.match((await fundo.daPagina({ tipo: "cancelarAssinatura" })).erro, /ícone/);
+  assert.equal(fundo.cancelamentos.length, 0);
+  assert.match((await fundo.doIcone({ tipo: "cancelarAssinatura" })).mensagem, /cancelada/);
+  assert.equal(fundo.cancelamentos.length, 1);
+  const avulsa = await fundo.doIcone({ tipo: "ativarLicenca", chave: await licenca(20, { assinatura: undefined, pagamento: "1" }) });
+  assert.equal(avulsa.pro.assinatura, false); // chave paga por período não mostra o botão
 });

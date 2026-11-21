@@ -52,6 +52,7 @@ globalThis.fetch = async (url, opcoes) => {
     return new Response(JSON.stringify(dados ?? { message: "not found" }), { status: dados ? 200 : 404 });
   }
   const dados = assinaturas[endereco.split("/").pop()];
+  if (dados && opcoes.method === "PUT") Object.assign(dados, JSON.parse(opcoes.body)); // cancelar a assinatura
   return new Response(JSON.stringify(dados ?? { message: "not found" }), { status: dados ? 200 : 404 });
 };
 
@@ -351,4 +352,42 @@ test("mais um período recusa chave de assinatura, emitida à mão ou inválida;
   const pelaPagina = await chamar("/renovar-periodo", formulario({ chave: await chaveComprada(), periodo: "anual" }));
   assert.equal(pelaPagina.status, 303);
   assert.equal(preferencias.at(-1).items[0].unit_price, 99);
+});
+
+// Cancelar a assinatura ------------------------------------------------------------------------------------------
+test("cancelar: com a chave, a assinatura é cancelada no Mercado Pago e a renovação para", async () => {
+  const privada = await crypto.subtle.importKey("pkcs8", Buffer.from(env.CHAVE_PRIVADA, "base64url"), { name: "Ed25519" },
+    false, ["sign"]);
+  assinaturas["assinatura-para-cancelar"] = { id: "assinatura-para-cancelar", status: "authorized",
+    preapproval_plan_id: "plano-mensal", payer_email: "cliente@example.com", next_payment_date: "2026-12-19T12:00:00.000-03:00" };
+  const chave = await assinar({ v: 1, plano: "pro", email: "cliente@example.com", assinatura: "assinatura-para-cancelar",
+    emitida: 1, exp: Math.floor(AGORA / 1000) + 10 * 86400 }, privada);
+  assert.match(await (await chamar("/cancelar")).text(), /<form method="post"/);
+  // Pelo formulário, só com a confirmação marcada.
+  assert.equal((await chamar("/cancelar", formulario({ chave }))).status, 400);
+  assert.equal(assinaturas["assinatura-para-cancelar"].status, "authorized");
+  const cancelada = await chamar("/cancelar", formulario({ chave, confirmo: "sim" }));
+  assert.equal(cancelada.status, 200);
+  assert.match(await cancelada.text(), /Assinatura cancelada.*vale até 29\/11\/2026/s);
+  assert.equal(assinaturas["assinatura-para-cancelar"].status, "cancelled");
+  // De novo (pela extensão): já estava cancelada. E a renovação não dá mais chave.
+  const deNovo = await chamar("/cancelar", { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ chave }) });
+  assert.equal(deNovo.status, 200);
+  assert.match((await deNovo.json()).mensagem, /já estava cancelada/);
+  assert.equal((await chamar("/renovar", { method: "POST", body: JSON.stringify({ chave }) })).status, 402);
+});
+
+test("cancelar recusa chave paga por período, emitida à mão ou inválida, sem mexer em nada", async () => {
+  const privada = await crypto.subtle.importKey("pkcs8", Buffer.from(env.CHAVE_PRIVADA, "base64url"), { name: "Ed25519" },
+    false, ["sign"]);
+  const json = (chave) => ({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chave }) });
+  const porPeriodo = await chaveComprada();
+  const resposta = await chamar("/cancelar", json(porPeriodo));
+  assert.equal(resposta.status, 409);
+  assert.match((await resposta.json()).erro, /não há cobrança automática/);
+  const manual = await assinar({ v: 1, plano: "pro", email: "", assinatura: "manual-2", emitida: 1, exp: 9999999999 }, privada);
+  assert.equal((await chamar("/cancelar", json(manual))).status, 409);
+  assert.equal((await chamar("/cancelar", json("VEU1.abc.def"))).status, 400);
+  assert.equal(assinaturas["assinatura-ativa"].status, "authorized");
 });

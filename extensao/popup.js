@@ -40,6 +40,7 @@
     $("#pagar-anual").textContent = `Pagar mais 1 ano${preco(pro.precos?.anual)}`;
     $("#pro-ativar").hidden = pro.ativo || pro.daEmpresa;
     $("#pro-remover").hidden = !pro.exp || pro.daEmpresa;
+    $("#pro-cancelar").hidden = !pro.assinatura || pro.daEmpresa;
     $("#pro-listas").hidden = !pro.ativo;
     $("#pro-paginas").hidden = !pro.ativo;
     $("#lista-nomes").value = (config.listaNomes || []).join("\n");
@@ -78,6 +79,26 @@
     if (await pedir({ tipo: "ativarLicenca", chave: $("#pro-chave").value })) $("#pro-chave").value = "";
   });
   $("#pro-remover").addEventListener("click", () => pedir({ tipo: "removerLicenca" }));
+  // Cancelar a assinatura pede dois cliques: o primeiro só troca o texto do botão por uma confirmação.
+  let confirmarCancelamento = false;
+  $("#pro-cancelar").addEventListener("click", async () => {
+    const botao = $("#pro-cancelar");
+    if (!confirmarCancelamento) {
+      confirmarCancelamento = true;
+      botao.textContent = "Confirmar: cancelar a assinatura";
+      setTimeout(() => { confirmarCancelamento = false; botao.textContent = "Cancelar a assinatura"; }, 6000);
+      return;
+    }
+    confirmarCancelamento = false;
+    if (!(await permitirRenovacao())) {
+      $("#pro-estado").textContent = "Sem a permissão, cancele em licencas.veu-pro.workers.dev/cancelar.";
+      return;
+    }
+    $("#pro-estado").textContent = "Cancelando...";
+    const resposta = await chrome.runtime.sendMessage({ tipo: "cancelarAssinatura" });
+    $("#pro-estado").textContent = resposta?.erro || resposta?.mensagem || "Pronto.";
+    botao.textContent = "Cancelar a assinatura";
+  });
   for (const periodo of ["mensal", "anual"]) {
     $(`#pagar-${periodo}`).addEventListener("click", async () => {
       if (!(await permitirRenovacao())) {
