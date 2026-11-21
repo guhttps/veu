@@ -35,7 +35,7 @@ Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capt
 
 > O Véu protege os dados pessoais e os segredos que você cola nos sites de IA. Antes de enviar, ele troca nomes, CPF, CNPJ, telefones, e-mails, cartões, chaves de API e senhas por marcadores como [PESSOA_1] e [CPF_1]. A IA trabalha normalmente com os marcadores, e você vê os dados reais de volta.
 >
-> Tudo roda no seu navegador: a extensão não coleta nada e não tem conta nem anúncios. A única conexão de rede é a renovação da chave de quem assina o Véu Pro, que leva só a própria chave.
+> Tudo roda no seu navegador: a extensão não coleta nada e não tem conta nem anúncios. As únicas conexões de rede são do Véu Pro: renovar a chave de quem assina e abrir o pagamento quando você pede para pagar mais um período. Elas levam só a própria chave.
 >
 > - Três modos: avisar (mostra um aviso e você decide), proteger (troca os dados antes de enviar) e bloquear (só envia depois de proteger).
 > - Você escolhe o que esconder: nomes e contatos, documentos do Brasil e de mais 21 países, dados financeiros, senhas e chaves, IPs e servidores internos, veículos.
@@ -56,7 +56,7 @@ Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capt
 
 > Véu protects the personal data and secrets you paste into AI websites. Before sending, it replaces names, ID numbers (Brazilian CPF and CNPJ, US SSN and documents from 20 other countries), phone numbers, e-mails, cards, API keys and passwords with markers such as [PESSOA_1] and [CPF_1]. The AI works normally with the markers, and you get the real data back.
 >
-> Everything runs in your browser: the extension collects nothing and has no account or ads. Its only network connection is the key renewal for Véu Pro subscribers, which carries only the key itself.
+> Everything runs in your browser: the extension collects nothing and has no account or ads. Its only network connections are for Véu Pro: renewing a subscriber's key, and opening the payment when you ask to pay for another period. They carry only the key itself.
 >
 > - Three modes: warn (you decide), protect (replaces the data before sending) and block (sends only after protecting).
 > - You choose what to hide: names and contacts, documents, financial data, passwords and keys, IP addresses and internal servers, vehicles.
