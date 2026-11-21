@@ -13,7 +13,7 @@ ruff check .                       # lint; precisa passar
 veu avaliar                        # benchmark; o vazamento da validação não pode piorar
 python scripts/gerar_conformidade.py   # depois de mudar um detector: atualiza js/test/conformidade.json
 cd js && npm ci && npm test        # versão JavaScript (precisa dar o mesmo resultado que a Python)
-node extensao/teste/e2e.mjs        # extensão e página num Chrome de verdade
+node extensao/teste/e2e.mjs        # extensão, site e os planos (servidor de licenças local e Mercado Pago falso) num Chrome de verdade
 python scripts/gerar_site.py --servir  # site de documentação (pip install zensical==0.1.0), montado do README e de docs/
 ```
 
