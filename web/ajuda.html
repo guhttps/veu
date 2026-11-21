@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Ajuda do Véu</title>
+  <meta name="description" content="Suporte do Véu Pro, relatar problemas, sugerir ideias e avisar de falhas de segurança.">
+  <meta property="og:title" content="Ajuda do Véu: suporte, problemas e ideias">
+  <meta property="og:image" content="https://guhttps.github.io/veu/banner.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23234e52'/%3E%3Cpath d='M8 12h16M8 17h12M8 22h8' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topo">
+    <a class="marca" href="./" aria-label="Véu, início">
+      <span class="logo" aria-hidden="true"></span>
+      <span class="nome-marca">Véu</span>
+    </a>
+    <nav class="links" aria-label="Site">
+      <a class="discreto" href="./#usar">Usar agora</a>
+      <a class="discreto" href="./#onde">Extensão e programa</a>
+      <a class="discreto" href="planos.html">Planos</a>
+      <a class="discreto" href="ajuda.html" aria-current="page">Ajuda</a>
+      <a class="discreto" href="docs/">Documentação</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="titulo-pagina">
+      <h1>Ajuda, problemas e ideias</h1>
+      <p>Fale com o Véu do jeito mais fácil para você. Nunca mande dados pessoais reais nem a sua chave completa.</p>
+    </div>
+
+    <div class="cartoes">
+      <article class="painel cartao">
+        <h2>Suporte</h2>
+        <p>Véu Pro, pagamento, chave que não apareceu ou qualquer dúvida particular. É privado: só a equipe do Véu lê.</p>
+        <a class="botao" href="mailto:veu.ajuda@protonmail.com">veu.ajuda@protonmail.com</a>
+        <p>Sobre um pagamento, mande só o número da operação que está no e-mail do Mercado Pago.</p>
+      </article>
+      <article class="painel cartao">
+        <h2>Relatar um problema</h2>
+        <p>Algo não funcionou no site, na extensão, no Véu Pro ou no programa. A lista de problemas é pública, então use exemplos inventados.</p>
+        <a class="botao secundario" href="https://github.com/guhttps/veu/issues/new?template=bug.yml">Relatar um problema</a>
+        <p>Precisa de uma conta grátis no GitHub. Sem conta, mande por e-mail.</p>
+      </article>
+      <article class="painel cartao">
+        <h2>Sugerir uma ideia</h2>
+        <p>Um recurso, um site de IA, um tipo de dado ou uma integração que faria diferença para você. Dá para ver e votar nas ideias dos outros.</p>
+        <a class="botao secundario" href="https://github.com/guhttps/veu/discussions/categories/ideas">Ver e sugerir ideias</a>
+        <p>Sem conta no GitHub, mande a ideia por e-mail.</p>
+      </article>
+    </div>
+
+    <section class="painel perguntas">
+      <h2>Antes de escrever</h2>
+      <h3>Paguei e a chave não apareceu</h3>
+      <p>A confirmação do Pix pode levar alguns minutos. Se a tela do Mercado Pago não mudar sozinha, clique em "Voltar para Véu". Fechou a página? Recupere a chave em <a href="https://licencas.veu-pro.workers.dev/recuperar">licencas.veu-pro.workers.dev/recuperar</a>, com o número da operação e o e-mail do pagamento.</p>
+      <h3>O Véu não escondeu um dado (ou escondeu algo que não era pessoal)</h3>
+      <p>Conte num <a href="https://github.com/guhttps/veu/issues/new?template=dado_nao_detectado.yml">aviso de dado não detectado</a>, com um exemplo inventado parecido com o texto real. É assim que a detecção melhora para todo mundo.</p>
+      <h3>Como cancelo a assinatura ou pago mais um período</h3>
+      <p>A assinatura se cancela no Mercado Pago, em Assinaturas. Para pagar mais um período pelo mesmo preço, use o ícone do Véu (Véu Pro → Pagar mais 1 mês) ou <a href="https://licencas.veu-pro.workers.dev/renovar-periodo">licencas.veu-pro.workers.dev/renovar-periodo</a>. Mais respostas na <a href="planos.html">página de planos</a>.</p>
+      <h3>Achei uma falha de segurança</h3>
+      <p>Não publique. Avise em particular pelo <a href="https://github.com/guhttps/veu/security/advisories/new">relato privado de segurança</a> do GitHub ou por e-mail.</p>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <nav class="links" aria-label="Rodapé">
+      <a class="discreto" href="planos.html">Planos</a>
+      <a class="discreto" href="ajuda.html">Ajuda</a>
+      <a class="discreto" href="instalar.html">Instalar</a>
+      <a class="discreto" href="docs/">Documentação</a>
+      <a class="discreto" href="privacidade.html">Privacidade</a>
+      <a class="discreto" href="https://github.com/guhttps/veu">Código aberto no GitHub</a>
+    </nav>
+    <p class="discreto">Véu, código aberto (licença MIT). Feito no Brasil.</p>
+  </footer>
+</body>
+</html>

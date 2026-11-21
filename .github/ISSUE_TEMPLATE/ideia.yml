@@ -1,7 +1,22 @@
-name: Ideia ou integração nova
-description: Um tipo de dado, provedor de IA ou integração que falta.
+name: Sugerir uma ideia
+description: Um recurso, tipo de dado, site de IA ou integração que faria diferença para você.
 labels: ["ideia"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideias são muito bem-vindas! Para conversar sobre uma ideia antes, ou votar nas dos outros, use as [Discussões](https://github.com/guhttps/veu/discussions/categories/ideas).
+  - type: dropdown
+    id: area
+    attributes:
+      label: Para qual parte do Véu
+      options:
+        - Site do Véu
+        - Extensão do navegador
+        - Véu Pro
+        - Programa no computador (painel)
+        - Bibliotecas, proxy, MCP ou n8n
+        - Outra
   - type: textarea
     id: ideia
     attributes:
@@ -11,4 +26,4 @@ body:
   - type: textarea
     id: motivo
     attributes:
-      label: Para que serve no seu caso
+      label: Para que serve no seu dia a dia

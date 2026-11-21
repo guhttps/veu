@@ -1,20 +1,39 @@
-name: Bug
-description: Algo não funciona como deveria (proxy, integração, CLI).
+name: Relatar um problema
+description: Algo não funciona como deveria no site, na extensão, no Véu Pro, no programa ou nas bibliotecas.
 labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por avisar! **Não cole dados pessoais reais nem a sua chave do Véu Pro aqui:** esta página é pública. Troque nomes, CPFs e números por exemplos inventados.
+        Problema com pagamento ou com a chave? Escreva para **veu.ajuda@protonmail.com**, que é privado.
+  - type: dropdown
+    id: onde
+    attributes:
+      label: Onde aconteceu
+      options:
+        - Site do Véu (guhttps.github.io/veu)
+        - Extensão do navegador
+        - Véu Pro (arquivos, listas, relatório)
+        - Programa no computador (painel)
+        - Bibliotecas, proxy, MCP ou n8n
+        - Outro lugar
+    validations:
+      required: true
   - type: textarea
     id: descricao
     attributes:
       label: O que aconteceu
+      description: O que você fez, o que esperava e o que aconteceu de verdade.
     validations:
       required: true
   - type: textarea
     id: reproduzir
     attributes:
-      label: Como reproduzir (com dados fictícios)
+      label: Texto ou passos para repetir (com dados inventados)
       render: text
   - type: input
     id: ambiente
     attributes:
-      label: Versão do Véu, do Python e do sistema
-      placeholder: veu 0.1.0, Python 3.13, Windows 11
+      label: Navegador, sistema e versão do Véu
+      placeholder: Chrome no Windows 11, extensão 0.9.3

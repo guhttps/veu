@@ -445,6 +445,15 @@ Para ver o site de documentação no seu computador: `pip install zensical==0.1.
 - [ ] Mais casos difíceis escritos à mão, de domínios reais (com dados fictícios)
 - [ ] Detector de nomes em minúsculas sem saudação ("o rayane esqueceu")
 
+## Suporte, problemas e ideias
+
+- **Suporte do Véu Pro, pagamento ou dúvida particular:** veu.ajuda@protonmail.com.
+- **Relatar um problema:** [abra um chamado](https://github.com/guhttps/veu/issues/new/choose), com dados inventados (a lista é pública).
+- **Ideias:** veja, vote e sugira nas [Discussões](https://github.com/guhttps/veu/discussions/categories/ideas).
+- **Falha de segurança:** avise em particular pelo [relato privado](https://github.com/guhttps/veu/security/advisories/new).
+
+Tudo isso está explicado para quem não usa GitHub na [página de ajuda](https://guhttps.github.io/veu/ajuda.html).
+
 ## Licença
 
 [MIT](LICENSE). Os dados usados nos exemplos e no benchmark são fictícios. As listas de nomes e municípios vêm do IBGE (Censo Demográfico 2022, Nomes do Brasil, e Localidades), dados públicos.

@@ -5,6 +5,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+- **Página de ajuda** (`ajuda.html`), com link no menu de todas as páginas e na extensão: suporte por e-mail (Véu Pro, pagamento, chave), relatar um problema, sugerir e votar em ideias nas Discussões do GitHub e avisar de falhas de segurança em particular. Os formulários de chamado ficaram em português simples, perguntam onde o problema aconteceu (site, extensão, Véu Pro, programa) e lembram de não colar dados reais.
+
 ### Alterado
 - **Aviso de que a chave pode demorar:** a página de planos, a descrição da cobrança e a página de espera avisam que a confirmação do Pix pode levar alguns minutos e que, se a tela do Mercado Pago não mudar sozinha, basta clicar em "Voltar para Véu" para ver a chave (visto no primeiro pagamento real).
 

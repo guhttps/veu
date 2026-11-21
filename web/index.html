@@ -32,6 +32,7 @@
       <a class="discreto" href="#usar" data-t="navUsar">Usar agora</a>
       <a class="discreto" href="#onde" data-t="navOnde">Extensão e programa</a>
       <a class="discreto" href="planos.html" data-t="planos">Planos</a>
+      <a class="discreto" href="ajuda.html" data-t="navAjuda">Ajuda</a>
       <a class="discreto" href="docs/" data-t="documentacao" data-t-href="documentacaoLink">Documentação</a>
       <a class="discreto" id="idioma" href="?lang=en" data-t="idioma">English</a>
     </nav>
@@ -107,7 +108,7 @@
             <button id="copiar-protegido" class="botao" data-t="copiarParaIa">Copiar para a IA</button>
           </div>
         </div>
-        <pre id="saida" class="saida" tabindex="0" aria-label="Texto protegido" data-t-aria="textoProtegido"></pre>
+        <pre id="saida" class="saida" tabindex="0" role="region" aria-label="Texto protegido" data-t-aria="textoProtegido"></pre>
         <p class="dica" data-t="dica">Cole este texto no ChatGPT, Claude, Gemini ou qualquer IA. Ela não vê seus dados reais.</p>
       </section>
 
@@ -117,7 +118,7 @@
           <button id="copiar-restaurado" class="botao" data-t="copiarRestaurado">Copiar com os dados reais</button>
         </div>
         <textarea id="resposta" rows="6" spellcheck="false" data-t-placeholder="exemploResposta" placeholder="Cole aqui a resposta da IA. Os marcadores, como [PESSOA_1], voltam a ser os dados reais."></textarea>
-        <pre id="restaurado" class="saida" tabindex="0" aria-label="Resposta com os dados reais" data-t-aria="respostaReal"></pre>
+        <pre id="restaurado" class="saida" tabindex="0" role="region" aria-label="Resposta com os dados reais" data-t-aria="respostaReal"></pre>
       </section>
 
       <section class="painel" id="arquivos" aria-labelledby="t4">
@@ -214,11 +215,11 @@
   <footer class="rodape">
     <nav class="links" aria-label="Rodapé">
       <a class="discreto" href="planos.html" data-t="planos">Planos</a>
+      <a class="discreto" href="ajuda.html" data-t="navAjuda">Ajuda</a>
       <a class="discreto" href="instalar.html" data-t="rodapeInstalar">Instalar</a>
       <a class="discreto" href="docs/" data-t="documentacao" data-t-href="documentacaoLink">Documentação</a>
       <a class="discreto" href="privacidade.html" data-t="politica" data-t-href="politicaLink">Privacidade</a>
       <a class="discreto" href="https://github.com/guhttps/veu" data-t="github">Código aberto no GitHub</a>
-      <a class="discreto" href="mailto:veu.ajuda@protonmail.com" data-t="rodapeContato">Contato</a>
     </nav>
     <p class="discreto" data-t="rodapeTexto">Véu, código aberto (licença MIT). Feito no Brasil.</p>
   </footer>

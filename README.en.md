@@ -155,6 +155,10 @@ cd js && npm ci && npm test
 
 Issues and pull requests in English or Portuguese are welcome. Name lists, document patterns, key formats and hard test cases (with fictitious data) help the most. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Support, issues and ideas
+
+Support for Véu Pro and private questions: veu.ajuda@protonmail.com. Report a problem by [opening an issue](https://github.com/guhttps/veu/issues/new/choose) (with made-up data, issues are public), share and vote on ideas in [Discussions](https://github.com/guhttps/veu/discussions/categories/ideas), and report security issues [privately](https://github.com/guhttps/veu/security/advisories/new).
+
 ## License
 
 MIT.

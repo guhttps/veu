@@ -10,11 +10,12 @@
     <img src="icones/32.png" alt="" width="24" height="24">
     <h1>Véu</h1>
     <label class="chave" title="Ligar ou desligar">
-      <input id="ativo" type="checkbox">
+      <input id="ativo" type="checkbox" aria-label="Ligar ou desligar o Véu">
       <span></span>
     </label>
   </header>
 
+  <main>
   <p id="empresa" class="empresa" hidden>Configurado pela sua empresa.</p>
 
   <section>
@@ -72,7 +73,9 @@
     <p id="resultado" class="resultado" aria-live="polite"></p>
   </section>
 
-  <footer>Tudo roda no seu navegador. <a href="https://github.com/guhttps/veu" target="_blank" rel="noreferrer">Sobre</a></footer>
+  </main>
+
+  <footer>Tudo roda no seu navegador. <a href="https://github.com/guhttps/veu" target="_blank" rel="noreferrer">Sobre</a> · <a href="https://guhttps.github.io/veu/ajuda.html" target="_blank" rel="noreferrer">Ajuda e sugestões</a></footer>
   <script src="veu.global.js"></script>
   <script src="popup.js"></script>
 </body>
