@@ -196,7 +196,8 @@ async function criarCobranca(origem, env, nome, termos) {
       body: JSON.stringify({
         items: [{ id: `veu-${nome}`, title: periodo.nome, quantity: 1, unit_price: termos.p[nome] / 100, currency_id: "BRL",
           category_id: "services",
-          description: `Chave do Véu Pro por ${periodo.dias} dias. Se fechar a página, recupere em ${origem}/recuperar` }],
+          description: `Chave do Véu Pro por ${periodo.dias} dias. Depois de pagar, clique em "Voltar para Véu" para ver a chave `
+            + `(a confirmação pode levar alguns minutos). Se fechar a página, recupere em ${origem}/recuperar` }],
         external_reference: referencia,
         back_urls: { success: volta, pending: volta, failure: volta },
         auto_return: "approved",
@@ -296,8 +297,9 @@ pague mais um período na <a href="${PAGINA_DE_PLANOS}">página de planos</a>.</
   }
   const endereco = escapar(`${url.origin}/pago?ref=${referencia}`);
   if (lista.some((pagamento) => PENDENTES.has(pagamento.status))) {
-    return pagina("Esperando o pagamento", `<p>O Mercado Pago ainda não confirmou o pagamento. Pix leva alguns segundos;
-boleto, até 3 dias úteis. Esta página se atualiza sozinha.</p>
+    return pagina("Esperando o pagamento", `<p>O Mercado Pago ainda não confirmou o pagamento. Pix leva de alguns segundos a
+alguns minutos; boleto, até 3 dias úteis. Esta página se atualiza sozinha, e a chave aparece aqui assim que o pagamento for
+confirmado.</p>
 <p>Pode fechar e voltar depois por este endereço (guarde-o):<br><a href="${endereco}">${endereco}</a></p>
 <p class="nota">Ou, com o boleto já pago, em <a href="${url.origin}/recuperar">${url.origin}/recuperar</a>, com o número da
 operação que vem no e-mail do Mercado Pago.</p>`, 202, `<meta http-equiv="refresh" content="20">`);
