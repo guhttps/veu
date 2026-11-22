@@ -88,3 +88,20 @@ test("zip bomb é recusada antes de descompactar", async () => {
 test("arquivo que não é do Office dá um erro claro", async () => {
   await assert.rejects(readZip(enc("isto não é um zip")), /Office/);
 });
+
+test("planilha grande: a reescrita do XML cresce em linha reta (muitas trocas num XML grande)", async () => {
+  // Antes, cada troca recortava e colava o XML inteiro: 60 mil trocas num XML de ~4 MB levavam mais de 10 segundos.
+  const { rewriteXml } = await import("../src/arquivos.ts");
+  const celulas = Array.from({ length: 60000 }, (_, i) => `<si><t>Cliente ${i} Joana Prado</t></si>`).join("");
+  const xml = `<sst>${celulas}</sst>`;
+  const inicio = performance.now();
+  const saida = rewriteXml(xml, new Set(["si"]), (texto) => {
+    const start = texto.indexOf("Joana Prado");
+    return start < 0 ? [] : [{ start, end: start + "Joana Prado".length, replacement: "[PESSOA_1]" }];
+  });
+  const segundos = (performance.now() - inicio) / 1000;
+  assert.equal(saida.split("[PESSOA_1]").length - 1, 60000);
+  assert.ok(!saida.includes("Joana Prado"));
+  assert.ok(saida.startsWith("<sst><si><t>Cliente 0 [PESSOA_1]</t></si>"));
+  assert.ok(segundos < 3, `levou ${segundos.toFixed(1)} s`);
+});

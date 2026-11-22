@@ -117,6 +117,16 @@ const CTX_BIRTH_COLUMN = [
   "nascimento", "data_nascimento", "dt_nascimento", "datanascimento", "data_nasc", "dt_nasc", "nasc",
   "birth_date", "birthdate", "date_of_birth", "dob", "data de nascimento", "data nascimento",
 ];
+// Valor em dinheiro que é dado financeiro de alguém: só com uma destas palavras antes ("saldo atual: R$ 15.432,10").
+// Preço, frete e receita de empresa ficam ("o frete custa R$ 30", "faturamento de R$ 2 milhões").
+const CTX_MONEY = [
+  "saldo", "saldo atual", "saldo disponivel", "salario", "salarios", "remuneracao", "renda", "renda mensal",
+  "rendimento", "rendimentos", "limite", "limite de credito", "patrimonio", "divida", "dividas", "pensao",
+  "aposentadoria", "beneficio", "poupanca", "investimento", "investimentos", "extrato", "holerite", "contracheque",
+  "balance", "salary", "income", "debt", "net worth", "credit limit",
+];
+const AMOUNT = "(?:\\d{1,3}(?:[.,]\\d{3})+|\\d+)(?:[.,]\\d{1,2})?(?:[ \\t]?(?:mil|milh(?:ão|ao|ões|oes)))?";
+const MONEY = `(?:(?:R\\$|US\\$|€|£)[ \\t]?${AMOUNT}|(?:\\d{1,3}(?:\\.\\d{3})+|\\d+)(?:,\\d{2})?[ \\t]?reais)`;
 const CTX_MAC = ["mac", "endereco mac", "mac address", "macaddress", "hwaddr", "ether", "bssid"];
 const CTX_IMEI = ["imei", "imei1", "imei 1", "imei2", "imei 2"];
 const CTX_BOLETO = ["boleto", "linha digitavel", "codigo de barras", "fatura", "pagamento", "pagar", "conta", "vencimento"];
@@ -339,6 +349,8 @@ export const DEFAULT_SPECS: PatternSpec[] = [
   // com a coluna "nascimento" no cabeçalho: "INSERT ... (nome, nascimento) VALUES ('Ana', '1985-04-03')".
   spec("DATA_NASCIMENTO", `(?<=['";,|\\t])[ ]?(?<valor>\\d{4}-\\d{2}-\\d{2}|\\d{1,2}/\\d{1,2}/\\d{4})(?![${W}])`,
     S(null, null, 0.8), { validator: v.isPlausibleBirthdate, context: CTX_BIRTH_COLUMN, before: 600, after: 0, name: "tabela" }),
+  // Saldo, salário, renda, limite: o valor some só com o contexto antes (preço e frete ficam).
+  spec("VALOR", `${B}${MONEY}${E}`, S(null, null, 0.8), { context: CTX_MONEY, flags: "i", before: 40, after: 0 }),
   // Coordenadas de GPS ("-23.550520, -46.633308"): sem contexto, só com sinal negativo e cinco casas decimais.
   spec("COORDENADAS",
     `(?<![${W}.\\-])-?(?:[0-8]?\\d|90)\\.\\d{4,8}[ \\t]*,[ \\t]*-?(?:1[0-7]\\d|0?\\d?\\d|180)\\.\\d{4,8}(?![${W}]|\\.\\d)`,

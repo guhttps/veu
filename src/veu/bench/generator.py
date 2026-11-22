@@ -37,7 +37,7 @@ TEMPLATES: list[tuple[str, str]] = [
     ("juridico", "Processo nº {PROCESSO}. Autor: {PESSOA}, CPF {CPF}, residente na {ENDERECO}. Réu: {empresa}, CNPJ {CNPJ}."),
     ("juridico", "{PESSOA}, portador do RG {RG} e inscrito no CPF sob o nº {CPF}, vem respeitosamente requerer a revisão."),
     ("juridico", "Nos autos do processo {PROCESSO}, a testemunha {PESSOA_RARA} declarou ter visto o veículo de placa {PLACA}."),
-    ("rh", "Admissão: {PESSOA}, CPF {CPF}, PIS {PIS}, título de eleitor {TITULO}. Salário de {valor}."),
+    ("rh", "Admissão: {PESSOA}, CPF {CPF}, PIS {PIS}, título de eleitor {TITULO}. Salário de {SALARIO}."),
     ("rh", "Dados bancários do colaborador {PESSOA}: agência {AGENCIA}, conta {CONTA}. Data de nascimento: {NASCIMENTO}."),
     ("veiculos", "Veículo placa {PLACA}, RENAVAM {RENAVAM}, proprietário {PESSOA}, CNH {CNH}."),
     ("financeiro", "Pagamento via Pix para a chave {CHAVE_PIX} confirmado em {data}. Valor: {valor}."),
@@ -97,6 +97,7 @@ SLOT_LABELS = {
     "CARTAO": "CARTAO_CREDITO", "RG": "RG", "CNH": "CNH", "PIS": "PIS", "CNS": "CNS", "TITULO": "TITULO_ELEITOR",
     "RENAVAM": "RENAVAM", "NASCIMENTO": "DATA_NASCIMENTO", "CHAVE_PIX": "CHAVE_PIX", "IP": "IP",
     "CONTA": "CONTA_BANCARIA", "AGENCIA": "CONTA_BANCARIA", "PROCESSO": "PROCESSO", "PASSAPORTE": "PASSAPORTE",
+    "SALARIO": "VALOR",
 }
 COMPANIES = ("Hospital Santa Luzia", "Mercado Bom Preço", "Tech Soluções Ltda", "Construtora Horizonte",
              "Farmácia Popular do Centro", "Clínica Vida Plena", "Padaria Pão Dourado", "Escola Nova Era")
@@ -172,6 +173,8 @@ def _slot(slot: str, rng: random.Random) -> str:
         "PASSAPORTE": lambda: fake.fake_passport(rng),
         "pedido": lambda: str(rng.randint(10_000, 9_999_999)),
         "protocolo": lambda: f"{rng.randint(2024, 2026)}{rng.randint(10_000_000, 99_999_999)}",
+        # Salário é dado pessoal (VALOR); preço e frete ({valor}) não são.
+        "SALARIO": lambda: f"R$ {rng.randint(1_500, 25_000):,}".replace(",", ".") + f",{rng.randint(0, 99):02d}",
         "valor": lambda: f"R$ {rng.randint(10, 9_999)},{rng.randint(0, 99):02d}",
         "data": lambda: f"{rng.randint(1, 28):02d}/{rng.randint(1, 12):02d}/{rng.randint(2024, 2027)}",
         "hora": lambda: f"{rng.randint(7, 22)}h{rng.choice(('00', '15', '30', '45'))}",

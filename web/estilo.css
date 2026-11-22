@@ -78,10 +78,24 @@ mark { background: var(--destaque); color: inherit; border-radius: 4px; padding:
 .arquivo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .achados { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; font-size: 14px; }
 .achados:empty { display: none; }
-.tipos { margin-top: 12px; border-top: 1px solid var(--borda); padding-top: 10px; font-size: 14px; }
-.tipos > summary { cursor: pointer; font-weight: 600; }
-.tipos-resumo { color: var(--suave); font-weight: 400; }
+/* "O que esconder": uma barra que chama a atenção, para todo mundo ver que dá para escolher. */
+.tipos { margin-top: 12px; font-size: 14px; }
+.tipos > summary { cursor: pointer; list-style: none; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px; row-gap: 2px; align-items: center; padding: 10px 12px 10px 14px; border: 1.5px solid var(--marca);
+  border-radius: 10px; background: var(--campo); }
+.tipos > summary::-webkit-details-marker { display: none; }
+.tipos > summary:hover { box-shadow: 0 0 0 1px var(--marca); }
+.tipos > summary:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+.tipos-titulo { font-weight: 700; font-size: 15px; color: var(--marca); }
+.tipos-resumo { color: var(--suave); font-weight: 400; font-size: 14px; }
 .tipos-resumo::before { content: "· "; }
+.tipos-dica { grid-column: 1; color: var(--suave); font-size: 13px; }
+.tipos-botao { grid-column: 2; grid-row: 1 / span 2; background: var(--marca); color: var(--marca-texto); font-weight: 600;
+  border-radius: 999px; padding: 6px 14px; white-space: nowrap; }
+.tipos-botao .abrir::after { content: " ▾"; }
+.tipos-botao .fechar::after { content: " ▴"; }
+.tipos-botao .fechar, .tipos[open] .tipos-botao .abrir, .tipos[open] .tipos-dica { display: none; }
+.tipos[open] .tipos-botao .fechar { display: inline; }
 .tipos-grupos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 10px; }
 .grupo { border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; min-width: 0; }
 .grupo > label { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; cursor: pointer; }

@@ -30,6 +30,7 @@ LABELS: dict[str, str] = {
     "CONTA_BANCARIA": "Agência ou conta bancária",
     "CHAVE_PIX": "Chave Pix aleatória ou Pix copia e cola",
     "BOLETO": "Linha digitável ou código de barras de boleto",
+    "VALOR": "Saldo, salário ou renda",
     "DATA_NASCIMENTO": "Data de nascimento",
     "IP": "Endereço IP",
     "PROCESSO": "Número de processo judicial (CNJ)",

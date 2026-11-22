@@ -29,24 +29,24 @@
       "id": "financeiro",
       "titulo": "Dados financeiros",
       "titulo_en": "Financial data",
-      "exemplo": "cartões, contas bancárias, chave Pix e Pix copia e cola, boletos, IBAN, carteiras de criptomoeda",
-      "exemplo_en": "cards, bank accounts, Pix keys and codes, bank slips (boletos), IBAN, crypto wallets",
-      "tipos": ["CARTAO_CREDITO", "CONTA_BANCARIA", "CHAVE_PIX", "BOLETO", "IBAN", "CRIPTO"]
+      "exemplo": "cartões, contas bancárias, saldos e salários, chave Pix e Pix copia e cola, boletos, IBAN, carteiras de criptomoeda",
+      "exemplo_en": "cards, bank accounts, balances and salaries, Pix keys and codes, bank slips (boletos), IBAN, crypto wallets",
+      "tipos": ["CARTAO_CREDITO", "CONTA_BANCARIA", "VALOR", "CHAVE_PIX", "BOLETO", "IBAN", "CRIPTO"]
     },
     {
       "id": "segredos",
       "titulo": "Senhas e chaves de acesso",
       "titulo_en": "Passwords and access keys",
-      "exemplo": "senhas, chaves de API, tokens, chaves privadas, frases de recuperação de carteiras e segredos de 2FA",
-      "exemplo_en": "passwords, API keys, tokens, private keys, wallet recovery phrases and 2FA secrets",
+      "exemplo": "senhas e chaves de API (também dentro de código), tokens, chaves privadas, frases de recuperação de carteiras e segredos de 2FA",
+      "exemplo_en": "passwords and API keys (also inside code), tokens, private keys, wallet recovery phrases and 2FA secrets",
       "tipos": ["CHAVE_API", "TOKEN", "SENHA", "CHAVE_PRIVADA", "URL_CONEXAO", "SEGREDO"]
     },
     {
       "id": "infra",
       "titulo": "Infraestrutura de TI",
       "titulo_en": "IT infrastructure",
-      "exemplo": "endereços IP, portas, nomes de servidores internos endereços MAC e IMEI de celulares",
-      "exemplo_en": "IP addresses, ports, internal server names MAC addresses and phone IMEIs",
+      "exemplo": "endereços IP, portas, nomes de servidores internos, endereços MAC e IMEI de celulares",
+      "exemplo_en": "IP addresses, ports, internal server names, MAC addresses and phone IMEIs",
       "tipos": ["IP", "PORTA", "SERVIDOR", "MAC", "IMEI"]
     },
     {

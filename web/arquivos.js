@@ -1,6 +1,6 @@
 // Arquivos inteiros na página: Word, Excel e PowerPoint voltam no mesmo formato, PDF vira texto. Tudo no navegador;
 // o PDF é lido pelo pdf.js servido por este mesmo site. Grátis: um arquivo por vez, até 10 MB. Véu Pro: vários de
-// uma vez e até 50 MB. O cofre é o mesmo da caixa de texto, então a resposta da IA volta com os dados reais no passo 3.
+// uma vez e até 100 MB. O cofre é o mesmo da caixa de texto, então a resposta da IA volta com os dados reais no passo 3.
 (() => {
   "use strict";
   const { protectDocument, restoreDocument, documentKind } = window.veu;
@@ -10,7 +10,7 @@
   const $ = (id) => document.getElementById(id);
   const MB = 1024 * 1024;
   const TEXTO = new Set(["txt", "md", "csv", "tsv", "json", "jsonl", "log", "xml", "html", "yml", "yaml", "ini", "sql"]);
-  const limite = () => (pro.estado.ativo ? 50 : 10) * MB;
+  const limite = () => (pro.estado.ativo ? 100 : 10) * MB;
 
   const extensao = (nome) => nome.toLowerCase().split(".").pop();
   const base = (nome) => nome.replace(/\.[^.]+$/, "");

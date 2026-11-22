@@ -7,7 +7,7 @@
   const parametros = new URLSearchParams(location.search);
   const abaId = Number(parametros.get("aba")) || "arquivos";
   const site = parametros.get("site") || "";
-  const LIMITE = 50 * 1024 * 1024;
+  const LIMITE = 100 * 1024 * 1024;
   const TEXTO = new Set(["txt", "md", "csv", "json"]);
 
   const config = await chrome.runtime.sendMessage({ tipo: "configuracao" });
@@ -78,7 +78,7 @@
   }
 
   async function proteger(arquivo) {
-    if (arquivo.size > LIMITE) return registrar(`${arquivo.name}: maior que 50 MB.`, true);
+    if (arquivo.size > LIMITE) return registrar(`${arquivo.name}: maior que 100 MB.`, true);
     const tipo = extensao(arquivo.name);
     const vault = await cofre();
     const bytes = new Uint8Array(await arquivo.arrayBuffer());
@@ -101,7 +101,7 @@
   }
 
   async function restaurar(arquivo) {
-    if (arquivo.size > LIMITE) return registrar(`${arquivo.name}: maior que 50 MB.`, true);
+    if (arquivo.size > LIMITE) return registrar(`${arquivo.name}: maior que 100 MB.`, true);
     const tipo = extensao(arquivo.name);
     const vault = await cofre();
     const bytes = new Uint8Array(await arquivo.arrayBuffer());

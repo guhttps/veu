@@ -152,3 +152,33 @@ def test_second_batch_lookalikes_stay(text):
 @pytest.mark.parametrize("text", ["telefone=11987654321", "fone: 1135689600", "phone=1135689600", "ligue 1135689600"])
 def test_phones_with_context_still_hidden_after_a_key(text):
     assert "TELEFONE" in labels(text)
+
+
+# Saldo, salário, renda e limite: o valor em dinheiro some só com o contexto antes (preço, frete e receita ficam).
+@pytest.mark.parametrize(("text", "value"), [
+    ("Saldo atual: R$ 15.432,10.", "R$ 15.432,10"),
+    ("Ag 0001 C/C 123456-7 - saldo disponível R$ 2.350,00", "R$ 2.350,00"),
+    ("meu salário este mês ficou em R$ 4500", "R$ 4500"),
+    ("renda mensal de 3.200,00 reais", "3.200,00 reais"),
+    ("tenho uma dívida de R$ 3 mil no cartão", "R$ 3 mil"),
+    ("limite de crédito: R$ 5.000,00", "R$ 5.000,00"),
+    ("balance: US$ 1,250.75", "US$ 1,250.75"),
+])
+def test_personal_money_amounts_are_hidden_with_context(text, value):
+    assert labels(text).get("VALOR") == value
+
+
+@pytest.mark.parametrize("text", [
+    "O frete custa R$ 30 e o produto R$ 1.299,90",
+    "faturamento de R$ 2,3 milhões no trimestre",
+    "Promoção: de R$ 199,00 por R$ 149,00",
+    "O plano custa R$ 9,90 por mês",
+])
+def test_prices_and_company_figures_stay(text):
+    assert "VALOR" not in labels(text)
+
+
+def test_money_synthetic_value_keeps_the_format():
+    result = Veu(operator="sintetico").anonymize("Saldo atual: R$ 15.432,10")
+    novo = result.text.removeprefix("Saldo atual: ")
+    assert novo != "R$ 15.432,10" and novo.startswith("R$ ") and len(novo) == len("R$ 15.432,10")

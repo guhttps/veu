@@ -5,6 +5,16 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+- **Saldo, salário e renda:** o tipo novo `VALOR` esconde o valor em dinheiro quando há uma palavra como saldo, salário, renda, limite, dívida, pensão, holerite ou extrato logo antes ("saldo atual: R$ 15.432,10", "renda mensal de 3.200,00 reais", "dívida de R$ 3 mil", "balance: US$ 1,250.75"). Preço, frete e receita de empresa continuam visíveis. Fica no grupo "Dados financeiros".
+
+### Alterado
+- **Véu Pro: arquivos de até 100 MB** (antes, 50 MB) na extensão e na página. Um Word ou Excel pode ter até 500 MB depois de aberto (antes, 200 MB); a proteção contra arquivo-bomba continua.
+- **"O que esconder" mais visível na página:** virou uma barra com um botão "Escolher" e a dica "Clique para ver os grupos e desmarcar o que não precisa esconder."; os textos dos grupos ganharam "senhas e chaves de API (também dentro de código)" e "saldos e salários".
+
+### Corrigido
+- **Planilhas grandes muito mais rápidas no navegador:** cada troca recortava e colava o XML inteiro, e o tempo crescia com o quadrado do tamanho. Uma planilha de 60 mil linhas caiu de 6,4 minutos para 25 segundos; uma de 600 mil linhas, que não terminava em meia hora, sai em 4 minutos; um Word de 95 MB, de 28 para 10 segundos.
+
 ## [0.9.5] - 2026-11-22
 
 ### Adicionado

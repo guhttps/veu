@@ -315,6 +315,9 @@ def make_surrogate(label: str, original: str, rng: random.Random) -> str | None:
     if label in generators:
         size, generate = generators[label]
         return apply_format(original, generate()) if len(digits) == size else apply_format(original, _digits(rng, len(digits)))
+    if label == "VALOR" and digits:  # só os dígitos mudam: "R$ 15.432,10" vira "R$ 83.917,46"
+        new_digits = iter(str(rng.randint(1, 9)) + _digits(rng, len(digits) - 1))
+        return "".join(next(new_digits) if char.isdigit() else char for char in original)
     if label in ("RG", "CONTA_BANCARIA"):
         return apply_format(original, "".join(rng.choice("0123456789") for _ in original if _.isalnum()))
     if label == "PASSAPORTE":

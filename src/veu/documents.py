@@ -47,7 +47,7 @@ def _source(data: bytes | str | Path):
 
 # Word, Excel e PowerPoint são arquivos zip: um .docx de 300 KB pode guardar 300 MB de XML (zip bomb) e derrubar o
 # processo que o abre. Os tamanhos declarados no zip são conferidos antes (o zipfile não entrega mais que isso).
-MAX_UNZIPPED = 200 * 1024 * 1024
+MAX_UNZIPPED = 500 * 1024 * 1024
 MAX_RATIO = 100
 
 

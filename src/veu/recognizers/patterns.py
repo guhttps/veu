@@ -140,6 +140,16 @@ CTX_BIRTH_COLUMN = (
     "nascimento", "data_nascimento", "dt_nascimento", "datanascimento", "data_nasc", "dt_nasc", "nasc",
     "birth_date", "birthdate", "date_of_birth", "dob", "data de nascimento", "data nascimento",
 )
+# Valor em dinheiro que é dado financeiro de alguém: só com uma destas palavras antes ("saldo atual: R$ 15.432,10").
+# Preço, frete e receita de empresa ficam ("o frete custa R$ 30", "faturamento de R$ 2 milhões").
+CTX_MONEY = (
+    "saldo", "saldo atual", "saldo disponivel", "salario", "salarios", "remuneracao", "renda", "renda mensal",
+    "rendimento", "rendimentos", "limite", "limite de credito", "patrimonio", "divida", "dividas", "pensao",
+    "aposentadoria", "beneficio", "poupanca", "investimento", "investimentos", "extrato", "holerite", "contracheque",
+    "balance", "salary", "income", "debt", "net worth", "credit limit",
+)
+_AMOUNT = r"(?:\d{1,3}(?:[.,]\d{3})+|\d+)(?:[.,]\d{1,2})?(?:[ \t]?(?:mil|milh(?:ão|ao|ões|oes)))?"
+_MONEY = rf"(?:(?:R\$|US\$|€|£)[ \t]?{_AMOUNT}|(?:\d{{1,3}}(?:\.\d{{3}})+|\d+)(?:,\d{{2}})?[ \t]?reais)"
 CTX_MAC = ("mac", "endereco mac", "mac address", "macaddress", "hwaddr", "ether", "bssid")
 CTX_COORD = (
     "coordenadas", "coordenada", "localizacao", "local", "gps", "lat", "latitude", "lng", "lon", "longitude",
@@ -430,6 +440,9 @@ DEFAULT_SPECS: list[PatternSpec] = [
         "DATA_NASCIMENTO", r"(?<=['\";,|\t])[ ]?(?P<valor>\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}/\d{4})(?![\w])",
         Scores(None, None, 0.8), v.is_plausible_birthdate, CTX_BIRTH_COLUMN, before=600, after=0, name="tabela",
     ),
+    # Saldo, salário, renda, limite: o valor some só com o contexto antes (preço e frete ficam).
+    PatternSpec("VALOR", B + _MONEY + E, Scores(None, None, 0.8), None, CTX_MONEY, flags=re.IGNORECASE, before=40,
+                after=0),
     # Coordenadas de GPS ("-23.550520, -46.633308"): sem contexto, só com sinal negativo e cinco casas decimais.
     PatternSpec(
         "COORDENADAS",

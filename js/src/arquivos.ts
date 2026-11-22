@@ -7,7 +7,7 @@ import type { Vault } from "./vault.ts";
 export type DocumentKind = "docx" | "xlsx" | "pptx";
 
 // Um .docx de 300 KB pode guardar 300 MB de XML (zip bomb): os tamanhos declarados são conferidos antes.
-export const MAX_UNZIPPED = 200 * 1024 * 1024;
+export const MAX_UNZIPPED = 500 * 1024 * 1024;
 export const MAX_RATIO = 100;
 
 // Zip -----------------------------------------------------------------------------------------------------------
@@ -260,9 +260,16 @@ export function rewriteXml(xml: string, paragraphs: ReadonlySet<string>, spansOf
       edits.push([node.tagEnd - node.openTag.length, node.closeStart, openTag + encodeXml(joined)]);
     });
   }
-  let output = xml;
-  for (const [start, end, value] of edits.sort((a, b) => b[0] - a[0])) output = output.slice(0, start) + value + output.slice(end);
-  return output;
+  // Monta a saída uma vez só, na ordem: recortar e colar o XML inteiro a cada troca deixava uma planilha de 60 mil
+  // linhas (60 mil trocas num XML de 15 MB) mais de seis minutos no navegador.
+  const parts: string[] = [];
+  let position = 0;
+  for (const [start, end, value] of edits.sort((a, b) => a[0] - b[0])) {
+    parts.push(xml.slice(position, start), value);
+    position = end;
+  }
+  parts.push(xml.slice(position));
+  return parts.join("");
 }
 
 // Excel: números que são documentos (CPF, cartão) viram texto com o marcador.
