@@ -65,7 +65,9 @@ def test_firefox_manifest():
     module = _packager()
     manifest = json.loads((EXTENSION / "manifest.json").read_text(encoding="utf-8"))
     firefox = module.firefox_manifest(manifest)
-    assert firefox["background"] == {"scripts": ["licenca.js", "fundo.js"]}
+    # A página de fundo do Firefox também lê as imagens do Véu Pro (tem DOM): leva o leitor e não usa offscreen.
+    assert firefox["background"] == {"scripts": ["veu.global.js", "licenca.js", "imagens.js", "leitor.js", "fundo.js"]}
+    assert "offscreen" in manifest["permissions"] and "offscreen" not in firefox["permissions"]
     assert firefox["browser_specific_settings"]["gecko"]["id"] == "veu@guhttps.github.io"
     assert "minimum_chrome_version" not in firefox and firefox["version"] == manifest["version"]
     # A Mozilla recusa extensões novas que não declaram se coletam dados.

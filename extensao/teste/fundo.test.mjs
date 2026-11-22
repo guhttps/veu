@@ -59,7 +59,7 @@ function carregar({ politica = {} } = {}) {
   vm.runInContext(readFileSync(new URL("fundo.js", pasta), "utf8"), contexto);
   const enviar = (mensagem, remetente) => new Promise((resolver) => receptor(mensagem, remetente, resolver));
   return {
-    store, renovacoes, abasAbertas, pagamentosPedidos, cancelamentos,
+    store, renovacoes, abasAbertas, pagamentosPedidos, cancelamentos, contexto,
     doIcone: (mensagem) => enviar(mensagem, { id: "veu", url: "chrome-extension://veu/popup.html" }),
     daPagina: (mensagem) => enviar(mensagem, { tab: { id: 7 }, url: "https://chatgpt.com/" }),
   };
@@ -171,4 +171,35 @@ test("cancelar a assinatura: só pelo ícone, com a chave guardada", async () =>
   assert.equal(fundo.cancelamentos.length, 1);
   const avulsa = await fundo.doIcone({ tipo: "ativarLicenca", chave: await licenca(20, { assinatura: undefined, pagamento: "1" }) });
   assert.equal(avulsa.pro.assinatura, false); // chave paga por período não mostra o botão
+});
+
+test("imagem colada num site de IA: só com o Pro, vai para o leitor e volta contada", async () => {
+  const png = "data:image/png;base64,iVBORw0KGgo=";
+  // Chrome e Edge: o leitor roda numa página escondida (offscreen), criada na primeira imagem.
+  const fundo = carregar();
+  const criados = [];
+  const enviadosAoLeitor = [];
+  fundo.contexto.chrome.offscreen = { createDocument: async (opcoes) => { criados.push(opcoes); } };
+  fundo.contexto.chrome.runtime.getContexts = async () => criados.map(() => ({ contextType: "OFFSCREEN_DOCUMENT" }));
+  fundo.contexto.chrome.runtime.sendMessage = async (mensagem) => {
+    enviadosAoLeitor.push(mensagem);
+    return { dados: "data:image/png;base64,AAAA", counts: { CPF: 1 }, qr: 1 };
+  };
+  assert.match((await fundo.daPagina({ tipo: "protegerImagem", dados: png })).erro, /Véu Pro/);
+  await fundo.doIcone({ tipo: "ativarLicenca", chave: await licenca(30) });
+  assert.match((await fundo.daPagina({ tipo: "protegerImagem", dados: "javascript:alert(1)" })).erro, /inválida/);
+  const resposta = await fundo.daPagina({ tipo: "protegerImagem", dados: png });
+  assert.deepEqual({ ...resposta, counts: { ...resposta.counts } }, { dados: "data:image/png;base64,AAAA", counts: { CPF: 1 }, qr: 1 });
+  await fundo.daPagina({ tipo: "protegerImagem", dados: png });
+  assert.equal(criados.length, 1); // a página escondida é reaproveitada
+  assert.equal(criados[0].url, "leitor.html");
+  assert.equal(enviadosAoLeitor[0].alvo, "leitor");
+  assert.equal(enviadosAoLeitor[0].config.pro.ativo, true);
+  assert.equal(fundo.store.session["contagem:7"].CPF, 2); // conta no selo da aba e no relatório
+
+  // Firefox: a página de fundo tem o leitor (leitor.js) e lê ali mesmo.
+  const firefox = carregar();
+  firefox.contexto.veuLeitor = async ({ dados }) => ({ dados, counts: {}, qr: 0 });
+  await firefox.doIcone({ tipo: "ativarLicenca", chave: await licenca(30) });
+  assert.equal((await firefox.daPagina({ tipo: "protegerImagem", dados: png })).dados, png);
 });

@@ -137,6 +137,34 @@ const limparLista = (lista) => (Array.isArray(lista) ? lista : [])
 const chaveDoCofre = (abaId) => `cofre:${abaId}`;
 const chaveDaContagem = (abaId) => `contagem:${abaId}`;
 
+/** Soma o que foi escondido na aba (selo do ícone) e no relatório do mês. */
+async function contar(abaId, contagem, origem) {
+  const chave = chaveDaContagem(abaId);
+  const atual = (await chrome.storage.session.get(chave))[chave] || {};
+  for (const [rotulo, n] of Object.entries(contagem || {})) atual[rotulo] = (atual[rotulo] || 0) + n;
+  await chrome.storage.session.set({ [chave]: atual });
+  await atualizarSelo(abaId);
+  await registrarNoRelatorio(contagem, origem);
+  return atual;
+}
+
+// Imagens (Véu Pro): o leitor (Tesseract) precisa de uma página com DOM e workers. No Chrome e no Edge é uma página
+// escondida da extensão (offscreen), aberta na primeira imagem; no Firefox, a própria página de fundo (leitor.js).
+const LEITOR = "leitor.html";
+const IMAGEM_EM_DATA_URL = /^data:image\/(png|jpeg|webp|gif|bmp);base64,[A-Za-z0-9+/=]+$/;
+
+async function lerImagem(pedido) {
+  if (typeof globalThis.veuLeitor === "function") return globalThis.veuLeitor(pedido);
+  if (!chrome.offscreen) return { erro: "Este navegador não consegue ler imagens." };
+  const abertos = await chrome.runtime.getContexts({ contextTypes: ["OFFSCREEN_DOCUMENT"] });
+  if (!abertos.length) {
+    await chrome.offscreen.createDocument({ url: LEITOR, reasons: ["WORKERS"],
+      justification: "Ler o texto de prints colados nos sites de IA para cobrir os dados pessoais, tudo no navegador." })
+      .catch(() => {}); // duas imagens ao mesmo tempo: a outra já abriu a página
+  }
+  return chrome.runtime.sendMessage({ alvo: "leitor", ...pedido });
+}
+
 async function atualizarSelo(abaId) {
   const salvo = await chrome.storage.session.get(chaveDaContagem(abaId));
   const contagem = salvo[chaveDaContagem(abaId)] || {};
@@ -146,6 +174,7 @@ async function atualizarSelo(abaId) {
 }
 
 chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
+  if (mensagem?.alvo === "leitor") return false; // para a página escondida do leitor de imagens
   // Páginas da própria extensão (o ícone, também aberto numa aba); o script dentro dos sites de IA não conta.
   const daExtensao = (remetente.url || "").startsWith(chrome.runtime.getURL(""));
   // A página de arquivos usa o cofre da aba da IA (abaId); o script de uma página só usa o da própria aba.
@@ -159,14 +188,18 @@ chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
         return true;
       case "carregarCofre":
         return (await chrome.storage.session.get(chaveDoCofre(abaId)))[chaveDoCofre(abaId)] || null;
-      case "contar": {
-        const chave = chaveDaContagem(abaId);
-        const atual = (await chrome.storage.session.get(chave))[chave] || {};
-        for (const [rotulo, n] of Object.entries(mensagem.contagem || {})) atual[rotulo] = (atual[rotulo] || 0) + n;
-        await chrome.storage.session.set({ [chave]: atual });
-        await atualizarSelo(abaId);
-        await registrarNoRelatorio(mensagem.contagem, daExtensao ? "arquivos" : remetente.tab?.url || remetente.url);
-        return atual;
+      case "contar":
+        return contar(abaId, mensagem.contagem, daExtensao ? "arquivos" : remetente.tab?.url || remetente.url);
+      case "protegerImagem": {
+        // Print colado, arrastado ou anexado num site de IA: volta com tarjas sobre os dados e os QR Codes.
+        const config = await configuracao();
+        if (!config.pro.ativo) return { erro: "Proteger imagens faz parte do Véu Pro." };
+        const dados = String(mensagem.dados || "");
+        if (!IMAGEM_EM_DATA_URL.test(dados)) return { erro: "Imagem inválida." };
+        const resposta = await lerImagem({ dados, config });
+        if (!resposta || resposta.erro) return { erro: resposta?.erro || "Não consegui ler a imagem." };
+        if (Object.keys(resposta.counts || {}).length) await contar(abaId, resposta.counts, remetente.tab?.url || remetente.url);
+        return { dados: resposta.dados, counts: resposta.counts || {}, qr: resposta.qr || 0 };
       }
       case "relatorio": {
         if (!daExtensao) return { erro: "O relatório só abre pelo ícone do Véu." };

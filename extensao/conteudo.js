@@ -203,9 +203,99 @@
     aviso(mensagemTexto, acoes, bloqueados.length || config.modo === "bloquear" ? "bloqueio" : "alerta");
   }
 
+  // Imagens (Véu Pro): um print colado, arrastado ou anexado chega ao site já com tarjas sobre os dados e os QR
+  // Codes. O leitor roda numa página da extensão (fundo.js); se ele falhar, a imagem não é enviada.
+  const IMAGEM = /^image\/(png|jpeg|webp|gif|bmp)$/;
+  const temImagens = (lista) => Boolean(config.pro?.ativo) && [...(lista || [])].some((arquivo) => IMAGEM.test(arquivo.type));
+  const lerDataUrl = (blob) => new Promise((pronto, erro) => {
+    const leitor = new FileReader();
+    leitor.onload = () => pronto(leitor.result);
+    leitor.onerror = () => erro(leitor.error);
+    leitor.readAsDataURL(blob);
+  });
+  function blobDe(dataUrl) {
+    const binario = atob(dataUrl.split(",")[1]);
+    const bytes = new Uint8Array(binario.length);
+    for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+    return new Blob([bytes], { type: "image/png" });
+  }
+  const resumoDaContagem = (contagem) => Object.entries(contagem).map(([rotulo, n]) => `${n} ${nome(rotulo)}`).join(", ");
+
+  async function protegerArquivos(arquivos) {
+    const protegidos = [];
+    const contagem = {};
+    let qr = 0;
+    for (const arquivo of arquivos) {
+      if (!IMAGEM.test(arquivo.type)) {
+        protegidos.push(arquivo);
+        continue;
+      }
+      const resposta = await mensagem({ tipo: "protegerImagem", dados: await lerDataUrl(arquivo) });
+      if (!resposta || resposta.erro) throw new Error(resposta?.erro || "o leitor de imagens não respondeu.");
+      const nomeBase = arquivo.name.replace(/\.[^.]+$/, "") || "imagem";
+      protegidos.push(new File([blobDe(resposta.dados)], `${nomeBase}-protegido.png`, { type: "image/png" }));
+      for (const [rotulo, n] of Object.entries(resposta.counts || {})) contagem[rotulo] = (contagem[rotulo] || 0) + n;
+      qr += resposta.qr || 0;
+    }
+    return { protegidos, contagem, qr };
+  }
+
+  /** Protege as imagens e entrega ao site um evento novo (colar, soltar ou trocar o anexo) com as versões protegidas. */
+  async function entregarProtegidas(alvo, arquivos, criarEvento, texto = "") {
+    aviso("Véu Pro: lendo a imagem para cobrir os dados...", [], "info", false);
+    try {
+      const { protegidos, contagem, qr } = await protegerArquivos(arquivos);
+      const dados = new DataTransfer();
+      for (const arquivo of protegidos) dados.items.add(arquivo);
+      if (texto) dados.setData("text/plain", veu.analyze(texto).length ? proteger(texto).text : texto);
+      alvo.dispatchEvent(criarEvento(dados));
+      const partes = [resumoDaContagem(contagem), qr ? `${qr} QR Code${qr > 1 ? "s" : ""}` : ""].filter(Boolean).join(", ");
+      aviso(partes ? `Imagem protegida com tarjas: ${partes}.` : "Imagem conferida: nenhum dado pessoal encontrado.",
+        [], "info", true);
+    } catch (erro) {
+      aviso(`O Véu não conseguiu proteger a imagem, e ela não foi enviada (${erro.message}).`, [], "alerta");
+    }
+  }
+
+  window.addEventListener("drop", (evento) => {
+    if (!config.ativo || !algumTipo || !evento.isTrusted || !temImagens(evento.dataTransfer?.files)) return;
+    const arquivos = [...evento.dataTransfer.files];
+    evento.preventDefault();
+    evento.stopImmediatePropagation();
+    const { clientX, clientY } = evento;
+    entregarProtegidas(evento.target, arquivos,
+      (dados) => new DragEvent("drop", { dataTransfer: dados, bubbles: true, cancelable: true, clientX, clientY }));
+  }, true);
+
+  // Anexo pelo botão do site (campo de arquivo): o site não vê o original; o campo recebe a versão protegida.
+  const anexoComImagens = (evento) => evento.isTrusted && config.ativo && algumTipo && evento.target instanceof HTMLInputElement
+    && evento.target.type === "file" && temImagens(evento.target.files);
+  window.addEventListener("input", (evento) => {
+    if (anexoComImagens(evento)) evento.stopImmediatePropagation();
+  }, true);
+  window.addEventListener("change", (evento) => {
+    if (!anexoComImagens(evento)) return;
+    evento.stopImmediatePropagation();
+    const entrada = evento.target;
+    entregarProtegidas(entrada, [...entrada.files], (dados) => {
+      entrada.files = dados.files;
+      entrada.dispatchEvent(new Event("input", { bubbles: true }));
+      return new Event("change", { bubbles: true });
+    });
+  }, true);
+
   // Colar: o texto com dados entra já protegido (modos proteger e bloquear) ou com um aviso (modo avisar).
   window.addEventListener("paste", (evento) => {
     if (!config.ativo || !algumTipo || !evento.isTrusted) return;
+    if (temImagens(evento.clipboardData?.files)) {
+      const arquivos = [...evento.clipboardData.files];
+      const texto = evento.clipboardData.getData("text/plain");
+      evento.preventDefault();
+      evento.stopImmediatePropagation();
+      entregarProtegidas(evento.target, arquivos,
+        (dados) => new ClipboardEvent("paste", { clipboardData: dados, bubbles: true, cancelable: true }), texto);
+      return;
+    }
     const campo = campoDe(evento.target);
     const texto = evento.clipboardData?.getData("text/plain");
     if (!campo || !texto) return;

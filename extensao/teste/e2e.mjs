@@ -113,13 +113,29 @@ const CHAT = `<!doctype html><meta charset="utf-8"><title>Chat falso</title>
 <div id="conversa"></div>
 <div id="prompt-textarea" contenteditable="true" style="min-height:40px;border:1px solid #999"></div>
 <button aria-label="Enviar mensagem" id="enviar">Enviar</button>
+<input type="file" id="anexo" accept="image/*">
 <script>
   window.enviadas = [];
+  window.anexos = [];
+  // Como os sites de IA: o anexo é lido do campo de arquivo no evento change.
+  document.getElementById("anexo").addEventListener("change", (e) => {
+    for (const arquivo of e.target.files) {
+      const leitor = new FileReader();
+      leitor.onload = () => window.anexos.push({ nome: arquivo.name, dados: leitor.result });
+      leitor.readAsDataURL(arquivo);
+    }
+  });
   const campo = document.getElementById("prompt-textarea");
   // Como o ProseMirror: o próprio editor trata o colar.
   campo.addEventListener("paste", (e) => {
     e.preventDefault();
-    document.execCommand("insertText", false, e.clipboardData.getData("text/plain"));
+    for (const arquivo of e.clipboardData.files) { // imagem colada: o editor guarda como anexo
+      const leitor = new FileReader();
+      leitor.onload = () => window.anexos.push({ nome: arquivo.name, dados: leitor.result });
+      leitor.readAsDataURL(arquivo);
+    }
+    const texto = e.clipboardData.getData("text/plain");
+    if (texto) document.execCommand("insertText", false, texto);
   });
   function enviar() {
     const texto = campo.innerText.trim();
@@ -260,6 +276,8 @@ async function lerImagem(pagina, caminho) {
   const dataUrl = `data:image/png;base64,${readFileSync(caminho).toString("base64")}`;
   return pagina.avaliar(`(async () => {
     const base = new URL("ocr/", document.baseURI).href;
+    if (!globalThis.Tesseract) await new Promise((ok) => { const s = document.createElement("script");
+      s.src = base + "tesseract.min.js"; s.onload = ok; document.head.append(s); });
     const w = await Tesseract.createWorker("por", 1, { workerPath: base + "worker.min.js",
       corePath: base + "tesseract-core-simd-lstm.wasm.js", langPath: base, gzip: true, workerBlobURL: false, cacheMethod: "none" });
     const texto = (await w.recognize(${JSON.stringify(dataUrl)})).data.text;
@@ -297,6 +315,52 @@ async function testarPro(id) {
   confere(!/joana/i.test(comLista) && comLista.includes("[PESSOA_1]") && comLista.includes("[CPF_1]"),
     `a lista própria esconde o nome em maiúsculas (${comLista.trim()})`);
   await chat.fechar();
+
+  // Print anexado num site de IA: o site recebe a versão com tarjas (o leitor roda numa página escondida da extensão).
+  const chatComAnexo = await abrir(`${base}/chat`);
+  const printDoChat = join(temporaria, "print-do-chat.png");
+  await gerarPrint(chatComAnexo, printDoChat, ["Cliente Maria Souza", `CPF ${CPF}`, "Telefone (11) 98765-4321", "Reunião amanhã às 10h"]);
+  await enviarArquivo(chatComAnexo, "#anexo", printDoChat);
+  let anexos = [];
+  for (let i = 0; i < 240 && !anexos.length; i++) {
+    await pausa(250);
+    anexos = await chatComAnexo.avaliar("window.anexos");
+  }
+  const anexoRecebido = join(temporaria, "anexo-recebido.png");
+  if (anexos.length) writeFileSync(anexoRecebido, Buffer.from(anexos[0].dados.split(",")[1], "base64"));
+  await chatComAnexo.fechar();
+  const leitorDeConferencia = await abrir(`chrome-extension://${id}/arquivos.html`);
+  const lidoNoChat = anexos.length ? await lerImagem(leitorDeConferencia, anexoRecebido) : "";
+  await leitorDeConferencia.fechar();
+  confere(anexos.length === 1 && anexos[0].nome === "print-do-chat-protegido.png" && /Reuni/.test(lidoNoChat)
+    && !/Souza|529|98765/.test(lidoNoChat),
+  `o print anexado no chat chega ao site com tarjas (${anexos[0]?.nome}; lido: ${lidoNoChat.replace(/\s+/g, " ").trim()})`);
+
+  // Print colado com Ctrl+V: o editor do site recebe a versão com tarjas.
+  const chatColar = await abrir(`${base}/chat`);
+  await cdp("Browser.grantPermissions", { permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"], origin: base });
+  const png64 = readFileSync(printDoChat).toString("base64");
+  await chatColar.avaliar(`(async () => {
+    const imagem = await (await fetch("data:image/png;base64,${png64}")).blob();
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": imagem })]);
+    document.getElementById("prompt-textarea").focus();
+  })()`);
+  await cdp("Input.dispatchKeyEvent", { type: "keyDown", key: "v", code: "KeyV", modifiers: process.platform === "darwin" ? 4 : 2, commands: ["paste"] }, chatColar.sessionId);
+  await cdp("Input.dispatchKeyEvent", { type: "keyUp", key: "v", code: "KeyV" }, chatColar.sessionId);
+  let colados = [];
+  for (let i = 0; i < 240 && !colados.length; i++) {
+    await pausa(250);
+    colados = await chatColar.avaliar("window.anexos");
+  }
+  await chatColar.fechar();
+  const colado = join(temporaria, "colado.png");
+  if (colados.length) writeFileSync(colado, Buffer.from(colados[0].dados.split(",")[1], "base64"));
+  const conferirColado = await abrir(`chrome-extension://${id}/arquivos.html`);
+  const lidoColado = colados.length ? await lerImagem(conferirColado, colado) : "";
+  await conferirColado.fechar();
+  confere(colados.length === 1 && /-protegido\.png$/.test(colados[0].nome) && /Reuni/.test(lidoColado)
+    && !/Souza|529|98765/.test(lidoColado),
+  `o print colado com Ctrl+V chega ao editor com tarjas (${colados[0]?.nome}; lido: ${lidoColado.replace(/\s+/g, " ").trim()})`);
 
   const relatorio = await abrir(`chrome-extension://${id}/relatorio.html`);
   const total = await relatorio.avaliar(`document.getElementById("total").textContent`);

@@ -21,7 +21,7 @@ EXTENSION = ROOT / "extensao"
 WEB = ROOT / "web"
 EXTENSION_FILES = ("manifest.json", "politica.json", "licenca.js", "fundo.js", "conteudo.js", "popup.html", "popup.css",
                    "popup.js", "veu.global.js", "pagina.css", "relatorio.html", "relatorio.js", "arquivos.html",
-                   "arquivos.js", "pdf.min.mjs", "pdf.worker.min.mjs", "pdfjs-LICENSE.txt", "imagens.js")
+                   "arquivos.js", "pdf.min.mjs", "pdf.worker.min.mjs", "pdfjs-LICENSE.txt", "imagens.js", "leitor.html", "leitor.js")
 # pdf.js (Mozilla, Apache-2.0) lê o texto dos PDFs na página de arquivos do Véu Pro. Vem sem mudanças do npm.
 PDFJS = ROOT / "js" / "node_modules" / "pdfjs-dist"
 # Imagens (Véu Pro): o Tesseract lê o texto dos prints e o jsQR acha os QR Codes, tudo no navegador. Vêm sem
@@ -56,8 +56,11 @@ FIREFOX_PRO_DATA = ("authenticationInfo", "personallyIdentifyingInfo")
 def firefox_manifest(manifest: dict) -> dict:
     """Manifesto para o Firefox: página de fundo em vez de service worker e o identificador do complemento."""
     result = {key: value for key, value in manifest.items() if key != "minimum_chrome_version"}
-    # No Chrome, o service worker carrega licenca.js com importScripts; no Firefox, a página de fundo lista os dois.
-    result["background"] = {"scripts": ["licenca.js", manifest["background"]["service_worker"]]}
+    # No Chrome, o service worker carrega licenca.js com importScripts; no Firefox, a página de fundo lista os
+    # arquivos. Ela também lê as imagens do Véu Pro (tem DOM e workers), então leva o leitor e não usa offscreen.
+    result["background"] = {"scripts": ["veu.global.js", "licenca.js", "imagens.js", "leitor.js",
+                                        manifest["background"]["service_worker"]]}
+    result["permissions"] = [item for item in manifest["permissions"] if item != "offscreen"]
     # A Mozilla exige que extensões novas declarem os dados que enviam (o Firefox mostra isso ao instalar). Sem o
     # Véu Pro, nada sai; com ele, a renovação manda a própria chave (um token com o e-mail da assinatura), e o
     # popup pede essa permissão opcional ao ativar a chave. A chave existe a partir do Firefox 140.

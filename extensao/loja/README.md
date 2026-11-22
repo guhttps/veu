@@ -74,6 +74,7 @@ Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capt
 | `storage` | Guarda, só no navegador, a ligação entre cada marcador e o dado real da aba (apagada ao fechar a aba) e as preferências da pessoa. |
 | `contextMenus` | Itens do menu do botão direito: proteger o texto selecionado e copiar a seleção com os dados reais. |
 | `activeTab` e `scripting` | Agir sobre o texto selecionado na aba atual, só quando a pessoa usa o menu do botão direito. |
+| `offscreen` (Chrome e Edge) | Véu Pro: ler, numa página escondida da extensão, o texto de um print colado ou anexado num site de IA, para cobrir os dados pessoais com tarjas antes de o site receber a imagem. Tudo no navegador. |
 | Acesso aos sites de IA | Ler o texto que a pessoa cola ou digita no campo de mensagem desses sites, para esconder os dados antes do envio. |
 
 **Coleta de dados:** nenhuma no uso grátis. Com a chave de uma **assinatura** do Véu Pro, a extensão manda a própria chave (que traz o e-mail do pagamento) ao servidor de licenças, perto do vencimento, para renová-la. No Firefox, o pacote declara isso como opcional (`data_collection_permissions`: `required: none`, `optional: authenticationInfo, personallyIdentifyingInfo`), e a extensão só pede a permissão quando a pessoa ativa uma chave.
@@ -85,6 +86,7 @@ Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capt
 - **contextMenus:** Adds two right-click items: protect the selected text, and copy the selection with the real data.
 - **activeTab:** Acts on the selected text in the current tab, only when the user clicks one of the right-click items.
 - **scripting:** Runs the protection on the selected text of the current tab when the user uses the right-click menu on a site that is not in the AI site list.
+- **offscreen:** Véu Pro only: when the user pastes or attaches a screenshot on an AI site, a hidden extension page runs the bundled OCR (Tesseract, WebAssembly) to read the image text and cover personal data with black bars before the site receives the image. The image never leaves the browser.
 - **Are you using remote code?** No, I am not using remote code.
 - **Data usage:** marque **Personally identifiable information** (o e-mail dentro da chave do Véu Pro) e **Authentication information** (a própria chave), os dois só para renovar a chave de quem assina o Véu Pro, abrir o pagamento de mais um período e cancelar a assinatura, quando a pessoa clica no botão. Não marque mais nada. Marque as três declarações de que os dados não são vendidos, não são usados para outros fins e não servem para avaliar crédito.
 - **Privacy Policy URL:** https://guhttps.github.io/veu/privacidade.html

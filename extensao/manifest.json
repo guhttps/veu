@@ -28,7 +28,8 @@
     "storage",
     "contextMenus",
     "activeTab",
-    "scripting"
+    "scripting",
+    "offscreen"
   ],
   "storage": {
     "managed_schema": "politica.json"
