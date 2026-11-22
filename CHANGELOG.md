@@ -6,6 +6,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 ## [Unreleased]
 
 ### Adicionado
+- **Prints e fotos (Véu Pro):** na página e na página de arquivos da extensão, uma imagem (.png, .jpg, .webp, .gif, .bmp) é lida no próprio navegador pelo Tesseract, o Véu acha os dados no texto lido e cobre cada um com uma tarja preta; QR Codes (que podem carregar um Pix com nome e chave) também são cobertos, pelo jsQR. O "@" que o leitor confunde com "&" não deixa o e-mail escapar. A imagem volta como PNG e não sai do navegador. No grátis, a página avisa que imagens são do Véu Pro. O leitor (~5,7 MB, português) só é baixado na primeira imagem.
 - **Saldo, salário e renda:** o tipo novo `VALOR` esconde o valor em dinheiro quando há uma palavra como saldo, salário, renda, limite, dívida, pensão, holerite ou extrato logo antes ("saldo atual: R$ 15.432,10", "renda mensal de 3.200,00 reais", "dívida de R$ 3 mil", "balance: US$ 1,250.75"). Preço, frete e receita de empresa continuam visíveis. Fica no grupo "Dados financeiros".
 
 ### Alterado

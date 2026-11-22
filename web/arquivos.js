@@ -49,9 +49,25 @@
     $("arquivos-feitos").prepend(linha);
   }
 
+  // Prints e fotos (Véu Pro): tarja preta sobre os dados e os QR Codes; a imagem volta como PNG.
+  async function protegerImagem(arquivo) {
+    if (!pro.estado.ativo) {
+      pagina.avisar(T.imagemSoPro(arquivo.name));
+      return registrar(T.imagemSoPro(arquivo.name), true);
+    }
+    registrar(T.imagemLendo(arquivo.name));
+    const veu = pagina.veu();
+    const { blob, counts, qr } = await window.veuImagens.proteger(arquivo, (texto) => veu.analyze(texto));
+    const nome = `${base(arquivo.name)}-protegido.png`;
+    baixar(blob, nome, "image/png");
+    const partes = [resumo(counts), qr ? T.imagemQr(qr) : ""].filter(Boolean).join(", ");
+    registrar(partes ? T.arquivoProtegido(nome, partes) : T.arquivoSemDados(nome));
+  }
+
   async function proteger(arquivo) {
     const tipo = extensao(arquivo.name);
     const tipoDocumento = documentKind(arquivo.name);
+    if (window.veuImagens?.ehImagem(arquivo.name)) return protegerImagem(arquivo);
     if (!tipoDocumento && tipo !== "pdf" && !TEXTO.has(tipo)) return registrar(T.arquivoTipo(arquivo.name), true);
     const bytes = new Uint8Array(await arquivo.arrayBuffer());
     const vault = pagina.cofre();

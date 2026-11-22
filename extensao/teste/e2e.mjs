@@ -223,9 +223,49 @@ async function enviarArquivo(pagina, seletor, caminho) {
   await cdp("DOM.setFileInputFiles", { files: [caminho], objectId: result.objectId }, pagina.sessionId);
 }
 
-async function esperarArquivo(caminho) {
-  for (let i = 0; i < 40 && !existsSync(caminho); i++) await pausa(250);
+async function esperarArquivo(caminho, tentativas = 40) {
+  for (let i = 0; i < tentativas && !existsSync(caminho); i++) await pausa(250);
   return existsSync(caminho);
+}
+
+/** Um print de verdade, desenhado num canvas da página: fundo branco, texto preto, uma linha por item. */
+async function gerarPrint(pagina, caminho, linhas) {
+  const dataUrl = await pagina.avaliar(`(() => {
+    const linhas = ${JSON.stringify(linhas)};
+    const c = document.createElement("canvas"); c.width = 900; c.height = 70 + linhas.length * 56;
+    const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+    x.fillStyle = "#111"; x.font = "30px Arial";
+    linhas.forEach((linha, i) => x.fillText(linha, 24, 60 + i * 56));
+    return c.toDataURL("image/png");
+  })()`);
+  writeFileSync(caminho, Buffer.from(dataUrl.split(",")[1], "base64"));
+}
+
+/** O conteúdo do QR Code de uma imagem (jsQR, o mesmo da página), ou "" se não houver QR Code legível. */
+async function lerQr(pagina, caminho) {
+  const dataUrl = `data:image/png;base64,${readFileSync(caminho).toString("base64")}`;
+  return pagina.avaliar(`(async () => {
+    if (!globalThis.jsQR) await new Promise((ok) => { const s = document.createElement("script");
+      s.src = new URL("ocr/jsQR.js", document.baseURI).href; s.onload = ok; document.head.append(s); });
+    const imagem = await new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = ${JSON.stringify(dataUrl)}; });
+    const c = document.createElement("canvas"); c.width = imagem.width; c.height = imagem.height;
+    const x = c.getContext("2d"); x.drawImage(imagem, 0, 0);
+    const achado = jsQR(x.getImageData(0, 0, c.width, c.height).data, c.width, c.height, { inversionAttempts: "attemptBoth" });
+    return achado ? achado.data : "";
+  })()`);
+}
+
+/** Lê uma imagem com o mesmo leitor (Tesseract) da página: o que alguém ainda conseguiria ler no print protegido. */
+async function lerImagem(pagina, caminho) {
+  const dataUrl = `data:image/png;base64,${readFileSync(caminho).toString("base64")}`;
+  return pagina.avaliar(`(async () => {
+    const base = new URL("ocr/", document.baseURI).href;
+    const w = await Tesseract.createWorker("por", 1, { workerPath: base + "worker.min.js",
+      corePath: base + "tesseract-core-simd-lstm.wasm.js", langPath: base, gzip: true, workerBlobURL: false, cacheMethod: "none" });
+    const texto = (await w.recognize(${JSON.stringify(dataUrl)})).data.text;
+    await w.terminate();
+    return texto;
+  })()`);
 }
 
 async function testarPro(id) {
@@ -281,6 +321,23 @@ async function testarPro(id) {
   const textoPdf = (await esperarArquivo(saidaPdf)) ? readFileSync(saidaPdf, "utf8") : "";
   confere(textoPdf.includes("[PESSOA_1]") && textoPdf.includes("[CPF_1]") && !textoPdf.includes("Souza"),
     `o PDF vira texto protegido pelo pdf.js (${textoPdf.replace(/\n/g, " ").slice(0, 80)})`);
+
+  const printExt = join(temporaria, "conversa.png");
+  await gerarPrint(arquivos, printExt, ["Cliente Maria Souza", `CPF ${CPF}`, "Telefone (11) 98765-4321", "Reunião amanhã às 10h"]);
+  await enviarArquivo(arquivos, "#proteger", printExt);
+  const printExtProtegido = join(downloads, "conversa-protegido.png");
+  const lidoExt = (await esperarArquivo(printExtProtegido, 240)) ? await lerImagem(arquivos, printExtProtegido) : "";
+  confere(/Reuni/.test(lidoExt) && !/Souza|529|98765/.test(lidoExt),
+    `o print sai com tarjas na página de arquivos (lido depois: ${lidoExt.replace(/\s+/g, " ").trim()})`);
+  // QR Code de um Pix (nome e chave dentro): legível antes, coberto depois.
+  const pixQr = join(temporaria, "pix.png");
+  writeFileSync(pixQr, readFileSync(join(raiz, "extensao", "teste", "pix-qr.png")));
+  const antesQr = await lerQr(arquivos, pixQr);
+  await enviarArquivo(arquivos, "#proteger", pixQr);
+  const pixProtegido = join(downloads, "pix-protegido.png");
+  const depoisQr = (await esperarArquivo(pixProtegido, 240)) ? await lerQr(arquivos, pixProtegido) : "erro";
+  confere(antesQr.includes("BR.GOV.BCB.PIX") && depoisQr === "",
+    `o QR Code do Pix é coberto (antes: ${antesQr.slice(0, 30)}..., depois: ${depoisQr || "nada legível"})`);
 
   await arquivos.fechar();
 }
@@ -515,6 +572,14 @@ try {
   confere(primeiro && !existsSync(join(baixados, "lote-b-protegido.txt")) && /Véu Pro/.test(aviso),
     "no grátis, a página protege um arquivo por vez");
 
+  const print = join(temporaria, "print.png");
+  await gerarPrint(docs, print, ["Cliente Maria Souza", `CPF ${CPF}`, "Telefone (11) 98765-4321", "Reunião amanhã às 10h"]);
+  await enviarArquivo(docs, "#arquivo-proteger", print);
+  await pausa(600);
+  const avisoImagem = await docs.avaliar(`document.getElementById("arquivos-feitos").textContent`);
+  confere(/imagens.*Véu Pro/.test(avisoImagem) && !existsSync(join(baixados, "print-protegido.png")),
+    "no grátis, a página não protege imagens e avisa que é do Véu Pro");
+
   // Véu Pro na página: a chave é conferida aqui mesmo, e libera vários arquivos e as listas próprias.
   {
     await docs.avaliar(`document.getElementById("pro").open = true; document.getElementById("pro-chave").value = ${JSON.stringify(CHAVE_DE_TESTE)}`);
@@ -531,6 +596,11 @@ try {
     await soltarDois(["pro-a.txt", "pro-b.txt"]);
     const doisBaixados = (await esperarArquivo(join(baixados, "pro-a-protegido.txt"))) && (await esperarArquivo(join(baixados, "pro-b-protegido.txt")));
     confere(doisBaixados, "com o Pro, a página protege vários arquivos de uma vez");
+    await enviarArquivo(docs, "#arquivo-proteger", print);
+    const printProtegido = join(baixados, "print-protegido.png");
+    const lido = (await esperarArquivo(printProtegido, 240)) ? await lerImagem(docs, printProtegido) : "";
+    confere(/Reuni/.test(lido) && !/Souza|529|98765/.test(lido),
+      `com o Pro, a página cobre os dados do print com tarjas (lido depois: ${lido.replace(/\s+/g, " ").trim()})`);
     await docs.avaliar(`document.getElementById("pro-remover").click()`);
     await pausa(300);
   }

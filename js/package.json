@@ -61,11 +61,14 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "0.135.0",
+    "@tesseract.js-data/por": "1.0.0",
     "@types/node": "24.19.2",
     "ai": "7.0.145",
     "esbuild": "0.28.2",
+    "jsqr": "1.4.0",
     "openai": "7.38.0",
     "pdfjs-dist": "6.5.438",
+    "tesseract.js": "7.0.0",
     "typescript": "7.0.2"
   }
 }

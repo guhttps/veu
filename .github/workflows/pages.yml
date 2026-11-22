@@ -39,6 +39,7 @@ jobs:
           cp js/dist/veu.global.js extensao/licenca.js web/
           cp js/node_modules/pdfjs-dist/build/pdf.min.mjs js/node_modules/pdfjs-dist/build/pdf.worker.min.mjs web/
           cp js/node_modules/pdfjs-dist/LICENSE web/pdfjs-LICENSE.txt
+          python3 scripts/empacotar_navegador.py  # imagens.js e o leitor de imagens (web/ocr/)
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"

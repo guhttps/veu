@@ -35,6 +35,9 @@ web/pdf.min.mjs
 web/pdf.worker.min.mjs
 web/pdfjs-LICENSE.txt
 web/licenca.js
+web/imagens.js
+web/ocr/
+extensao/ocr/
 web/docs/
 .hypothesis/
 n8n/node_modules/

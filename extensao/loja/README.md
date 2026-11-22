@@ -23,7 +23,7 @@ Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capt
 
 ## Notas para quem analisa (as duas lojas têm esse campo)
 
-> No account or setup is needed. To test: open chatgpt.com (or claude.ai, gemini.google.com), paste the text "Customer Maria Souza, CPF 529.982.247-25, phone (11) 98765-4321" into the message box and press Enter. In the default "warn" mode, Véu shows a notice with a "Proteger" (Protect) button; the interface is in Portuguese. After clicking it, the text shows [PESSOA_1], [CPF_1] and [TELEFONE_1] instead of the data. The CPF is a fictitious test number. All detection runs locally. Without a Véu Pro key, the extension makes no network requests. With an activated Pro key from a card subscription, it sends only that key to https://licencas.veu-pro.workers.dev to renew it near expiry (no text, no page content). With a key paid for a single period (Pix, boleto), it sends the key only when the user clicks "Pagar mais 1 mês/1 ano", to open the payment at the price stored in the key. A subscriber who clicks "Cancelar a assinatura" (twice, to confirm) sends the key so the server cancels the subscription. Pro is optional and paid; the free features need no key. The optional Pro pages (arquivos.html and relatorio.html) process files and counts locally. pdf.min.mjs and pdf.worker.min.mjs are the unmodified pdf.js 6.5.438 build from the pdfjs-dist npm package (Mozilla, Apache-2.0, https://github.com/mozilla/pdf.js), used only to read the text of PDFs on the files page.
+> No account or setup is needed. To test: open chatgpt.com (or claude.ai, gemini.google.com), paste the text "Customer Maria Souza, CPF 529.982.247-25, phone (11) 98765-4321" into the message box and press Enter. In the default "warn" mode, Véu shows a notice with a "Proteger" (Protect) button; the interface is in Portuguese. After clicking it, the text shows [PESSOA_1], [CPF_1] and [TELEFONE_1] instead of the data. The CPF is a fictitious test number. All detection runs locally. Without a Véu Pro key, the extension makes no network requests. With an activated Pro key from a card subscription, it sends only that key to https://licencas.veu-pro.workers.dev to renew it near expiry (no text, no page content). With a key paid for a single period (Pix, boleto), it sends the key only when the user clicks "Pagar mais 1 mês/1 ano", to open the payment at the price stored in the key. A subscriber who clicks "Cancelar a assinatura" (twice, to confirm) sends the key so the server cancels the subscription. Pro is optional and paid; the free features need no key. The optional Pro pages (arquivos.html and relatorio.html) process files and counts locally. pdf.min.mjs and pdf.worker.min.mjs are the unmodified pdf.js 6.5.438 build from the pdfjs-dist npm package (Mozilla, Apache-2.0, https://github.com/mozilla/pdf.js), used only to read the text of PDFs on the files page. The ocr/ folder holds the unmodified tesseract.js 7.0.0, tesseract.js-core 6.1.2 (simd-lstm build) and Portuguese tessdata_best_int, plus jsQR 1.4.0, all Apache-2.0 (see ocr/LEIA-ME.txt): on the optional Pro files page they read the text and QR codes of an image locally to cover personal data with black bars. 'wasm-unsafe-eval' in the extension pages CSP is only for that bundled WebAssembly; no remote code is loaded.
 
 ## Textos em português
 
@@ -42,7 +42,7 @@ Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capt
 > - Documentos conferidos pelo dígito verificador: um número qualquer não vira CPF.
 > - Funciona no ChatGPT, Claude, Gemini, Copilot, Perplexity, DeepSeek, Mistral, Grok, Meta AI, Poe, Qwen, Kimi e Maritaca.
 > - Empresas podem instalar e configurar pela política do navegador, com uma mensagem de orientação própria.
-> - Véu Pro (opcional, pago): proteger arquivos inteiros (Word, Excel, PowerPoint e PDF) no navegador, listas próprias de nomes e termos que sempre somem e um relatório mensal só com contagens, útil para a LGPD.
+> - Véu Pro (opcional, pago): proteger arquivos inteiros (Word, Excel, PowerPoint e PDF) e prints e fotos (tarja preta sobre os dados e os QR Codes) no navegador, listas próprias de nomes e termos que sempre somem e um relatório mensal só com contagens, útil para a LGPD.
 >
 > Código aberto (MIT): https://github.com/guhttps/veu
 
@@ -63,7 +63,7 @@ Para gerar de novo: `python scripts/empacotar_navegador.py` e `node scripts/capt
 > - Documents are validated by their check digits, so a random number is not mistaken for an ID.
 > - Works on ChatGPT, Claude, Gemini, Copilot, Perplexity, DeepSeek, Mistral, Grok, Meta AI, Poe, Qwen, Kimi and Maritaca.
 > - Companies can deploy and configure it through browser policy, with their own guidance message.
-> - Véu Pro (optional, paid, in Brazil): protect whole files (Word, Excel, PowerPoint and PDF) in the browser, own lists of names and terms that always disappear, and a monthly report with counts only.
+> - Véu Pro (optional, paid, in Brazil): protect whole files (Word, Excel, PowerPoint and PDF) and screenshots and photos (black bars over the data and QR codes) in the browser, own lists of names and terms that always disappear, and a monthly report with counts only.
 >
 > Open source (MIT): https://github.com/guhttps/veu
 
