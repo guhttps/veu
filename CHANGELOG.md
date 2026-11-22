@@ -5,6 +5,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-11-22
+
 ### Adicionado
 - **Segredos dentro de código, em qualquer linguagem:** o Véu passa a esconder senhas e chaves que não vêm depois de `=` ou `:`: argumento de função (`setPassword("...")`, `define('SECRET', '...')`, `#define API_KEY "..."`, `auth=("admin", "...")`, `HTTPBasicAuth`, `smtp.login`, `getConnection(url, "u", "...")`, `jwt.sign(dados, "...")`), comparação (`senha === "..."`), `app.config["SECRET_KEY"] = "..."`, `default =` do Terraform, tag XML (`<password>...</password>`), atributo (`<add key="SmtpPassword" value="..."/>`, `<input name="api_token" value="...">`), SQL (`IDENTIFIED BY '...'`, `PASSWORD '...'`), comandos (`curl -u usuário:...`, `mysql -p...`, `sshpass -p`, `docker login -p`, `echo ... | docker login --password-stdin`, `htpasswd -b`, `ldapsearch -w`, `sqlcmd -P`, `mongo -p`, `redis-cli -a`, `smbclient -U usuário%...`, `xfreerdp /p:`), `ConvertTo-SecureString "..."` do PowerShell e `Authorization: Token ...`. Em trechos inventados de mais de 40 linguagens e formatos, os segredos escondidos passaram de 101 de 121 para 121 de 121.
 
@@ -444,7 +446,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.4...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.5...HEAD
+[0.9.5]: https://github.com/guhttps/veu/compare/v0.9.4...v0.9.5
 [0.9.4]: https://github.com/guhttps/veu/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/guhttps/veu/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/guhttps/veu/compare/v0.9.1...v0.9.2

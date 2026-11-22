@@ -7,12 +7,12 @@
     "url": "https://github.com/guhttps/veu",
     "source": "github"
   },
-  "version": "0.9.4",
+  "version": "0.9.5",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "veu",
-      "version": "0.9.4",
+      "version": "0.9.5",
       "runtimeHint": "uvx",
       "runtimeArguments": [
         { "type": "named", "name": "--from", "value": "veu[mcp]" }
