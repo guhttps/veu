@@ -5,6 +5,12 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+### Adicionado
+- **Segredos dentro de código, em qualquer linguagem:** o Véu passa a esconder senhas e chaves que não vêm depois de `=` ou `:`: argumento de função (`setPassword("...")`, `define('SECRET', '...')`, `#define API_KEY "..."`, `auth=("admin", "...")`, `HTTPBasicAuth`, `smtp.login`, `getConnection(url, "u", "...")`, `jwt.sign(dados, "...")`), comparação (`senha === "..."`), `app.config["SECRET_KEY"] = "..."`, `default =` do Terraform, tag XML (`<password>...</password>`), atributo (`<add key="SmtpPassword" value="..."/>`, `<input name="api_token" value="...">`), SQL (`IDENTIFIED BY '...'`, `PASSWORD '...'`), comandos (`curl -u usuário:...`, `mysql -p...`, `sshpass -p`, `docker login -p`, `echo ... | docker login --password-stdin`, `htpasswd -b`, `ldapsearch -w`, `sqlcmd -P`, `mongo -p`, `redis-cli -a`, `smbclient -U usuário%...`, `xfreerdp /p:`), `ConvertTo-SecureString "..."` do PowerShell e `Authorization: Token ...`. Em trechos inventados de mais de 40 linguagens e formatos, os segredos escondidos passaram de 101 de 121 para 121 de 121.
+
+### Corrigido
+- **Código sem segredo fica intacto:** `if password != confirm_password:`, `password == x`, tags do YAML (`password: !vault |`, `senha: !secret wifi`), comandos do PowerShell (`$senha = Read-Host`), nomes de campo (`password = new_password`, `<add key="SmtpPassword" ...>`) e um rótulo na linha seguinte (`confirm_password:` + `password: x`) não viram mais senha. Em 23.738 arquivos de código de bibliotecas conhecidas, 56 falsos positivos antigos sumiram e nenhum acerto se perdeu.
+
 ## [0.9.4] - 2026-11-21
 
 ### Adicionado

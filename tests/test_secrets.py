@@ -188,3 +188,75 @@ def test_prose_password_after_common_verbs(text):
 )
 def test_prose_password_ignores_ordinary_sentences(text):
     assert Veu().anonymize(text).text == text
+
+
+# Segredos em código que não vêm depois de "=" ou ":" (argumento, flag, tag, atributo, comparação, SQL).
+SENHA_CODIGO = "Xq7" + chars(9) + "#4"
+SEGREDO_CODIGO = chars(40)
+CODE_SNIPPETS = [
+    f"define('AWS_SECRET_ACCESS_KEY', '{SEGREDO_CODIGO}');",
+    f'#define API_KEY "{SEGREDO_CODIGO}"',
+    f'ds.setPassword("{SENHA_CODIGO}");',
+    f'app.config["SECRET_KEY"] = "{SEGREDO_CODIGO}"',
+    f'variable "db_password" {{\n  default = "{SENHA_CODIGO}"\n}}',
+    f'token = jwt.encode(payload, "{SENHA_CODIGO}", algorithm="HS256")',
+    f'if (req.body.senha === "{SENHA_CODIGO}") {{ liberar(); }}',
+    f"<password>{SENHA_CODIGO}</password>",
+    f'<add key="SmtpPassword" value="{SENHA_CODIGO}" />',
+    f'<input type="hidden" name="api_token" value="{SEGREDO_CODIGO}">',
+    f'requests.get(url, auth=("admin", "{SENHA_CODIGO}"))',
+    f'new UsernamePasswordAuthenticationToken("admin", "{SENHA_CODIGO}")',
+    f'Connection c = DriverManager.getConnection(url, "app", "{SENHA_CODIGO}");',
+    f"CREATE USER relatorio IDENTIFIED BY '{SENHA_CODIGO}';",
+    f"curl -u admin:{SENHA_CODIGO} https://10.0.0.5/api",
+    f"mysql -u root -p{SENHA_CODIGO} vendas",
+    f"sshpass -p '{SENHA_CODIGO}' ssh deploy@10.0.0.7",
+    f"docker login -u deploy -p {SENHA_CODIGO} registry.example.com",
+    f'echo "{SENHA_CODIGO}" | docker login -u deploy --password-stdin',
+    f"htpasswd -bc /etc/nginx/.htpasswd admin {SENHA_CODIGO}",
+    f'ldapsearch -x -D "cn=admin,dc=acme" -w {SENHA_CODIGO} -b "dc=acme"',
+    f'$senha = ConvertTo-SecureString "{SENHA_CODIGO}" -AsPlainText -Force',
+    f'headers = {{"Authorization": "Token {SEGREDO_CODIGO}"}}',
+]
+
+
+@pytest.mark.parametrize("snippet", CODE_SNIPPETS)
+def test_secrets_inside_code_are_hidden(snippet):
+    protected = veu.anonymize(snippet).text
+    assert SENHA_CODIGO not in protected and SEGREDO_CODIGO not in protected
+
+
+@pytest.mark.parametrize("snippet", [
+    "if password != confirm_password:\n    raise ValueError()",
+    "password: !vault |\n  $ANSIBLE_VAULT;1.1;AES256",
+    "wifi_password: !secret wifi_password",
+    '$senha = Read-Host -AsSecureString "Senha"',
+    'dynamic_api_key = get_secret_str("AI21_API_KEY")',
+    '@field_serializer("password", "password_bytes", when_used="json")',
+    'CREDENTIAL_HEADERS = ("authorization", "x-api-key", "api-key")',
+    'auth_methods = ["client_secret_post", "client_secret_basic"]',
+    "Load the library identified by 'name'. A user is identified by their id.",
+    'if pass_arg == "environment":',
+    'params["SignatureMethod"] = "HmacSHA256"',
+    'const t = createValidToken("partial-custom-token-2");',
+    't("password", "Senha")',
+    "git push -u origin main\ndocker run -u 1000:1000 nginx\nrsync -avu origem/ servidor:/backup/",
+    'user.set_password(form.cleaned_data["password"])\nauth = (usuario, senha)',
+])
+def test_code_without_secrets_is_left_alone(snippet):
+    assert [entity.label for entity in veu.analyze(snippet) if entity.label in ("SENHA", "SEGREDO", "TOKEN")] == []
+
+
+@pytest.mark.parametrize("snippet", [
+    "if password != confirm_password:\npassword: !vault |",  # o rótulo da linha seguinte não é o valor
+    "confirm_password:\npassword: x",
+    "password = new_password",
+    '<password>[SENHA_1]</password> <add key="SmtpPassword" value="[SENHA_1]" />',  # o nome do campo fica
+])
+def test_field_names_are_not_passwords(snippet):
+    assert [entity.text for entity in veu.analyze(snippet) if entity.label == "SENHA"] == []
+
+
+def test_passwords_with_digits_that_look_like_names_are_still_hidden():
+    assert labels("a senha é Senha_Forte2024") == [("SENHA", "Senha_Forte2024")]
+    assert labels("DB_PASSWORD=super_password1") == [("SENHA", "super_password1")]

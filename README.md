@@ -115,6 +115,7 @@ Para abrir de novo, use o atalho **Véu** ou rode `veu painel`.
   - chaves da OpenAI, Anthropic, AWS, Google, GitHub, Stripe, Slack, Hugging Face, Notion, Mercado Pago, Asaas e mais 20 serviços;
   - JWT e tokens Bearer;
   - senhas (`DB_PASSWORD=...`, "a senha é ...", QR de Wi-Fi) e códigos de verificação ("seu código é 483920");
+  - segredos dentro de código, em qualquer linguagem: argumento de função (`setPassword("...")`, `auth=("admin", "...")`, `jwt.sign(dados, "...")`), comando (`curl -u admin:...`, `mysql -p...`, `docker login -p`, `htpasswd`), tag XML, atributo HTML, SQL (`IDENTIFIED BY '...'`), `app.config["SECRET_KEY"] = ...` e `default =` do Terraform, sem mexer no código que só usa a palavra "password";
   - tokens em links (`?token=...`, `X-Amz-Signature=...`) e segredos de 2FA (`otpauth://...secret=...`);
   - frases de recuperação de carteiras (12 a 24 palavras do BIP-39, pelo checksum ou com "seed" e "carteira" por perto), chaves privadas de Bitcoin (WIF, `xprv`) e de Ethereum;
   - chaves do `age`, do PuTTY e chaves PEM em base64 (kubeconfig);
@@ -411,7 +412,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 1083 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 1126 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 python scripts/simular_usuarios.py --rodadas 5    # 77 perfis de trabalho usando o Véu, com dados fictícios

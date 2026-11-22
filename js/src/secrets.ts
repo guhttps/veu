@@ -33,12 +33,103 @@ function rules(): CompiledRule[] {
 
 const VALUE_CHARS = "[^\\s\"'`,;&<>()\\[\\]{}]";
 const ASSIGNMENT = new RegExp(
-  `(?<![A-Za-z0-9_.-])([A-Za-z_][A-Za-z0-9_.-]{0,60})["']?[ \\t]*(=>|:=|=|:)[ \\t]*["']?(${VALUE_CHARS}{3,500})`, "gd",
+  `(?<![A-Za-z0-9_.-])([A-Za-z_][A-Za-z0-9_.-]{0,60})["']?[ \\t]*(=>|:=|=(?!=)|:)[ \\t]*["']?(${VALUE_CHARS}{3,500})`, "gd",
 );
+// Comparação não é atribuição: "if password != confirm_password:" e "password == x" ficam.
 const PROSE_PASSWORD = new RegExp(
-  `(?<![A-Za-z0-9])(?:senha|password|passwd)(?:[^\\n:=]{0,25}?)(\\s*(?::|=)\\s*|\\s+(?:é|eh|is|fica|ficou|era|para|pra|to)\\s+)["']?(${VALUE_CHARS}{3,200})`,
+  `(?<![A-Za-z0-9])(?:senha|password|passwd)(?:[^\\n:=<>]{0,25}?)(\\s*(?::|(?<![!=<>])=(?!=))\\s*|\\s+(?:é|eh|is|fica|ficou|era|para|pra|to)\\s+)["']?(${VALUE_CHARS}{3,200})`,
   "gdi",
 );
+
+// Segredos em código que não vêm depois de "=" ou ":": argumento de função, flag de comando, tag XML, atributo
+// HTML, comparação e SQL. Cada item: padrão, grupo do nome do campo (0 = sem nome), grupos do valor e como conferir.
+const LITERAL = "[^\\s\"'`\\\\]{3,500}";
+const ID = "[A-Za-z_][A-Za-z0-9_]{0,60}";
+const ID_DOT = "[A-Za-z_][A-Za-z0-9_.]{0,60}";
+const START = "(?<![A-Za-z0-9_])";
+type CodeMode = "prosa" | "campo" | "estrito" | "login" | "senha" | "segredo" | "comando";
+const CODE_SECRETS: [string[], RegExp, number, number[], CodeMode][] = ([
+  // define('AWS_SECRET_ACCESS_KEY', '...'), putenv("API_KEY", "..."), setItem("token", "...") (só os dois argumentos)
+  [["(\"", "('", "( \"", "( '"], `(?<=[A-Za-z0-9_$])\\([ \\t]*["'](${ID_DOT})["'][ \\t]*,[ \\t]*["'](${LITERAL})["'][ \\t]*\\)`, "", 1, [2], "prosa"],
+  // #define API_KEY "..."
+  [["#define", "# define", "#\tdefine"], `#[ \\t]*define[ \\t]+(${ID})[ \\t]+"(${LITERAL})"`, "", 1, [2], "campo"],
+  // setPassword("..."), .password("..."), withApiKey("...")
+  [["(\"", "('", "( \"", "( '"], `${START}(${ID})\\([ \\t]*["'](${LITERAL})["'][ \\t]*\\)`, "", 1, [2], "estrito"],
+  // app.config["SECRET_KEY"] = "...", os.environ['API_KEY'] = '...'
+  [["[\"", "['", "[ \"", "[ '"], `\\[[ \\t]*["'](${ID_DOT})["'][ \\t]*\\][ \\t]*=(?!=)[ \\t]*["'](${LITERAL})["']`, "", 1, [2], "campo"],
+  // variable "db_password" { default = "..." } (Terraform)
+  [["variable \""], `${START}variable[ \\t]+"(${ID})"[ \\t]*\\{[^{}]{0,300}?(?<![A-Za-z0-9_])default[ \\t]*=[ \\t]*"(${LITERAL})"`, "", 1, [2],
+    "campo"],
+  // jwt.sign(payload, "..."), jwt.encode(payload, "...", algorithm="HS256")
+  [["jwt", "jsonwebtoken", "jose"], `${START}(?:jwt|jsonwebtoken|JWT|jose)\\.(?:sign|encode|decode|verify)\\([^()\\n]{1,200}?,[ \\t]*["'](${LITERAL})["']`,
+    "", 0, [1], "segredo"],
+  // password == "...", token !== '...', senha.equals("...")
+  [["==", "!="], `${START}(${ID_DOT})[ \\t]*(?:===?|!==?)[ \\t]*["'](${LITERAL})["']`, "", 1, [2], "estrito"],
+  [[".equals("], `${START}(${ID_DOT})\\.equals\\([ \\t]*"(${LITERAL})"[ \\t]*\\)`, "", 1, [2], "campo"],
+  // <password>...</password> e <ns:apiKey>...</ns:apiKey>
+  [["</"], `<(?:[A-Za-z_][A-Za-z0-9_.-]*:)?(${ID})(?:[ \\t][^<>\\n]{0,200})?>([^<>\\s]{3,500})</(?:[A-Za-z_][A-Za-z0-9_.-]*:)?\\1>`,
+    "", 1, [2], "campo"],
+  // <add key="ApiKey" value="..."/>, <input name="api_token" value="...">, <property name="password" value="..."/>
+  [["value=", "value ="], `(?<![A-Za-z0-9_-])(?:name|key|id|property)[ \\t]*=[ \\t]*["']([A-Za-z_][A-Za-z0-9_.:-]{0,60})["'][^<>\\n]{0,200}?[ \\t]value[ \\t]*=[ \\t]*["']([^"'\\s<>]{3,500})["']`,
+    "", 1, [2], "campo"],
+  // auth=("admin", "..."), HTTPBasicAuth("u", "..."), smtp.login("u@x.com", "...") (só usuário e senha)
+  [["(\"", "('", "( \"", "( '"], `${START}(${ID_DOT})[ \\t]*(?:=[ \\t]*)?\\([ \\t]*["'][^"'\\n]{1,100}["'][ \\t]*,[ \\t]*["'](${LITERAL})["'][ \\t]*\\)`,
+    "", 1, [2], "login"],
+  // DriverManager.getConnection(url, "user", "..."), new PDO($dsn, "root", "...")
+  [["getconnection", "pdo("], `${START}(?:getConnection|PDO)\\([^,()\\n]{1,300},[ \\t]*["'][^"'\\n]*["'][ \\t]*,[ \\t]*["'](${LITERAL})["']`,
+    "", 0, [1], "senha"],
+  // mysqli_connect("host", "user", "..."), pymysql.connect("host", "user", "...")
+  [["mysql"], `${START}(?:mysqli_connect|mysqli|mysql_connect|pymysql\\.connect|MySQLdb\\.connect)\\([ \\t]*["'][^"'\\n]*["'][ \\t]*,[ \\t]*["'][^"'\\n]*["'][ \\t]*,[ \\t]*["'](${LITERAL})["']`,
+    "", 0, [1], "senha"],
+  // CREATE USER x IDENTIFIED BY '...', GRANT ... TO 'u'@'h' IDENTIFIED BY '...' e WITH PASSWORD '...'
+  [["identified"], `${START}(?:user|role|login|to)(?![A-Za-z0-9_])[^\\n]{0,120}?(?<![A-Za-z0-9_])identified[ \\t]+by[ \\t]+(?:password[ \\t]+)?["'](${LITERAL})["']`,
+    "i", 0, [1], "senha"],
+  [["password '", "password  '", "password\t'"], `${START}password[ \\t]+'(${LITERAL})'`, "i", 0, [1], "senha"],
+  // curl -u admin:... e http -a admin:...
+  [["curl ", "curl\t", "http ", "http\t", "https ", "https\t", "xh ", "xh\t"], `${START}(?:curl|https?|xh)[ \\t][^\\n]*?(?<![A-Za-z0-9_-])(?:-u|--user|-a|--auth)(?:[ \\t]+|=)(["']?)[^\\s:"'@/]{1,100}:(${LITERAL})\\1`,
+    "", 0, [2], "comando"],
+  // mysql -p... (grudado), sshpass -p ..., docker login -p ..., redis-cli -a ...
+  [["mysql", "mariadb"], `${START}(?:mysql|mysqldump|mariadb|mysqladmin|mysqlimport)(?![A-Za-z0-9_])[^\\n]*?[ \\t]-p(["']?)(${LITERAL})\\1`,
+    "", 0, [2], "comando"],
+  [["sshpass"], `${START}sshpass[ \\t]+-p[ \\t]*(["']?)(${LITERAL})\\1`, "", 0, [2], "comando"],
+  [["docker", "podman", "buildah", "skopeo", "oras ", "helm"], `${START}(?:docker|podman|buildah|skopeo|oras|helm[ \\t]+registry)[ \\t]+login(?![A-Za-z0-9_])[^\\n]*?[ \\t](?:-p|--password)(?:[ \\t]+|=)(["']?)(${LITERAL})\\1`,
+    "", 0, [2], "comando"],
+  [["redis-cli"], `${START}redis-cli(?![A-Za-z0-9_])[^\\n]*?[ \\t]-a[ \\t]+(["']?)(${LITERAL})\\1`, "", 0, [2], "comando"],
+  [["ldap"], `${START}(?:ldapsearch|ldapmodify|ldapadd|ldapdelete|ldappasswd|ldapwhoami|ldapcompare)(?![A-Za-z0-9_])[^\\n]*?[ \\t]-w[ \\t]+(["']?)(${LITERAL})\\1`,
+    "", 0, [2], "comando"],
+  [["sqlcmd", "bcp"], `${START}(?:sqlcmd|bcp)(?![A-Za-z0-9_])[^\\n]*?[ \\t]-P[ \\t]*(["']?)(${LITERAL})\\1`, "", 0, [2], "comando"],
+  [["mongo"], `${START}(?:mongo|mongosh|mongodump|mongorestore|mongoexport|mongoimport)(?![A-Za-z0-9_])[^\\n]*?[ \\t](?:-p|--password)(?:[ \\t]+|=)(["']?)(${LITERAL})\\1`,
+    "", 0, [2], "comando"],
+  [["smbclient"], `${START}smbclient(?![A-Za-z0-9_])[^\\n]*?[ \\t](?:-U|--user)(?:[ \\t]+|=)(["']?)[^\\s%"']+%(${LITERAL})\\1`, "", 0, [2],
+    "comando"],
+  [["xfreerdp"], `${START}xfreerdp(?![A-Za-z0-9_])[^\\n]*?[ \\t]/p:(["']?)(${LITERAL})\\1`, "", 0, [2], "comando"],
+  // htpasswd -b arquivo usuario ... (a senha é o último argumento)
+  [["htpasswd"], `${START}htpasswd[ \\t][^\\n]*?(?<![A-Za-z0-9_-])-[A-Za-z]*b[A-Za-z]*[ \\t][^\\n]*?[ \\t](["']?)(${LITERAL})\\1(?=[ \\t]*(?:\\r?\\n|$))`,
+    "", 0, [2], "comando"],
+  // echo "..." | docker login --password-stdin, echo "..." | sudo -S
+  [["--password-stdin", "sudo"], `${START}(?:echo|printf)[ \\t]+(?:-[A-Za-z]+[ \\t]+)?(["']?)(${LITERAL})\\1[ \\t]*\\|[^\\n]*?(?:--password-stdin|sudo[ \\t]+-S)(?![A-Za-z0-9_-])`,
+    "", 0, [2], "comando"],
+  // ConvertTo-SecureString "..." -AsPlainText (PowerShell)
+  [["convertto-securestring"], `(?<![A-Za-z0-9_-])ConvertTo-SecureString[ \\t]+(?:-String[ \\t]+)?(["'])(${LITERAL})\\1`, "i", 0, [2], "senha"],
+] as [string[], string, string, number, number[], CodeMode][]).map(([hints, source, flags, key, values, mode]) =>
+  [hints, new RegExp(source, `gd${flags}`), key, values, mode]);
+const CODE_HINTS = [...new Set(CODE_SECRETS.flatMap(([hints]) => hints))];
+// Nomes de função que recebem usuário e senha: auth=(...), HTTPBasicAuth(...), smtp.login(...).
+const LOGIN_WORDS = new Set(["auth", "login", "basic", "credential", "credentials", "authenticate", "signin"]);
+// Funções que recebem o nome do segredo, não o valor: get_secret("API_KEY"), getenv("DB_PASSWORD").
+const GETTER_WORDS = new Set(["get", "read", "load", "fetch", "lookup", "find", "has", "delete", "remove", "del", "print",
+  "log", "describe", "require", "unset", "clear"]);
+// Nome de variável de ambiente ("AI21_API_KEY") e nome de campo com palavra de segredo ("sentinel_password",
+// "x-api-key", "workbookPasswordSet"): é nome, não valor.
+const ENV_NAME = /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$/;
+const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_.-]*$/;
+const COMPOUND = /[_.-]|[a-z0-9][A-Z]/;
+// Palavras em minúsculas ligadas por hífen ou sublinhado ("partial-custom-token-2", "enable_oauth2_auth").
+const WORDY = /^[a-z]+(?:[-_.][a-z0-9]+)+$/;
+// Tag do YAML no lugar do valor ("password: !vault |", "senha: !secret wifi"): o segredo está em outro lugar.
+const YAML_TAG = /^![A-Za-z_][A-Za-z0-9_]*$/;
+// Comando do PowerShell no lugar do valor ("$senha = Read-Host -AsSecureString").
+const CMDLET = /^(?:Get|Set|Read|New|ConvertTo|ConvertFrom|Import|Export|Invoke|Select|Join|Out|Write|Format|Find|Test|Resolve|Protect|Unprotect)-[A-Z][A-Za-z]+$/;
 
 // Sem separador ("Login admin, senha bGsE$34", "rede Visitantes, senha Visit@2026"): só vale com cara de senha.
 const PROSE_PASSWORD_BARE = new RegExp(`(?<![A-Za-z0-9])(?:senha|password|passwd)[ \\t]+["']?(${VALUE_CHARS}{6,200})`, "gdi");
@@ -76,7 +167,7 @@ const NOT_SECRET_WORDS = new Set([
   "expires", "expiry", "expiration", "max", "min", "header", "field", "label", "prefix", "env", "var",
   "placeholder", "hint", "description", "desc", "enabled", "required", "policy", "rotation", "version", "tokens",
   "usage", "id", "ref", "arn", "mode", "format", "manager", "provider", "store", "location", "nome",
-  "tipo", "arquivo", "caminho",
+  "tipo", "arquivo", "caminho", "method", "methods", "algorithm", "algorithms", "alg", "scheme",
 ]);
 const PLACEHOLDERS = new Set([
   "null", "none", "nil", "true", "false", "undefined", "empty", "vazio", "string", "str", "number", "int",
@@ -113,7 +204,7 @@ export function keyKind(key: string): "SENHA" | "SEGREDO" | null {
 export function isPlaceholder(value: string): boolean {
   const lowered = value.toLowerCase();
   return PLACEHOLDERS.has(lowered) || "$%<{[#*".includes(value[0]) || FILLER.test(value) || DOTTED.test(value)
-    || CONSTANT.test(value)
+    || CONSTANT.test(value) || CMDLET.test(value)
     || ["your", "sua_", "seu_", "<", "example", "exemplo", "process.env", "os.environ"].some((p) => lowered.startsWith(p));
 }
 
@@ -150,6 +241,39 @@ export function plausiblePassword(value: string, prose: boolean): boolean {
   return !(prose && isAlpha(value) && (isLower(value) || isLower(value.slice(1))));
 }
 
+/** O valor é uma tag do YAML seguida do conteúdo ("!vault |", "!secret wifi"), não a senha. */
+export function yamlTag(text: string, start: number, end: number): boolean {
+  return YAML_TAG.test(text.slice(start, end)) && (text[end] === " " || text[end] === "\t");
+}
+
+/** SENHA, SEGREDO ou null para um valor achado em código, conforme o nome do campo e a cara do valor. */
+/** O valor é um nome (de variável de ambiente ou de campo de segredo), não o segredo. */
+export function namesAField(value: string): boolean {
+  if (ENV_NAME.test(value)) return true;
+  return IDENTIFIER.test(value) && COMPOUND.test(value) && !/\p{Nd}/u.test(value) && keyKind(value) !== null;
+}
+
+export function codeSecretKind(mode: CodeMode, key: string, value: string): "SENHA" | "SEGREDO" | null {
+  if (!/[\p{L}\p{N}]/u.test(value) || namesAField(value)) return null;
+  const words = keyWords(key);
+  if (mode === "estrito" && words.length && GETTER_WORDS.has(words[0])) return null; // get_secret("API_KEY")
+  if (mode === "login") {
+    const named = keyWords(key).some((word) => LOGIN_WORDS.has(word) || PASSWORD_WORDS.has(word));
+    return named && plausiblePassword(value, false) ? "SENHA" : null;
+  }
+  if (mode === "segredo") return plausiblePassword(value, false) ? "SEGREDO" : null;
+  if (mode === "senha" || mode === "comando") {
+    if (mode === "comando" && (/^[0-9]+$/.test(value) || "/~".includes(value[0]))) return null; // docker -u 1000:1000
+    return plausiblePassword(value, false) ? "SENHA" : null;
+  }
+  const kind = keyKind(key);
+  if (kind === "SENHA") {
+    if (!plausiblePassword(value, mode === "prosa")) return null;
+    return mode !== "estrito" || looksLikePassword(value) ? "SENHA" : null;
+  }
+  return kind === "SEGREDO" && looksRandom(value) && !WORDY.test(value) ? "SEGREDO" : null;
+}
+
 export class SecretRecognizer implements Recognizer {
   name = "segredos";
   labels: ReadonlySet<string> = new Set(SECRET_RECOGNIZER_LABELS);
@@ -175,8 +299,9 @@ export class SecretRecognizer implements Recognizer {
       const kind = keyKind(match[1]);
       if (kind === null) continue;
       const [start, end] = match.indices![3]!;
-      if (text[end] === "(") continue; // password = getpass()
       const value = match[3];
+      // password = getpass(), password: !vault |, password = new_password
+      if (text[end] === "(" || yamlTag(text, start, end) || namesAField(value)) continue;
       if (kind === "SENHA") {
         const prose = match[2] === ":" && keyWords(match[1]).length === 1;
         if (plausiblePassword(value, prose)) {
@@ -203,7 +328,9 @@ export class SecretRecognizer implements Recognizer {
       const [start, matchEnd] = match.indices![2]!;
       // O ponto que fecha a frase não faz parte da senha: "resetei a senha para Tmp#4821."
       const end = match[2].endsWith(".") && (matchEnd === text.length || /\s/.test(text[matchEnd])) ? matchEnd - 1 : matchEnd;
-      if (plausiblePassword(text.slice(start, end), true)) {
+      const value = text.slice(start, end);
+      // "confirm_password:\npassword: x": o valor terminado em ":" é o rótulo da linha seguinte.
+      if (plausiblePassword(value, true) && !yamlTag(text, start, end) && !value.endsWith(":") && !namesAField(value)) {
         yield { label: "SENHA", start, end, score: 0.8, recognizer: this.name };
       }
     }
@@ -213,6 +340,21 @@ export class SecretRecognizer implements Recognizer {
       const value = text.slice(start, end);
       if (plausiblePassword(value, true) && looksLikePassword(value)) {
         yield { label: "SENHA", start, end, score: 0.75, recognizer: this.name };
+      }
+    }
+    // Cada regra só roda se o texto tem um trecho que ela procura (curl, define, jwt...): cada pista é
+    // conferida uma vez, e o texto comum, sem nenhuma, pula todas as regras.
+    const lowered = text.toLowerCase();
+    const present = new Set(CODE_HINTS.filter((hint) => lowered.includes(hint)));
+    for (const [hints, pattern, keyGroup, valueGroups, mode] of present.size ? CODE_SECRETS : []) {
+      if (!hints.some((hint) => present.has(hint))) continue;
+      for (const match of text.matchAll(pattern)) {
+        const group = valueGroups.find((g) => match[g] !== undefined)!;
+        const kind = codeSecretKind(mode, keyGroup ? match[keyGroup] : "", match[group]);
+        if (kind !== null) {
+          const [start, end] = match.indices![group]!;
+          yield { label: kind, start, end, score: keyGroup ? 0.85 : 0.8, recognizer: this.name };
+        }
       }
     }
     for (const header of text.matchAll(COOKIE_HEADER)) {

@@ -130,6 +130,18 @@ EXTRA = [
     "Sou o Rui Porto, moro na Rua de Santa Catarina, 120, 4050-262 Porto. O Sr. Porto aguarda.",
     "A cliente Ana Campos mora em Campos/RJ e em Campos - RJ; o réu João Lima é da comarca de Lima. A Campos ligou.",
     "Boleto da conta de luz: 83620000001-1 23450048100-5 00000000001-1 23456789012-3 e conta 836200000011234500481000",
+    # Segredos dentro de código (argumento, flag, tag, atributo, comparação, SQL) e código sem segredo.
+    "define('DB_SECRET', 'Kp3vX9qL2mN8rT5wY7zA1bC4dE6fG0hJ');\n#define API_KEY \"Kp3vX9qL2mN8rT5wY7zA1bC4dE6fG0hJ\"\n"
+    "ds.setPassword(\"Xq7mPa2#4\"); app.config[\"SECRET_KEY\"] = \"Kp3vX9qL2mN8rT5wY7zA1bC4dE6fG0hJ\"",
+    "variable \"db_password\" {\n  default = \"Xq7mPa2#4\"\n}\ntoken = jwt.encode(payload, \"Xq7mPa2#4\")\n"
+    "if (req.body.senha === \"Xq7mPa2#4\") {}\n<password>Xq7mPa2#4</password> <add key=\"SmtpPassword\" value=\"Xq7mPa2#4\" />",
+    "requests.get(url, auth=(\"admin\", \"Xq7mPa2#4\"))\nCREATE USER rel IDENTIFIED BY 'Xq7mPa2#4';\n"
+    "curl -u admin:Xq7mPa2#4 https://10.0.0.5/api\nmysql -u root -pXq7mPa2#4 vendas\nsshpass -p 'Xq7mPa2#4' ssh x@h\n"
+    "echo \"Xq7mPa2#4\" | docker login -u d --password-stdin\nhtpasswd -bc /etc/.htpasswd admin Xq7mPa2#4",
+    "$senha = ConvertTo-SecureString \"Xq7mPa2#4\" -AsPlainText\n$p = Read-Host -AsSecureString\n"
+    "if password != confirm_password:\npassword: !vault |\nwifi_password: !secret wifi_password\n"
+    "get_secret_str(\"AI21_API_KEY\") ; @field_serializer(\"password\", \"password_bytes\", when_used=\"json\")\n"
+    "Load the library identified by 'name'. git push -u origin main; docker run -u 1000:1000 nginx",
 ]
 
 

@@ -73,6 +73,8 @@
      "padrao": "(?<![A-Za-z0-9_])[Bb]earer\\s+([A-Za-z0-9._~+/-]{16,}=*)"},
     {"id": "basic", "entidade": "TOKEN", "pontuacao": 0.9, "grupo": 1,
      "padrao": "[Aa]uthorization[\"']?\\s*[:=]\\s*[\"']?Basic\\s+([A-Za-z0-9+/]{8,}={0,2})"},
+    {"id": "authorization_token", "entidade": "TOKEN", "pontuacao": 0.9, "grupo": 1, "filtro": "aleatorio",
+     "padrao": "[Aa]uthorization[\"']?\\s*[:=,]\\s*[\"']?(?:Token|token|Api-Key|ApiKey|apikey|Key|key|SSWS|GenieKey)\\s+([A-Za-z0-9._~+/-]{16,}=*)"},
     {"id": "age", "entidade": "CHAVE_PRIVADA", "pontuacao": 0.99,
      "padrao": "AGE-SECRET-KEY-1[02-9AC-HJ-NP-Z]{20,}"},
     {"id": "putty", "entidade": "CHAVE_PRIVADA", "pontuacao": 0.99,

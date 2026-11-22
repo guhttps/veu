@@ -2143,6 +2143,146 @@
    "generalizado": "Boleto da conta de luz: [BOLETO] e conta 836200000011234500481000"
   },
   {
+   "texto": "define('DB_SECRET', 'Kp3vX9qL2mN8rT5wY7zA1bC4dE6fG0hJ');\n#define API_KEY \"Kp3vX9qL2mN8rT5wY7zA1bC4dE6fG0hJ\"\nds.setPassword(\"Xq7mPa2#4\"); app.config[\"SECRET_KEY\"] = \"Kp3vX9qL2mN8rT5wY7zA1bC4dE6fG0hJ\"",
+   "entidades": [
+    [
+     "SEGREDO",
+     21,
+     53,
+     0.85
+    ],
+    [
+     "SEGREDO",
+     74,
+     106,
+     0.85
+    ],
+    [
+     "SENHA",
+     124,
+     133,
+     0.85
+    ],
+    [
+     "SEGREDO",
+     165,
+     197,
+     0.85
+    ]
+   ],
+   "anonimizado": "define('DB_SECRET', '[SEGREDO_1]');\n#define API_KEY \"[SEGREDO_1]\"\nds.setPassword(\"[SENHA_1]\"); app.config[\"SECRET_KEY\"] = \"[SEGREDO_1]\"",
+   "mascarado": "define('DB_SECRET', '****');\n#define API_KEY \"****\"\nds.setPassword(\"********\"); app.config[\"SECRET_KEY\"] = \"****\"",
+   "generalizado": "define('DB_SECRET', '[SEGREDO]');\n#define API_KEY \"[SEGREDO]\"\nds.setPassword(\"[SENHA]\"); app.config[\"SECRET_KEY\"] = \"[SEGREDO]\""
+  },
+  {
+   "texto": "variable \"db_password\" {\n  default = \"Xq7mPa2#4\"\n}\ntoken = jwt.encode(payload, \"Xq7mPa2#4\")\nif (req.body.senha === \"Xq7mPa2#4\") {}\n<password>Xq7mPa2#4</password> <add key=\"SmtpPassword\" value=\"Xq7mPa2#4\" />",
+   "entidades": [
+    [
+     "SENHA",
+     38,
+     47,
+     0.85
+    ],
+    [
+     "SEGREDO",
+     80,
+     89,
+     0.8
+    ],
+    [
+     "SENHA",
+     116,
+     125,
+     0.85
+    ],
+    [
+     "SENHA",
+     141,
+     150,
+     0.85
+    ],
+    [
+     "SENHA",
+     193,
+     202,
+     0.85
+    ]
+   ],
+   "anonimizado": "variable \"db_password\" {\n  default = \"[SENHA_1]\"\n}\ntoken = jwt.encode(payload, \"[SEGREDO_1]\")\nif (req.body.senha === \"[SENHA_1]\") {}\n<password>[SENHA_1]</password> <add key=\"SmtpPassword\" value=\"[SENHA_1]\" />",
+   "mascarado": "variable \"db_password\" {\n  default = \"********\"\n}\ntoken = jwt.encode(payload, \"****\")\nif (req.body.senha === \"********\") {}\n<password>********</password> <add key=\"SmtpPassword\" value=\"********\" />",
+   "generalizado": "variable \"db_password\" {\n  default = \"[SENHA]\"\n}\ntoken = jwt.encode(payload, \"[SEGREDO]\")\nif (req.body.senha === \"[SENHA]\") {}\n<password>[SENHA]</password> <add key=\"SmtpPassword\" value=\"[SENHA]\" />"
+  },
+  {
+   "texto": "requests.get(url, auth=(\"admin\", \"Xq7mPa2#4\"))\nCREATE USER rel IDENTIFIED BY 'Xq7mPa2#4';\ncurl -u admin:Xq7mPa2#4 https://10.0.0.5/api\nmysql -u root -pXq7mPa2#4 vendas\nsshpass -p 'Xq7mPa2#4' ssh x@h\necho \"Xq7mPa2#4\" | docker login -u d --password-stdin\nhtpasswd -bc /etc/.htpasswd admin Xq7mPa2#4",
+   "entidades": [
+    [
+     "SENHA",
+     34,
+     43,
+     0.85
+    ],
+    [
+     "SENHA",
+     78,
+     87,
+     0.8
+    ],
+    [
+     "SENHA",
+     104,
+     113,
+     0.8
+    ],
+    [
+     "IP",
+     122,
+     130,
+     0.7
+    ],
+    [
+     "SENHA",
+     151,
+     160,
+     0.8
+    ],
+    [
+     "SENHA",
+     180,
+     189,
+     0.8
+    ],
+    [
+     "SENHA",
+     205,
+     214,
+     0.8
+    ],
+    [
+     "SENHA",
+     287,
+     296,
+     0.8
+    ]
+   ],
+   "anonimizado": "requests.get(url, auth=(\"admin\", \"[SENHA_1]\"))\nCREATE USER rel IDENTIFIED BY '[SENHA_1]';\ncurl -u admin:[SENHA_1] https://[IP_1]/api\nmysql -u root -p[SENHA_1] vendas\nsshpass -p '[SENHA_1]' ssh x@h\necho \"[SENHA_1]\" | docker login -u d --password-stdin\nhtpasswd -bc /etc/.htpasswd admin [SENHA_1]",
+   "mascarado": "requests.get(url, auth=(\"admin\", \"********\"))\nCREATE USER rel IDENTIFIED BY '********';\ncurl -u admin:******** https://**.*.0.5/api\nmysql -u root -p******** vendas\nsshpass -p '********' ssh x@h\necho \"********\" | docker login -u d --password-stdin\nhtpasswd -bc /etc/.htpasswd admin ********",
+   "generalizado": "requests.get(url, auth=(\"admin\", \"[SENHA]\"))\nCREATE USER rel IDENTIFIED BY '[SENHA]';\ncurl -u admin:[SENHA] https://10.0.0.0/24/api\nmysql -u root -p[SENHA] vendas\nsshpass -p '[SENHA]' ssh x@h\necho \"[SENHA]\" | docker login -u d --password-stdin\nhtpasswd -bc /etc/.htpasswd admin [SENHA]"
+  },
+  {
+   "texto": "$senha = ConvertTo-SecureString \"Xq7mPa2#4\" -AsPlainText\n$p = Read-Host -AsSecureString\nif password != confirm_password:\npassword: !vault |\nwifi_password: !secret wifi_password\nget_secret_str(\"AI21_API_KEY\") ; @field_serializer(\"password\", \"password_bytes\", when_used=\"json\")\nLoad the library identified by 'name'. git push -u origin main; docker run -u 1000:1000 nginx",
+   "entidades": [
+    [
+     "SENHA",
+     33,
+     42,
+     0.8
+    ]
+   ],
+   "anonimizado": "$senha = ConvertTo-SecureString \"[SENHA_1]\" -AsPlainText\n$p = Read-Host -AsSecureString\nif password != confirm_password:\npassword: !vault |\nwifi_password: !secret wifi_password\nget_secret_str(\"AI21_API_KEY\") ; @field_serializer(\"password\", \"password_bytes\", when_used=\"json\")\nLoad the library identified by 'name'. git push -u origin main; docker run -u 1000:1000 nginx",
+   "mascarado": "$senha = ConvertTo-SecureString \"********\" -AsPlainText\n$p = Read-Host -AsSecureString\nif password != confirm_password:\npassword: !vault |\nwifi_password: !secret wifi_password\nget_secret_str(\"AI21_API_KEY\") ; @field_serializer(\"password\", \"password_bytes\", when_used=\"json\")\nLoad the library identified by 'name'. git push -u origin main; docker run -u 1000:1000 nginx",
+   "generalizado": "$senha = ConvertTo-SecureString \"[SENHA]\" -AsPlainText\n$p = Read-Host -AsSecureString\nif password != confirm_password:\npassword: !vault |\nwifi_password: !secret wifi_password\nget_secret_str(\"AI21_API_KEY\") ; @field_serializer(\"password\", \"password_bytes\", when_used=\"json\")\nLoad the library identified by 'name'. git push -u origin main; docker run -u 1000:1000 nginx"
+  },
+  {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
    "entidades": [
     [
