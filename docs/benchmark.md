@@ -35,7 +35,7 @@ Todos os valores são fictícios: os conjuntos próprios usam dados gerados pelo
 
 | Conjunto | Véu | Véu + `ml` | Véu + spaCy | Presidio |
 |---|---:|---:|---:|---:|
-| Desafio (50 menções) | **22,0%** (10,7% a 35,4%) | 8,0% (1,8% a 17,6%) | 14,0% (5,3% a 25,0%) | 50,0% (34,6% a 65,3%) |
+| Desafio (50 menções) | **18,0%** (7,4% a 30,6%) | 8,0% (1,8% a 17,6%) | 14,0% (5,3% a 25,0%) | 50,0% (34,6% a 65,3%) |
 | BR-Agentic (622 menções) | **22,2%** (18,9% a 26,0%) | 21,4% (17,9% a 25,2%)¹ | 16,9% (13,5% a 20,5%) | 53,1% (49,5% a 57,0%) |
 | privacy-filter-br, 3.000 documentos (17.335 menções) | **0,4%** (0,3% a 0,5%) | 0,2% (0,2% a 0,3%) | 0,3% (0,2% a 0,4%) | 52,0% (51,4% a 52,7%) |
 | privacy-filter-br, holdout inteiro (107.594 menções) | **3,3%** (3,2% a 3,5%) | — | — | — |
@@ -59,12 +59,12 @@ O que os números mostram:
 
 | Conjunto | Só regras | Regras + `ml` | Vazamento de nomes | Precisão em nomes |
 |---|---:|---:|---:|---:|
-| Desafio | 22,0% | 8,0% | de 35,0% para 0,0% | de 88,2% para 87,0% |
+| Desafio | 18,0% | 8,0% | de 25,0% para 0,0% | de 89,5% para 87,0% |
 | privacy-filter-br, 3.000 documentos | 0,4% | 0,2% | de 0,9% para 0,0% | de 77,9% para 78,4% |
 | BR-Agentic (o modelo treinou nele) | 22,2% | 21,4% | de 18,7% para 16,1% | de 80,0% para 80,4% |
-| Validação própria | 2,5% | 0,0% | de 6,4% para 0,0% | 100% nos dois |
+| Validação própria | 0,0% | 0,0% | 0,0% nos dois | 100% nos dois |
 
-Leia com cuidado: o desafio tem só 20 nomes, e a precisão nos conjuntos externos é baixa nas duas colunas porque eles não anotam tudo o que é dado pessoal. No BR-Agentic, o que sobra são endereços completos e contas, que o modelo não cobre. O custo é a velocidade: de 2 a 7 mil caracteres por segundo numa CPU comum, contra cerca de 300 mil só com as regras. Vale para lotes, arquivos e o proxy de uma equipe pequena; para a extensão e a página, que analisam a cada tecla, as regras continuam sendo o caminho. Textos maiores que o limite do modelo (512 tokens) são lidos em janelas sobrepostas.
+As colunas só com regras são de 22/11/2026, depois da melhoria de nomes em minúsculas, apelidos e verbo de pessoa depois do nome (desafio de 22,0% para 18,0%, validação de 2,5% para 0,0%, conjuntos externos iguais); as colunas com `ml` são da medição anterior. Leia com cuidado: o desafio tem só 20 nomes, e a precisão nos conjuntos externos é baixa nas duas colunas porque eles não anotam tudo o que é dado pessoal. No BR-Agentic, o que sobra são endereços completos e contas, que o modelo não cobre. O custo é a velocidade: de 2 a 7 mil caracteres por segundo numa CPU comum, contra cerca de 300 mil só com as regras. Vale para lotes, arquivos e o proxy de uma equipe pequena; para a extensão e a página, que analisam a cada tecla, as regras continuam sendo o caminho. Textos maiores que o limite do modelo (512 tokens) são lidos em janelas sobrepostas.
 
 ### O que mudou com a avaliação externa
 

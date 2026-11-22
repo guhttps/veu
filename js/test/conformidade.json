@@ -357,6 +357,12 @@
     ],
     [
      "PESSOA",
+     31,
+     37,
+     0.6
+    ],
+    [
+     "PESSOA",
      61,
      73,
      0.9
@@ -400,6 +406,12 @@
      2,
      13,
      0.9
+    ],
+    [
+     "PESSOA",
+     30,
+     34,
+     0.6
     ],
     [
      "PESSOA",
@@ -2281,6 +2293,71 @@
    "anonimizado": "$senha = ConvertTo-SecureString \"[SENHA_1]\" -AsPlainText\n$p = Read-Host -AsSecureString\nif password != confirm_password:\npassword: !vault |\nwifi_password: !secret wifi_password\nget_secret_str(\"AI21_API_KEY\") ; @field_serializer(\"password\", \"password_bytes\", when_used=\"json\")\nLoad the library identified by 'name'. git push -u origin main; docker run -u 1000:1000 nginx",
    "mascarado": "$senha = ConvertTo-SecureString \"********\" -AsPlainText\n$p = Read-Host -AsSecureString\nif password != confirm_password:\npassword: !vault |\nwifi_password: !secret wifi_password\nget_secret_str(\"AI21_API_KEY\") ; @field_serializer(\"password\", \"password_bytes\", when_used=\"json\")\nLoad the library identified by 'name'. git push -u origin main; docker run -u 1000:1000 nginx",
    "generalizado": "$senha = ConvertTo-SecureString \"[SENHA]\" -AsPlainText\n$p = Read-Host -AsSecureString\nif password != confirm_password:\npassword: !vault |\nwifi_password: !secret wifi_password\nget_secret_str(\"AI21_API_KEY\") ; @field_serializer(\"password\", \"password_bytes\", when_used=\"json\")\nLoad the library identified by 'name'. git push -u origin main; docker run -u 1000:1000 nginx"
+  },
+  {
+   "texto": "liga pro pedro e avisa que a fernanda vai cobrir o turno; a dona maria e o seu josé reclamaram.",
+   "entidades": [
+    [
+     "PESSOA",
+     9,
+     14,
+     0.6
+    ],
+    [
+     "PESSOA",
+     29,
+     37,
+     0.6
+    ],
+    [
+     "PESSOA",
+     65,
+     70,
+     0.6
+    ],
+    [
+     "PESSOA",
+     79,
+     83,
+     0.6
+    ]
+   ],
+   "anonimizado": "liga pro [PESSOA_1] e avisa que a [PESSOA_2] vai cobrir o turno; a dona [PESSOA_3] e o seu [PESSOA_4] reclamaram.",
+   "mascarado": "liga pro p*** e avisa que a f*** vai cobrir o turno; a dona m*** e o seu j*** reclamaram.",
+   "generalizado": "liga pro [PESSOA] e avisa que a [PESSOA] vai cobrir o turno; a dona [PESSOA] e o seu [PESSOA] reclamaram."
+  },
+  {
+   "texto": "A Rosa ligou pedindo o boleto. Chama o Tião pra ajudar. Nguyen Van An assinou o termo.",
+   "entidades": [
+    [
+     "PESSOA",
+     2,
+     6,
+     0.7
+    ],
+    [
+     "PESSOA",
+     39,
+     43,
+     0.8
+    ],
+    [
+     "PESSOA",
+     56,
+     69,
+     0.65
+    ]
+   ],
+   "anonimizado": "A [PESSOA_1] ligou pedindo o boleto. Chama o [PESSOA_2] pra ajudar. [PESSOA_3] assinou o termo.",
+   "mascarado": "A R*** ligou pedindo o boleto. Chama o T*** pra ajudar. N*** Van A*** assinou o termo.",
+   "generalizado": "A [PESSOA] ligou pedindo o boleto. Chama o [PESSOA] pra ajudar. [PESSOA] assinou o termo."
+  },
+  {
+   "texto": "O Véu Pro chegou. A Coca Cola informou. A rosa do jardim floresceu. Documentos da américa latina.",
+   "entidades": [],
+   "anonimizado": "O Véu Pro chegou. A Coca Cola informou. A rosa do jardim floresceu. Documentos da américa latina.",
+   "mascarado": "O Véu Pro chegou. A Coca Cola informou. A rosa do jardim floresceu. Documentos da américa latina.",
+   "generalizado": "O Véu Pro chegou. A Coca Cola informou. A rosa do jardim floresceu. Documentos da américa latina."
   },
   {
    "texto": "Olá, meu nome é Sílvio Pinheiro e meu CPF é 893.287.921-42. Fiz o pedido 7502589 no valor de R$ 4980,18 e até agora não chegou.",
@@ -6723,10 +6800,17 @@
   },
   {
    "texto": "kkkk a kamilly esqueceu o carregador aqui dnv",
-   "entidades": [],
-   "anonimizado": "kkkk a kamilly esqueceu o carregador aqui dnv",
-   "mascarado": "kkkk a kamilly esqueceu o carregador aqui dnv",
-   "generalizado": "kkkk a kamilly esqueceu o carregador aqui dnv"
+   "entidades": [
+    [
+     "PESSOA",
+     7,
+     14,
+     0.6
+    ]
+   ],
+   "anonimizado": "kkkk a [PESSOA_1] esqueceu o carregador aqui dnv",
+   "mascarado": "kkkk a k*** esqueceu o carregador aqui dnv",
+   "generalizado": "kkkk a [PESSOA] esqueceu o carregador aqui dnv"
   },
   {
    "texto": "bom dia! aqui é o enzo gabriel, filho da dona cleide",
@@ -6736,11 +6820,17 @@
      18,
      30,
      0.65
+    ],
+    [
+     "PESSOA",
+     46,
+     52,
+     0.6
     ]
    ],
-   "anonimizado": "bom dia! aqui é o [PESSOA_1], filho da dona cleide",
-   "mascarado": "bom dia! aqui é o e*** g***, filho da dona cleide",
-   "generalizado": "bom dia! aqui é o [PESSOA], filho da dona cleide"
+   "anonimizado": "bom dia! aqui é o [PESSOA_1], filho da dona [PESSOA_2]",
+   "mascarado": "bom dia! aqui é o e*** g***, filho da dona c***",
+   "generalizado": "bom dia! aqui é o [PESSOA], filho da dona [PESSOA]"
   },
   {
    "texto": "manda o pix pro thiaguinho q ele paga o churras",

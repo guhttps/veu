@@ -58,6 +58,25 @@ const GREETINGS = [
   "vlw", "tchau", "beijo", "bjs", "abraco", "querido", "querida", "meu nome e", "me chamo", "sou o", "sou a",
   "aqui e o", "aqui e a", "com o", "com a",
 ];
+// Um prenome sozinho em minúsculas depois de artigo, preposição ou tratamento: "liga pro pedro", "a fernanda vai",
+// "dona maria", "seu jose". Vale só para prenomes que não são palavras comuns nem lugares (texto já normalizado).
+const LOWERCASE_LEAD = /(?:^|[^\p{L}\p{N}_])(?:o|a|os|as|pro|pra|pros|pras|pelo|pela|do|da|no|na|seu|dona|sr|sra|tia|tio|vo|primo|prima)\s*$/u;
+// Um verbo de quem age logo depois do nome também é contexto: "A Rosa ligou", "O Jesus da portaria pediu folga",
+// "Nguyen Van An assinou". Com "da portaria", "do RH", "de Campinas" no meio. Aplicado ao texto normalizado.
+const PERSON_VERB_AFTER = new RegExp(
+  "^\\s*,?\\s*(?:d[aeo]s?\\s+[a-z]+\\s+)?(?:ja\\s+|tambem\\s+|nao\\s+|hoje\\s+|ontem\\s+)?"
+  + "(?:ligou|telefonou|disse|falou|pediu|reclamou|mandou|enviou|avisou|confirmou|assinou|respondeu|perguntou|"
+  + "comentou|explicou|chegou|faltou|agendou|pagou|escreveu|solicitou|informou|aprovou|recusou|desmarcou|"
+  + "remarcou|cancelou|contratou|assumiu|deixou)(?![\\p{L}\\p{N}_])",
+  "u",
+);
+// Sem nenhum nome conhecido na sequência, só verbos que empresas e produtos não "fazem": "O Véu Pro chegou" e
+// "a Coca Cola informou" ficam; "Nguyen Van An assinou" e "Oluwaseun Adeyemi ligou" viram nomes.
+const HUMAN_VERB_AFTER = new RegExp(
+  "^\\s*,?\\s*(?:d[aeo]s?\\s+[a-z]+\\s+)?(?:ja\\s+|tambem\\s+|nao\\s+|hoje\\s+|ontem\\s+)?"
+  + "(?:ligou|telefonou|reclamou|assinou|faltou|perguntou)(?![\\p{L}\\p{N}_])",
+  "u",
+);
 // Logo antes de um nome que não está nas listas ("Priya", "Oluwaseun"), estas expressões bastam.
 const STRONG_CONTEXT = new RegExp(
   "(?<![\\p{L}\\p{N}_])(?:meu nome e|me chamo|nome:|nome completo:|sr\\.?|sra\\.?|dona|dr\\.?|dra\\.?|senhora|senhor|doutora|"
@@ -206,18 +225,27 @@ export class PersonRecognizer implements Recognizer {
     const start = tokens[0][0];
     const end = tokens[tokens.length - 1][1];
     if (STREET_BEFORE.test(fold(textBefore(text, start, 16)))) return null;
-    const context = this.hasContext(text, start);
+    // Contexto antes ("cliente", "dona") ou um verbo de pessoa logo depois ("A Rosa ligou"); sem nenhum nome
+    // conhecido na sequência, só os verbos que empresas e produtos não "fazem".
+    const before = this.hasContext(text, start);
+    const after = fold(text.slice(end, end + 60));
+    const context = before || PERSON_VERB_AFTER.test(after);
+    const strictContext = before || HUMAN_VERB_AFTER.test(after);
     const rawNameWords = tokens.map((token) => token[2]).filter((word) => !CONNECTORS.has(fold(word)));
     if (rawNameWords.length >= 2 && rawNameWords.some((word) => this.isStop(word))) return null;
     const nameWords = rawNameWords.map(fold);
     const knownFirst = this.firstNames.has(folded[0]);
     const known = nameWords.filter((word) => this.firstNames.has(word) || this.surnames.has(word)).length;
+    // "Documentos de Portugal", "Universidade de Coimbra": palavra que não é prenome, "de" e um lugar no fim.
+    if (!knownFirst && folded.length >= 3 && CONNECTORS.has(folded[folded.length - 2]) && this.places.has(folded[folded.length - 1])) {
+      return null;
+    }
     let score: number;
     if (nameWords.length >= 2) {
       if (knownFirst && known >= 2) score = 0.9;
       else if (knownFirst) score = 0.8;
       else if (this.surnames.has(nameWords[nameWords.length - 1]) || known >= 2) score = context ? 0.7 : 0.62;
-      else if (context) score = 0.65;
+      else if (strictContext) score = 0.65;
       else return null;
     } else {
       const word = nameWords[0];
@@ -272,7 +300,9 @@ export class PersonRecognizer implements Recognizer {
       while (last > index && CONNECTORS.has(fold(words[last][2]))) last -= 1;
       const before = fold(textBefore(text, start, 18));
       if (last > index) yield { label: "PESSOA", start, end: words[last][1], score: 0.65, recognizer: this.name };
-      else if (this.greeting.test(before)) yield { label: "PESSOA", start, end, score: 0.6, recognizer: this.name };
+      else if (this.greeting.test(before) || (LOWERCASE_LEAD.test(before) && !this.places.has(folded))) {
+        yield { label: "PESSOA", start, end, score: 0.6, recognizer: this.name };
+      }
       index = last + 1;
     }
   }

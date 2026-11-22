@@ -195,3 +195,13 @@ Angola
 Moçambique
 América Latina
 Europa
+# Continentes e regiões ("da américa latina" não é a pessoa América).
+América
+América Latina
+América do Sul
+América do Norte
+América Central
+África
+Ásia
+Oceania
+Antártida

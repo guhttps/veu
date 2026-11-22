@@ -63,5 +63,7 @@ def test_confirmed_names_propagate(text, expected):
 
 
 def test_propagation_can_be_turned_off():
-    text = "Oi, sou a Rayane Souza. kkkk a rayane esqueceu."
+    # Sem artigo antes ("a rayane" o detector já pega sozinho): só a propagação esconde este "rayane".
+    text = "Oi, sou a Rayane Souza. kkkk rayane esqueceu."
+    assert "rayane" not in Veu().anonymize(text).text
     assert "rayane" in Veu(link_names=False).anonymize(text).text

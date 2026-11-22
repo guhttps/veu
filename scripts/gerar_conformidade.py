@@ -142,6 +142,10 @@ EXTRA = [
     "if password != confirm_password:\npassword: !vault |\nwifi_password: !secret wifi_password\n"
     "get_secret_str(\"AI21_API_KEY\") ; @field_serializer(\"password\", \"password_bytes\", when_used=\"json\")\n"
     "Load the library identified by 'name'. git push -u origin main; docker run -u 1000:1000 nginx",
+    # Nomes: minúsculas depois de artigo ou tratamento, apelidos, verbo de pessoa depois, e o que não é pessoa.
+    "liga pro pedro e avisa que a fernanda vai cobrir o turno; a dona maria e o seu josé reclamaram.",
+    "A Rosa ligou pedindo o boleto. Chama o Tião pra ajudar. Nguyen Van An assinou o termo.",
+    "O Véu Pro chegou. A Coca Cola informou. A rosa do jardim floresceu. Documentos da américa latina.",
 ]
 
 

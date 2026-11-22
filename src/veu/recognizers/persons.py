@@ -75,6 +75,25 @@ GREETINGS = (
     "vlw", "tchau", "beijo", "bjs", "abraco", "querido", "querida", "meu nome e", "me chamo", "sou o", "sou a",
     "aqui e o", "aqui e a", "com o", "com a",
 )
+# Um prenome sozinho em minúsculas depois de artigo, preposição ou tratamento: "liga pro pedro", "a fernanda vai",
+# "dona maria", "seu jose". Vale só para prenomes que não são palavras comuns nem lugares (texto já normalizado).
+_LOWERCASE_LEAD = re.compile(
+    r"(?:^|[^\w])(?:o|a|os|as|pro|pra|pros|pras|pelo|pela|do|da|no|na|seu|dona|sr|sra|tia|tio|vo|primo|prima)\s*$"
+)
+# Um verbo de quem age logo depois do nome também é contexto: "A Rosa ligou", "O Jesus da portaria pediu folga",
+# "Nguyen Van An assinou". Com "da portaria", "do RH", "de Campinas" no meio. Aplicado ao texto normalizado.
+_PERSON_VERB_AFTER = re.compile(
+    r"^\s*,?\s*(?:d[aeo]s?\s+[a-z]+\s+)?(?:ja\s+|tambem\s+|nao\s+|hoje\s+|ontem\s+)?"
+    r"(?:ligou|telefonou|disse|falou|pediu|reclamou|mandou|enviou|avisou|confirmou|assinou|respondeu|perguntou|"
+    r"comentou|explicou|chegou|faltou|agendou|pagou|escreveu|solicitou|informou|aprovou|recusou|desmarcou|"
+    r"remarcou|cancelou|contratou|assumiu|deixou)(?![\w])"
+)
+# Sem nenhum nome conhecido na sequência, só verbos que empresas e produtos não "fazem": "O Véu Pro chegou" e
+# "a Coca Cola informou" ficam; "Nguyen Van An assinou" e "Oluwaseun Adeyemi ligou" viram nomes.
+_HUMAN_VERB_AFTER = re.compile(
+    r"^\s*,?\s*(?:d[aeo]s?\s+[a-z]+\s+)?(?:ja\s+|tambem\s+|nao\s+|hoje\s+|ontem\s+)?"
+    r"(?:ligou|telefonou|reclamou|assinou|faltou|perguntou)(?![\w])"
+)
 
 
 class PersonRecognizer:
@@ -85,7 +104,7 @@ class PersonRecognizer:
         # Listas curadas mais as do Censo 2022 do IBGE (scripts/gerar_nomes_ibge.py). Prenomes que também são
         # palavras comuns ("rosa", "natal") ficam em ambíguos e só contam com contexto.
         self.first_names = (folded_set("first_names.txt") | folded_set("ibge_prenomes.txt")
-                            | {fold(name) for name in extra_first_names})
+                            | folded_set("apelidos.txt") | {fold(name) for name in extra_first_names})
         self.surnames = (folded_set("surnames.txt") | folded_set("ibge_sobrenomes.txt")
                          | {fold(name) for name in extra_surnames})
         self.ambiguous = folded_set("ambiguous.txt") | folded_set("ibge_ambiguos.txt")
@@ -192,13 +211,21 @@ class PersonRecognizer:
         # "Rua Augusta", "Av. Getúlio Vargas": nome de logradouro, não de pessoa.
         if _STREET_BEFORE.search(fold(text_before(text, start, 16))):
             return None
-        context = self._has_context(text, start)
+        # Contexto antes ("cliente", "dona") ou um verbo de pessoa logo depois ("A Rosa ligou"); sem nenhum nome
+        # conhecido na sequência, só os verbos que empresas e produtos não "fazem".
+        before = self._has_context(text, start)
+        after = fold(text[end:end + 60])
+        context = before or _PERSON_VERB_AFTER.search(after) is not None
+        strict_context = before or _HUMAN_VERB_AFTER.search(after) is not None
         name_words = [token[2] for token in tokens if fold(token[2]) not in CONNECTORS]
         if len(name_words) >= 2 and any(self._is_stop(word) for word in name_words):
             return None
         name_words = [fold(word) for word in name_words]
         known_first = folded[0] in self.first_names
         known = sum(1 for word in name_words if word in self.first_names or word in self.surnames)
+        # "Documentos de Portugal", "Universidade de Coimbra": palavra que não é prenome, "de" e um lugar no fim.
+        if not known_first and len(folded) >= 3 and folded[-2] in CONNECTORS and folded[-1] in self.places:
+            return None
 
         if len(name_words) >= 2:
             if known_first and known >= 2:
@@ -207,7 +234,7 @@ class PersonRecognizer:
                 score = 0.8
             elif name_words[-1] in self.surnames or known >= 2:
                 score = 0.7 if context else 0.62
-            elif context:
+            elif strict_context:
                 score = 0.65
             else:
                 return None
@@ -261,6 +288,6 @@ class PersonRecognizer:
             before = fold(text_before(text, start, 18))
             if last > index:
                 yield Candidate("PESSOA", start, words[last][1], 0.65, self.name)
-            elif self._greeting.search(before):
+            elif self._greeting.search(before) or (_LOWERCASE_LEAD.search(before) and folded not in self.places):
                 yield Candidate("PESSOA", start, end, 0.6, self.name)
             index = last + 1

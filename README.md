@@ -338,10 +338,10 @@ veu avaliar --externo todos    # BR-Agentic e privacy-filter-br (baixados uma ve
 
 | Conjunto | Véu | Véu + `ml` | Véu + spaCy | Presidio |
 |---|---:|---:|---:|---:|
-| Desafio: 41 textos escritos à mão e congelados | **22,0%** | 8,0% | 14,0% | 50,0% |
+| Desafio: 41 textos escritos à mão e congelados | **18,0%** | 8,0% | 14,0% | 50,0% |
 | [BR-Agentic](https://huggingface.co/datasets/guardion/BR-Agentic-PII-Benchmark): conversas bancárias com ferramentas | **22,2%** | 21,4%¹ | 16,9% | 53,1% |
 | [privacy-filter-br](https://huggingface.co/datasets/lucianfialho/privacy-filter-br-dataset): 3.000 documentos | **0,4%** | 0,2% | 0,3% | 52,0% |
-| Validação própria: 1.000 textos de modelos não usados no ajuste | **2,5%** | 0,0% | 1,2% | — |
+| Validação própria: 1.000 textos de modelos não usados no ajuste | **0,0%** | 0,0% | 1,2% | — |
 | Velocidade (caracteres por segundo) | ~300 mil | 2 a 7 mil | ~19 mil | 7 a 28 mil |
 
 ¹ O modelo do detector `ml` foi treinado com o BR-Agentic; esse número não mede generalização.
@@ -412,7 +412,7 @@ Leia o [modelo de ameaças](docs/modelo-de-ameacas.md) e as [limitações](SECUR
 git clone https://github.com/guhttps/veu && cd veu
 python -m venv .venv && .venv/Scripts/activate      # Linux/macOS: source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                    # 1138 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
+pytest                    # 1153 testes, inclusive com os SDKs oficiais, LangChain, MCP, Office e Redis
 ruff check .
 veu avaliar               # benchmark
 python scripts/simular_usuarios.py --rodadas 5    # 77 perfis de trabalho usando o Véu, com dados fictícios
@@ -444,7 +444,7 @@ Para ver o site de documentação no seu computador: `pip install zensical==0.1.
 - [ ] Operador sintético na versão JavaScript
 - [ ] Bibliotecas para Go e Java
 - [ ] Mais casos difíceis escritos à mão, de domínios reais (com dados fictícios)
-- [ ] Detector de nomes em minúsculas sem saudação ("o rayane esqueceu")
+- [x] Nomes em minúsculas depois de artigo ou tratamento ("a rayane esqueceu", "dona maria"), apelidos e verbo de pessoa logo depois do nome ("A Rosa ligou")
 
 ## Suporte, problemas e ideias
 
