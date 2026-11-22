@@ -3,17 +3,18 @@
 // e a configuração (tipos desligados, valores ignorados, listas próprias) e devolve a imagem com tarjas.
 "use strict";
 (() => {
-  /** O Véu com a mesma configuração dos sites de IA (igual à página de arquivos). */
+  /** Os tipos ligados (política da empresa menos as caixinhas desmarcadas) e o Véu com essa configuração. */
   function veuDa(config) {
     const { Veu, GROUPS } = globalThis.veu;
     const permitidos = config.tipos?.length ? config.tipos : GROUPS.flatMap((grupo) => grupo.tipos);
     const ligados = permitidos.filter((tipo) => !(config.tiposDesligados || []).includes(tipo));
-    return new Veu({
+    const veu = new Veu({
       labels: ligados.length < permitidos.length || config.tipos?.length ? ligados : undefined,
       allowlist: config.ignorar || [],
       allowPatterns: config.ignorarPadroes || [],
       terms: { PESSOA: config.listaNomes || [], TERMO: config.listaTermos || [] },
     });
+    return { veu, ligado: (tipo) => ligados.includes(tipo) };
   }
 
   function dataUrlParaBlob(dados) {
@@ -32,9 +33,9 @@
   });
 
   async function ler({ dados, config }) {
-    const veu = veuDa(config);
-    const { blob, counts, qr } = await globalThis.veuImagens.proteger(dataUrlParaBlob(dados), (texto) => veu.analyze(texto));
-    return { dados: await paraDataUrl(blob), counts, qr };
+    const { veu, ligado } = veuDa(config);
+    const { blob, counts } = await globalThis.veuImagens.proteger(dataUrlParaBlob(dados), (texto) => veu.analyze(texto), ligado);
+    return { dados: await paraDataUrl(blob), counts };
   }
 
   globalThis.veuLeitor = (pedido) => ler(pedido).catch((erro) => ({ erro: erro?.message || "Não consegui ler a imagem." }));

@@ -271,6 +271,67 @@ async function lerQr(pagina, caminho) {
   })()`);
 }
 
+/** Um documento com texto difícil, código de barras de boleto e assinatura acima da linha; devolve as regiões. */
+async function desenharDocumento(pagina, caminho) {
+  const { dataUrl, regioes } = await pagina.avaliar(`(() => {
+    const c = document.createElement("canvas"); c.width = 1000; c.height = 680;
+    const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 1000, 680); x.fillStyle = "#111";
+    x.font = "30px Arial"; x.fillText("Contrato de prestação de serviços", 40, 60);
+    x.fillText("Reunião amanhã às 10h", 40, 110);
+    x.font = "bold 34px Arial"; x.fillText("minimum illuminated Illinois", 40, 170);
+    const ITF = ["NNWWN", "WNNNW", "NWNNW", "WWNNN", "NNWNW", "WNWNN", "NWWNN", "NNNWW", "WNNWN", "NWNWN"];
+    const digitos = "23793381286000000000300000000400184340000010000";
+    const el = ["N", "N", "N", "N"];
+    for (let i = 0; i < 44; i += 2) { const b = ITF[+digitos[i]], s = ITF[+digitos[i + 1]]; for (let k = 0; k < 5; k++) el.push(b[k], s[k]); }
+    el.push("W", "N", "N");
+    let cx = 60; el.forEach((e, i) => { const w = e === "W" ? 6 : 2; if (i % 2 === 0) x.fillRect(cx, 230, w, 60); cx += w; });
+    x.fillRect(100, 560, 380, 2); // linha de assinatura
+    x.lineWidth = 3; x.strokeStyle = "#111"; x.beginPath(); x.moveTo(130, 540);
+    x.bezierCurveTo(170, 470, 200, 560, 240, 500); x.bezierCurveTo(270, 460, 300, 555, 340, 505);
+    x.bezierCurveTo(370, 470, 400, 550, 440, 515); x.stroke();
+    x.font = "26px Arial"; x.fillText("Maria Souza", 160, 600);
+    return { dataUrl: c.toDataURL("image/png"), regioes: [[60, 230, cx, 290], [135, 495, 435, 540]] };
+  })()`);
+  writeFileSync(caminho, Buffer.from(dataUrl.split(",")[1], "base64"));
+  return regioes;
+}
+
+/** Fração de pixels pretos em cada região de uma imagem (1 = região toda coberta pela tarja). */
+async function fracaoPreta(pagina, caminho, regioes) {
+  const dataUrl = `data:image/png;base64,${readFileSync(caminho).toString("base64")}`;
+  return pagina.avaliar(`(async () => {
+    const i = new Image(); await new Promise((ok) => { i.onload = ok; i.src = ${JSON.stringify(dataUrl)}; });
+    const c = document.createElement("canvas"); c.width = i.width; c.height = i.height;
+    const x = c.getContext("2d"); x.drawImage(i, 0, 0);
+    return ${JSON.stringify(regioes)}.map(([x0, y0, x1, y1]) => {
+      const d = x.getImageData(x0, y0, x1 - x0, y1 - y0).data; let pretos = 0;
+      for (let k = 0; k < d.length; k += 4) if (d[k] + d[k + 1] + d[k + 2] < 60) pretos += 1;
+      return pretos / (d.length / 4);
+    });
+  })()`);
+}
+
+/** Quantos rostos o mesmo detector da página acha numa imagem. */
+async function contarRostos(pagina, caminho) {
+  const tipo = caminho.endsWith(".png") ? "image/png" : "image/jpeg";
+  const dataUrl = `data:${tipo};base64,${readFileSync(caminho).toString("base64")}`;
+  return pagina.avaliar(`(async () => {
+    const carregar = (arquivo) => new Promise((ok) => { const s = document.createElement("script");
+      s.src = new URL("ocr/" + arquivo, document.baseURI).href; s.onload = ok; document.head.append(s); });
+    if (!globalThis.faceapi) await carregar("face-api.js");
+    if (!globalThis.veuModeloRostos) await carregar("rostos-modelo.js");
+    if (!faceapi.nets.tinyFaceDetector.isLoaded) {
+      const b = atob(veuModeloRostos.pesos); const bytes = new Uint8Array(b.length);
+      for (let k = 0; k < b.length; k++) bytes[k] = b.charCodeAt(k);
+      await faceapi.nets.tinyFaceDetector.loadFromWeightMap(faceapi.tf.io.decodeWeights(bytes.buffer,
+        veuModeloRostos.manifesto.flatMap((g) => g.weights)));
+    }
+    const i = new Image(); await new Promise((ok) => { i.onload = ok; i.src = ${JSON.stringify(dataUrl)}; });
+    const c = document.createElement("canvas"); c.width = i.width; c.height = i.height; c.getContext("2d").drawImage(i, 0, 0);
+    return (await faceapi.detectAllFaces(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.4 }))).length;
+  })()`);
+}
+
 /** Lê uma imagem com o mesmo leitor (Tesseract) da página: o que alguém ainda conseguiria ler no print protegido. */
 async function lerImagem(pagina, caminho) {
   const dataUrl = `data:image/png;base64,${readFileSync(caminho).toString("base64")}`;
@@ -402,6 +463,27 @@ async function testarPro(id) {
   const depoisQr = (await esperarArquivo(pixProtegido, 240)) ? await lerQr(arquivos, pixProtegido) : "erro";
   confere(antesQr.includes("BR.GOV.BCB.PIX") && depoisQr === "",
     `o QR Code do Pix é coberto (antes: ${antesQr.slice(0, 30)}..., depois: ${depoisQr || "nada legível"})`);
+  // Documento: código de barras de boleto e assinatura cobertos; o texto comum (inclusive cheio de traços) fica.
+  const documento = join(temporaria, "documento.png");
+  const regioes = await desenharDocumento(arquivos, documento);
+  await enviarArquivo(arquivos, "#proteger", documento);
+  const documentoProtegido = join(downloads, "documento-protegido.png");
+  const cobertas = (await esperarArquivo(documentoProtegido, 240)) ? await fracaoPreta(arquivos, documentoProtegido, regioes) : [0, 0];
+  const lidoDocumento = cobertas[0] ? await lerImagem(arquivos, documentoProtegido) : "";
+  confere(cobertas[0] > 0.95 && cobertas[1] > 0.95 && /minimum/.test(lidoDocumento) && /Reuni/.test(lidoDocumento)
+    && !/Souza/.test(lidoDocumento),
+  `código de barras e assinatura cobertos, texto comum legível (barras ${cobertas[0].toFixed(2)}, assinatura ${cobertas[1].toFixed(2)}; lido: ${lidoDocumento.replace(/\s+/g, " ").trim().slice(0, 90)})`);
+  // Foto com rostos (a de demonstração do face-api, que vem no pacote do npm): nenhum rosto sobra.
+  const fotoDemo = join(raiz, "js", "node_modules", "@vladmandic", "face-api", "demo", "sample1.jpg");
+  if (existsSync(fotoDemo)) {
+    const foto = join(temporaria, "foto.jpg");
+    writeFileSync(foto, readFileSync(fotoDemo));
+    const rostosAntes = await contarRostos(arquivos, foto);
+    await enviarArquivo(arquivos, "#proteger", foto);
+    const fotoProtegida = join(downloads, "foto-protegido.png");
+    const rostosDepois = (await esperarArquivo(fotoProtegida, 240)) ? await contarRostos(arquivos, fotoProtegida) : -1;
+    confere(rostosAntes >= 1 && rostosDepois === 0, `os rostos da foto são cobertos (antes: ${rostosAntes}, depois: ${rostosDepois})`);
+  }
 
   await arquivos.fechar();
 }
@@ -575,7 +657,7 @@ try {
   // Caixinhas de "O que esconder": desmarcar um grupo deixa aquele tipo passar, e a escolha fica salva.
   const caixas = await abrir(`${base}/web/index.html?lang=pt`);
   const grupos = await caixas.avaliar(`document.querySelectorAll("#tipos-grupos .grupo").length`);
-  confere(grupos === 7, `a página mostra os 7 grupos (${grupos})`);
+  confere(grupos === 8, `a página mostra os 8 grupos (${grupos})`);
   await caixas.avaliar(`document.getElementById("entrada").focus()`);
   await caixas.digitar("Servidor 10.0.0.5:8080 da Maria Souza");
   await pausa(400);
@@ -714,7 +796,7 @@ try {
   // Caixinhas do ícone da extensão: com "Documentos" desmarcado, o CPF passa e o nome continua escondido.
   const icone = await abrir(`chrome-extension://${id}/popup.html`);
   const gruposNoIcone = await icone.avaliar(`document.querySelectorAll("#grupos label").length`);
-  confere(gruposNoIcone === 7, `o ícone mostra os 7 grupos (${gruposNoIcone})`);
+  confere(gruposNoIcone === 8, `o ícone mostra os 8 grupos (${gruposNoIcone})`);
   await icone.avaliar(`document.getElementById("grupo-documentos").click()`);
   await pausa(400);
   await icone.fechar();

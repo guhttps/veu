@@ -326,6 +326,7 @@
     },
     veu: () => veuPara([...ignorados], "token"),
     nomeDoTipo,
+    ligado: (tipo) => !desligados.has(tipo), // caixinhas de "O que esconder" (imagens usam também)
   };
   window.veuPro?.aoMudar(() => {
     instancias.clear();

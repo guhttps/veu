@@ -183,13 +183,13 @@ test("imagem colada num site de IA: só com o Pro, vai para o leitor e volta con
   fundo.contexto.chrome.runtime.getContexts = async () => criados.map(() => ({ contextType: "OFFSCREEN_DOCUMENT" }));
   fundo.contexto.chrome.runtime.sendMessage = async (mensagem) => {
     enviadosAoLeitor.push(mensagem);
-    return { dados: "data:image/png;base64,AAAA", counts: { CPF: 1 }, qr: 1 };
+    return { dados: "data:image/png;base64,AAAA", counts: { CPF: 1, QR_CODE: 1 } };
   };
   assert.match((await fundo.daPagina({ tipo: "protegerImagem", dados: png })).erro, /Véu Pro/);
   await fundo.doIcone({ tipo: "ativarLicenca", chave: await licenca(30) });
   assert.match((await fundo.daPagina({ tipo: "protegerImagem", dados: "javascript:alert(1)" })).erro, /inválida/);
   const resposta = await fundo.daPagina({ tipo: "protegerImagem", dados: png });
-  assert.deepEqual({ ...resposta, counts: { ...resposta.counts } }, { dados: "data:image/png;base64,AAAA", counts: { CPF: 1 }, qr: 1 });
+  assert.deepEqual({ ...resposta, counts: { ...resposta.counts } }, { dados: "data:image/png;base64,AAAA", counts: { CPF: 1, QR_CODE: 1 } });
   await fundo.daPagina({ tipo: "protegerImagem", dados: png });
   assert.equal(criados.length, 1); // a página escondida é reaproveitada
   assert.equal(criados[0].url, "leitor.html");
@@ -199,7 +199,7 @@ test("imagem colada num site de IA: só com o Pro, vai para o leitor e volta con
 
   // Firefox: a página de fundo tem o leitor (leitor.js) e lê ali mesmo.
   const firefox = carregar();
-  firefox.contexto.veuLeitor = async ({ dados }) => ({ dados, counts: {}, qr: 0 });
+  firefox.contexto.veuLeitor = async ({ dados }) => ({ dados, counts: {} });
   await firefox.doIcone({ tipo: "ativarLicenca", chave: await licenca(30) });
   assert.equal((await firefox.daPagina({ tipo: "protegerImagem", dados: png })).dados, png);
 });

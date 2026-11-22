@@ -199,7 +199,7 @@ chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
         const resposta = await lerImagem({ dados, config });
         if (!resposta || resposta.erro) return { erro: resposta?.erro || "Não consegui ler a imagem." };
         if (Object.keys(resposta.counts || {}).length) await contar(abaId, resposta.counts, remetente.tab?.url || remetente.url);
-        return { dados: resposta.dados, counts: resposta.counts || {}, qr: resposta.qr || 0 };
+        return { dados: resposta.dados, counts: resposta.counts || {} };
       }
       case "relatorio": {
         if (!daExtensao) return { erro: "O relatório só abre pelo ícone do Véu." };

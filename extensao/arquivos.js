@@ -80,12 +80,12 @@
   // Prints e fotos: tarja preta sobre os dados e os QR Codes (nada a devolver depois: a tarja não tem marcador).
   async function protegerImagem(arquivo) {
     registrar(`${arquivo.name}: lendo a imagem...`);
-    const { blob, counts, qr } = await window.veuImagens.proteger(arquivo, (texto) => veu.analyze(texto));
+    const { blob, counts } = await window.veuImagens.proteger(arquivo, (texto) => veu.analyze(texto),
+      (tipo) => ligados.includes(tipo));
     if (Object.keys(counts).length) await chrome.runtime.sendMessage({ tipo: "contar", abaId, contagem: counts });
     const nome = `${base(arquivo.name)}-protegido.png`;
     baixar(blob, nome, "image/png");
-    const partes = [resumo(counts), qr ? `${qr} QR Code${qr > 1 ? "s" : ""}` : ""].filter(Boolean).join(", ");
-    registrar(`${nome}: ${partes ? `escondidos ${partes}` : "nenhum dado pessoal encontrado"}.`);
+    registrar(`${nome}: ${Object.keys(counts).length ? `escondidos ${resumo(counts)}` : "nenhum dado pessoal encontrado"}.`);
   }
 
   async function proteger(arquivo) {

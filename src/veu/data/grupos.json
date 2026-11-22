@@ -56,6 +56,14 @@
       "exemplo": "placas, RENAVAM, chassi (VIN)",
       "exemplo_en": "license plates, RENAVAM, VIN",
       "tipos": ["PLACA", "RENAVAM", "VIN"]
+    },
+    {
+      "id": "imagens",
+      "titulo": "Em imagens (Véu Pro)",
+      "titulo_en": "In images (Véu Pro)",
+      "exemplo": "rostos, assinaturas, QR Codes e códigos de barras em prints e fotos",
+      "exemplo_en": "faces, signatures, QR codes and barcodes in screenshots and photos",
+      "tipos": ["ROSTO", "ASSINATURA", "QR_CODE", "CODIGO_BARRAS"]
     }
   ]
 }

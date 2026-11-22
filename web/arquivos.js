@@ -57,11 +57,10 @@
     }
     registrar(T.imagemLendo(arquivo.name));
     const veu = pagina.veu();
-    const { blob, counts, qr } = await window.veuImagens.proteger(arquivo, (texto) => veu.analyze(texto));
+    const { blob, counts } = await window.veuImagens.proteger(arquivo, (texto) => veu.analyze(texto), pagina.ligado);
     const nome = `${base(arquivo.name)}-protegido.png`;
     baixar(blob, nome, "image/png");
-    const partes = [resumo(counts), qr ? T.imagemQr(qr) : ""].filter(Boolean).join(", ");
-    registrar(partes ? T.arquivoProtegido(nome, partes) : T.arquivoSemDados(nome));
+    registrar(Object.keys(counts).length ? T.arquivoProtegido(nome, resumo(counts)) : T.arquivoSemDados(nome));
   }
 
   async function proteger(arquivo) {

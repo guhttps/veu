@@ -65,6 +65,11 @@ export const LABELS: Record<string, string> = {
   SERVIDOR: "Nome de servidor interno",
   MAC: "Endereço MAC de placa de rede",
   IMEI: "IMEI de celular",
+  // Só em imagens (Véu Pro, no navegador): o leitor de imagens cobre com tarja.
+  QR_CODE: "QR Code",
+  CODIGO_BARRAS: "Código de barras",
+  ASSINATURA: "Assinatura",
+  ROSTO: "Rosto",
   CHAVE_API: "Chave de API ou token de serviço (OpenAI, AWS, GitHub...)",
   TOKEN: "Token de acesso (JWT, Bearer)",
   SENHA: "Senha",

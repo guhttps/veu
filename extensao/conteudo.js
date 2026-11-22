@@ -224,7 +224,6 @@
   async function protegerArquivos(arquivos) {
     const protegidos = [];
     const contagem = {};
-    let qr = 0;
     for (const arquivo of arquivos) {
       if (!IMAGEM.test(arquivo.type)) {
         protegidos.push(arquivo);
@@ -235,21 +234,20 @@
       const nomeBase = arquivo.name.replace(/\.[^.]+$/, "") || "imagem";
       protegidos.push(new File([blobDe(resposta.dados)], `${nomeBase}-protegido.png`, { type: "image/png" }));
       for (const [rotulo, n] of Object.entries(resposta.counts || {})) contagem[rotulo] = (contagem[rotulo] || 0) + n;
-      qr += resposta.qr || 0;
     }
-    return { protegidos, contagem, qr };
+    return { protegidos, contagem };
   }
 
   /** Protege as imagens e entrega ao site um evento novo (colar, soltar ou trocar o anexo) com as versões protegidas. */
   async function entregarProtegidas(alvo, arquivos, criarEvento, texto = "") {
     aviso("Véu Pro: lendo a imagem para cobrir os dados...", [], "info", false);
     try {
-      const { protegidos, contagem, qr } = await protegerArquivos(arquivos);
+      const { protegidos, contagem } = await protegerArquivos(arquivos);
       const dados = new DataTransfer();
       for (const arquivo of protegidos) dados.items.add(arquivo);
       if (texto) dados.setData("text/plain", veu.analyze(texto).length ? proteger(texto).text : texto);
       alvo.dispatchEvent(criarEvento(dados));
-      const partes = [resumoDaContagem(contagem), qr ? `${qr} QR Code${qr > 1 ? "s" : ""}` : ""].filter(Boolean).join(", ");
+      const partes = resumoDaContagem(contagem);
       aviso(partes ? `Imagem protegida com tarjas: ${partes}.` : "Imagem conferida: nenhum dado pessoal encontrado.",
         [], "info", true);
     } catch (erro) {

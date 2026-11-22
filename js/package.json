@@ -63,6 +63,7 @@
     "@anthropic-ai/sdk": "0.135.0",
     "@tesseract.js-data/por": "1.0.0",
     "@types/node": "24.19.2",
+    "@vladmandic/face-api": "1.7.15",
     "ai": "7.0.145",
     "esbuild": "0.28.2",
     "jsqr": "1.4.0",

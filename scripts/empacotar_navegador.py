@@ -9,6 +9,7 @@ browser_specific_settings). O Edge usa o mesmo pacote do Chrome.
 
 from __future__ import annotations
 
+import base64
 import json
 import shutil
 import sys
@@ -36,7 +37,13 @@ OCR_FILES = {
     "tesseract.js-LICENSE.md": NODE / "tesseract.js" / "LICENSE.md",
     "tesseract.js-core-LICENSE.txt": NODE / "tesseract.js-core" / "LICENSE",
     "jsQR-LICENSE.txt": NODE / "jsqr" / "LICENSE",
+    "face-api.js": NODE / "@vladmandic" / "face-api" / "dist" / "face-api.js",
+    "face-api-LICENSE.txt": NODE / "@vladmandic" / "face-api" / "LICENSE",
 }
+# Modelo do detector de rostos (TinyFaceDetector, ~190 KB): vai num script, não por fetch, porque a página do site
+# bloqueia conexões. rostos-modelo.js define veuModeloRostos = { manifesto, pesos (base64) }.
+FACE_MODEL = NODE / "@vladmandic" / "face-api" / "model"
+GENERATED_OCR_FILES = ("rostos-modelo.js", "LEIA-ME.txt")
 OCR_NOTICE = """Leitor de imagens do Véu Pro (tudo roda no navegador; a imagem não sai do computador)
 
 tesseract.min.js, worker.min.js: tesseract.js 7.0.0 (Apache-2.0), https://github.com/naptha/tesseract.js
@@ -44,6 +51,8 @@ tesseract-core-simd-lstm.wasm.js: tesseract.js-core 6.1.2 (Apache-2.0), com o Te
   Leptonica (BSD-2-Clause), https://github.com/naptha/tesseract.js-core
 por.traineddata.gz: dados de português do tessdata_best_int (Apache-2.0), via @tesseract.js-data/por 1.0.0 (MIT)
 jsQR.js: jsQR 1.4.0 (Apache-2.0), https://github.com/cozmo/jsQR
+face-api.js: @vladmandic/face-api 1.7.15 (MIT), com o TensorFlow.js (Apache-2.0), https://github.com/vladmandic/face-api
+rostos-modelo.js: o modelo TinyFaceDetector do mesmo pacote (tiny_face_detector_model), em base64
 
 Todos sem mudanças, copiados do npm por scripts/empacotar_navegador.py.
 """
@@ -77,7 +86,7 @@ def write_zip(output: Path, manifest: dict) -> None:
         for name in EXTENSION_FILES:
             if name != "manifest.json":
                 archive.write(EXTENSION / name, name)
-        for name in sorted(OCR_FILES) + ["LEIA-ME.txt"]:
+        for name in sorted(OCR_FILES) + list(GENERATED_OCR_FILES):
             archive.write(EXTENSION / "ocr" / name, f"ocr/{name}")
         for icon in sorted((EXTENSION / "icones").glob("*.png")):
             archive.write(icon, f"icones/{icon.name}")
@@ -102,16 +111,23 @@ def main() -> int:
         shutil.copyfile(PDFJS / "LICENSE", target / "pdfjs-LICENSE.txt")
     shutil.copyfile(EXTENSION / "licenca.js", WEB / "licenca.js")
     # Imagens: o mesmo imagens.js e a mesma pasta ocr/ na extensão e no site.
-    missing = [str(source.relative_to(ROOT)) for source in OCR_FILES.values() if not source.exists()]
+    needed = [*OCR_FILES.values(), FACE_MODEL / "tiny_face_detector_model-weights_manifest.json",
+              FACE_MODEL / "tiny_face_detector_model.bin"]
+    missing = [str(source.relative_to(ROOT)) for source in needed if not source.exists()]
     if missing:
         print(f"Falta o leitor de imagens ({', '.join(missing)}): rode 'npm ci' na pasta js.", file=sys.stderr)
         return 1
     shutil.copyfile(EXTENSION / "imagens.js", WEB / "imagens.js")
+    manifesto = json.loads((FACE_MODEL / "tiny_face_detector_model-weights_manifest.json").read_text(encoding="utf-8"))
+    pesos = base64.b64encode((FACE_MODEL / "tiny_face_detector_model.bin").read_bytes()).decode("ascii")
+    modelo = ("// Gerado por scripts/empacotar_navegador.py: o modelo TinyFaceDetector do @vladmandic/face-api (MIT).\n"
+              f"globalThis.veuModeloRostos = {{ manifesto: {json.dumps(manifesto)}, pesos: \"{pesos}\" }};\n")
     for target in (EXTENSION, WEB):
         (target / "ocr").mkdir(exist_ok=True)
         for name, source in OCR_FILES.items():
             shutil.copyfile(source, target / "ocr" / name)
         (target / "ocr" / "LEIA-ME.txt").write_text(OCR_NOTICE, encoding="utf-8")
+        (target / "ocr" / "rostos-modelo.js").write_text(modelo, encoding="utf-8")
     manifest = json.loads((EXTENSION / "manifest.json").read_text(encoding="utf-8"))
     version = manifest["version"]
     output = ROOT / "dist" / f"veu-extensao-{version}.zip"
