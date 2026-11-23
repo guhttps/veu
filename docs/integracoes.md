@@ -643,7 +643,7 @@ scrape_configs:
 ```yaml
 repos:
   - repo: https://github.com/guhttps/veu
-    rev: v0.9.5
+    rev: v0.9.6
     hooks:
       - id: veu
 ```
@@ -656,7 +656,7 @@ Linhas com dados fictícios propositais podem ser liberadas com o comentário `v
 
 ```yaml
 - uses: actions/checkout@v5
-- uses: guhttps/veu@v0.9.5
+- uses: guhttps/veu@v0.9.6
   with:
     limiar: "0.6"              # opcional
     caminhos: "src docs"       # opcional; padrão: todos os arquivos versionados
@@ -670,7 +670,7 @@ Os achados aparecem como anotações no pull request, com os valores mascarados.
 Com o relatório SARIF, os achados aparecem na aba **Security → Code scanning** do repositório:
 
 ```yaml
-- uses: guhttps/veu@v0.9.5
+- uses: guhttps/veu@v0.9.6
   with: { sarif: veu.sarif, falhar: "false" }
 - uses: github/codeql-action/upload-sarif@v4
   with: { sarif_file: veu.sarif }

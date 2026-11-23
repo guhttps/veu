@@ -5,6 +5,8 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Unreleased]
 
+## [0.9.6] - 2026-11-22
+
 ### Adicionado
 - **Mais nomes de pessoa sem contexto antes:** um prenome em minúsculas depois de artigo, preposição ou tratamento ("liga pro pedro", "a fernanda vai", "dona maria", "seu josé"), apelidos comuns (Tião, Chico, Zeca, Manu e outros) e um verbo de pessoa logo depois do nome ("A Rosa ligou", "Nguyen Van An assinou"; para uma sequência sem nenhum nome conhecido, só verbos que empresas e produtos não "fazem"). Na validação, o vazamento de nomes caiu de 6,4% para 0,0% e o geral de 2,5% para 0,0%, com a precisão em 100%; no desafio, de 22,0% para 18,0%. Continentes entraram na lista de lugares ("da américa latina"), e "Documentos de Portugal" deixou de virar pessoa.
 - **Prints e fotos (Véu Pro):** na extensão, um print colado (Ctrl+V), arrastado ou anexado pelo botão do ChatGPT, Claude e dos outros sites de IA chega ao site já com as tarjas, e um aviso diz o que foi coberto; se o leitor falhar, a imagem não é enviada. O leitor roda numa página escondida da extensão (permissão offscreen, no Chrome e no Edge) ou na página de fundo (Firefox). Na página e na página de arquivos da extensão, uma imagem (.png, .jpg, .webp, .gif, .bmp) é lida no próprio navegador pelo Tesseract, o Véu acha os dados no texto lido e cobre cada um com uma tarja preta; QR Codes (que podem carregar um Pix com nome e chave, pelo jsQR), códigos de barras (boleto, EAN, Code 128: barras verticais finas e da mesma altura, sem confundir gráfico de barras, linha de tabela nem texto), assinaturas (tinta que o leitor não reconhece como palavra acima da linha de assinatura ou ao lado de "Assinatura") e rostos (TinyFaceDetector do @vladmandic/face-api, também em fotos de perfil pequenas) também são cobertos. Cada um pode ser desligado no grupo novo "Em imagens (Véu Pro)" de "O que esconder". O "@" que o leitor confunde com "&" não deixa o e-mail escapar. A imagem volta como PNG e não sai do navegador. No grátis, a página avisa que imagens são do Véu Pro. O leitor (~5,7 MB, português) só é baixado na primeira imagem.
@@ -458,7 +460,8 @@ Primeira versão.
 ### Benchmark
 - Gerador de textos anotados com dados falsos, conjuntos de desenvolvimento, validação e casos difíceis, e o comando `veu avaliar`.
 
-[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.5...HEAD
+[Unreleased]: https://github.com/guhttps/veu/compare/v0.9.6...HEAD
+[0.9.6]: https://github.com/guhttps/veu/compare/v0.9.5...v0.9.6
 [0.9.5]: https://github.com/guhttps/veu/compare/v0.9.4...v0.9.5
 [0.9.4]: https://github.com/guhttps/veu/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/guhttps/veu/compare/v0.9.2...v0.9.3
